@@ -1,0 +1,30 @@
+{
+  "name": "@media-voyage/backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsx watch src/index.ts",
+    "build": "tsx build src/index.ts --out-dir dist"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@11.5.0",
+  "type": "module",
+  "dependencies": {
+    "@better-auth/drizzle-adapter": "^1.6.13",
+    "@fastify/cors": "^11.2.0",
+    "@media-voyage/shared": "workspace:*",
+    "better-auth": "^1.6.13",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
+    "fastify": "^5.8.5",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsx": "^4.22.4"
+  }
+}
