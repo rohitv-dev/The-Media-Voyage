@@ -79,7 +79,7 @@ export const userMedia = pgTable(
   (table) => [unique("user_media_unique").on(table.userId, table.mediaId)],
 );
 
-export const mediaList = pgTable("media_list", {
+export const mediaCollection = pgTable("media_collection", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id")
     .references(() => user.id, { onDelete: "cascade" })
@@ -92,17 +92,15 @@ export const mediaList = pgTable("media_list", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const mediaListItems = pgTable("media_list_items", {
+export const mediaCollectionItems = pgTable("media_collection_items", {
   id: uuid("id").primaryKey().defaultRandom(),
-  listId: uuid("list_id")
-    .references(() => mediaList.id, { onDelete: "cascade" })
+  collectionId: uuid("collection_id")
+    .references(() => mediaCollection.id, { onDelete: "cascade" })
     .notNull(),
   mediaId: uuid("media_id")
     .references(() => media.id, { onDelete: "cascade" })
     .notNull(),
   position: integer("position"), // For ordering items in the list
-  addedAt: timestamp("added_at").defaultNow(),
-  notes: text("notes"), // Optional personal notes about this item in the list
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -121,21 +119,21 @@ export const userMediaRelations = relations(userMedia, ({ one }) => ({
   }),
 }));
 
-export const mediaListRelations = relations(mediaList, ({ many, one }) => ({
+export const mediaCollectionRelations = relations(mediaCollection, ({ many, one }) => ({
   user: one(user, {
-    fields: [mediaList.userId],
+    fields: [mediaCollection.userId],
     references: [user.id],
   }),
-  items: many(mediaListItems),
+  items: many(mediaCollectionItems),
 }));
 
-export const mediaListItemsRelations = relations(mediaListItems, ({ one }) => ({
-  list: one(mediaList, {
-    fields: [mediaListItems.listId],
-    references: [mediaList.id],
+export const mediaCollectionItemsRelations = relations(mediaCollectionItems, ({ one }) => ({
+  list: one(mediaCollection, {
+    fields: [mediaCollectionItems.collectionId],
+    references: [mediaCollection.id],
   }),
   media: one(media, {
-    fields: [mediaListItems.mediaId],
+    fields: [mediaCollectionItems.mediaId],
     references: [media.id],
   }),
 }));

@@ -22,7 +22,7 @@ type ApiErrorResponse =
 fastify.register(cors, {
   origin: "http://localhost:4000",
   credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
 });
 
 fastify.setErrorHandler((error, request, reply) => {
@@ -54,7 +54,8 @@ fastify.setErrorHandler((error, request, reply) => {
 
 fastify.register(import("./routes/auth"));
 fastify.register(import("./routes/v1/media"), { prefix: "/api/v1" });
-
+fastify.register(import("./routes/v1/collection"), { prefix: "/api/v1/collection" });
+fastify.register(import("./routes/v1/collectionItem"), { prefix: "/api/v1/collectionItem" });
 fastify.get("/health", async () => {
   return { status: "OK" };
 });

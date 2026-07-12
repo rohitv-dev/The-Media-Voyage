@@ -40,8 +40,8 @@ export function MediaTable({ data }: MediaTableProps) {
   return (
     <DataTable
       bodyRef={bodyRef}
-      height={500}
-      borderRadius="md"
+      mah={500}
+      borderRadius="xs"
       textSelectionDisabled
       withRowBorders
       withTableBorder

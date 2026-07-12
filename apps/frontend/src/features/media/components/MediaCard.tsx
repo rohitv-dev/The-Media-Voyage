@@ -13,9 +13,11 @@ import {
   IconMovie,
   IconBook,
   IconDeviceTv,
+  IconHeartFilled,
 } from "@tabler/icons-react";
 import type { MediaRecord } from "@media-voyage/shared/api";
 import dayjs from "dayjs";
+import { motion } from "motion/react";
 
 interface MediaCardProps {
   media: MediaRecord;
@@ -60,10 +62,18 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
 
   return (
     <Card
+      component={motion.div}
       withBorder
       h="100%"
-      style={{
-        cursor: "pointer",
+      whileHover={{
+        y: -4,
+        scale: 1.015,
+        boxShadow: "0 12px 30px rgba(0,0,0,0.15)",
+      }}
+      transition={{
+        type: "spring",
+        stiffness: 350,
+        damping: 25,
       }}
       onClick={() => onView?.(media.id)}
     >
@@ -73,12 +83,19 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
             <Group gap="xs">
               {getTypeIcon()}
 
-              <Title order={4} lineClamp={2}>
+              <Title order={5} lineClamp={2} fw={600}>
                 {media.title}
               </Title>
             </Group>
 
-            {media.favorite && <Rating size="md" value={1} count={1} />}
+            {media.favorite && (
+              <motion.div
+                animate={{ scale: [1, 1.15, 1] }}
+                transition={{ repeat: Infinity, duration: 2.5 }}
+              >
+                <IconHeartFilled size={20} color="red" />
+              </motion.div>
+            )}
           </Group>
 
           <Group mt="sm">
@@ -100,12 +117,20 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
               Added{" "}
               {media.createdAt && dayjs(media.createdAt).format("MMM DD YYYY")}
             </Text>
+
+            <Text size="xs" c="dimmed">
+              Updated {dayjs(media.updatedAt).format("MMM DD, YYYY")}
+            </Text>
           </Stack>
         </div>
 
         <Group>
           <Button
+            component={motion.button}
             size="xs"
+            whileHover={{
+              width: 100,
+            }}
             onClick={(e) => {
               e.stopPropagation();
               onEdit?.(media.id);

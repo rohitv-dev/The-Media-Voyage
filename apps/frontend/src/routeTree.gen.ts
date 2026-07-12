@@ -13,10 +13,17 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedMediaIndexRouteImport } from './routes/_authenticated/media/index'
-import { Route as AuthenticatedMediaAddRouteImport } from './routes/_authenticated/media/add'
+import { Route as AuthenticatedCollectionIndexRouteImport } from './routes/_authenticated/collection/index'
+import { Route as AuthenticatedCollectionAddRouteImport } from './routes/_authenticated/collection/add'
+import { Route as AuthenticatedMediaFormsRouteRouteImport } from './routes/_authenticated/media/_forms/route'
 import { Route as AuthenticatedMediaViewIdRouteImport } from './routes/_authenticated/media/view.$id'
-import { Route as AuthenticatedMediaUpdateIdRouteImport } from './routes/_authenticated/media/update.$id'
+import { Route as AuthenticatedMediaFormsAddRouteImport } from './routes/_authenticated/media/_forms/add'
+import { Route as AuthenticatedCollectionViewIdRouteImport } from './routes/_authenticated/collection/view.$id'
+import { Route as AuthenticatedCollectionEditIdRouteImport } from './routes/_authenticated/collection/edit.$id'
+import { Route as AuthenticatedMediaFormsUpdateIdRouteImport } from './routes/_authenticated/media/_forms/update.$id'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -37,87 +44,168 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMediaIndexRoute = AuthenticatedMediaIndexRouteImport.update({
   id: '/media/',
   path: '/media/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedMediaAddRoute = AuthenticatedMediaAddRouteImport.update({
-  id: '/media/add',
-  path: '/media/add',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
+const AuthenticatedCollectionIndexRoute =
+  AuthenticatedCollectionIndexRouteImport.update({
+    id: '/collection/',
+    path: '/collection/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCollectionAddRoute =
+  AuthenticatedCollectionAddRouteImport.update({
+    id: '/collection/add',
+    path: '/collection/add',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedMediaFormsRouteRoute =
+  AuthenticatedMediaFormsRouteRouteImport.update({
+    id: '/media/_forms',
+    path: '/media',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMediaViewIdRoute =
   AuthenticatedMediaViewIdRouteImport.update({
     id: '/media/view/$id',
     path: '/media/view/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedMediaUpdateIdRoute =
-  AuthenticatedMediaUpdateIdRouteImport.update({
-    id: '/media/update/$id',
-    path: '/media/update/$id',
+const AuthenticatedMediaFormsAddRoute =
+  AuthenticatedMediaFormsAddRouteImport.update({
+    id: '/add',
+    path: '/add',
+    getParentRoute: () => AuthenticatedMediaFormsRouteRoute,
+  } as any)
+const AuthenticatedCollectionViewIdRoute =
+  AuthenticatedCollectionViewIdRouteImport.update({
+    id: '/collection/view/$id',
+    path: '/collection/view/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCollectionEditIdRoute =
+  AuthenticatedCollectionEditIdRouteImport.update({
+    id: '/collection/edit/$id',
+    path: '/collection/edit/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedMediaFormsUpdateIdRoute =
+  AuthenticatedMediaFormsUpdateIdRouteImport.update({
+    id: '/update/$id',
+    path: '/update/$id',
+    getParentRoute: () => AuthenticatedMediaFormsRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
-  '/media/add': typeof AuthenticatedMediaAddRoute
+  '/media': typeof AuthenticatedMediaFormsRouteRouteWithChildren
+  '/collection/add': typeof AuthenticatedCollectionAddRoute
+  '/collection/': typeof AuthenticatedCollectionIndexRoute
   '/media/': typeof AuthenticatedMediaIndexRoute
-  '/media/update/$id': typeof AuthenticatedMediaUpdateIdRoute
+  '/collection/edit/$id': typeof AuthenticatedCollectionEditIdRoute
+  '/collection/view/$id': typeof AuthenticatedCollectionViewIdRoute
+  '/media/add': typeof AuthenticatedMediaFormsAddRoute
   '/media/view/$id': typeof AuthenticatedMediaViewIdRoute
+  '/media/update/$id': typeof AuthenticatedMediaFormsUpdateIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
-  '/media/add': typeof AuthenticatedMediaAddRoute
   '/media': typeof AuthenticatedMediaIndexRoute
-  '/media/update/$id': typeof AuthenticatedMediaUpdateIdRoute
+  '/collection/add': typeof AuthenticatedCollectionAddRoute
+  '/collection': typeof AuthenticatedCollectionIndexRoute
+  '/collection/edit/$id': typeof AuthenticatedCollectionEditIdRoute
+  '/collection/view/$id': typeof AuthenticatedCollectionViewIdRoute
+  '/media/add': typeof AuthenticatedMediaFormsAddRoute
   '/media/view/$id': typeof AuthenticatedMediaViewIdRoute
+  '/media/update/$id': typeof AuthenticatedMediaFormsUpdateIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
-  '/_authenticated/media/add': typeof AuthenticatedMediaAddRoute
+  '/_authenticated/media/_forms': typeof AuthenticatedMediaFormsRouteRouteWithChildren
+  '/_authenticated/collection/add': typeof AuthenticatedCollectionAddRoute
+  '/_authenticated/collection/': typeof AuthenticatedCollectionIndexRoute
   '/_authenticated/media/': typeof AuthenticatedMediaIndexRoute
-  '/_authenticated/media/update/$id': typeof AuthenticatedMediaUpdateIdRoute
+  '/_authenticated/collection/edit/$id': typeof AuthenticatedCollectionEditIdRoute
+  '/_authenticated/collection/view/$id': typeof AuthenticatedCollectionViewIdRoute
+  '/_authenticated/media/_forms/add': typeof AuthenticatedMediaFormsAddRoute
   '/_authenticated/media/view/$id': typeof AuthenticatedMediaViewIdRoute
+  '/_authenticated/media/_forms/update/$id': typeof AuthenticatedMediaFormsUpdateIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/dashboard'
+    | '/profile'
     | '/auth/login'
     | '/auth/register'
-    | '/media/add'
+    | '/media'
+    | '/collection/add'
+    | '/collection/'
     | '/media/'
-    | '/media/update/$id'
+    | '/collection/edit/$id'
+    | '/collection/view/$id'
+    | '/media/add'
     | '/media/view/$id'
+    | '/media/update/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/dashboard'
+    | '/profile'
     | '/auth/login'
     | '/auth/register'
-    | '/media/add'
     | '/media'
-    | '/media/update/$id'
+    | '/collection/add'
+    | '/collection'
+    | '/collection/edit/$id'
+    | '/collection/view/$id'
+    | '/media/add'
     | '/media/view/$id'
+    | '/media/update/$id'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/profile'
     | '/auth/login'
     | '/auth/register'
-    | '/_authenticated/media/add'
+    | '/_authenticated/media/_forms'
+    | '/_authenticated/collection/add'
+    | '/_authenticated/collection/'
     | '/_authenticated/media/'
-    | '/_authenticated/media/update/$id'
+    | '/_authenticated/collection/edit/$id'
+    | '/_authenticated/collection/view/$id'
+    | '/_authenticated/media/_forms/add'
     | '/_authenticated/media/view/$id'
+    | '/_authenticated/media/_forms/update/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -157,6 +245,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/media/': {
       id: '/_authenticated/media/'
       path: '/media'
@@ -164,11 +266,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMediaIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/media/add': {
-      id: '/_authenticated/media/add'
-      path: '/media/add'
-      fullPath: '/media/add'
-      preLoaderRoute: typeof AuthenticatedMediaAddRouteImport
+    '/_authenticated/collection/': {
+      id: '/_authenticated/collection/'
+      path: '/collection'
+      fullPath: '/collection/'
+      preLoaderRoute: typeof AuthenticatedCollectionIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/collection/add': {
+      id: '/_authenticated/collection/add'
+      path: '/collection/add'
+      fullPath: '/collection/add'
+      preLoaderRoute: typeof AuthenticatedCollectionAddRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/media/_forms': {
+      id: '/_authenticated/media/_forms'
+      path: '/media'
+      fullPath: '/media'
+      preLoaderRoute: typeof AuthenticatedMediaFormsRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/media/view/$id': {
@@ -178,27 +294,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMediaViewIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/media/update/$id': {
-      id: '/_authenticated/media/update/$id'
-      path: '/media/update/$id'
-      fullPath: '/media/update/$id'
-      preLoaderRoute: typeof AuthenticatedMediaUpdateIdRouteImport
+    '/_authenticated/media/_forms/add': {
+      id: '/_authenticated/media/_forms/add'
+      path: '/add'
+      fullPath: '/media/add'
+      preLoaderRoute: typeof AuthenticatedMediaFormsAddRouteImport
+      parentRoute: typeof AuthenticatedMediaFormsRouteRoute
+    }
+    '/_authenticated/collection/view/$id': {
+      id: '/_authenticated/collection/view/$id'
+      path: '/collection/view/$id'
+      fullPath: '/collection/view/$id'
+      preLoaderRoute: typeof AuthenticatedCollectionViewIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/collection/edit/$id': {
+      id: '/_authenticated/collection/edit/$id'
+      path: '/collection/edit/$id'
+      fullPath: '/collection/edit/$id'
+      preLoaderRoute: typeof AuthenticatedCollectionEditIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/media/_forms/update/$id': {
+      id: '/_authenticated/media/_forms/update/$id'
+      path: '/update/$id'
+      fullPath: '/media/update/$id'
+      preLoaderRoute: typeof AuthenticatedMediaFormsUpdateIdRouteImport
+      parentRoute: typeof AuthenticatedMediaFormsRouteRoute
     }
   }
 }
 
+interface AuthenticatedMediaFormsRouteRouteChildren {
+  AuthenticatedMediaFormsAddRoute: typeof AuthenticatedMediaFormsAddRoute
+  AuthenticatedMediaFormsUpdateIdRoute: typeof AuthenticatedMediaFormsUpdateIdRoute
+}
+
+const AuthenticatedMediaFormsRouteRouteChildren: AuthenticatedMediaFormsRouteRouteChildren =
+  {
+    AuthenticatedMediaFormsAddRoute: AuthenticatedMediaFormsAddRoute,
+    AuthenticatedMediaFormsUpdateIdRoute: AuthenticatedMediaFormsUpdateIdRoute,
+  }
+
+const AuthenticatedMediaFormsRouteRouteWithChildren =
+  AuthenticatedMediaFormsRouteRoute._addFileChildren(
+    AuthenticatedMediaFormsRouteRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedMediaAddRoute: typeof AuthenticatedMediaAddRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedMediaFormsRouteRoute: typeof AuthenticatedMediaFormsRouteRouteWithChildren
+  AuthenticatedCollectionAddRoute: typeof AuthenticatedCollectionAddRoute
+  AuthenticatedCollectionIndexRoute: typeof AuthenticatedCollectionIndexRoute
   AuthenticatedMediaIndexRoute: typeof AuthenticatedMediaIndexRoute
-  AuthenticatedMediaUpdateIdRoute: typeof AuthenticatedMediaUpdateIdRoute
+  AuthenticatedCollectionEditIdRoute: typeof AuthenticatedCollectionEditIdRoute
+  AuthenticatedCollectionViewIdRoute: typeof AuthenticatedCollectionViewIdRoute
   AuthenticatedMediaViewIdRoute: typeof AuthenticatedMediaViewIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedMediaAddRoute: AuthenticatedMediaAddRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedMediaFormsRouteRoute:
+    AuthenticatedMediaFormsRouteRouteWithChildren,
+  AuthenticatedCollectionAddRoute: AuthenticatedCollectionAddRoute,
+  AuthenticatedCollectionIndexRoute: AuthenticatedCollectionIndexRoute,
   AuthenticatedMediaIndexRoute: AuthenticatedMediaIndexRoute,
-  AuthenticatedMediaUpdateIdRoute: AuthenticatedMediaUpdateIdRoute,
+  AuthenticatedCollectionEditIdRoute: AuthenticatedCollectionEditIdRoute,
+  AuthenticatedCollectionViewIdRoute: AuthenticatedCollectionViewIdRoute,
   AuthenticatedMediaViewIdRoute: AuthenticatedMediaViewIdRoute,
 }
 

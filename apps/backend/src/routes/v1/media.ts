@@ -1,11 +1,13 @@
 import { fromNodeHeaders } from "better-auth/node";
 import { FastifyInstance } from "fastify";
 import { auth } from "../../auth";
-import { media, userMedia } from "@media-voyage/shared";
-import { eq, ilike, and, desc, count } from "drizzle-orm";
+import { media, mediaCollection, userMedia } from "@media-voyage/shared";
+import { eq, ilike, and, desc, count, sql, isNotNull } from "drizzle-orm";
 import { userMediaFormSchema, UserMediaQuerySchema } from "@media-voyage/shared/api";
 import { userMediaQuerySchema } from "@media-voyage/shared/api";
 import { db } from "../../db/db";
+import Papa from "papaparse";
+import { Status } from "@media-voyage/shared/userMediaSchema";
 
 async function mediaRoutes(fastify: FastifyInstance) {
   fastify.addHook("preHandler", async (request, reply) => {
@@ -23,39 +25,6 @@ async function mediaRoutes(fastify: FastifyInstance) {
       console.error("Authentication error in preHandler:", error);
       return reply.status(500).send({ error: "Internal authentication error" });
     }
-  });
-
-  fastify.get("/media", async (request, reply) => {
-    const query = request.query as {
-      q?: string;
-      type?: "movie" | "show" | "game" | "book";
-    };
-
-    const { q, type } = query;
-
-    if (!q || q.trim().length < 3) {
-      return [];
-    }
-
-    const conditions = [];
-
-    if (type) {
-      conditions.push(eq(media.type, type));
-    }
-
-    conditions.push(ilike(media.title, `%${q.trim()}%`));
-
-    const results = await db
-      .select({
-        id: media.id,
-        title: media.title,
-        type: media.type,
-      })
-      .from(media)
-      .where(and(...conditions))
-      .limit(10);
-
-    return results;
   });
 
   fastify.post("/user-media", async (request, reply) => {
@@ -257,6 +226,7 @@ async function mediaRoutes(fastify: FastifyInstance) {
         source: userMedia.source,
 
         createdAt: userMedia.createdAt,
+        updatedAt: userMedia.updatedAt,
       })
       .from(userMedia)
       .innerJoin(media, eq(userMedia.mediaId, media.id))
@@ -293,11 +263,44 @@ async function mediaRoutes(fastify: FastifyInstance) {
         source: userMedia.source,
 
         createdAt: userMedia.createdAt,
+        updatedAt: userMedia.updatedAt,
       })
       .from(userMedia)
       .innerJoin(media, eq(userMedia.mediaId, media.id))
       .where(eq(userMedia.userId, userId))
       .orderBy(desc(userMedia.createdAt));
+
+    return reply.send({
+      success: true,
+      count: results.length,
+      data: results,
+    });
+  });
+
+  fastify.get("/user-media/favorites", async (request, reply) => {
+    const userId = request.userId;
+
+    const results = await db
+      .select({
+        id: userMedia.id,
+        mediaId: userMedia.mediaId,
+        title: media.title,
+        type: media.type,
+        status: userMedia.status,
+        rating: userMedia.rating,
+        favorite: userMedia.favorite,
+        review: userMedia.review,
+        notes: userMedia.notes,
+        progress: userMedia.progress,
+        timeSpent: userMedia.timeSpent,
+
+        createdAt: userMedia.createdAt,
+        updatedAt: userMedia.updatedAt,
+      })
+      .from(userMedia)
+      .innerJoin(media, eq(userMedia.mediaId, media.id))
+      .where(and(eq(userMedia.userId, userId), eq(userMedia.favorite, true)))
+      .orderBy(desc(userMedia.rating));
 
     return reply.send({
       success: true,
@@ -319,6 +322,215 @@ async function mediaRoutes(fastify: FastifyInstance) {
       .groupBy(userMedia.status);
 
     return reply.send(counts);
+  });
+
+  fastify.get("/user-media/dropdowns", async (request, reply) => {
+    const userId = request.userId;
+
+    // fetch all source values the user has entered for autocomplete
+    const rows = await db
+      .selectDistinct({ source: userMedia.source })
+      .from(userMedia)
+      .where(eq(userMedia.userId, userId));
+
+    return reply.send({ sources: rows.map((row) => row.source).filter((source) => source !== null) });
+  });
+
+  fastify.get("/user-media/dashboard/stats", async (request, reply) => {
+    const userId = request.userId;
+
+    function statusSelect(status: Status) {
+      return db
+        .select({ count: count() })
+        .from(userMedia)
+        .where(and(eq(userMedia.userId, userId), eq(userMedia.status, status), eq(userMedia.isDeleted, false)));
+    }
+
+    const [
+      totalMedia,
+      completed,
+      inProgress,
+      planned,
+      dropped,
+      onHold,
+      collections,
+      statusDistribution,
+      mediaTypeDistribution,
+      ratingDistribution,
+      completionTrend,
+    ] = await Promise.all([
+      //-----------------------------------
+      // Summary
+      //-----------------------------------
+
+      db
+        .select({ count: count() })
+        .from(userMedia)
+        .where(and(eq(userMedia.userId, userId), eq(userMedia.isDeleted, false))),
+
+      statusSelect("completed"),
+      statusSelect("in_progress"),
+      statusSelect("planned"),
+      statusSelect("dropped"),
+      statusSelect("on_hold"),
+
+      db.select({ count: count() }).from(mediaCollection).where(eq(mediaCollection.userId, userId)),
+
+      //-----------------------------------
+      // Status chart
+      //-----------------------------------
+
+      db
+        .select({
+          status: userMedia.status,
+          count: count(),
+        })
+        .from(userMedia)
+        .where(and(eq(userMedia.userId, userId), eq(userMedia.isDeleted, false)))
+        .groupBy(userMedia.status),
+
+      //-----------------------------------
+      // Media type chart
+      //-----------------------------------
+
+      db
+        .select({
+          type: media.type,
+          count: count(),
+        })
+        .from(userMedia)
+        .innerJoin(media, eq(media.id, userMedia.mediaId))
+        .where(and(eq(userMedia.userId, userId), eq(userMedia.isDeleted, false)))
+        .groupBy(media.type),
+
+      //-----------------------------------
+      // Rating distribution
+      //-----------------------------------
+
+      db
+        .select({
+          rating: userMedia.rating,
+          count: count(),
+        })
+        .from(userMedia)
+        .where(and(eq(userMedia.userId, userId), eq(userMedia.isDeleted, false), isNotNull(userMedia.rating)))
+        .groupBy(userMedia.rating)
+        .orderBy(userMedia.rating),
+
+      //-----------------------------------
+      // Completed per month
+      //-----------------------------------
+
+      db
+        .select({
+          month: sql<string>`
+              to_char(date_trunc('month', ${userMedia.completedAt}), 'YYYY-MM')
+            `,
+          count: count(),
+        })
+        .from(userMedia)
+        .where(
+          and(
+            eq(userMedia.userId, userId),
+            eq(userMedia.status, "completed"),
+            isNotNull(userMedia.completedAt),
+            eq(userMedia.isDeleted, false),
+          ),
+        )
+        .groupBy(sql`date_trunc('month', ${userMedia.completedAt})`)
+        .orderBy(sql`date_trunc('month', ${userMedia.completedAt})`),
+    ]);
+
+    return {
+      summary: {
+        total_media: totalMedia[0]?.count ?? 0,
+        completed: completed[0]?.count ?? 0,
+        in_progress: inProgress[0]?.count ?? 0,
+        on_hold: onHold[0]?.count ?? 0,
+        planned: planned[0]?.count ?? 0,
+        dropped: dropped[0]?.count ?? 0,
+        collections: collections[0]?.count ?? 0,
+      },
+
+      statusDistribution,
+
+      mediaTypeDistribution,
+
+      ratingDistribution,
+
+      completionTrend,
+    };
+  });
+
+  fastify.get("/user-media/export", async (request, reply) => {
+    const userId = request.userId;
+
+    try {
+      // Fetch all user media with joined catalog data
+      const records = await db
+        .select({
+          id: userMedia.id,
+          userId: userMedia.userId,
+          mediaId: userMedia.mediaId,
+          title: media.title,
+          type: media.type,
+          description: media.description,
+          status: userMedia.status,
+          rating: userMedia.rating,
+          review: userMedia.review,
+          notes: userMedia.notes,
+          progress: userMedia.progress,
+          favorite: userMedia.favorite,
+          rewatches: userMedia.rewatches,
+          timeSpent: userMedia.timeSpent,
+
+          startedAt: userMedia.startedAt,
+          completedAt: userMedia.completedAt,
+
+          createdAt: userMedia.createdAt,
+          updatedAt: userMedia.updatedAt,
+        })
+        .from(userMedia)
+        .innerJoin(media, eq(userMedia.mediaId, media.id))
+        .where(eq(userMedia.userId, userId));
+
+      // Convert to plain objects for CSV
+      const csvData = records.map((r) => ({
+        id: r.id,
+        title: r.title ?? "",
+        type: r.type ?? "",
+        description: r.description ?? "",
+        status: r.status ?? "pending",
+        rating: r.rating ?? "-",
+        review: r.review ?? "-",
+        notes: r.notes ?? "-",
+        progress: `${r.progress ?? 0}%`,
+        favorite: r.favorite ? "true" : "false",
+        rewatches: r.rewatches ?? "-",
+        timeSpent: r.timeSpent ? `${r.timeSpent} hours` : "-",
+
+        startedAt: r.startedAt ? r.startedAt.toISOString().slice(0, 16) : "-",
+        completedAt: r.completedAt ? r.completedAt.toISOString().slice(0, 16) : "-",
+
+        createdAt: r.createdAt ? r.createdAt.toISOString().slice(0, 16) : "-",
+        updatedAt: r.updatedAt ? r.updatedAt.toISOString().slice(0, 16) : "-",
+      }));
+
+      // Generate CSV using PapaParse
+      const csv = Papa.unparse(csvData, { header: true });
+
+      reply.header("Content-Type", "text/csv");
+      reply.header("Content-Disposition", `attachment; filename="user-media-${userId}-${Date.now()}.csv"`);
+
+      return reply.send(csv);
+    } catch (error) {
+      console.error("Export CSV error:", error);
+      return reply.status(500).send({
+        success: false,
+        error: "Failed to export data",
+        details: error instanceof Error ? error.message : String(error),
+      });
+    }
   });
 
   fastify.get("/seed", async (request, reply) => {

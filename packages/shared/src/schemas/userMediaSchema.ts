@@ -14,3 +14,4 @@ export const statusEnumValues = statusEnum.enumValues;
 export const visibilityEnumValues = visibilityEnum.enumValues;
 
 export type Status = (typeof statusEnumValues)[number];
+export type MediaType = (typeof mediaTypeEnumValues)[number];

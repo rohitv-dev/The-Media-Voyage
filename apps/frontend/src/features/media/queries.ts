@@ -1,10 +1,12 @@
 import { api } from "#/lib/api";
 import { queryOptions } from "@tanstack/react-query";
 import type {
+  DashboardStatsResponse,
   UserMediaCounts,
   GetUserMediaResponse,
   MediaDetailedRecord,
   UserMediaQuerySchema,
+  UserMediaDropdowns,
 } from "@media-voyage/shared/api";
 
 async function getUserMedia() {
@@ -32,6 +34,14 @@ async function getUserMediaCounts() {
   return api<UserMediaCounts>("/user-media/counts");
 }
 
+async function getUserMediaDropdowns() {
+  return api<UserMediaDropdowns>("/user-media/dropdowns");
+}
+
+export function getDashboardStats() {
+  return api<DashboardStatsResponse>("/user-media/dashboard/stats");
+}
+
 export function userMediaDetailedOptions(id: string) {
   return queryOptions({
     queryKey: ["user-media", { id }],
@@ -54,4 +64,14 @@ export function userMediaFilterQueryOptions(filters: UserMediaQuerySchema) {
 export const userMediaCountOptions = queryOptions({
   queryKey: ["user-media", "count"],
   queryFn: getUserMediaCounts,
+});
+
+export const userMediaDropdownOptions = queryOptions({
+  queryKey: ["user-media", "dropdowns"],
+  queryFn: getUserMediaDropdowns,
+});
+
+export const dashboardStatOptions = queryOptions({
+  queryKey: ["dashboard-stats"],
+  queryFn: getDashboardStats,
 });

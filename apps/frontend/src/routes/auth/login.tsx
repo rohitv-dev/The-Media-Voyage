@@ -86,7 +86,13 @@ function RouteComponent() {
 
         <Text ta="center" mt="md">
           Don't have an account?{" "}
-          <Anchor href="#" onClick={(e) => e.preventDefault()}>
+          <Anchor
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate({ to: "/auth/register" });
+            }}
+          >
             Sign up
           </Anchor>
         </Text>

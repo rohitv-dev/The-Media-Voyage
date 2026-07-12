@@ -4,6 +4,7 @@ import { routeTree } from "./routeTree.gen";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
+import type { MediaRecord } from "@media-voyage/shared/api";
 
 import "@mantine/core/styles.css";
 import "@mantine/charts/styles.css";
@@ -12,7 +13,17 @@ import "@mantine/notifications/styles.css";
 import "@mantine/tiptap/styles.css";
 import "mantine-datatable/styles.css";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: Infinity,
+      gcTime: 1000 * 60 * 60,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+    },
+  },
+});
 
 const router = createRouter({
   routeTree,
@@ -27,6 +38,10 @@ declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
   }
+
+  interface HistoryState {
+    mediaPreview?: MediaRecord;
+  }
 }
 
 const rootElement = document.getElementById("app")!;
@@ -38,7 +53,7 @@ if (!rootElement.innerHTML) {
       <MantineProvider
         defaultColorScheme="light"
         theme={{
-          primaryColor: "blue",
+          primaryColor: "indigo",
 
           radius: {
             xs: "6px",
@@ -64,6 +79,14 @@ if (!rootElement.innerHTML) {
             sm: "0 2px 8px rgba(16,24,40,.05)",
             md: "0 4px 12px rgba(16,24,40,.06)",
             lg: "0 8px 24px rgba(16,24,40,.08)",
+          },
+
+          components: {
+            Badge: {
+              defaultProps: {
+                variant: "",
+              },
+            },
           },
         }}
       >

@@ -23,6 +23,39 @@ const formatDate = (value?: Date | undefined | null) =>
 const formatValue = (value?: string | number | null) =>
   value === undefined || value === null || value === "" ? "-" : value;
 
+const renderListItems = ({
+  items,
+  orientation,
+}: {
+  items: Array<{ label: string; value: React.ReactNode }>;
+  orientation?: "horizontal" | "vertical";
+}) => (
+  <DataList
+    orientation={orientation}
+    style={{
+      justifyContent: orientation === "horizontal" ? "space-between" : "",
+    }}
+  >
+    {items.map((item) => (
+      <DataList.Item
+        key={item.label}
+        style={{
+          justifyContent:
+            item.value != null &&
+            item.value.toString().length > 50 &&
+            !orientation
+              ? "flex-start"
+              : "space-between",
+          flexWrap: "wrap",
+        }}
+      >
+        <DataList.ItemLabel>{item.label}</DataList.ItemLabel>
+        <DataList.ItemValue fw="500">{item.value}</DataList.ItemValue>
+      </DataList.Item>
+    ))}
+  </DataList>
+);
+
 function StatCard({
   label,
   value,
@@ -73,7 +106,6 @@ export function MediaView({ data }: { data: MediaDetailedRecord }) {
   return (
     <Container size="lg" py="lg">
       <Stack gap="xs">
-        {/* Hero */}
         <Card withBorder p="lg" shadow="sm">
           <Group justify="space-between" align="flex-start">
             <Stack gap="sm" maw={900}>
@@ -170,21 +202,10 @@ export function MediaView({ data }: { data: MediaDetailedRecord }) {
 
                 <Divider />
 
-                <DataList orientation="horizontal">
-                  {mediaDetails.map((detail) => (
-                    <DataList.Item
-                      key={detail.label}
-                      style={{
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <DataList.ItemLabel>{detail.label}</DataList.ItemLabel>
-                      <DataList.ItemValue fw="500">
-                        {detail.value}
-                      </DataList.ItemValue>
-                    </DataList.Item>
-                  ))}
-                </DataList>
+                {renderListItems({
+                  items: mediaDetails,
+                  orientation: "horizontal",
+                })}
               </Stack>
             </Card>
           </Grid.Col>
@@ -204,21 +225,10 @@ export function MediaView({ data }: { data: MediaDetailedRecord }) {
 
                 <Divider />
 
-                <DataList>
-                  {trackingDetails.map((detail) => (
-                    <DataList.Item
-                      key={detail.label}
-                      style={{
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <DataList.ItemLabel>{detail.label}</DataList.ItemLabel>
-                      <DataList.ItemValue fw="500">
-                        {detail.value}
-                      </DataList.ItemValue>
-                    </DataList.Item>
-                  ))}
-                </DataList>
+                {renderListItems({
+                  items: trackingDetails,
+                  orientation: "horizontal",
+                })}
               </Stack>
             </Card>
           </Grid.Col>

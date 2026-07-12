@@ -16,6 +16,7 @@ import {
   Textarea,
   Button,
   Text,
+  Autocomplete,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useForm } from "@mantine/form";
@@ -23,6 +24,7 @@ import { showNotification } from "@mantine/notifications";
 import type {
   UserMediaFormSchema,
   MediaDetailedRecord,
+  UserMediaDropdowns,
 } from "@media-voyage/shared/api";
 import {
   mediaTypeEnumValues,
@@ -39,16 +41,22 @@ import {
 } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { userMediaDetailedOptions, userMediaQueryOptions } from "../queries";
+import {
+  userMediaDetailedOptions,
+  userMediaDropdownOptions,
+  userMediaQueryOptions,
+} from "../queries";
 
 type MediaFormProps =
   | {
       mode: "add";
+      dropdowns: UserMediaDropdowns;
     }
   | {
       id: string;
       mode: "update";
       initialValues: UserMediaFormSchema;
+      dropdowns: UserMediaDropdowns;
     };
 
 const addInitialValues: UserMediaFormSchema = {
@@ -114,7 +122,10 @@ export function MediaForm(props: MediaFormProps) {
         message: `${data.title} has been added to your list`,
         color: "teal",
       });
-      await queryClient.invalidateQueries(userMediaQueryOptions);
+      await Promise.all([
+        queryClient.invalidateQueries(userMediaQueryOptions),
+        queryClient.invalidateQueries(userMediaDropdownOptions),
+      ]);
       navigate({
         to: "/media",
       });
@@ -147,6 +158,7 @@ export function MediaForm(props: MediaFormProps) {
       await Promise.all([
         queryClient.invalidateQueries(userMediaQueryOptions),
         queryClient.invalidateQueries(userMediaDetailedOptions(data.id)),
+        queryClient.invalidateQueries(userMediaDropdownOptions),
       ]);
 
       if (!isAddMode)
@@ -335,12 +347,7 @@ export function MediaForm(props: MediaFormProps) {
                       step={5}
                       {...form.getInputProps("progress")}
                     />
-                    {/* <Slider
-                      min={0}
-                      max={100}
-                      step={5}
-                      {...form.getInputProps("userMedia.progress")}
-                    /> */}
+
                     <Progress
                       value={form.values.progress ?? 0}
                       size="lg"
@@ -387,21 +394,12 @@ export function MediaForm(props: MediaFormProps) {
 
                   <Group grow gap="md">
                     <NumberInput
-                      // value={
-                      //   form.values.timeSpent
-                      //     ? Number(form.values.timeSpent)
-                      //     : undefined
-                      // }
                       label="Time Spent"
                       placeholder="120"
                       variant="filled"
                       min={0}
                       suffix=" min"
                       description="Approximate time spent"
-                      // onChange={(val) => {
-                      //   if (val === "") return;
-                      //   form.setFieldValue("timeSpent", Number(val));
-                      // }}
                       {...form.getInputProps("timeSpent")}
                     />
 
@@ -415,11 +413,12 @@ export function MediaForm(props: MediaFormProps) {
                     />
                   </Group>
 
-                  <TextInput
+                  <Autocomplete
                     label="Source"
                     placeholder="Netflix, Steam, Kindle..."
                     variant="filled"
                     description="Where you consumed it"
+                    data={props.dropdowns.sources}
                     {...form.getInputProps("source")}
                   />
 
@@ -428,8 +427,6 @@ export function MediaForm(props: MediaFormProps) {
                     placeholder="Fantasy, Action, Favorite..."
                     variant="filled"
                     searchable
-                    // creatable
-                    // getCreateLabel={(query) => `+ Create tag "${query}"`}
                     data={[]}
                     description="Organize your collection with tags"
                     {...form.getInputProps("tags")}
@@ -458,8 +455,6 @@ export function MediaForm(props: MediaFormProps) {
                     placeholder="Share your thoughts about this media..."
                     variant="filled"
                     rows={6}
-                    // minRows={6}
-                    // autosize
                     description="Your thoughts and opinions"
                     {...form.getInputProps("review")}
                   />
@@ -469,8 +464,6 @@ export function MediaForm(props: MediaFormProps) {
                     placeholder="Private notes, memorable moments, recommendations..."
                     variant="filled"
                     rows={4}
-                    // minRows={4}
-                    // autosize
                     description="Private notes visible only to you"
                     {...form.getInputProps("notes")}
                   />
@@ -481,11 +474,7 @@ export function MediaForm(props: MediaFormProps) {
             <Grid.Col span={{ xs: 12 }}>
               <Group justify="flex-end" gap="md">
                 <Button variant="light">Cancel</Button>
-                <Button
-                  type="submit"
-                  leftSection={<IconCheck size={18} />}
-                  color="blue"
-                >
+                <Button type="submit" leftSection={<IconCheck size={18} />}>
                   {isAddMode ? "Save Media" : "Update Media"}
                 </Button>
               </Group>

@@ -136,3 +136,5 @@ dist
 .pnp.*
 
 apps/backend/api_files
+.agents
+skills-lock.json

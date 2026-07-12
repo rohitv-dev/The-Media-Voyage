@@ -1,5 +1,5 @@
 import z from "zod";
-import { Status, userMediaInsertSchema, userMediaSelectSchema } from "../schemas/userMediaSchema";
+import { MediaType, Status, userMediaInsertSchema, userMediaSelectSchema } from "../schemas/userMediaSchema";
 import { mediaInsertSchema, mediaSelectSchema } from "../schemas/mediaSchema";
 import { mediaTypeEnum, statusEnum } from "../";
 
@@ -15,6 +15,7 @@ export const mediaRecordSchema = z.object({
   source: userMediaSelectSchema.shape.source,
 
   createdAt: userMediaSelectSchema.shape.createdAt,
+  updatedAt: userMediaSelectSchema.shape.updatedAt,
 });
 
 export type MediaRecord = z.infer<typeof mediaRecordSchema>;
@@ -73,24 +74,6 @@ export const userMediaFieldsSchema = userMediaInsertSchema.omit({
   isDeleted: true,
 });
 
-export const addUserMediaRequestSchema = z
-  .object({
-    mediaId: z.string().optional(),
-
-    media: mediaInsertSchema
-      .pick({
-        title: true,
-        type: true,
-        description: true,
-      })
-      .optional(),
-
-    userMedia: userMediaFieldsSchema,
-  })
-  .refine((data) => data.mediaId || data.media, {
-    message: "Either mediaId or media must be provided",
-  });
-
 export const userMediaFormSchema = userMediaInsertSchema
   .pick({
     status: true,
@@ -122,7 +105,6 @@ export const userMediaFormSchema = userMediaInsertSchema
     }).shape,
   );
 
-export type AddUserMediaRequest = z.infer<typeof addUserMediaRequestSchema>;
 export type UserMediaFormSchema = z.infer<typeof userMediaFormSchema>;
 
 export const userMediaQuerySchema = z.object({
@@ -144,3 +126,38 @@ export type UserMediaCounts = {
   status: Status;
   count: number;
 }[];
+
+export type UserMediaDropdowns = {
+  sources: string[];
+};
+
+export type DashboardStatsResponse = {
+  summary: {
+    total_media: number;
+    completed: number;
+    planned: number;
+    in_progress: number;
+    on_hold: number;
+    collections: number;
+  };
+
+  statusDistribution: {
+    status: Status;
+    count: number;
+  }[];
+
+  mediaTypeDistribution: {
+    type: MediaType;
+    count: number;
+  }[];
+
+  ratingDistribution: {
+    rating: number;
+    count: number;
+  }[];
+
+  completionTrend: {
+    month: string; // YYYY-MM
+    count: number;
+  }[];
+};
