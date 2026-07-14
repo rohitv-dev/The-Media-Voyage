@@ -28,7 +28,6 @@
     "@mantine/tiptap": "^9.4.1",
     "@media-voyage/shared": "workspace:*",
     "@tabler/icons-react": "^3.44.0",
-    "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-devtools": "latest",
     "@tanstack/react-query": "^5.101.0",
     "@tanstack/react-query-devtools": "^5.101.0",
@@ -48,11 +47,9 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "recharts": "^3.8.1",
-    "tailwindcss": "^4.1.18",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@tailwindcss/typography": "^0.5.16",
     "@tanstack/devtools-vite": "latest",
     "@tanstack/eslint-config": "latest",
     "@tanstack/eslint-plugin-query": "^5.101.0",
@@ -70,6 +67,7 @@
     "postcss-preset-mantine": "^1.18.0",
     "postcss-simple-vars": "^7.0.1",
     "prettier": "^3.8.1",
+    "sass-embedded": "^1.100.0",
     "typescript": "^6.0.2",
     "vite": "^8.0.0",
     "vitest": "^4.1.5"

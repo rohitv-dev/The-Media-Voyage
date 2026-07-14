@@ -18,12 +18,16 @@ async function getUserMediaDetailedRecord(id: string) {
 }
 
 async function getUserMediaFilterRecords(filters: UserMediaQuerySchema) {
-  const params = new URLSearchParams(
-    Object.entries(filters)
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      .filter(([, value]) => value != null)
-      .map(([key, value]) => [key, String(value)]),
-  );
+  const params = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(filters)) {
+    if (!value) continue;
+
+    params.set(
+      key,
+      Array.isArray(value) ? JSON.stringify(value) : String(value),
+    );
+  }
 
   return api<GetUserMediaResponse>(
     `/user-media/filter${params.toString() ? `?${params.toString()}` : ""}`,

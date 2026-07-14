@@ -3,8 +3,6 @@ import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { FullScreenLoader } from "#/components/FullScreenLoader";
 
-import "../styles.css";
-
 interface RouteContext {
   queryClient: QueryClient;
 }

@@ -107,12 +107,18 @@ export const userMediaFormSchema = userMediaInsertSchema
 
 export type UserMediaFormSchema = z.infer<typeof userMediaFormSchema>;
 
+const arrayFromJson = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((value) => {
+    if (typeof value === "string") {
+      return JSON.parse(value);
+    }
+    return value;
+  }, z.array(schema));
+
 export const userMediaQuerySchema = z.object({
-  status: z.enum(statusEnum.enumValues).optional(),
-  type: z.enum(mediaTypeEnum.enumValues).optional(),
-
+  status: arrayFromJson(z.enum(statusEnum.enumValues)).optional(),
+  type: arrayFromJson(z.enum(mediaTypeEnum.enumValues)).optional(),
   favorite: z.coerce.boolean().optional(),
-
   search: z.string().optional(),
 
   // sort: z.enum(["createdAt", "updatedAt", "rating", "title"]).default("updatedAt"),

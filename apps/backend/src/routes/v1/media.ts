@@ -2,7 +2,7 @@ import { fromNodeHeaders } from "better-auth/node";
 import { FastifyInstance } from "fastify";
 import { auth } from "../../auth";
 import { media, mediaCollection, userMedia } from "@media-voyage/shared";
-import { eq, ilike, and, desc, count, sql, isNotNull } from "drizzle-orm";
+import { eq, ilike, and, desc, count, sql, isNotNull, inArray } from "drizzle-orm";
 import { userMediaFormSchema, UserMediaQuerySchema } from "@media-voyage/shared/api";
 import { userMediaQuerySchema } from "@media-voyage/shared/api";
 import { db } from "../../db/db";
@@ -197,16 +197,16 @@ async function mediaRoutes(fastify: FastifyInstance) {
 
     const conditions = [eq(userMedia.userId, userId)];
 
-    if (parsed.status) {
-      conditions.push(eq(userMedia.status, parsed.status));
+    if (parsed.status && parsed.status.length > 0) {
+      conditions.push(inArray(userMedia.status, parsed.status));
     }
 
     if (parsed.favorite !== undefined) {
       conditions.push(eq(userMedia.favorite, parsed.favorite));
     }
 
-    if (parsed.type) {
-      conditions.push(eq(media.type, parsed.type));
+    if (parsed.type && parsed.type.length > 0) {
+      conditions.push(inArray(media.type, parsed.type));
     }
 
     if (parsed.search) {

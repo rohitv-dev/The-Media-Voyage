@@ -1,0 +1,16 @@
+@use "./mantine" as mantine;
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: light-dark(#f8f9fa, #18181b);
+}
