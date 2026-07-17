@@ -15,22 +15,27 @@ export const statusEnum = pgEnum("media_status", [
 export const visibilityEnum = pgEnum("visibility", ["private", "friends", "public"]);
 
 // Main Media (Canonical)
-export const media = pgTable("media", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  title: text("title").notNull(),
-  type: mediaTypeEnum("type").notNull(),
+export const media = pgTable(
+  "media",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    type: mediaTypeEnum("type").notNull(),
 
-  originalTitle: text("original_title"),
-  description: text("description"),
-  imageUrl: text("image_url"),
-  releaseDate: timestamp("release_date"),
-  externalId: text("external_id"), // Future TMDB/IGDB/etc.
+    originalTitle: text("original_title"),
+    description: text("description"),
+    imageUrl: text("image_url"),
+    releaseDate: text("release_date"),
+    source: text("source"),
+    externalId: text("external_id"),
 
-  metadata: jsonb("metadata").default({}), // genres, director, author, etc.
+    metadata: jsonb("metadata").default({}), // genres, director, author, etc.
 
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [unique("media_source_external_id_unique").on(table.source, table.externalId)],
+);
 
 // User-specific tracking (the heart)
 export const userMedia = pgTable(
@@ -55,17 +60,17 @@ export const userMedia = pgTable(
 
     favorite: boolean("favorite").default(false),
 
-    rewatches: integer("rewatches").default(0), // How many times you've re-watched/re-read/re-played
+    rewatches: integer("rewatches").default(0),
 
     lastProgressUpdate: timestamp("last_progress_update").defaultNow(),
 
-    timeSpent: integer("time_spent"), // Minutes spent (great for games/books/shows)
+    timeSpent: integer("time_spent"),
 
     source: text("source"), // "Netflix", "Theater", "Kindle", "Steam", etc.
 
     tags: text("tags").array().default([]), // e.g. ["mind-bending", "comfort-watch", "cry-fest"]
 
-    visibility: visibilityEnum("visibility").default("private"), // 'private' | 'friends' | 'public' (future-proof)
+    visibility: visibilityEnum("visibility").default("private"), // 'private' | 'friends' | 'public'
 
     // Flexible future-proofing
     customFields: jsonb("custom_fields").default({}),

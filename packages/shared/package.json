@@ -20,6 +20,7 @@
     ".": "./src/index.ts",
     "./schema": "./src/db/schema.ts",
     "./api": "./src/api/index.ts",
+    "./utilities": "./src/utilities/index.ts",
     "./userMediaSchema": "./src/schemas/userMediaSchema.ts"
   },
   "dependencies": {

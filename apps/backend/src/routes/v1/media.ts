@@ -1,13 +1,13 @@
 import { fromNodeHeaders } from "better-auth/node";
 import { FastifyInstance } from "fastify";
 import { auth } from "../../auth";
-import { media, mediaCollection, userMedia } from "@media-voyage/shared";
-import { eq, ilike, and, desc, count, sql, isNotNull, inArray } from "drizzle-orm";
-import { userMediaFormSchema, UserMediaQuerySchema } from "@media-voyage/shared/api";
-import { userMediaQuerySchema } from "@media-voyage/shared/api";
+import { searchOmdb } from "../../services/omdb";
+import { media } from "@media-voyage/shared";
+import type { SourceMediaRecord } from "@media-voyage/shared/api";
 import { db } from "../../db/db";
-import Papa from "papaparse";
-import { Status } from "@media-voyage/shared/userMediaSchema";
+import { ilike, and, eq } from "drizzle-orm";
+import { MediaType } from "@media-voyage/shared/userMediaSchema";
+import { searchGames } from "../../services/igdb";
 
 async function mediaRoutes(fastify: FastifyInstance) {
   fastify.addHook("preHandler", async (request, reply) => {
@@ -27,609 +27,70 @@ async function mediaRoutes(fastify: FastifyInstance) {
     }
   });
 
-  fastify.post("/user-media", async (request, reply) => {
-    const userId = request.userId;
-
-    request.log.info(request.body);
-
-    const parsed = userMediaFormSchema.parse(request.body);
-
-    const { title, type, ...rest } = parsed;
-
-    let mediaId = parsed.mediaId;
-
-    if (!mediaId) {
-      const createdMedia = await db
-        .insert(media)
-        .values({
-          title: parsed.title!,
-          type: parsed.type!,
-        })
-        .returning({ id: media.id });
-
-      mediaId = createdMedia[0].id;
-    }
-
-    const created = await db
-      .insert(userMedia)
-      .values({
-        userId,
-        mediaId,
-        ...rest,
-      })
-      .returning({ id: userMedia.id });
-
-    const [record] = await db
-      .select({
-        id: userMedia.id,
-        mediaId: userMedia.mediaId,
-
-        title: media.title,
-        type: media.type,
-        description: media.description,
-
-        status: userMedia.status,
-        rating: userMedia.rating,
-        review: userMedia.review,
-        notes: userMedia.notes,
-        progress: userMedia.progress,
-        favorite: userMedia.favorite,
-        rewatches: userMedia.rewatches,
-        timeSpent: userMedia.timeSpent,
-        source: userMedia.source,
-        tags: userMedia.tags,
-        visibility: userMedia.visibility,
-        customFields: userMedia.customFields,
-        seasonsProgress: userMedia.seasonsProgress,
-
-        createdAt: userMedia.createdAt,
-        updatedAt: userMedia.updatedAt,
-      })
-      .from(userMedia)
-      .innerJoin(media, eq(userMedia.mediaId, media.id))
-      .where(eq(userMedia.id, created[0].id))
-      .limit(1);
-
-    return reply.status(201).send(record);
-  });
-
-  fastify.get("/user-media/:id", async (request, reply) => {
-    const userId = request.userId;
-    const { id } = request.params as { id: string };
-
-    const userMediaRecord = await db
-      .select({
-        id: userMedia.id,
-        mediaId: userMedia.mediaId,
-
-        title: media.title,
-        type: media.type,
-        description: media.description,
-
-        status: userMedia.status,
-        rating: userMedia.rating,
-        review: userMedia.review,
-        notes: userMedia.notes,
-        progress: userMedia.progress,
-        favorite: userMedia.favorite,
-        rewatches: userMedia.rewatches,
-        timeSpent: userMedia.timeSpent,
-        source: userMedia.source,
-        tags: userMedia.tags,
-        visibility: userMedia.visibility,
-        customFields: userMedia.customFields,
-        seasonsProgress: userMedia.seasonsProgress,
-
-        startedAt: userMedia.startedAt,
-        completedAt: userMedia.completedAt,
-        createdAt: userMedia.createdAt,
-        updatedAt: userMedia.updatedAt,
-      })
-      .from(userMedia)
-      .where(and(eq(userMedia.id, id), eq(userMedia.userId, userId)))
-      .innerJoin(media, eq(userMedia.mediaId, media.id))
-      .limit(1);
-
-    if (!userMediaRecord.length) {
-      return reply.status(404).send({ error: "User media not found" });
-    }
-
-    return reply.send(userMediaRecord[0]);
-  });
-
-  fastify.patch("/user-media/:id", async (request, reply) => {
-    const userId = request.userId;
-    const { id } = request.params as { id: string };
-    console.log(request.body);
-    const updateData = userMediaFormSchema.parse(request.body);
-
-    const { title, type, mediaId, ...rest } = updateData;
-
-    const updated = await db
-      .update(userMedia)
-      .set(rest)
-      .where(and(eq(userMedia.id, id), eq(userMedia.userId, userId)))
-      .returning();
-
-    if (!updated.length) {
-      return reply.status(404).send({ error: "User media not found or not updated" });
-    }
-
-    const userMediaRecord = await db
-      .select({
-        id: userMedia.id,
-        mediaId: userMedia.mediaId,
-
-        title: media.title,
-        type: media.type,
-        description: media.description,
-
-        status: userMedia.status,
-        rating: userMedia.rating,
-        review: userMedia.review,
-        notes: userMedia.notes,
-        progress: userMedia.progress,
-        favorite: userMedia.favorite,
-        rewatches: userMedia.rewatches,
-        timeSpent: userMedia.timeSpent,
-        source: userMedia.source,
-        tags: userMedia.tags,
-        visibility: userMedia.visibility,
-        customFields: userMedia.customFields,
-        seasonsProgress: userMedia.seasonsProgress,
-
-        startedAt: userMedia.startedAt,
-        completedAt: userMedia.completedAt,
-        createdAt: userMedia.createdAt,
-        updatedAt: userMedia.updatedAt,
-      })
-      .from(userMedia)
-      .where(and(eq(userMedia.id, id), eq(userMedia.userId, userId)))
-      .innerJoin(media, eq(userMedia.mediaId, media.id))
-      .limit(1);
-
-    return reply.send(userMediaRecord);
-  });
-
-  fastify.get<{ Querystring: UserMediaQuerySchema }>("/user-media/filter", async (request, reply) => {
-    const userId = request.userId;
-    const parsed = userMediaQuerySchema.parse(request.query);
-
-    const conditions = [eq(userMedia.userId, userId)];
-
-    if (parsed.status && parsed.status.length > 0) {
-      conditions.push(inArray(userMedia.status, parsed.status));
-    }
-
-    if (parsed.favorite !== undefined) {
-      conditions.push(eq(userMedia.favorite, parsed.favorite));
-    }
-
-    if (parsed.type && parsed.type.length > 0) {
-      conditions.push(inArray(media.type, parsed.type));
-    }
-
-    if (parsed.search) {
-      conditions.push(ilike(media.title, `%${parsed.search}%`));
-    }
-
-    const results = await db
-      .select({
-        id: userMedia.id,
-
-        title: media.title,
-        type: media.type,
-
-        status: userMedia.status,
-        rating: userMedia.rating,
-        favorite: userMedia.favorite,
-        source: userMedia.source,
-
-        createdAt: userMedia.createdAt,
-        updatedAt: userMedia.updatedAt,
-      })
-      .from(userMedia)
-      .innerJoin(media, eq(userMedia.mediaId, media.id))
-      .where(and(...conditions));
-
-    return reply.send({
-      success: true,
-      count: results.length,
-      data: results,
-    });
-  });
-
-  fastify.get("/user-media", async (request, reply) => {
-    const session = await auth.api.getSession({
-      headers: fromNodeHeaders(request.headers),
-    });
-
-    if (!session) {
-      return reply.status(401).send({ error: "Unauthorized" });
-    }
-
-    const userId = session.user.id;
-
-    const results = await db
-      .select({
-        id: userMedia.id,
-
-        title: media.title,
-        type: media.type,
-
-        status: userMedia.status,
-        rating: userMedia.rating,
-        favorite: userMedia.favorite,
-        source: userMedia.source,
-
-        createdAt: userMedia.createdAt,
-        updatedAt: userMedia.updatedAt,
-      })
-      .from(userMedia)
-      .innerJoin(media, eq(userMedia.mediaId, media.id))
-      .where(eq(userMedia.userId, userId))
-      .orderBy(desc(userMedia.createdAt));
-
-    return reply.send({
-      success: true,
-      count: results.length,
-      data: results,
-    });
-  });
-
-  fastify.get("/user-media/favorites", async (request, reply) => {
-    const userId = request.userId;
-
-    const results = await db
-      .select({
-        id: userMedia.id,
-        mediaId: userMedia.mediaId,
-        title: media.title,
-        type: media.type,
-        status: userMedia.status,
-        rating: userMedia.rating,
-        favorite: userMedia.favorite,
-        review: userMedia.review,
-        notes: userMedia.notes,
-        progress: userMedia.progress,
-        timeSpent: userMedia.timeSpent,
-
-        createdAt: userMedia.createdAt,
-        updatedAt: userMedia.updatedAt,
-      })
-      .from(userMedia)
-      .innerJoin(media, eq(userMedia.mediaId, media.id))
-      .where(and(eq(userMedia.userId, userId), eq(userMedia.favorite, true)))
-      .orderBy(desc(userMedia.rating));
-
-    return reply.send({
-      success: true,
-      count: results.length,
-      data: results,
-    });
-  });
-
-  fastify.get("/user-media/counts", async (request, reply) => {
-    const userId = request.userId;
-
-    const counts = await db
-      .select({
-        status: userMedia.status,
-        count: count(),
-      })
-      .from(userMedia)
-      .where(eq(userMedia.userId, userId))
-      .groupBy(userMedia.status);
-
-    return reply.send(counts);
-  });
-
-  fastify.get("/user-media/dropdowns", async (request, reply) => {
-    const userId = request.userId;
-
-    // fetch all source values the user has entered for autocomplete
-    const rows = await db
-      .selectDistinct({ source: userMedia.source })
-      .from(userMedia)
-      .where(eq(userMedia.userId, userId));
-
-    return reply.send({ sources: rows.map((row) => row.source).filter((source) => source !== null) });
-  });
-
-  fastify.get("/user-media/dashboard/stats", async (request, reply) => {
-    const userId = request.userId;
-
-    function statusSelect(status: Status) {
-      return db
-        .select({ count: count() })
-        .from(userMedia)
-        .where(and(eq(userMedia.userId, userId), eq(userMedia.status, status), eq(userMedia.isDeleted, false)));
-    }
-
-    const [
-      totalMedia,
-      completed,
-      inProgress,
-      planned,
-      dropped,
-      onHold,
-      collections,
-      statusDistribution,
-      mediaTypeDistribution,
-      ratingDistribution,
-      completionTrend,
-    ] = await Promise.all([
-      //-----------------------------------
-      // Summary
-      //-----------------------------------
-
-      db
-        .select({ count: count() })
-        .from(userMedia)
-        .where(and(eq(userMedia.userId, userId), eq(userMedia.isDeleted, false))),
-
-      statusSelect("completed"),
-      statusSelect("in_progress"),
-      statusSelect("planned"),
-      statusSelect("dropped"),
-      statusSelect("on_hold"),
-
-      db.select({ count: count() }).from(mediaCollection).where(eq(mediaCollection.userId, userId)),
-
-      //-----------------------------------
-      // Status chart
-      //-----------------------------------
-
-      db
-        .select({
-          status: userMedia.status,
-          count: count(),
-        })
-        .from(userMedia)
-        .where(and(eq(userMedia.userId, userId), eq(userMedia.isDeleted, false)))
-        .groupBy(userMedia.status),
-
-      //-----------------------------------
-      // Media type chart
-      //-----------------------------------
-
-      db
-        .select({
-          type: media.type,
-          count: count(),
-        })
-        .from(userMedia)
-        .innerJoin(media, eq(media.id, userMedia.mediaId))
-        .where(and(eq(userMedia.userId, userId), eq(userMedia.isDeleted, false)))
-        .groupBy(media.type),
-
-      //-----------------------------------
-      // Rating distribution
-      //-----------------------------------
-
-      db
-        .select({
-          rating: userMedia.rating,
-          count: count(),
-        })
-        .from(userMedia)
-        .where(and(eq(userMedia.userId, userId), eq(userMedia.isDeleted, false), isNotNull(userMedia.rating)))
-        .groupBy(userMedia.rating)
-        .orderBy(userMedia.rating),
-
-      //-----------------------------------
-      // Completed per month
-      //-----------------------------------
-
-      db
-        .select({
-          month: sql<string>`
-              to_char(date_trunc('month', ${userMedia.completedAt}), 'YYYY-MM')
-            `,
-          count: count(),
-        })
-        .from(userMedia)
-        .where(
-          and(
-            eq(userMedia.userId, userId),
-            eq(userMedia.status, "completed"),
-            isNotNull(userMedia.completedAt),
-            eq(userMedia.isDeleted, false),
-          ),
-        )
-        .groupBy(sql`date_trunc('month', ${userMedia.completedAt})`)
-        .orderBy(sql`date_trunc('month', ${userMedia.completedAt})`),
-    ]);
-
-    return {
-      summary: {
-        total_media: totalMedia[0]?.count ?? 0,
-        completed: completed[0]?.count ?? 0,
-        in_progress: inProgress[0]?.count ?? 0,
-        on_hold: onHold[0]?.count ?? 0,
-        planned: planned[0]?.count ?? 0,
-        dropped: dropped[0]?.count ?? 0,
-        collections: collections[0]?.count ?? 0,
-      },
-
-      statusDistribution,
-
-      mediaTypeDistribution,
-
-      ratingDistribution,
-
-      completionTrend,
-    };
-  });
-
-  fastify.get("/user-media/export", async (request, reply) => {
-    const userId = request.userId;
-
-    try {
-      // Fetch all user media with joined catalog data
-      const records = await db
-        .select({
-          id: userMedia.id,
-          userId: userMedia.userId,
-          mediaId: userMedia.mediaId,
-          title: media.title,
-          type: media.type,
-          description: media.description,
-          status: userMedia.status,
-          rating: userMedia.rating,
-          review: userMedia.review,
-          notes: userMedia.notes,
-          progress: userMedia.progress,
-          favorite: userMedia.favorite,
-          rewatches: userMedia.rewatches,
-          timeSpent: userMedia.timeSpent,
-
-          startedAt: userMedia.startedAt,
-          completedAt: userMedia.completedAt,
-
-          createdAt: userMedia.createdAt,
-          updatedAt: userMedia.updatedAt,
-        })
-        .from(userMedia)
-        .innerJoin(media, eq(userMedia.mediaId, media.id))
-        .where(eq(userMedia.userId, userId));
-
-      // Convert to plain objects for CSV
-      const csvData = records.map((r) => ({
-        id: r.id,
-        title: r.title ?? "",
-        type: r.type ?? "",
-        description: r.description ?? "",
-        status: r.status ?? "pending",
-        rating: r.rating ?? "-",
-        review: r.review ?? "-",
-        notes: r.notes ?? "-",
-        progress: `${r.progress ?? 0}%`,
-        favorite: r.favorite ? "true" : "false",
-        rewatches: r.rewatches ?? "-",
-        timeSpent: r.timeSpent ? `${r.timeSpent} hours` : "-",
-
-        startedAt: r.startedAt ? r.startedAt.toISOString().slice(0, 16) : "-",
-        completedAt: r.completedAt ? r.completedAt.toISOString().slice(0, 16) : "-",
-
-        createdAt: r.createdAt ? r.createdAt.toISOString().slice(0, 16) : "-",
-        updatedAt: r.updatedAt ? r.updatedAt.toISOString().slice(0, 16) : "-",
-      }));
-
-      // Generate CSV using PapaParse
-      const csv = Papa.unparse(csvData, { header: true });
-
-      reply.header("Content-Type", "text/csv");
-      reply.header("Content-Disposition", `attachment; filename="user-media-${userId}-${Date.now()}.csv"`);
-
-      return reply.send(csv);
-    } catch (error) {
-      console.error("Export CSV error:", error);
-      return reply.status(500).send({
-        success: false,
-        error: "Failed to export data",
-        details: error instanceof Error ? error.message : String(error),
+  fastify.get("/search", async (request, reply) => {
+    const { q, type } = request.query as { q?: string; type?: MediaType };
+
+    if (!q?.trim()) {
+      return reply.status(400).send({
+        error: "Query parameter 'q' is required",
       });
     }
-  });
 
-  fastify.get("/seed", async (request, reply) => {
-    try {
-      // Sample media data
-      const sampleMedia = [
-        {
-          title: "Inception",
-          type: "movie" as const,
-          originalTitle: "Inception",
-          description: "A skilled thief who steals corporate secrets through dream-sharing technology",
-          imageUrl: "https://via.placeholder.com/300x450?text=Inception",
-          releaseDate: new Date("2010-07-16"),
-          externalId: "27205",
-          metadata: {
-            director: "Christopher Nolan",
-            genres: ["sci-fi", "action", "thriller"],
-            rating: 8.8,
-          },
-        },
-        {
-          title: "Breaking Bad",
-          type: "show" as const,
-          originalTitle: "Breaking Bad",
-          description: "A high school chemistry teacher turned methamphetamine producer",
-          imageUrl: "https://via.placeholder.com/300x450?text=Breaking+Bad",
-          releaseDate: new Date("2008-01-20"),
-          externalId: "1396",
-          metadata: {
-            genres: ["crime", "drama", "thriller"],
-            seasons: 5,
-            totalEpisodes: 62,
-            rating: 9.5,
-          },
-        },
-        {
-          title: "The Witcher 3: Wild Hunt",
-          type: "game" as const,
-          originalTitle: "The Witcher 3: Wild Hunt",
-          description: "An open-world fantasy RPG about a monster hunter named Geralt of Rivia",
-          imageUrl: "https://via.placeholder.com/300x450?text=Witcher+3",
-          releaseDate: new Date("2015-05-19"),
-          externalId: "109644",
-          metadata: {
-            developer: "CD Projekt Red",
-            genres: ["RPG", "action", "adventure"],
-            platforms: ["PC", "PS4", "Xbox One"],
-            rating: 92,
-          },
-        },
-        {
-          title: "Dune",
-          type: "book" as const,
-          originalTitle: "Dune",
-          description: "An epic science fiction novel about politics, ecology, and religion",
-          imageUrl: "https://via.placeholder.com/300x450?text=Dune",
-          releaseDate: new Date("1965-06-01"),
-          externalId: "44",
-          metadata: {
-            author: "Frank Herbert",
-            genres: ["sci-fi", "adventure"],
-            pages: 688,
-          },
-        },
-        {
-          title: "The Shawshank Redemption",
-          type: "movie" as const,
-          originalTitle: "The Shawshank Redemption",
-          description: "Two imprisoned men bond over a number of years, finding solace in acts of common decency",
-          imageUrl: "https://via.placeholder.com/300x450?text=Shawshank",
-          releaseDate: new Date("1994-09-23"),
-          externalId: "278",
-          metadata: {
-            director: "Frank Darabont",
-            genres: ["drama"],
-            rating: 9.3,
-          },
-        },
-      ];
-
-      // Insert media
-      const createdMedia = await db.insert(media).values(sampleMedia).returning();
-
-      return reply.status(201).send({
-        success: true,
-        message: `Successfully seeded database with ${createdMedia.length} media items`,
-        data: {
-          mediaCount: createdMedia.length,
-          media: createdMedia,
-        },
-      });
-    } catch (error) {
-      console.error("Error seeding database:", error);
-      return reply.status(500).send({
-        success: false,
-        error: "Failed to seed database",
-        details: error instanceof Error ? error.message : String(error),
+    if (!type) {
+      return reply.status(400).send({
+        error: "Query parameter 'type' is required",
       });
     }
+
+    // 1. Search local database
+    const localResults = await db
+      .select({
+        id: media.id,
+        title: media.title,
+        imageUrl: media.imageUrl,
+        type: media.type,
+        releaseDate: media.releaseDate,
+        externalId: media.externalId,
+      })
+      .from(media)
+      .where(and(ilike(media.title, `%${q}%`), eq(media.type, type)))
+      .limit(10);
+
+    const localRecords: SourceMediaRecord[] = localResults.map((val) => ({
+      id: val.id,
+      source: "db",
+      title: val.title,
+      imageUrl: val.imageUrl,
+      type: val.type,
+      externalId: val.externalId,
+      releaseDate: val.releaseDate ?? "",
+    }));
+
+    // 2. If enough local results, don't hit external services
+    if (localRecords.length >= 10) {
+      return reply.send(localRecords);
+    }
+
+    let omdbRecords: SourceMediaRecord[] = [];
+    let gameRecords: SourceMediaRecord[] = [];
+
+    switch (type) {
+      case "movie":
+      case "show":
+        omdbRecords = await searchOmdb(q);
+        break;
+      case "game":
+        gameRecords = await searchGames(q);
+        break;
+    }
+
+    const result: SourceMediaRecord[] = [
+      ...localRecords,
+      ...omdbRecords,
+      ...gameRecords,
+    ];
+
+    return reply.send(result);
   });
 }
 

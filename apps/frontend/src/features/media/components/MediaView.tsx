@@ -1,274 +1,348 @@
 import { capitalizeWords } from "#/utils/stringFunctions";
 import {
   Badge,
+  Box,
   Button,
   Card,
   Container,
-  Divider,
   Grid,
   Group,
+  Image,
+  Paper,
   Progress,
   SimpleGrid,
   Stack,
   Text,
+  ThemeIcon,
   Title,
-  DataList,
 } from "@mantine/core";
+import {
+  IconArrowLeft,
+  IconCheck,
+  IconEdit,
+  IconHeartFilled,
+  IconNotebook,
+  IconPlayerPlay,
+  IconQuote,
+} from "@tabler/icons-react";
 import type { MediaDetailedRecord } from "@media-voyage/shared/api";
 import { useNavigate } from "@tanstack/react-router";
+import { motion, useReducedMotion } from "motion/react";
 
-const formatDate = (value?: Date | undefined | null) =>
-  value ? new Date(value).toLocaleDateString() : "-";
+const formatDate = (value?: Date | null) =>
+  value ? new Date(value).toLocaleDateString() : "—";
 
 const formatValue = (value?: string | number | null) =>
-  value === undefined || value === null || value === "" ? "-" : value;
+  value === undefined || value === null || value === "" ? "—" : value;
 
-const renderListItems = ({
-  items,
-  orientation,
-}: {
-  items: Array<{ label: string; value: React.ReactNode }>;
-  orientation?: "horizontal" | "vertical";
-}) => (
-  <DataList
-    orientation={orientation}
-    style={{
-      justifyContent: orientation === "horizontal" ? "space-between" : "",
-    }}
-  >
-    {items.map((item) => (
-      <DataList.Item
-        key={item.label}
-        style={{
-          justifyContent:
-            item.value != null &&
-            item.value.toString().length > 50 &&
-            !orientation
-              ? "flex-start"
-              : "space-between",
-          flexWrap: "wrap",
-        }}
+const defaultBorder = "var(--mantine-color-default-border)";
+const accentText = "var(--mantine-primary-color-filled)";
+
+function MetaItem({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <Box p="md" style={{ borderTop: `1px solid ${defaultBorder}` }}>
+      <Text
+        size="xs"
+        c="dimmed"
+        fw={700}
+        tt="uppercase"
+        mb={5}
+        style={{ letterSpacing: "0.1em" }}
       >
-        <DataList.ItemLabel>{item.label}</DataList.ItemLabel>
-        <DataList.ItemValue fw="500">{item.value}</DataList.ItemValue>
-      </DataList.Item>
-    ))}
-  </DataList>
-);
+        {label}
+      </Text>
+      <Text size="sm" fw={600} lh={1.35}>
+        {value}
+      </Text>
+    </Box>
+  );
+}
 
-function StatCard({
-  label,
-  value,
+function ReadingPanel({
+  icon,
+  title,
+  children,
+  reducedMotion,
 }: {
-  label: string;
-  value?: string | number | null;
+  icon: React.ReactNode;
+  title: string;
+  children: React.ReactNode;
+  reducedMotion: boolean;
 }) {
   return (
-    <Card
-      withBorder
-      p="lg"
-      h="100%"
-      style={{
-        display: "flex",
-        justifyContent: "center",
-      }}
+    <motion.div
+      initial={reducedMotion ? false : { opacity: 0, y: 10 }}
+      animate={reducedMotion ? undefined : { opacity: 1, y: 0 }}
+      whileHover={reducedMotion ? undefined : { y: -3 }}
+      transition={{ duration: 0.25, delay: 0.12 }}
+      style={{ height: "100%" }}
     >
-      <Stack gap={4}>
-        <Text size="xs" fw={700} c="dimmed" tt="uppercase">
-          {label}
+      <Paper
+        withBorder
+        p={{ base: "md", sm: "lg" }}
+        h="100%"
+        style={{ borderColor: defaultBorder }}
+      >
+        <Group gap="xs" mb="md">
+          <ThemeIcon variant="light" c="primary" size={30} radius="sm">
+            {icon}
+          </ThemeIcon>
+          <Title order={4}>{title}</Title>
+        </Group>
+        <Text size="sm" lh={1.75} style={{ whiteSpace: "pre-wrap" }}>
+          {children}
         </Text>
-
-        <Text fw={600}>{formatValue(value)}</Text>
-      </Stack>
-    </Card>
+      </Paper>
+    </motion.div>
   );
 }
 
 export function MediaView({ data }: { data: MediaDetailedRecord }) {
   const navigate = useNavigate();
+  const reducedMotion = useReducedMotion() ?? false;
+  const progress = Math.min(100, Math.max(0, data.progress ?? 0));
 
-  const mediaDetails = [
-    { label: "Title", value: data.title },
-    { label: "Type", value: capitalizeWords(data.type) },
-    {
-      label: "Visibility",
-      value: data.visibility ? capitalizeWords(data.visibility) : "-",
-    },
-    { label: "Source", value: data.source || "-" },
-  ];
-
-  const trackingDetails = [
+  const metaItems = [
+    { label: "Status", value: capitalizeWords(data.status) },
+    { label: "Rating", value: formatValue(data.rating?.toFixed(1)) },
+    { label: "Source", value: formatValue(data.source) },
     { label: "Started", value: formatDate(data.startedAt) },
     { label: "Completed", value: formatDate(data.completedAt) },
-    { label: "Rewatches", value: data.rewatches },
   ];
 
   return (
-    <Container size="lg" py="lg">
-      <Stack gap="xs">
-        <Card withBorder p="lg" shadow="sm">
-          <Group justify="space-between" align="flex-start">
-            <Stack gap="sm" maw={900}>
-              <Group justify="space-between" align="flex-start">
-                <Stack gap="1px">
-                  <Title order={2}>{data.title}</Title>
-                  <Text c="dimmed" size="sm">
-                    {data.description ||
+    <Container size="md" py={{ base: "sm", sm: "xl" }}>
+      <Stack gap="md">
+        <Button
+          variant="subtle"
+          color="gray"
+          leftSection={<IconArrowLeft size={16} />}
+          px={0}
+          fw={600}
+          style={{ alignSelf: "flex-start" }}
+          onClick={() => navigate({ to: "/media" })}
+        >
+          Back to library
+        </Button>
+
+        <motion.div
+          initial={reducedMotion ? false : { opacity: 0, y: 12 }}
+          animate={reducedMotion ? undefined : { opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Card
+            withBorder
+            p={{ base: "sm", sm: "lg" }}
+            style={{
+              position: "relative",
+              overflow: "hidden",
+              borderColor: defaultBorder,
+              background:
+                "radial-gradient(circle at 96% 0%, light-dark(rgba(99, 102, 241, 0.14), rgba(129, 140, 248, 0.18)), transparent 30%), linear-gradient(135deg, var(--mantine-color-default) 0%, var(--mantine-color-body) 100%)",
+            }}
+          >
+            <Box
+              pos="absolute"
+              top={-92}
+              right={-72}
+              w={220}
+              h={220}
+              style={{
+                border:
+                  "1px solid light-dark(rgba(99, 102, 241, 0.14), rgba(129, 140, 248, 0.18))",
+                borderRadius: "50%",
+                pointerEvents: "none",
+              }}
+            />
+
+            <Grid
+              gap={{ base: "sm", sm: "lg" }}
+              align="flex-start"
+              pos="relative"
+            >
+              <Grid.Col span={{ base: 4, xs: 3, sm: 3 }}>
+                <Image
+                  src={data.imageUrl === "N/A" ? null : data.imageUrl}
+                  alt={data.title}
+                  radius="sm"
+                  fit="cover"
+                  fallbackSrc="https://placehold.co/336x504?text=No+Image"
+                  style={{
+                    width: "100%",
+                    aspectRatio: "2 / 3",
+                    boxShadow:
+                      "light-dark(0 14px 26px rgba(31, 41, 55, 0.16), 0 18px 34px rgba(0, 0, 0, 0.42))",
+                  }}
+                />
+              </Grid.Col>
+
+              <Grid.Col span={{ base: 8, xs: 9, sm: 9 }}>
+                <Stack gap={0} h="100%">
+                  <Text
+                    size="xs"
+                    fw={800}
+                    tt="uppercase"
+                    mb="xs"
+                    style={{ letterSpacing: "0.05em", color: accentText }}
+                  >
+                    {capitalizeWords(data.type)} / library entry
+                  </Text>
+
+                  <Group
+                    align="flex-start"
+                    justify="space-between"
+                    gap="md"
+                    wrap="wrap"
+                  >
+                    <Title
+                      order={1}
+                      fz={{ base: 28, sm: 48 }}
+                      lh={1}
+                      lts="-0.045em"
+                      maw={650}
+                      style={{ overflowWrap: "anywhere", flex: "1 1 220px" }}
+                    >
+                      {data.title}
+                    </Title>
+                    <Button
+                      w={{ base: "100%", xs: "auto" }}
+                      flex="0 0 auto"
+                      leftSection={<IconEdit size={16} />}
+                      onClick={() =>
+                        navigate({
+                          to: "/media/update/$id",
+                          params: { id: data.id },
+                        })
+                      }
+                    >
+                      Update
+                    </Button>
+                  </Group>
+
+                  <Group gap={6} mt={{ base: "sm", sm: "md" }}>
+                    <Badge variant="light" size="sm">
+                      {capitalizeWords(data.status)}
+                    </Badge>
+                    {data.visibility && (
+                      <Badge variant="outline" size="sm">
+                        {capitalizeWords(data.visibility)}
+                      </Badge>
+                    )}
+                    {data.favorite && (
+                      <Badge
+                        color="yellow"
+                        leftSection={<IconHeartFilled size={12} />}
+                        size="sm"
+                      >
+                        Favorite
+                      </Badge>
+                    )}
+                  </Group>
+
+                  {data.tags && data.tags.length > 0 && (
+                    <Group gap={6} mt="sm">
+                      {data.tags.map((tag) => (
+                        <Badge
+                          key={tag}
+                          radius="xl"
+                          variant="dot"
+                          color="gray"
+                          size="sm"
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                    </Group>
+                  )}
+
+                  <Text
+                    c="dimmed"
+                    size="sm"
+                    lh={1.65}
+                    mt={{ base: "sm", sm: "md" }}
+                    maw={680}
+                  >
+                    {data.description?.trim() ||
                       "No description available for this media item."}
                   </Text>
+
+                  <Box maw={480} mt="auto" pt={{ base: "md", sm: "xl" }}>
+                    <Group justify="space-between" gap="xs" mb={6}>
+                      <Group gap={6}>
+                        <ThemeIcon variant="transparent" c="primary" size={18}>
+                          {progress === 100 ? (
+                            <IconCheck size={15} stroke={2.5} />
+                          ) : (
+                            <IconPlayerPlay size={15} stroke={2.5} />
+                          )}
+                        </ThemeIcon>
+                        <Text size="xs" fw={700}>
+                          {progress === 100 ? "Completed" : "Your progress"}
+                        </Text>
+                      </Group>
+                      <Text size="xs" c="dimmed" fw={700}>
+                        {progress}%
+                      </Text>
+                    </Group>
+                    <Progress
+                      value={progress}
+                      size="sm"
+                      radius="xl"
+                      c="primary"
+                    />
+                  </Box>
                 </Stack>
+              </Grid.Col>
+            </Grid>
+          </Card>
+        </motion.div>
 
-                <Button
-                  size="xs"
-                  variant="gradient"
-                  gradient={{ from: "blue", to: "cyan" }}
-                  onClick={() =>
-                    navigate({
-                      to: "/media/update/$id",
-                      params: { id: data.id },
-                    })
-                  }
-                >
-                  Update Media
-                </Button>
-              </Group>
-
-              <Group gap="xs">
-                <Badge variant="light">{capitalizeWords(data.type)}</Badge>
-
-                {data.visibility && (
-                  <Badge variant="outline">
-                    {capitalizeWords(data.visibility)}
-                  </Badge>
-                )}
-
-                {data.favorite && <Badge color="yellow">★ Favorite</Badge>}
-              </Group>
-
-              {data.tags && data.tags.length > 0 && (
-                <Group gap="xs">
-                  {data.tags.map((tag) => (
-                    <Badge key={tag} radius="xl" variant="dot" color="gray">
-                      {tag}
-                    </Badge>
-                  ))}
-                </Group>
-              )}
-            </Stack>
-          </Group>
-        </Card>
-
-        {/* Stats */}
-        <SimpleGrid cols={{ base: 2, md: 4 }}>
-          <StatCard label="Status" value={capitalizeWords(data.status)} />
-
-          <StatCard label="Rating" value={data.rating?.toFixed(1)} />
-
-          <StatCard label="Progress" value={`${data.progress ?? 0}%`} />
-
-          <StatCard
-            label="Time Spent"
-            value={data.timeSpent ? `${data.timeSpent} min` : "-"}
-          />
-        </SimpleGrid>
-
-        {/* Progress */}
-        <Card withBorder p="lg">
-          <Stack gap="xs">
-            <Group justify="space-between">
-              <Text fw={600}>Completion Progress</Text>
-
-              <Text fw={700}>{data.progress ?? 0}%</Text>
+        <Paper
+          withBorder
+          p="xs"
+          style={{
+            overflow: "hidden",
+            borderColor: defaultBorder,
+          }}
+        >
+          <Group justify="space-between" px="md" py="sm">
+            <Group gap="xs">
+              {/* <IconCalendar size={17} /> */}
+              <Text size="sm" fw={800} style={{ color: accentText }}>
+                Details
+              </Text>
             </Group>
-
-            <Progress value={data.progress ?? 0} size="xl" radius="xl" />
-          </Stack>
-        </Card>
-
-        {/* Main Info */}
-        <Grid align="stretch">
-          <Grid.Col span={{ base: 12, lg: 6 }}>
-            <Card
-              withBorder
-              p="lg"
-              h="100%"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <Stack gap="md">
-                <Title order={4}>Media Details</Title>
-
-                <Divider />
-
-                {renderListItems({
-                  items: mediaDetails,
-                  orientation: "horizontal",
-                })}
-              </Stack>
-            </Card>
-          </Grid.Col>
-
-          <Grid.Col span={{ base: 12, lg: 6 }}>
-            <Card
-              withBorder
-              p="lg"
-              h="100%"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <Stack gap="md">
-                <Title order={4}>Tracking</Title>
-
-                <Divider />
-
-                {renderListItems({
-                  items: trackingDetails,
-                  orientation: "horizontal",
-                })}
-              </Stack>
-            </Card>
-          </Grid.Col>
-        </Grid>
-
-        {/* Review */}
-        <Card withBorder p="lg">
-          <Stack gap="md">
-            <Title order={4}>Review</Title>
-
-            <Divider />
-
-            <Text
-              style={{
-                whiteSpace: "pre-wrap",
-                lineHeight: 1.8,
-              }}
-            >
-              {data.review?.trim() || "No review has been added yet."}
+            <Text size="xs" c="dimmed">
+              {progress}% tracked
             </Text>
-          </Stack>
-        </Card>
+          </Group>
+          <SimpleGrid cols={{ base: 2, xs: 3, sm: 5 }} spacing={0}>
+            {metaItems.map((item) => (
+              <MetaItem
+                key={item.label}
+                label={item.label}
+                value={item.value}
+              />
+            ))}
+          </SimpleGrid>
+        </Paper>
 
-        {/* Notes */}
-        <Card withBorder p="lg">
-          <Stack gap="md">
-            <Title order={4}>Notes</Title>
-
-            <Divider />
-
-            <Text
-              style={{
-                whiteSpace: "pre-wrap",
-                lineHeight: 1.8,
-              }}
-            >
-              {data.notes?.trim() || "No notes have been added yet."}
-            </Text>
-          </Stack>
-        </Card>
+        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+          <ReadingPanel
+            icon={<IconQuote size={17} />}
+            title="Review"
+            reducedMotion={reducedMotion}
+          >
+            {data.review?.trim() || "No review has been added yet."}
+          </ReadingPanel>
+          <ReadingPanel
+            icon={<IconNotebook size={17} />}
+            title="Notes"
+            reducedMotion={reducedMotion}
+          >
+            {data.notes?.trim() || "No notes have been added yet."}
+          </ReadingPanel>
+        </SimpleGrid>
       </Stack>
     </Container>
   );

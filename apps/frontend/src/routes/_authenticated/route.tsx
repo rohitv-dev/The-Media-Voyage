@@ -1,25 +1,33 @@
 import {
+  ActionIcon,
   AppShell,
   Avatar,
+  Box,
   Burger,
   Button,
   Divider,
   Group,
   NavLink,
   Stack,
+  Text,
   Title,
+  Tooltip,
+  useComputedColorScheme,
+  useMantineColorScheme,
 } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import {
   IconBooks,
   IconChevronRight,
+  IconMoon,
+  IconPlus,
+  IconSun,
   IconTrendingUp,
   IconUser,
 } from "@tabler/icons-react";
-import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { useDisclosure } from "@mantine/hooks";
-import { collectionQueryOptions } from "#/features/mediaCollection/queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { collectionQueryOptions } from "#/features/mediaCollection/queries";
 
 export const Route = createFileRoute("/_authenticated")({
   loader: ({ context: { queryClient } }) => {
@@ -28,125 +36,226 @@ export const Route = createFileRoute("/_authenticated")({
   component: RouteComponent,
 });
 
+function ColorSchemeToggle({ mobile = false }: { mobile?: boolean }) {
+  const { toggleColorScheme } = useMantineColorScheme({
+    keepTransitions: true,
+  });
+  const computedColorScheme = useComputedColorScheme("light", {
+    getInitialValueInEffect: true,
+  });
+  const isDark = computedColorScheme === "dark";
+  const label = isDark ? "Switch to light mode" : "Switch to dark mode";
+  const icon = isDark ? <IconSun size={18} /> : <IconMoon size={18} />;
+
+  if (mobile) {
+    return (
+      <Button
+        fullWidth
+        variant="light"
+        color="gray"
+        leftSection={icon}
+        onClick={() => toggleColorScheme()}
+      >
+        {isDark ? "Light mode" : "Dark mode"}
+      </Button>
+    );
+  }
+
+  return (
+    <Tooltip label={label} withArrow>
+      <ActionIcon
+        variant="subtle"
+        color="gray"
+        size="lg"
+        aria-label={label}
+        onClick={() => toggleColorScheme()}
+      >
+        {icon}
+      </ActionIcon>
+    </Tooltip>
+  );
+}
+
 function RouteComponent() {
   const navigate = Route.useNavigate();
-  const [opened, { toggle }] = useDisclosure();
-
+  const [opened, { toggle, close }] = useDisclosure();
   const { data: collections } = useSuspenseQuery(collectionQueryOptions);
-
-  console.log("Authenticated mounted");
-
-  useEffect(() => {
-    return () => {
-      console.log("Authenticated unmounted");
-    };
-  }, []);
 
   return (
     <AppShell
-      header={{ height: 60 }}
+      header={{ height: 68 }}
       navbar={{
         width: 260,
         breakpoint: "md",
         collapsed: { mobile: !opened },
       }}
     >
-      <AppShell.Header>
-        <Group justify="space-between" h="100%" px="lg">
-          <Group gap="xs" align="center">
+      <AppShell.Header
+        style={{
+          borderBottom: "1px solid var(--mantine-color-default-border)",
+          background: "var(--mantine-color-body)",
+        }}
+      >
+        <Group justify="space-between" h="100%" px={{ base: "md", sm: "lg" }}>
+          <Group gap="sm" wrap="nowrap">
             <Burger
               opened={opened}
               onClick={toggle}
-              hiddenFrom="sm"
+              hiddenFrom="md"
               size="sm"
+              aria-label={opened ? "Close navigation" : "Open navigation"}
             />
-            <Title
-              order={3}
-              onClick={() => navigate({ to: "/media" })}
+
+            <Box
               style={{ cursor: "pointer" }}
+              onClick={() => navigate({ to: "/media" })}
             >
-              {">"} Media Voyage {"<"}
-            </Title>
+              <Stack gap={0}>
+                <Title order={4} lh={1.1}>
+                  Media Voyage
+                </Title>
+                <Text size="xs" c="dimmed" lh={1.2} visibleFrom="sm">
+                  Your personal media log
+                </Text>
+              </Stack>
+            </Box>
           </Group>
 
-          <Group visibleFrom="md">
-            <Button size="xs" onClick={() => navigate({ to: "/media/add" })}>
-              Add Media
+          <Group gap="md" wrap="nowrap">
+            <Box visibleFrom="sm">
+              <ColorSchemeToggle />
+            </Box>
+            <Button
+              visibleFrom="md"
+              size="sm"
+              leftSection={<IconPlus size={16} />}
+              onClick={() => navigate({ to: "/media/add" })}
+            >
+              Add media
             </Button>
-            <Avatar onClick={() => navigate({ to: "/profile" })} />
+            <Box visibleFrom="md">
+              <Tooltip label="Profile" withArrow>
+                <Avatar
+                  color="indigo"
+                  radius="xl"
+                  size="sm"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => navigate({ to: "/profile" })}
+                  aria-label="Open profile"
+                >
+                  <IconUser size={17} />
+                </Avatar>
+              </Tooltip>
+            </Box>
           </Group>
         </Group>
       </AppShell.Header>
-      <AppShell.Navbar>
-        <Stack gap="xs" p="sm">
-          <NavLink
-            label="Dashboard"
-            leftSection={<IconTrendingUp />}
-            onClick={() => navigate({ to: "/dashboard" })}
-          />
 
-          <NavLink
-            label="Library"
-            leftSection={<IconBooks />}
-            onClick={() => navigate({ to: "/media" })}
-          />
-
-          <NavLink
-            label="Profile"
-            leftSection={<IconUser />}
-            onClick={() => navigate({ to: "/profile" })}
-          />
-
-          <Divider my="md" />
-
-          <Stack gap={0}>
+      <AppShell.Navbar
+        p={0}
+        style={{
+          borderRight: "1px solid var(--mantine-color-default-border)",
+          background: "var(--mantine-color-body)",
+        }}
+      >
+        <Stack gap={0} p="sm" h="100%">
+          <Stack gap={4}>
             <NavLink
-              label="Collections"
-              active={false}
-              rightSection={<IconChevronRight size={18} />}
-              onClick={() => navigate({ to: "/collection" })}
+              label="Dashboard"
+              leftSection={<IconTrendingUp size={19} />}
+              onClick={() => {
+                navigate({ to: "/dashboard" });
+                close();
+              }}
             />
 
+            <NavLink
+              label="Library"
+              leftSection={<IconBooks size={19} />}
+              onClick={() => {
+                navigate({ to: "/media" });
+                close();
+              }}
+            />
+
+            <NavLink
+              label="Profile"
+              leftSection={<IconUser size={19} />}
+              onClick={() => {
+                navigate({ to: "/profile" });
+                close();
+              }}
+            />
+
+            <Divider my="md" />
+
             <Stack gap={4}>
-              {collections.map((collection) => (
-                <NavLink
-                  key={collection.id}
-                  label={collection.name}
-                  description={
-                    collection.description
-                      ? String(collection.description)
-                      : undefined
-                  }
-                  leftSection={<IconBooks size={16} />}
-                  onClick={() =>
-                    navigate({
-                      to: "/collection/edit/$id",
-                      params: { id: collection.id },
-                    })
-                  }
-                />
-              ))}
+              <NavLink
+                label="Collections"
+                active={false}
+                rightSection={<IconChevronRight size={18} />}
+                onClick={() => {
+                  navigate({ to: "/collection" });
+                  close();
+                }}
+              />
+
+              <Stack gap={4} pl="sm">
+                {collections.map((collection) => (
+                  <NavLink
+                    key={collection.id}
+                    label={collection.name}
+                    description={
+                      collection.description
+                        ? String(collection.description)
+                        : undefined
+                    }
+                    leftSection={<IconBooks size={16} />}
+                    onClick={() => {
+                      navigate({
+                        to: "/collection/edit/$id",
+                        params: { id: collection.id },
+                      });
+                      close();
+                    }}
+                  />
+                ))}
+              </Stack>
             </Stack>
           </Stack>
 
-          <Divider />
-
-          <Button
-            hiddenFrom="md"
-            variant="gradient"
-            onClick={() => navigate({ to: "/media/add" })}
-          >
-            Add Media
-          </Button>
-          <Button
-            hiddenFrom="md"
-            variant="light"
-            onClick={() => navigate({ to: "/profile" })}
-          >
-            My Profile
-          </Button>
+          <Box hiddenFrom="md" mt="auto">
+            <Divider my="md" />
+            <Stack gap="xs">
+              <Box hiddenFrom="sm">
+                <ColorSchemeToggle mobile />
+              </Box>
+              <Button
+                variant="gradient"
+                leftSection={<IconPlus size={16} />}
+                onClick={() => {
+                  navigate({ to: "/media/add" });
+                  close();
+                }}
+              >
+                Add media
+              </Button>
+              <Button
+                variant="light"
+                color="gray"
+                leftSection={<IconUser size={16} />}
+                onClick={() => {
+                  navigate({ to: "/profile" });
+                  close();
+                }}
+              >
+                My profile
+              </Button>
+            </Stack>
+          </Box>
         </Stack>
       </AppShell.Navbar>
+
       <AppShell.Main>
         <Outlet />
       </AppShell.Main>

@@ -1,5 +1,9 @@
 import z from "zod";
-import { MediaType, Status, userMediaInsertSchema, userMediaSelectSchema } from "../schemas/userMediaSchema";
+import type { MediaType, Status } from "../schemas/userMediaSchema";
+import {
+  userMediaInsertSchema,
+  userMediaSelectSchema,
+} from "../schemas/userMediaSchema";
 import { mediaInsertSchema, mediaSelectSchema } from "../schemas/mediaSchema";
 import { mediaTypeEnum, statusEnum } from "../";
 
@@ -27,6 +31,8 @@ export const mediaDetailedRecordSchema = z.object({
   title: mediaSelectSchema.shape.title,
   type: mediaSelectSchema.shape.type,
   description: mediaSelectSchema.shape.description,
+  imageUrl: mediaSelectSchema.shape.imageUrl,
+
   status: userMediaSelectSchema.shape.status,
   rating: userMediaSelectSchema.shape.rating,
   review: userMediaSelectSchema.shape.review,
@@ -54,7 +60,9 @@ export const getUserDetailedMediaResponseSchema = z.object({
   data: mediaDetailedRecordSchema,
 });
 
-export type GetUserDetailedMediaResponse = z.infer<typeof getUserDetailedMediaResponseSchema>;
+export type GetUserDetailedMediaResponse = z.infer<
+  typeof getUserDetailedMediaResponseSchema
+>;
 
 export const getUserMediaResponseSchema = z.object({
   success: z.boolean(),
@@ -97,11 +105,15 @@ export const userMediaFormSchema = userMediaInsertSchema
     mediaInsertSchema.pick({
       title: true,
       type: true,
+      imageUrl: true,
+      releaseDate: true,
+      externalId: true,
     }).shape,
   )
   .extend(
     z.object({
       mediaId: z.string().optional(),
+      mediaSource: z.string().optional(),
     }).shape,
   );
 
@@ -120,10 +132,16 @@ export const userMediaQuerySchema = z.object({
   type: arrayFromJson(z.enum(mediaTypeEnum.enumValues)).optional(),
   favorite: z.coerce.boolean().optional(),
   search: z.string().optional(),
-
-  // sort: z.enum(["createdAt", "updatedAt", "rating", "title"]).default("updatedAt"),
-
-  // order: z.enum(["asc", "desc"]).default("desc"),
+  minRating: z.coerce.number().min(0).max(10).optional(),
+  maxRating: z.coerce.number().min(0).max(10).optional(),
+  createdFrom: z.iso.date().optional(),
+  createdTo: z.iso.date().optional(),
+  sources: arrayFromJson(z.string().trim().min(1)).optional(),
+  tags: arrayFromJson(z.string().trim().min(1)).optional(),
+  sort: z
+    .enum(["createdAt", "updatedAt", "rating", "title"])
+    .default("updatedAt"),
+  order: z.enum(["asc", "desc"]).default("desc"),
 });
 
 export type UserMediaQuerySchema = z.infer<typeof userMediaQuerySchema>;
@@ -135,6 +153,7 @@ export type UserMediaCounts = {
 
 export type UserMediaDropdowns = {
   sources: string[];
+  tags: string[];
 };
 
 export type DashboardStatsResponse = {

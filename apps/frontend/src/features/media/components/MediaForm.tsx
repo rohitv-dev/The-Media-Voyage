@@ -8,20 +8,21 @@ import {
   Group,
   Title,
   Checkbox,
-  TextInput,
   Select,
   NumberInput,
   Progress,
-  MultiSelect,
+  TagsInput,
   Textarea,
   Button,
   Text,
+  TextInput,
   Autocomplete,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useForm } from "@mantine/form";
 import { showNotification } from "@mantine/notifications";
 import type {
+  SourceMediaRecord,
   UserMediaFormSchema,
   MediaDetailedRecord,
   UserMediaDropdowns,
@@ -40,12 +41,14 @@ import {
   IconLock,
 } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { useCanGoBack, useNavigate, useRouter } from "@tanstack/react-router";
 import {
   userMediaDetailedOptions,
   userMediaDropdownOptions,
   userMediaQueryOptions,
 } from "../queries";
+import { MediaTitleSelect } from "./MediaTitleSelect";
+import { useState } from "react";
 
 type MediaFormProps =
   | {
@@ -81,20 +84,79 @@ const addInitialValues: UserMediaFormSchema = {
   seasonsProgress: undefined,
 };
 
+function normalizeTags(tags: string[]) {
+  const normalizedValues = new Set<string>();
+
+  return tags.reduce<string[]>((normalizedTags, tag) => {
+    const trimmedTag = tag.trim();
+    const normalizedTag = trimmedTag.toLowerCase();
+
+    if (trimmedTag && !normalizedValues.has(normalizedTag)) {
+      normalizedValues.add(normalizedTag);
+      normalizedTags.push(trimmedTag);
+    }
+
+    return normalizedTags;
+  }, []);
+}
+
 export function MediaForm(props: MediaFormProps) {
   const { mode } = props;
   const isAddMode = mode === "add";
+  const canGoBack = useCanGoBack();
 
+  const [mediaRecord, setMediaRecord] = useState<SourceMediaRecord | null>(
+    null,
+  );
+  const [search, setSearch] = useState(
+    props.mode === "add" ? "" : props.initialValues.title,
+  );
+  const router = useRouter();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const form = useForm<UserMediaFormSchema>({
     initialValues: isAddMode ? addInitialValues : props.initialValues,
     transformValues: (values) => ({
-      timeSpent: Number(values.timeSpent) === 0 ? undefined : values.timeSpent,
       ...values,
+      timeSpent: Number(values.timeSpent) === 0 ? undefined : values.timeSpent,
+      tags: normalizeTags(values.tags ?? []),
     }),
+    validate: {
+      title: (value) =>
+        isAddMode && !value.trim() ? "Title is required" : undefined,
+    },
   });
+
+  const showMutationError = (error: Error) => {
+    let message = "Unable to save this media. Please try again.";
+
+    if (error instanceof ApiError) {
+      if (error.data?.type === "validation") {
+        message = error.data.details;
+      } else if (error.status === 401) {
+        message = "Your session has expired. Sign in and try again.";
+      } else if (error.status === 403) {
+        message = "You do not have permission to change this media.";
+      } else if (error.status === 404) {
+        message = "This media entry could not be found.";
+      } else if (error.status >= 500) {
+        message = "The server could not save your changes. Try again shortly.";
+      } else {
+        message = error.data?.error ?? error.message;
+      }
+    } else if (error instanceof TypeError) {
+      message =
+        "Unable to reach the server. Check your connection and try again.";
+    }
+
+    showNotification({
+      title: isAddMode ? "Could not add media" : "Could not update media",
+      message,
+      color: "red",
+      position: "top-center",
+    });
+  };
 
   form.watch("status", ({ value }) => {
     if (value === "completed") {
@@ -108,12 +170,23 @@ export function MediaForm(props: MediaFormProps) {
     UserMediaFormSchema
   >({
     mutationFn: async (data) => {
+      const transformedData: UserMediaFormSchema = {
+        ...data,
+        mediaId: mediaRecord?.id,
+        title: mediaRecord?.title ?? data.title,
+        type: mediaRecord?.type ?? data.type,
+        externalId: mediaRecord?.externalId,
+        imageUrl: mediaRecord?.imageUrl,
+        releaseDate: mediaRecord?.releaseDate,
+        mediaSource: mediaRecord?.source ?? "manual",
+      };
+
       return api("/user-media", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(transformedData),
       });
     },
     onSuccess: async (data) => {
@@ -130,6 +203,7 @@ export function MediaForm(props: MediaFormProps) {
         to: "/media",
       });
     },
+    onError: showMutationError,
   });
 
   const updateMutation = useMutation<
@@ -147,7 +221,7 @@ export function MediaForm(props: MediaFormProps) {
           body: JSON.stringify(data),
         });
       }
-      return Promise.reject(new Error("Invalid mode for update"));
+      throw new Error("Invalid mode for update");
     },
     onSuccess: async (data) => {
       showNotification({
@@ -171,21 +245,14 @@ export function MediaForm(props: MediaFormProps) {
           to: "/media",
         });
     },
-    onError: (error) => {
-      if (error instanceof ApiError) {
-        if (error.data && error.data.type === "validation") {
-          showNotification({
-            title: "Error",
-            message: error.data.details,
-            color: "red",
-            position: "top-center",
-          });
-        }
-      }
-    },
+    onError: showMutationError,
   });
 
-  const handleSubmit = (values: UserMediaFormSchema) => {
+  const handleSubmit = async (values: UserMediaFormSchema) => {
+    if (addMutation.isPending || updateMutation.isPending) {
+      return;
+    }
+
     if (isAddMode) {
       addMutation.mutate(values);
     } else {
@@ -243,18 +310,38 @@ export function MediaForm(props: MediaFormProps) {
                     </Stack>
                   </Group>
 
-                  <TextInput
-                    label="Title"
-                    placeholder="The Lord of the Rings"
-                    variant="filled"
-                    readOnly={!isAddMode}
-                    rightSection={
-                      !isAddMode ? (
+                  {isAddMode ? (
+                    <MediaTitleSelect
+                      value={mediaRecord}
+                      type={form.values.type}
+                      search={search}
+                      error={form.errors.title}
+                      onChange={(val) => {
+                        setMediaRecord(val);
+                        if (val) {
+                          form.setFieldValue("title", val.title);
+                          form.setFieldValue("type", val.type);
+                        }
+                      }}
+                      onSearchChange={(val) => {
+                        setSearch(val);
+                        form.setFieldValue("title", val);
+                        setMediaRecord((current) =>
+                          current && current.title !== val ? null : current,
+                        );
+                      }}
+                    />
+                  ) : (
+                    <TextInput
+                      label="Title"
+                      variant="filled"
+                      readOnly
+                      value={form.values.title}
+                      rightSection={
                         <IconLock size={18} stroke={1.5} color="#868e96" />
-                      ) : undefined
-                    }
-                    {...form.getInputProps("title")}
-                  />
+                      }
+                    />
+                  )}
 
                   <Group grow gap="md">
                     <Select
@@ -275,25 +362,25 @@ export function MediaForm(props: MediaFormProps) {
                         if (!isAddMode) e.stopPropagation();
                       }}
                       {...form.getInputProps("type")}
+                      onChange={(value) => {
+                        if (value) {
+                          form.setFieldValue(
+                            "type",
+                            value as UserMediaFormSchema["type"],
+                          );
+                          setMediaRecord(null);
+                        }
+                      }}
                     />
 
                     <Select
                       label="Visibility"
                       placeholder="Who can see this?"
                       variant="filled"
-                      readOnly={!isAddMode}
                       data={visibilityEnumValues.map((val) => ({
                         value: val,
                         label: capitalizeWords(val),
                       }))}
-                      rightSection={
-                        !isAddMode ? (
-                          <IconLock size={18} stroke={1.5} color="#868e96" />
-                        ) : undefined
-                      }
-                      onClick={(e) => {
-                        if (!isAddMode) e.stopPropagation();
-                      }}
                       {...form.getInputProps("visibility")}
                     />
                   </Group>
@@ -422,14 +509,18 @@ export function MediaForm(props: MediaFormProps) {
                     {...form.getInputProps("source")}
                   />
 
-                  <MultiSelect
+                  <TagsInput
                     label="Tags"
-                    placeholder="Fantasy, Action, Favorite..."
+                    placeholder="Science Fiction, Horror..."
                     variant="filled"
-                    searchable
-                    data={[]}
-                    description="Organize your collection with tags"
+                    data={props.dropdowns.tags}
+                    clearable
+                    description="Press Enter or comma to add a tag"
                     {...form.getInputProps("tags")}
+                    value={form.values.tags ?? []}
+                    onChange={(tags) =>
+                      form.setFieldValue("tags", normalizeTags(tags))
+                    }
                   />
                 </Stack>
               </Card>
@@ -473,8 +564,29 @@ export function MediaForm(props: MediaFormProps) {
 
             <Grid.Col span={{ xs: 12 }}>
               <Group justify="flex-end" gap="md">
-                <Button variant="light">Cancel</Button>
-                <Button type="submit" leftSection={<IconCheck size={18} />}>
+                <Button
+                  variant="light"
+                  disabled={addMutation.isPending || updateMutation.isPending}
+                  onClick={() => {
+                    if (canGoBack) {
+                      router.history.back();
+                    } else if (isAddMode) {
+                      navigate({ to: "/media" });
+                    } else {
+                      navigate({
+                        to: "/media/view/$id",
+                        params: { id: props.id },
+                      });
+                    }
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  leftSection={<IconCheck size={18} />}
+                  loading={addMutation.isPending || updateMutation.isPending}
+                >
                   {isAddMode ? "Save Media" : "Update Media"}
                 </Button>
               </Group>

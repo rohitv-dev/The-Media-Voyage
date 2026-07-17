@@ -1,4 +1,7 @@
-import { userMediaFilterQueryOptions } from "#/features/media/queries";
+import {
+  userMediaDropdownOptions,
+  userMediaFilterQueryOptions,
+} from "#/features/media/queries";
 import {
   Badge,
   Box,
@@ -6,7 +9,6 @@ import {
   Container,
   Drawer,
   Flex,
-  Grid,
   Group,
   Loader,
   SimpleGrid,
@@ -28,13 +30,9 @@ import { IconFilter } from "@tabler/icons-react";
 
 export const Route = createFileRoute("/_authenticated/media/")({
   validateSearch: userMediaQuerySchema,
-  loaderDeps: ({ search: { favorite, search, status, type } }) => ({
-    status,
-    type,
-    favorite,
-    search,
-  }),
+  loaderDeps: ({ search }) => search,
   loader: ({ context: { queryClient }, deps }) => {
+    queryClient.ensureQueryData(userMediaDropdownOptions);
     queryClient.ensureQueryData(userMediaFilterQueryOptions(deps));
   },
   component: RouteComponent,
@@ -42,6 +40,7 @@ export const Route = createFileRoute("/_authenticated/media/")({
 
 function RouteComponent() {
   const search = Route.useSearch();
+  const { data: dropdowns } = useQuery(userMediaDropdownOptions);
   const { data, isFetching, isError } = useQuery({
     ...userMediaFilterQueryOptions(search),
     placeholderData: keepPreviousData,
@@ -72,6 +71,14 @@ function RouteComponent() {
       search: undefined,
       status: [],
       type: [],
+      minRating: undefined,
+      maxRating: undefined,
+      createdFrom: undefined,
+      createdTo: undefined,
+      sources: [],
+      tags: [],
+      sort: "updatedAt",
+      order: "desc",
     });
     close();
     navigate({ to: "/media", search: undefined });
@@ -129,6 +136,29 @@ function RouteComponent() {
                   {capitalizeWords(val)}
                 </Badge>
               ))}
+              {search.favorite && <Badge color="pink">Favorites</Badge>}
+              {(search.minRating !== undefined ||
+                search.maxRating !== undefined) && (
+                <Badge color="yellow">
+                  Rating {search.minRating ?? 0}–{search.maxRating ?? 10}
+                </Badge>
+              )}
+              {(search.createdFrom || search.createdTo) && (
+                <Badge color="blue">
+                  Added {search.createdFrom ?? "any time"} to{" "}
+                  {search.createdTo ?? "now"}
+                </Badge>
+              )}
+              {search.sources?.map((source) => (
+                <Badge key={source} color="grape">
+                  {source}
+                </Badge>
+              ))}
+              {search.tags?.map((tag) => (
+                <Badge key={tag} color="cyan">
+                  #{tag}
+                </Badge>
+              ))}
             </Group>
           </Stack>
         </Group>
@@ -156,6 +186,7 @@ function RouteComponent() {
           <Box flex="1">
             <SimpleGrid
               hidden={view !== "grid"}
+              spacing={{ base: "xs", md: "md" }}
               cols={{
                 base: 1,
                 sm: 2,
@@ -198,12 +229,14 @@ function RouteComponent() {
             </SimpleGrid>
           </Box>
 
-          <Box visibleFrom="lg">
+          <Box visibleFrom="lg" w={248} flex="0 0 248px">
             <MediaFilterCard
               filters={filters}
               applyFilters={applyFilters}
               resetFilters={resetFilters}
               updateFilters={updateFilters}
+              dropdowns={dropdowns ?? { sources: [], tags: [] }}
+              compact
             />
           </Box>
         </Flex>
@@ -215,6 +248,7 @@ function RouteComponent() {
           applyFilters={applyFilters}
           resetFilters={resetFilters}
           updateFilters={updateFilters}
+          dropdowns={dropdowns ?? { sources: [], tags: [] }}
         />
       </Drawer>
     </Container>
