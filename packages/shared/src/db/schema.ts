@@ -1,7 +1,23 @@
 import { relations } from "drizzle-orm";
-import { pgTable, text, timestamp, boolean, uuid, jsonb, index, pgEnum, integer, unique } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  uuid,
+  jsonb,
+  index,
+  pgEnum,
+  integer,
+  unique,
+} from "drizzle-orm/pg-core";
 
-export const mediaTypeEnum = pgEnum("media_type", ["movie", "show", "game", "book"]);
+export const mediaTypeEnum = pgEnum("media_type", [
+  "movie",
+  "show",
+  "game",
+  "book",
+]);
 
 export const statusEnum = pgEnum("media_status", [
   "planned",
@@ -12,7 +28,11 @@ export const statusEnum = pgEnum("media_status", [
   "revisiting",
 ]);
 
-export const visibilityEnum = pgEnum("visibility", ["private", "friends", "public"]);
+export const visibilityEnum = pgEnum("visibility", [
+  "private",
+  "friends",
+  "public",
+]);
 
 // Main Media (Canonical)
 export const media = pgTable(
@@ -34,7 +54,12 @@ export const media = pgTable(
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
   },
-  (table) => [unique("media_source_external_id_unique").on(table.source, table.externalId)],
+  (table) => [
+    unique("media_source_external_id_unique").on(
+      table.source,
+      table.externalId,
+    ),
+  ],
 );
 
 // User-specific tracking (the heart)
@@ -50,6 +75,7 @@ export const userMedia = pgTable(
       .notNull(),
 
     status: statusEnum("status").notNull().default("planned"),
+    statusChangedAt: timestamp("status_changed_at").defaultNow().notNull(),
     rating: integer("rating"),
     review: text("review"),
     notes: text("notes"),
@@ -79,9 +105,37 @@ export const userMedia = pgTable(
 
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
-    isDeleted: boolean("is_deleted").default(false),
+    deletedAt: timestamp("deleted_at"),
   },
-  (table) => [unique("user_media_unique").on(table.userId, table.mediaId)],
+  (table) => [
+    unique("user_media_unique").on(table.userId, table.mediaId),
+    index("user_media_status_changed_idx").on(
+      table.userId,
+      table.status,
+      table.statusChangedAt,
+    ),
+  ],
+);
+
+export const userMediaStatusHistory = pgTable(
+  "user_media_status_history",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userMediaId: uuid("user_media_id")
+      .references(() => userMedia.id, { onDelete: "cascade" })
+      .notNull(),
+    fromStatus: statusEnum("from_status"),
+    toStatus: statusEnum("to_status").notNull(),
+    progressSnapshot: integer("progress_snapshot"),
+    source: text("source").notNull(),
+    changedAt: timestamp("changed_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("user_media_status_history_entry_changed_idx").on(
+      table.userMediaId,
+      table.changedAt,
+    ),
+  ],
 );
 
 export const mediaCollection = pgTable("media_collection", {
@@ -97,23 +151,36 @@ export const mediaCollection = pgTable("media_collection", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const mediaCollectionItems = pgTable("media_collection_items", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  collectionId: uuid("collection_id")
-    .references(() => mediaCollection.id, { onDelete: "cascade" })
-    .notNull(),
-  mediaId: uuid("media_id")
-    .references(() => media.id, { onDelete: "cascade" })
-    .notNull(),
-  position: integer("position"), // For ordering items in the list
-  createdAt: timestamp("created_at").defaultNow(),
-});
+export const mediaCollectionItems = pgTable(
+  "media_collection_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    collectionId: uuid("collection_id")
+      .references(() => mediaCollection.id, { onDelete: "cascade" })
+      .notNull(),
+    userMediaId: uuid("user_media_id")
+      .references(() => userMedia.id, { onDelete: "cascade" })
+      .notNull(),
+    position: integer("position").default(0).notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    unique("media_collection_item_unique").on(
+      table.collectionId,
+      table.userMediaId,
+    ),
+    index("media_collection_items_collection_position_idx").on(
+      table.collectionId,
+      table.position,
+    ),
+  ],
+);
 
 export const mediaRelations = relations(media, ({ many }) => ({
   userEntries: many(userMedia),
 }));
 
-export const userMediaRelations = relations(userMedia, ({ one }) => ({
+export const userMediaRelations = relations(userMedia, ({ one, many }) => ({
   user: one(user, {
     fields: [userMedia.userId],
     references: [user.id],
@@ -122,26 +189,44 @@ export const userMediaRelations = relations(userMedia, ({ one }) => ({
     fields: [userMedia.mediaId],
     references: [media.id],
   }),
+  collectionItems: many(mediaCollectionItems),
+  statusHistory: many(userMediaStatusHistory),
 }));
 
-export const mediaCollectionRelations = relations(mediaCollection, ({ many, one }) => ({
-  user: one(user, {
-    fields: [mediaCollection.userId],
-    references: [user.id],
+export const userMediaStatusHistoryRelations = relations(
+  userMediaStatusHistory,
+  ({ one }) => ({
+    userMedia: one(userMedia, {
+      fields: [userMediaStatusHistory.userMediaId],
+      references: [userMedia.id],
+    }),
   }),
-  items: many(mediaCollectionItems),
-}));
+);
 
-export const mediaCollectionItemsRelations = relations(mediaCollectionItems, ({ one }) => ({
-  list: one(mediaCollection, {
-    fields: [mediaCollectionItems.collectionId],
-    references: [mediaCollection.id],
+export const mediaCollectionRelations = relations(
+  mediaCollection,
+  ({ many, one }) => ({
+    user: one(user, {
+      fields: [mediaCollection.userId],
+      references: [user.id],
+    }),
+    items: many(mediaCollectionItems),
   }),
-  media: one(media, {
-    fields: [mediaCollectionItems.mediaId],
-    references: [media.id],
+);
+
+export const mediaCollectionItemsRelations = relations(
+  mediaCollectionItems,
+  ({ one }) => ({
+    list: one(mediaCollection, {
+      fields: [mediaCollectionItems.collectionId],
+      references: [mediaCollection.id],
+    }),
+    userMedia: one(userMedia, {
+      fields: [mediaCollectionItems.userMediaId],
+      references: [userMedia.id],
+    }),
   }),
-}));
+);
 
 // Better Auth Generated Tables
 

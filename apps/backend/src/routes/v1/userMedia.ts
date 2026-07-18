@@ -6,6 +6,7 @@ import {
   mediaCollection,
   mediaCollectionItems,
   userMedia,
+  userMediaStatusHistory,
 } from "@media-voyage/shared";
 import {
   eq,
@@ -20,6 +21,7 @@ import {
   asc,
   gte,
   lte,
+  isNull,
 } from "drizzle-orm";
 import {
   userMediaFormSchema,
@@ -57,8 +59,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
 
     const parsed = userMediaFormSchema.parse(request.body);
 
-    const { title, type, externalId, imageUrl, releaseDate, mediaSource } =
-      parsed;
+    const { title, type, externalId, imageUrl, releaseDate, mediaSource } = parsed;
 
     const record = await db.transaction(async (tx) => {
       let mediaId = parsed.mediaId;
@@ -79,12 +80,14 @@ async function userMediaRoutes(fastify: FastifyInstance) {
         mediaId = createdMedia.id;
       }
 
+      const statusChangedAt = new Date();
       const [createdUserMedia] = await tx
         .insert(userMedia)
         .values({
           userId,
           mediaId,
           status: parsed.status,
+          statusChangedAt,
           rating: parsed.rating,
           review: parsed.review,
           notes: parsed.notes,
@@ -100,7 +103,20 @@ async function userMediaRoutes(fastify: FastifyInstance) {
           customFields: parsed.customFields,
           seasonsProgress: parsed.seasonsProgress,
         })
-        .returning({ id: userMedia.id });
+        .returning({
+          id: userMedia.id,
+          status: userMedia.status,
+          progress: userMedia.progress,
+        });
+
+      await tx.insert(userMediaStatusHistory).values({
+        userMediaId: createdUserMedia.id,
+        fromStatus: null,
+        toStatus: createdUserMedia.status,
+        progressSnapshot: createdUserMedia.progress,
+        source: "created",
+        changedAt: statusChangedAt,
+      });
 
       const [record] = await tx
         .select({
@@ -199,10 +215,12 @@ async function userMediaRoutes(fastify: FastifyInstance) {
         .select({
           progress: userMedia.progress,
           status: userMedia.status,
+          statusChangedAt: userMedia.statusChangedAt,
           lastProgressUpdate: userMedia.lastProgressUpdate,
         })
         .from(userMedia)
         .where(and(eq(userMedia.id, id), eq(userMedia.userId, userId)))
+        .for("update")
         .limit(1);
 
       if (!existing) return null;
@@ -211,20 +229,39 @@ async function userMediaRoutes(fastify: FastifyInstance) {
         rest.progress !== undefined && rest.progress !== existing.progress;
       const startedProgress =
         rest.status === "in_progress" && existing.status !== "in_progress";
+      const statusChanged =
+        rest.status !== undefined && rest.status !== existing.status;
+      const now = new Date();
 
       const [updated] = await tx
         .update(userMedia)
         .set({
           ...rest,
+          statusChangedAt: statusChanged ? now : existing.statusChangedAt,
           lastProgressUpdate:
             progressChanged || startedProgress
-              ? new Date()
+              ? now
               : existing.lastProgressUpdate,
         })
         .where(and(eq(userMedia.id, id), eq(userMedia.userId, userId)))
-        .returning({ id: userMedia.id });
+        .returning({
+          id: userMedia.id,
+          status: userMedia.status,
+          progress: userMedia.progress,
+        });
 
       if (!updated) return null;
+
+      if (statusChanged) {
+        await tx.insert(userMediaStatusHistory).values({
+          userMediaId: updated.id,
+          fromStatus: existing.status,
+          toStatus: updated.status,
+          progressSnapshot: updated.progress,
+          source: "form",
+          changedAt: now,
+        });
+      }
 
       const [record] = await tx
         .select({
@@ -264,9 +301,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     });
 
     if (!userMediaRecord) {
-      return reply
-        .status(404)
-        .send({ error: "User media not found or not updated" });
+      return reply.status(404).send({ error: "User media not found or not updated" });
     }
 
     return reply.send(userMediaRecord);
@@ -276,77 +311,144 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     const userId = request.userId;
     const { id } = request.params as { id: string };
     const quickAction = userMediaQuickActionSchema.parse(request.body);
-    const now = new Date();
+    const result = await db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select({
+          status: userMedia.status,
+          progress: userMedia.progress,
+        })
+        .from(userMedia)
+        .where(
+          and(
+            eq(userMedia.id, id),
+            eq(userMedia.userId, userId),
+            isNull(userMedia.deletedAt),
+          ),
+        )
+        .for("update")
+        .limit(1);
 
-    const updateData: Partial<typeof userMedia.$inferInsert> = {
-      ...quickAction,
-      updatedAt: now,
-    };
+      if (!existing) return null;
 
-    if (
-      quickAction.progress !== undefined ||
-      quickAction.status === "in_progress"
-    ) {
-      updateData.lastProgressUpdate = now;
-    }
+      const now = new Date();
+      const statusChanged =
+        quickAction.status !== undefined &&
+        quickAction.status !== existing.status;
+      const updateData: Partial<typeof userMedia.$inferInsert> = {
+        ...quickAction,
+        updatedAt: now,
+      };
 
-    if (quickAction.status === "completed") {
-      updateData.completedAt = now;
-      updateData.progress = 100;
-      updateData.lastProgressUpdate = now;
-    } else if (quickAction.status !== undefined) {
-      updateData.completedAt = null;
-    }
+      if (
+        quickAction.progress !== undefined ||
+        (statusChanged && quickAction.status === "in_progress")
+      ) {
+        updateData.lastProgressUpdate = now;
+      }
 
-    const [updated] = await db
-      .update(userMedia)
-      .set(updateData)
-      .where(
-        and(
-          eq(userMedia.id, id),
-          eq(userMedia.userId, userId),
-          eq(userMedia.isDeleted, false),
-        ),
-      )
-      .returning({
-        id: userMedia.id,
-        status: userMedia.status,
-        progress: userMedia.progress,
-        rating: userMedia.rating,
-        favorite: userMedia.favorite,
-        source: userMedia.source,
-        lastProgressUpdate: userMedia.lastProgressUpdate,
-        createdAt: userMedia.createdAt,
-        updatedAt: userMedia.updatedAt,
-      });
+      if (statusChanged) {
+        updateData.statusChangedAt = now;
 
-    if (!updated) {
+        if (quickAction.status === "completed") {
+          updateData.completedAt = now;
+          updateData.progress = 100;
+          updateData.lastProgressUpdate = now;
+        } else {
+          updateData.completedAt = null;
+        }
+      }
+
+      const [updated] = await tx
+        .update(userMedia)
+        .set(updateData)
+        .where(
+          and(
+            eq(userMedia.id, id),
+            eq(userMedia.userId, userId),
+            isNull(userMedia.deletedAt),
+          ),
+        )
+        .returning({
+          id: userMedia.id,
+          status: userMedia.status,
+          progress: userMedia.progress,
+          rating: userMedia.rating,
+          favorite: userMedia.favorite,
+          source: userMedia.source,
+          lastProgressUpdate: userMedia.lastProgressUpdate,
+          createdAt: userMedia.createdAt,
+          updatedAt: userMedia.updatedAt,
+        });
+
+      if (!updated) return null;
+
+      if (statusChanged) {
+        await tx.insert(userMediaStatusHistory).values({
+          userMediaId: updated.id,
+          fromStatus: existing.status,
+          toStatus: updated.status,
+          progressSnapshot: updated.progress,
+          source: "quick_action",
+          changedAt: now,
+        });
+      }
+
+      const [catalogRecord] = await tx
+        .select({ title: media.title, type: media.type })
+        .from(userMedia)
+        .innerJoin(media, eq(userMedia.mediaId, media.id))
+        .where(and(eq(userMedia.id, id), eq(userMedia.userId, userId)))
+        .limit(1);
+
+      return { ...updated, ...catalogRecord };
+    });
+
+    if (!result) {
       return reply.status(404).send({ error: "User media not found" });
     }
 
-    const [catalogRecord] = await db
-      .select({ title: media.title, type: media.type })
+    return reply.send(result);
+  });
+
+  fastify.get("/:id/status-history", async (request, reply) => {
+    const userId = request.userId;
+    const { id } = request.params as { id: string };
+
+    const [entry] = await db
+      .select({ id: userMedia.id })
       .from(userMedia)
-      .innerJoin(media, eq(userMedia.mediaId, media.id))
       .where(and(eq(userMedia.id, id), eq(userMedia.userId, userId)))
       .limit(1);
 
-    return reply.send({ ...updated, ...catalogRecord });
+    if (!entry) {
+      return reply.status(404).send({ error: "User media not found" });
+    }
+
+    const history = await db
+      .select({
+        id: userMediaStatusHistory.id,
+        fromStatus: userMediaStatusHistory.fromStatus,
+        toStatus: userMediaStatusHistory.toStatus,
+        progressSnapshot: userMediaStatusHistory.progressSnapshot,
+        source: userMediaStatusHistory.source,
+        changedAt: userMediaStatusHistory.changedAt,
+      })
+      .from(userMediaStatusHistory)
+      .innerJoin(userMedia, eq(userMediaStatusHistory.userMediaId, userMedia.id))
+      .where(and(eq(userMedia.id, id), eq(userMedia.userId, userId)))
+      .orderBy(desc(userMediaStatusHistory.changedAt));
+
+    return reply.send(history);
   });
 
   fastify.get("/pick", async (request, reply) => {
     const userId = request.userId;
     const filters = mediaPickerQuerySchema.parse(request.query);
-    const conditions = [
-      eq(userMedia.userId, userId),
-      eq(userMedia.status, "planned"),
-      eq(userMedia.isDeleted, false),
-    ];
+    const conditions = [eq(userMedia.userId, userId), eq(userMedia.status, "planned"), isNull(userMedia.deletedAt)];
 
     if (filters.type) conditions.push(eq(media.type, filters.type));
     if (filters.source) conditions.push(eq(userMedia.source, filters.source));
-    if (filters.tag)
-      conditions.push(arrayOverlaps(userMedia.tags, [filters.tag]));
+    if (filters.tag) conditions.push(arrayOverlaps(userMedia.tags, [filters.tag]));
 
     const selection = {
       id: userMedia.id,
@@ -372,16 +474,13 @@ async function userMediaRoutes(fastify: FastifyInstance) {
           .innerJoin(
             mediaCollectionItems,
             and(
-              eq(userMedia.mediaId, mediaCollectionItems.mediaId),
+              eq(userMedia.id, mediaCollectionItems.userMediaId),
               eq(mediaCollectionItems.collectionId, filters.collectionId),
             ),
           )
           .innerJoin(
             mediaCollection,
-            and(
-              eq(mediaCollectionItems.collectionId, mediaCollection.id),
-              eq(mediaCollection.userId, userId),
-            ),
+            and(eq(mediaCollectionItems.collectionId, mediaCollection.id), eq(mediaCollection.userId, userId)),
           )
           .where(and(...conditions))
           .orderBy(sql`random()`)
@@ -397,98 +496,88 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     return reply.send(records[0] ?? null);
   });
 
-  fastify.get<{ Querystring: UserMediaQuerySchema }>(
-    "/filter",
-    async (request, reply) => {
-      const userId = request.userId;
-      const parsed = userMediaQuerySchema.parse(request.query);
+  fastify.get<{ Querystring: UserMediaQuerySchema }>("/filter", async (request, reply) => {
+    const userId = request.userId;
+    const parsed = userMediaQuerySchema.parse(request.query);
 
-      const conditions = [
-        eq(userMedia.userId, userId),
-        eq(userMedia.isDeleted, false),
-      ];
+    const conditions = [eq(userMedia.userId, userId), isNull(userMedia.deletedAt)];
 
-      if (parsed.status && parsed.status.length > 0) {
-        conditions.push(inArray(userMedia.status, parsed.status));
-      }
+    if (parsed.status && parsed.status.length > 0) {
+      conditions.push(inArray(userMedia.status, parsed.status));
+    }
 
-      if (parsed.favorite !== undefined) {
-        conditions.push(eq(userMedia.favorite, parsed.favorite));
-      }
+    if (parsed.favorite !== undefined) {
+      conditions.push(eq(userMedia.favorite, parsed.favorite));
+    }
 
-      if (parsed.type && parsed.type.length > 0) {
-        conditions.push(inArray(media.type, parsed.type));
-      }
+    if (parsed.type && parsed.type.length > 0) {
+      conditions.push(inArray(media.type, parsed.type));
+    }
 
-      if (parsed.search) {
-        conditions.push(ilike(media.title, `%${parsed.search}%`));
-      }
+    if (parsed.search) {
+      conditions.push(ilike(media.title, `%${parsed.search}%`));
+    }
 
-      if (parsed.minRating !== undefined) {
-        conditions.push(gte(userMedia.rating, parsed.minRating));
-      }
+    if (parsed.minRating !== undefined) {
+      conditions.push(gte(userMedia.rating, parsed.minRating));
+    }
 
-      if (parsed.maxRating !== undefined) {
-        conditions.push(lte(userMedia.rating, parsed.maxRating));
-      }
+    if (parsed.maxRating !== undefined) {
+      conditions.push(lte(userMedia.rating, parsed.maxRating));
+    }
 
-      if (parsed.createdFrom) {
-        conditions.push(
-          sql`${userMedia.createdAt}::date >= ${parsed.createdFrom}::date`,
-        );
-      }
+    if (parsed.createdFrom) {
+      conditions.push(sql`${userMedia.createdAt}::date >= ${parsed.createdFrom}::date`);
+    }
 
-      if (parsed.createdTo) {
-        conditions.push(
-          sql`${userMedia.createdAt}::date <= ${parsed.createdTo}::date`,
-        );
-      }
+    if (parsed.createdTo) {
+      conditions.push(sql`${userMedia.createdAt}::date <= ${parsed.createdTo}::date`);
+    }
 
-      if (parsed.sources && parsed.sources.length > 0) {
-        conditions.push(inArray(userMedia.source, parsed.sources));
-      }
+    if (parsed.sources && parsed.sources.length > 0) {
+      conditions.push(inArray(userMedia.source, parsed.sources));
+    }
 
-      if (parsed.tags && parsed.tags.length > 0) {
-        conditions.push(arrayOverlaps(userMedia.tags, parsed.tags));
-      }
+    if (parsed.tags && parsed.tags.length > 0) {
+      conditions.push(arrayOverlaps(userMedia.tags, parsed.tags));
+    }
 
-      const sortColumns = {
+    const sortColumns = {
+      createdAt: userMedia.createdAt,
+      updatedAt: userMedia.updatedAt,
+      rating: userMedia.rating,
+      title: media.title,
+    };
+    const sortDirection = parsed.order === "asc" ? asc : desc;
+
+    const results = await db
+      .select({
+        id: userMedia.id,
+
+        title: media.title,
+        type: media.type,
+
+        status: userMedia.status,
+        progress: userMedia.progress,
+        rating: userMedia.rating,
+        favorite: userMedia.favorite,
+        source: userMedia.source,
+        lastProgressUpdate: userMedia.lastProgressUpdate,
+
         createdAt: userMedia.createdAt,
         updatedAt: userMedia.updatedAt,
-        rating: userMedia.rating,
-        title: media.title,
-      };
-      const sortDirection = parsed.order === "asc" ? asc : desc;
+      })
+      .from(userMedia)
+      .innerJoin(media, eq(userMedia.mediaId, media.id))
+      .where(and(...conditions))
+      .orderBy(sortDirection(sortColumns[parsed.sort]));
 
-      const results = await db
-        .select({
-          id: userMedia.id,
-
-          title: media.title,
-          type: media.type,
-
-          status: userMedia.status,
-          progress: userMedia.progress,
-          rating: userMedia.rating,
-          favorite: userMedia.favorite,
-          source: userMedia.source,
-          lastProgressUpdate: userMedia.lastProgressUpdate,
-
-          createdAt: userMedia.createdAt,
-          updatedAt: userMedia.updatedAt,
-        })
-        .from(userMedia)
-        .innerJoin(media, eq(userMedia.mediaId, media.id))
-        .where(and(...conditions))
-        .orderBy(sortDirection(sortColumns[parsed.sort]));
-
-      return reply.send({
-        success: true,
-        count: results.length,
-        data: results,
-      });
-    },
-  );
+    return reply.send({
+      success: true,
+      count: results.length,
+      data: results,
+    });
+  });
 
   fastify.get("/", async (request, reply) => {
     const session = await auth.api.getSession({
@@ -581,14 +670,8 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     const userId = request.userId;
 
     const [sourceRows, tagRows] = await Promise.all([
-      db
-        .selectDistinct({ source: userMedia.source })
-        .from(userMedia)
-        .where(eq(userMedia.userId, userId)),
-      db
-        .select({ tags: userMedia.tags })
-        .from(userMedia)
-        .where(eq(userMedia.userId, userId)),
+      db.selectDistinct({ source: userMedia.source }).from(userMedia).where(eq(userMedia.userId, userId)),
+      db.select({ tags: userMedia.tags }).from(userMedia).where(eq(userMedia.userId, userId)),
     ]);
 
     const tagsByNormalizedValue = new Map<string, string>();
@@ -603,12 +686,8 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     }
 
     return reply.send({
-      sources: sourceRows
-        .map((row) => row.source)
-        .filter((source) => source !== null),
-      tags: [...tagsByNormalizedValue.values()].sort((a, b) =>
-        a.localeCompare(b),
-      ),
+      sources: sourceRows.map((row) => row.source).filter((source) => source !== null),
+      tags: [...tagsByNormalizedValue.values()].sort((a, b) => a.localeCompare(b)),
     });
   });
 
@@ -619,13 +698,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
       return db
         .select({ count: count() })
         .from(userMedia)
-        .where(
-          and(
-            eq(userMedia.userId, userId),
-            eq(userMedia.status, status),
-            eq(userMedia.isDeleted, false),
-          ),
-        );
+        .where(and(eq(userMedia.userId, userId), eq(userMedia.status, status), isNull(userMedia.deletedAt)));
     }
 
     const [
@@ -648,9 +721,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
       db
         .select({ count: count() })
         .from(userMedia)
-        .where(
-          and(eq(userMedia.userId, userId), eq(userMedia.isDeleted, false)),
-        ),
+        .where(and(eq(userMedia.userId, userId), isNull(userMedia.deletedAt))),
 
       statusSelect("completed"),
       statusSelect("in_progress"),
@@ -658,10 +729,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
       statusSelect("dropped"),
       statusSelect("on_hold"),
 
-      db
-        .select({ count: count() })
-        .from(mediaCollection)
-        .where(eq(mediaCollection.userId, userId)),
+      db.select({ count: count() }).from(mediaCollection).where(eq(mediaCollection.userId, userId)),
 
       //-----------------------------------
       // Status chart
@@ -673,9 +741,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
           count: count(),
         })
         .from(userMedia)
-        .where(
-          and(eq(userMedia.userId, userId), eq(userMedia.isDeleted, false)),
-        )
+        .where(and(eq(userMedia.userId, userId), isNull(userMedia.deletedAt)))
         .groupBy(userMedia.status),
 
       //-----------------------------------
@@ -689,9 +755,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
         })
         .from(userMedia)
         .innerJoin(media, eq(media.id, userMedia.mediaId))
-        .where(
-          and(eq(userMedia.userId, userId), eq(userMedia.isDeleted, false)),
-        )
+        .where(and(eq(userMedia.userId, userId), isNull(userMedia.deletedAt)))
         .groupBy(media.type),
 
       //-----------------------------------
@@ -704,13 +768,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
           count: count(),
         })
         .from(userMedia)
-        .where(
-          and(
-            eq(userMedia.userId, userId),
-            eq(userMedia.isDeleted, false),
-            isNotNull(userMedia.rating),
-          ),
-        )
+        .where(and(eq(userMedia.userId, userId), isNull(userMedia.deletedAt), isNotNull(userMedia.rating)))
         .groupBy(userMedia.rating)
         .orderBy(userMedia.rating),
 
@@ -731,7 +789,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
             eq(userMedia.userId, userId),
             eq(userMedia.status, "completed"),
             isNotNull(userMedia.completedAt),
-            eq(userMedia.isDeleted, false),
+            isNull(userMedia.deletedAt),
           ),
         )
         .groupBy(sql`date_trunc('month', ${userMedia.completedAt})`)
@@ -831,12 +889,8 @@ async function userMediaRoutes(fastify: FastifyInstance) {
         seasonsProgress: JSON.stringify(r.seasonsProgress ?? []),
 
         startedAt: r.startedAt ? r.startedAt.toISOString().slice(0, 16) : "-",
-        completedAt: r.completedAt
-          ? r.completedAt.toISOString().slice(0, 16)
-          : "-",
-        lastProgressUpdate: r.lastProgressUpdate
-          ? r.lastProgressUpdate.toISOString().slice(0, 16)
-          : "-",
+        completedAt: r.completedAt ? r.completedAt.toISOString().slice(0, 16) : "-",
+        lastProgressUpdate: r.lastProgressUpdate ? r.lastProgressUpdate.toISOString().slice(0, 16) : "-",
 
         createdAt: r.createdAt ? r.createdAt.toISOString().slice(0, 16) : "-",
         updatedAt: r.updatedAt ? r.updatedAt.toISOString().slice(0, 16) : "-",
@@ -846,10 +900,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
       const csv = Papa.unparse(csvData, { header: true });
 
       reply.header("Content-Type", "text/csv");
-      reply.header(
-        "Content-Disposition",
-        `attachment; filename="user-media-${userId}-${Date.now()}.csv"`,
-      );
+      reply.header("Content-Disposition", `attachment; filename="user-media-${userId}-${Date.now()}.csv"`);
 
       return reply.send(csv);
     } catch (error) {

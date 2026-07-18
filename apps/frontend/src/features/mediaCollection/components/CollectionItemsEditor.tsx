@@ -12,7 +12,10 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import type { MediaRecord } from "@media-voyage/shared/api";
+import type {
+  MediaCollectionItemRecord,
+  MediaRecord,
+} from "@media-voyage/shared/api";
 import { IconPlus, IconX, IconGripVertical } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
@@ -22,15 +25,6 @@ import type { DropResult } from "@hello-pangea/dnd";
 import { motion } from "motion/react";
 import type { Variants } from "motion/react";
 import { capitalizeWords } from "#/utils/stringFunctions";
-
-type CollectionItem = {
-  id: string;
-  mediaId: string;
-  title: string;
-  type: string;
-  position?: number | null;
-  createdAt?: string | null;
-};
 
 type CollectionItemsEditorProps = {
   data: MediaRecord[];
@@ -69,13 +63,16 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
     from: "/_authenticated/collection/edit/$id",
   });
   const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
-  const [orderedItems, setOrderedItems] = useState<CollectionItem[]>([]);
+  const [orderedItems, setOrderedItems] = useState<MediaCollectionItemRecord[]>(
+    [],
+  );
   const [canSaveOrder, setCanSaveOrder] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: collectionItems = [], isPending: isLoadingItems } = useQuery({
     queryKey: ["collection-items", collectionId],
-    queryFn: () => api<CollectionItem[]>(`/collectionItem/${collectionId}`),
+    queryFn: () =>
+      api<MediaCollectionItemRecord[]>(`/collectionItem/${collectionId}`),
   });
 
   useEffect(() => {
@@ -83,13 +80,17 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
   }, [collectionItems]);
 
   const availableMediaOptions = useMemo(() => {
-    const options = props.data;
+    const includedIds = new Set(
+      collectionItems.map((item) => item.userMediaId),
+    );
 
-    return options.map((entry) => ({
-      value: entry.id,
-      label: `${entry.title} (${capitalizeWords(entry.type)})`,
-    }));
-  }, [props.data]);
+    return props.data
+      .filter((entry) => !includedIds.has(entry.id))
+      .map((entry) => ({
+        value: entry.id,
+        label: `${entry.title} (${capitalizeWords(entry.type)})`,
+      }));
+  }, [collectionItems, props.data]);
 
   const addMutation = useMutation({
     mutationFn: async (userMediaId: string) =>
@@ -121,7 +122,7 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
   });
 
   const saveOrderMutation = useMutation({
-    mutationFn: async (items: CollectionItem[]) =>
+    mutationFn: async (items: MediaCollectionItemRecord[]) =>
       api(`/collectionItem/${collectionId}`, {
         method: "PATCH",
         headers: {
@@ -148,7 +149,7 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
   };
 
   const reorder = (
-    list: CollectionItem[],
+    list: MediaCollectionItemRecord[],
     startIndex: number,
     endIndex: number,
   ) => {

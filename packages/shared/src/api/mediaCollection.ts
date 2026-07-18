@@ -1,5 +1,10 @@
 import z from "zod";
-import { mediaCollectionInsertSchema, mediaCollectionSelectSchema } from "../schemas/mediaCollection";
+import {
+  mediaCollectionInsertSchema,
+  mediaCollectionItemSelectSchema,
+  mediaCollectionSelectSchema,
+} from "../schemas/mediaCollection";
+import { mediaSelectSchema } from "../schemas/mediaSchema";
 
 export const mediaCollectionSchema = z.object({
   id: mediaCollectionSelectSchema.shape.id,
@@ -15,14 +20,29 @@ export const mediaCollectionFormSchema = mediaCollectionInsertSchema.pick({
   visibility: true,
 });
 
-export type MediaCollectionFormSchema = z.infer<typeof mediaCollectionFormSchema>;
+export type MediaCollectionFormSchema = z.infer<
+  typeof mediaCollectionFormSchema
+>;
 
 export const mediaCollectionRecord = z.object({
   id: mediaCollectionSelectSchema.shape.id,
   name: mediaCollectionSelectSchema.shape.name,
-  description: mediaCollectionSelectSchema.description,
-  visiblity: mediaCollectionSelectSchema.shape.visibility,
+  description: mediaCollectionSelectSchema.shape.description,
+  visibility: mediaCollectionSelectSchema.shape.visibility,
   createdAt: mediaCollectionSelectSchema.shape.createdAt,
 });
 
 export type MediaCollectionRecord = z.infer<typeof mediaCollectionRecord>;
+
+export const mediaCollectionItemRecord = z.object({
+  id: mediaCollectionItemSelectSchema.shape.id,
+  userMediaId: mediaCollectionItemSelectSchema.shape.userMediaId,
+  title: mediaSelectSchema.shape.title,
+  type: mediaSelectSchema.shape.type,
+  position: mediaCollectionItemSelectSchema.shape.position,
+  createdAt: mediaCollectionItemSelectSchema.shape.createdAt,
+});
+
+export type MediaCollectionItemRecord = z.infer<
+  typeof mediaCollectionItemRecord
+>;

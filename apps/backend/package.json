@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx watch src/index.ts",
-    "build": "tsx build src/index.ts --out-dir dist"
+    "build": "esbuild ./src/index.ts --bundle --platform=node --format=esm --outfile=./dist/index.js"
   },
   "keywords": [],
   "author": "",
@@ -27,6 +27,7 @@
   "devDependencies": {
     "@types/node": "^25.9.1",
     "@types/papaparse": "^5.5.2",
+    "esbuild": "^0.28.0",
     "tsx": "^4.22.4"
   }
 }

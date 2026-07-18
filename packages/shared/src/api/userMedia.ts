@@ -109,8 +109,9 @@ export const userMediaFieldsSchema = userMediaInsertSchema.omit({
   mediaId: true,
   createdAt: true,
   updatedAt: true,
+  deletedAt: true,
   lastProgressUpdate: true,
-  isDeleted: true,
+  statusChangedAt: true,
 });
 
 export const userMediaFormSchema = userMediaInsertSchema

@@ -2,8 +2,13 @@ import { fromNodeHeaders } from "better-auth/node";
 import { FastifyInstance } from "fastify";
 import { auth } from "../../auth";
 import { db } from "../../db/db";
-import { media, mediaCollection, mediaCollectionItems, userMedia } from "@media-voyage/shared";
-import { and, eq } from "drizzle-orm";
+import {
+  media,
+  mediaCollection,
+  mediaCollectionItems,
+  userMedia,
+} from "@media-voyage/shared";
+import { and, asc, eq, isNull, max } from "drizzle-orm";
 
 async function collectionItemRoutes(fastify: FastifyInstance) {
   fastify.addHook("preHandler", async (request, reply) => {
@@ -30,7 +35,12 @@ async function collectionItemRoutes(fastify: FastifyInstance) {
     const collection = await db
       .select({ id: mediaCollection.id })
       .from(mediaCollection)
-      .where(and(eq(mediaCollection.id, collectionId), eq(mediaCollection.userId, userId)))
+      .where(
+        and(
+          eq(mediaCollection.id, collectionId),
+          eq(mediaCollection.userId, userId),
+        ),
+      )
       .limit(1);
 
     if (!collection.length) {
@@ -40,15 +50,19 @@ async function collectionItemRoutes(fastify: FastifyInstance) {
     const items = await db
       .select({
         id: mediaCollectionItems.id,
-        mediaId: mediaCollectionItems.mediaId,
+        userMediaId: mediaCollectionItems.userMediaId,
         title: media.title,
         type: media.type,
+        position: mediaCollectionItems.position,
         createdAt: mediaCollectionItems.createdAt,
       })
       .from(mediaCollectionItems)
-      .innerJoin(media, eq(mediaCollectionItems.mediaId, media.id))
-      .where(
-        and(eq(mediaCollectionItems.collectionId, collectionId), eq(mediaCollectionItems.collectionId, collectionId)),
+      .innerJoin(userMedia, eq(mediaCollectionItems.userMediaId, userMedia.id))
+      .innerJoin(media, eq(userMedia.mediaId, media.id))
+      .where(eq(mediaCollectionItems.collectionId, collectionId))
+      .orderBy(
+        asc(mediaCollectionItems.position),
+        asc(mediaCollectionItems.createdAt),
       );
 
     return reply.send(items);
@@ -62,7 +76,12 @@ async function collectionItemRoutes(fastify: FastifyInstance) {
     const collection = await db
       .select({ id: mediaCollection.id })
       .from(mediaCollection)
-      .where(and(eq(mediaCollection.id, collectionId), eq(mediaCollection.userId, userId)))
+      .where(
+        and(
+          eq(mediaCollection.id, collectionId),
+          eq(mediaCollection.userId, userId),
+        ),
+      )
       .limit(1);
 
     if (!collection.length) {
@@ -74,34 +93,50 @@ async function collectionItemRoutes(fastify: FastifyInstance) {
     }
 
     const userMediaEntry = await db
-      .select({ mediaId: userMedia.mediaId })
+      .select({ id: userMedia.id })
       .from(userMedia)
-      .where(and(eq(userMedia.id, userMediaId), eq(userMedia.userId, userId)))
+      .where(
+        and(
+          eq(userMedia.id, userMediaId),
+          eq(userMedia.userId, userId),
+          isNull(userMedia.deletedAt),
+        ),
+      )
       .limit(1);
 
     if (!userMediaEntry.length) {
-      return reply.status(404).send({ error: "Selected media entry not found" });
+      return reply
+        .status(404)
+        .send({ error: "Selected media entry not found" });
     }
-
-    const resolvedMediaId = userMediaEntry[0].mediaId;
 
     const existing = await db
       .select({ id: mediaCollectionItems.id })
       .from(mediaCollectionItems)
       .where(
-        and(eq(mediaCollectionItems.collectionId, collectionId), eq(mediaCollectionItems.mediaId, resolvedMediaId)),
+        and(
+          eq(mediaCollectionItems.collectionId, collectionId),
+          eq(mediaCollectionItems.userMediaId, userMediaId),
+        ),
       );
 
     if (existing.length) {
-      return reply.status(409).send({ error: "Media is already in this collection" });
+      return reply
+        .status(409)
+        .send({ error: "Media is already in this collection" });
     }
+
+    const [lastItem] = await db
+      .select({ position: max(mediaCollectionItems.position) })
+      .from(mediaCollectionItems)
+      .where(eq(mediaCollectionItems.collectionId, collectionId));
 
     const inserted = await db
       .insert(mediaCollectionItems)
       .values({
         collectionId,
-        mediaId: resolvedMediaId,
-        position: 0,
+        userMediaId,
+        position: (lastItem?.position ?? 0) + 1,
       })
       .returning();
 
@@ -118,7 +153,12 @@ async function collectionItemRoutes(fastify: FastifyInstance) {
     const collection = await db
       .select({ id: mediaCollection.id })
       .from(mediaCollection)
-      .where(and(eq(mediaCollection.id, collectionId), eq(mediaCollection.userId, userId)))
+      .where(
+        and(
+          eq(mediaCollection.id, collectionId),
+          eq(mediaCollection.userId, userId),
+        ),
+      )
       .limit(1);
 
     if (!collection.length) {
@@ -134,7 +174,12 @@ async function collectionItemRoutes(fastify: FastifyInstance) {
         db
           .update(mediaCollectionItems)
           .set({ position: item.position })
-          .where(and(eq(mediaCollectionItems.collectionId, collectionId), eq(mediaCollectionItems.id, item.id))),
+          .where(
+            and(
+              eq(mediaCollectionItems.collectionId, collectionId),
+              eq(mediaCollectionItems.id, item.id),
+            ),
+          ),
       ),
     );
 
@@ -151,7 +196,12 @@ async function collectionItemRoutes(fastify: FastifyInstance) {
     const collection = await db
       .select({ id: mediaCollection.id })
       .from(mediaCollection)
-      .where(and(eq(mediaCollection.id, collectionId), eq(mediaCollection.userId, userId)))
+      .where(
+        and(
+          eq(mediaCollection.id, collectionId),
+          eq(mediaCollection.userId, userId),
+        ),
+      )
       .limit(1);
 
     if (!collection.length) {
@@ -160,7 +210,12 @@ async function collectionItemRoutes(fastify: FastifyInstance) {
 
     const deleted = await db
       .delete(mediaCollectionItems)
-      .where(and(eq(mediaCollectionItems.collectionId, collectionId), eq(mediaCollectionItems.id, itemId)))
+      .where(
+        and(
+          eq(mediaCollectionItems.collectionId, collectionId),
+          eq(mediaCollectionItems.id, itemId),
+        ),
+      )
       .returning();
 
     if (!deleted.length) {

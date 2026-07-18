@@ -5,6 +5,7 @@ import {
 import {
   Box,
   Button,
+  Card,
   Container,
   Drawer,
   Flex,
@@ -26,7 +27,13 @@ import { AnimatePresence, motion } from "motion/react";
 import { MediaFilterCard } from "#/features/media/components/MediaFilterCard";
 import { MediaPickerModal } from "#/features/media/components/MediaPickerModal";
 import { collectionQueryOptions } from "#/features/mediaCollection/queries";
-import { IconDice5, IconFilter } from "@tabler/icons-react";
+import {
+  IconDice5,
+  IconFilter,
+  IconMovie,
+  IconPlus,
+} from "@tabler/icons-react";
+import { MediaAppliedFilters } from "#/features/media/components/MediaAppliedFilters";
 
 export const Route = createFileRoute("/_authenticated/media/")({
   validateSearch: userMediaQuerySchema,
@@ -60,12 +67,31 @@ function RouteComponent() {
 
   const [filters, setFilters] = useState<UserMediaQuerySchema>(search);
 
+  const hasAppliedFilters = Boolean(
+    search.search ||
+    search.favorite ||
+    search.status?.length ||
+    search.type?.length ||
+    search.minRating !== undefined ||
+    search.maxRating !== undefined ||
+    search.createdFrom ||
+    search.createdTo ||
+    search.sources?.length ||
+    search.tags?.length,
+  );
+
   const updateFilters = (newFilters: UserMediaQuerySchema) => {
     setFilters(newFilters);
   };
 
   const applyFilters = () => {
     navigate({ to: "/media", search: filters });
+    close();
+  };
+
+  const updateAndApplyFilters = (newFilters: UserMediaQuerySchema) => {
+    updateFilters(newFilters);
+    navigate({ to: "/media", search: newFilters });
     close();
   };
 
@@ -139,6 +165,11 @@ function RouteComponent() {
               Click any card to view the full details, or use the action button
               to update.
             </Text>
+
+            <MediaAppliedFilters
+              filters={search}
+              updateAndApplyFilters={updateAndApplyFilters}
+            />
           </Stack>
         </Group>
 
@@ -163,49 +194,85 @@ function RouteComponent() {
 
         <Flex gap="sm">
           <Box flex="1">
-            <SimpleGrid
-              hidden={view !== "grid"}
-              spacing={{ base: "xs", md: "md" }}
-              cols={{
-                base: 1,
-                sm: 2,
-                lg: 3,
-                xl: 4,
-              }}
-            >
-              <AnimatePresence mode="popLayout">
-                {data?.data.map((record) => (
-                  <motion.div
-                    key={record.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.96 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.96 }}
-                    transition={{
-                      duration: 0.2,
-                      layout: {
-                        duration: 0.25,
-                      },
-                    }}
+            {!isFetching && data?.data.length === 0 ? (
+              <Card withBorder p="xl">
+                <Stack align="center" gap="xs">
+                  <IconMovie size={36} />
+                  <Text fw={600}>
+                    {hasAppliedFilters
+                      ? "No media match these filters"
+                      : "Your library is empty"}
+                  </Text>
+                  <Text c="dimmed" size="sm" ta="center">
+                    {hasAppliedFilters
+                      ? "Clear the filters to see everything in your library."
+                      : "Add your first movie, show, book, or game to get started."}
+                  </Text>
+                  <Button
+                    mt="xs"
+                    variant="light"
+                    leftSection={
+                      hasAppliedFilters ? (
+                        <IconFilter size={16} />
+                      ) : (
+                        <IconPlus size={16} />
+                      )
+                    }
+                    onClick={() =>
+                      hasAppliedFilters
+                        ? resetFilters()
+                        : navigate({ to: "/media/add" })
+                    }
                   >
-                    <MediaCard
+                    {hasAppliedFilters ? "Clear filters" : "Add media"}
+                  </Button>
+                </Stack>
+              </Card>
+            ) : (
+              <SimpleGrid
+                hidden={view !== "grid"}
+                spacing={{ base: "xs", md: "md" }}
+                cols={{
+                  base: 1,
+                  sm: 2,
+                  lg: 3,
+                  xl: 4,
+                }}
+              >
+                <AnimatePresence mode="popLayout">
+                  {data?.data.map((record) => (
+                    <motion.div
                       key={record.id}
-                      media={record}
-                      onView={(id) =>
-                        navigate({
-                          to: "/media/view/$id",
-                          params: { id },
-                          viewTransition: true,
-                        })
-                      }
-                      onEdit={(id) =>
-                        navigate({ to: "/media/update/$id", params: { id } })
-                      }
-                    />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </SimpleGrid>
+                      layout
+                      initial={{ opacity: 0, scale: 0.96 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.96 }}
+                      transition={{
+                        duration: 0.2,
+                        layout: {
+                          duration: 0.25,
+                        },
+                      }}
+                    >
+                      <MediaCard
+                        key={record.id}
+                        media={record}
+                        onView={(id) =>
+                          navigate({
+                            to: "/media/view/$id",
+                            params: { id },
+                            viewTransition: true,
+                          })
+                        }
+                        onEdit={(id) =>
+                          navigate({ to: "/media/update/$id", params: { id } })
+                        }
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </SimpleGrid>
+            )}
           </Box>
 
           <Box visibleFrom="lg" w={248} flex="0 0 248px">
