@@ -1,7 +1,12 @@
 import { fromNodeHeaders } from "better-auth/node";
 import { FastifyInstance } from "fastify";
 import { auth } from "../../auth";
-import { media, mediaCollection, userMedia } from "@media-voyage/shared";
+import {
+  media,
+  mediaCollection,
+  mediaCollectionItems,
+  userMedia,
+} from "@media-voyage/shared";
 import {
   eq,
   ilike,
@@ -18,6 +23,8 @@ import {
 } from "drizzle-orm";
 import {
   userMediaFormSchema,
+  mediaPickerQuerySchema,
+  userMediaQuickActionSchema,
   UserMediaQuerySchema,
 } from "@media-voyage/shared/api";
 import { userMediaQuerySchema } from "@media-voyage/shared/api";
@@ -86,7 +93,6 @@ async function userMediaRoutes(fastify: FastifyInstance) {
           progress: parsed.progress,
           favorite: parsed.favorite,
           rewatches: parsed.rewatches,
-          lastProgressUpdate: parsed.lastProgressUpdate,
           timeSpent: parsed.timeSpent,
           source: parsed.source,
           tags: parsed.tags,
@@ -118,6 +124,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
           visibility: userMedia.visibility,
           customFields: userMedia.customFields,
           seasonsProgress: userMedia.seasonsProgress,
+          lastProgressUpdate: userMedia.lastProgressUpdate,
 
           createdAt: userMedia.createdAt,
           updatedAt: userMedia.updatedAt,
@@ -163,6 +170,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
 
         startedAt: userMedia.startedAt,
         completedAt: userMedia.completedAt,
+        lastProgressUpdate: userMedia.lastProgressUpdate,
         createdAt: userMedia.createdAt,
         updatedAt: userMedia.updatedAt,
       })
@@ -186,52 +194,207 @@ async function userMediaRoutes(fastify: FastifyInstance) {
 
     const { title, type, mediaId, ...rest } = updateData;
 
-    const updated = await db
-      .update(userMedia)
-      .set(rest)
-      .where(and(eq(userMedia.id, id), eq(userMedia.userId, userId)))
-      .returning();
+    const userMediaRecord = await db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select({
+          progress: userMedia.progress,
+          status: userMedia.status,
+          lastProgressUpdate: userMedia.lastProgressUpdate,
+        })
+        .from(userMedia)
+        .where(and(eq(userMedia.id, id), eq(userMedia.userId, userId)))
+        .limit(1);
 
-    if (!updated.length) {
+      if (!existing) return null;
+
+      const progressChanged =
+        rest.progress !== undefined && rest.progress !== existing.progress;
+      const startedProgress =
+        rest.status === "in_progress" && existing.status !== "in_progress";
+
+      const [updated] = await tx
+        .update(userMedia)
+        .set({
+          ...rest,
+          lastProgressUpdate:
+            progressChanged || startedProgress
+              ? new Date()
+              : existing.lastProgressUpdate,
+        })
+        .where(and(eq(userMedia.id, id), eq(userMedia.userId, userId)))
+        .returning({ id: userMedia.id });
+
+      if (!updated) return null;
+
+      const [record] = await tx
+        .select({
+          id: userMedia.id,
+          mediaId: userMedia.mediaId,
+
+          title: media.title,
+          type: media.type,
+          description: media.description,
+
+          status: userMedia.status,
+          rating: userMedia.rating,
+          review: userMedia.review,
+          notes: userMedia.notes,
+          progress: userMedia.progress,
+          favorite: userMedia.favorite,
+          rewatches: userMedia.rewatches,
+          timeSpent: userMedia.timeSpent,
+          source: userMedia.source,
+          tags: userMedia.tags,
+          visibility: userMedia.visibility,
+          customFields: userMedia.customFields,
+          seasonsProgress: userMedia.seasonsProgress,
+
+          startedAt: userMedia.startedAt,
+          completedAt: userMedia.completedAt,
+          lastProgressUpdate: userMedia.lastProgressUpdate,
+          createdAt: userMedia.createdAt,
+          updatedAt: userMedia.updatedAt,
+        })
+        .from(userMedia)
+        .where(and(eq(userMedia.id, updated.id), eq(userMedia.userId, userId)))
+        .innerJoin(media, eq(userMedia.mediaId, media.id))
+        .limit(1);
+
+      return record ?? null;
+    });
+
+    if (!userMediaRecord) {
       return reply
         .status(404)
         .send({ error: "User media not found or not updated" });
     }
 
-    const userMediaRecord = await db
-      .select({
+    return reply.send(userMediaRecord);
+  });
+
+  fastify.patch("/:id/quick-actions", async (request, reply) => {
+    const userId = request.userId;
+    const { id } = request.params as { id: string };
+    const quickAction = userMediaQuickActionSchema.parse(request.body);
+    const now = new Date();
+
+    const updateData: Partial<typeof userMedia.$inferInsert> = {
+      ...quickAction,
+      updatedAt: now,
+    };
+
+    if (
+      quickAction.progress !== undefined ||
+      quickAction.status === "in_progress"
+    ) {
+      updateData.lastProgressUpdate = now;
+    }
+
+    if (quickAction.status === "completed") {
+      updateData.completedAt = now;
+      updateData.progress = 100;
+      updateData.lastProgressUpdate = now;
+    } else if (quickAction.status !== undefined) {
+      updateData.completedAt = null;
+    }
+
+    const [updated] = await db
+      .update(userMedia)
+      .set(updateData)
+      .where(
+        and(
+          eq(userMedia.id, id),
+          eq(userMedia.userId, userId),
+          eq(userMedia.isDeleted, false),
+        ),
+      )
+      .returning({
         id: userMedia.id,
-        mediaId: userMedia.mediaId,
-
-        title: media.title,
-        type: media.type,
-        description: media.description,
-
         status: userMedia.status,
-        rating: userMedia.rating,
-        review: userMedia.review,
-        notes: userMedia.notes,
         progress: userMedia.progress,
+        rating: userMedia.rating,
         favorite: userMedia.favorite,
-        rewatches: userMedia.rewatches,
-        timeSpent: userMedia.timeSpent,
         source: userMedia.source,
-        tags: userMedia.tags,
-        visibility: userMedia.visibility,
-        customFields: userMedia.customFields,
-        seasonsProgress: userMedia.seasonsProgress,
-
-        startedAt: userMedia.startedAt,
-        completedAt: userMedia.completedAt,
+        lastProgressUpdate: userMedia.lastProgressUpdate,
         createdAt: userMedia.createdAt,
         updatedAt: userMedia.updatedAt,
-      })
+      });
+
+    if (!updated) {
+      return reply.status(404).send({ error: "User media not found" });
+    }
+
+    const [catalogRecord] = await db
+      .select({ title: media.title, type: media.type })
       .from(userMedia)
-      .where(and(eq(userMedia.id, id), eq(userMedia.userId, userId)))
       .innerJoin(media, eq(userMedia.mediaId, media.id))
+      .where(and(eq(userMedia.id, id), eq(userMedia.userId, userId)))
       .limit(1);
 
-    return reply.send(userMediaRecord[0]);
+    return reply.send({ ...updated, ...catalogRecord });
+  });
+
+  fastify.get("/pick", async (request, reply) => {
+    const userId = request.userId;
+    const filters = mediaPickerQuerySchema.parse(request.query);
+    const conditions = [
+      eq(userMedia.userId, userId),
+      eq(userMedia.status, "planned"),
+      eq(userMedia.isDeleted, false),
+    ];
+
+    if (filters.type) conditions.push(eq(media.type, filters.type));
+    if (filters.source) conditions.push(eq(userMedia.source, filters.source));
+    if (filters.tag)
+      conditions.push(arrayOverlaps(userMedia.tags, [filters.tag]));
+
+    const selection = {
+      id: userMedia.id,
+      title: media.title,
+      type: media.type,
+      imageUrl: media.imageUrl,
+      status: userMedia.status,
+      progress: userMedia.progress,
+      rating: userMedia.rating,
+      favorite: userMedia.favorite,
+      source: userMedia.source,
+      tags: userMedia.tags,
+      lastProgressUpdate: userMedia.lastProgressUpdate,
+      createdAt: userMedia.createdAt,
+      updatedAt: userMedia.updatedAt,
+    };
+
+    const records = filters.collectionId
+      ? await db
+          .select(selection)
+          .from(userMedia)
+          .innerJoin(media, eq(userMedia.mediaId, media.id))
+          .innerJoin(
+            mediaCollectionItems,
+            and(
+              eq(userMedia.mediaId, mediaCollectionItems.mediaId),
+              eq(mediaCollectionItems.collectionId, filters.collectionId),
+            ),
+          )
+          .innerJoin(
+            mediaCollection,
+            and(
+              eq(mediaCollectionItems.collectionId, mediaCollection.id),
+              eq(mediaCollection.userId, userId),
+            ),
+          )
+          .where(and(...conditions))
+          .orderBy(sql`random()`)
+          .limit(1)
+      : await db
+          .select(selection)
+          .from(userMedia)
+          .innerJoin(media, eq(userMedia.mediaId, media.id))
+          .where(and(...conditions))
+          .orderBy(sql`random()`)
+          .limit(1);
+
+    return reply.send(records[0] ?? null);
   });
 
   fastify.get<{ Querystring: UserMediaQuerySchema }>(
@@ -305,9 +468,11 @@ async function userMediaRoutes(fastify: FastifyInstance) {
           type: media.type,
 
           status: userMedia.status,
+          progress: userMedia.progress,
           rating: userMedia.rating,
           favorite: userMedia.favorite,
           source: userMedia.source,
+          lastProgressUpdate: userMedia.lastProgressUpdate,
 
           createdAt: userMedia.createdAt,
           updatedAt: userMedia.updatedAt,
@@ -344,9 +509,11 @@ async function userMediaRoutes(fastify: FastifyInstance) {
         type: media.type,
 
         status: userMedia.status,
+        progress: userMedia.progress,
         rating: userMedia.rating,
         favorite: userMedia.favorite,
         source: userMedia.source,
+        lastProgressUpdate: userMedia.lastProgressUpdate,
 
         createdAt: userMedia.createdAt,
         updatedAt: userMedia.updatedAt,
@@ -603,8 +770,14 @@ async function userMediaRoutes(fastify: FastifyInstance) {
           userId: userMedia.userId,
           mediaId: userMedia.mediaId,
           title: media.title,
+          originalTitle: media.originalTitle,
           type: media.type,
           description: media.description,
+          imageUrl: media.imageUrl,
+          releaseDate: media.releaseDate,
+          catalogSource: media.source,
+          externalId: media.externalId,
+          catalogMetadata: media.metadata,
           status: userMedia.status,
           rating: userMedia.rating,
           review: userMedia.review,
@@ -613,9 +786,15 @@ async function userMediaRoutes(fastify: FastifyInstance) {
           favorite: userMedia.favorite,
           rewatches: userMedia.rewatches,
           timeSpent: userMedia.timeSpent,
+          trackingSource: userMedia.source,
+          tags: userMedia.tags,
+          visibility: userMedia.visibility,
+          customFields: userMedia.customFields,
+          seasonsProgress: userMedia.seasonsProgress,
 
           startedAt: userMedia.startedAt,
           completedAt: userMedia.completedAt,
+          lastProgressUpdate: userMedia.lastProgressUpdate,
 
           createdAt: userMedia.createdAt,
           updatedAt: userMedia.updatedAt,
@@ -627,9 +806,16 @@ async function userMediaRoutes(fastify: FastifyInstance) {
       // Convert to plain objects for CSV
       const csvData = records.map((r) => ({
         id: r.id,
+        mediaId: r.mediaId,
         title: r.title ?? "",
+        originalTitle: r.originalTitle ?? "",
         type: r.type ?? "",
         description: r.description ?? "",
+        imageUrl: r.imageUrl ?? "",
+        releaseDate: r.releaseDate ?? "",
+        catalogSource: r.catalogSource ?? "",
+        externalId: r.externalId ?? "",
+        catalogMetadata: JSON.stringify(r.catalogMetadata ?? {}),
         status: r.status ?? "pending",
         rating: r.rating ?? "-",
         review: r.review ?? "-",
@@ -638,10 +824,18 @@ async function userMediaRoutes(fastify: FastifyInstance) {
         favorite: r.favorite ? "true" : "false",
         rewatches: r.rewatches ?? "-",
         timeSpent: r.timeSpent ? `${r.timeSpent} hours` : "-",
+        trackingSource: r.trackingSource ?? "",
+        tags: (r.tags ?? []).join(", "),
+        visibility: r.visibility ?? "private",
+        customFields: JSON.stringify(r.customFields ?? {}),
+        seasonsProgress: JSON.stringify(r.seasonsProgress ?? []),
 
         startedAt: r.startedAt ? r.startedAt.toISOString().slice(0, 16) : "-",
         completedAt: r.completedAt
           ? r.completedAt.toISOString().slice(0, 16)
+          : "-",
+        lastProgressUpdate: r.lastProgressUpdate
+          ? r.lastProgressUpdate.toISOString().slice(0, 16)
           : "-",
 
         createdAt: r.createdAt ? r.createdAt.toISOString().slice(0, 16) : "-",

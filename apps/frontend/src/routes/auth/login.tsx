@@ -56,8 +56,8 @@ function RouteComponent() {
   });
 
   return (
-    <Center w="100%" h="100vh">
-      <Paper p="xl" withBorder shadow="md" style={{ width: 400 }}>
+    <Center w="100%" mih="100vh" p={{ base: "md", sm: "xl" }}>
+      <Paper w="100%" maw={400} p={{ base: "lg", sm: "xl" }} withBorder shadow="md">
         <Title order={2} ta="center" mb="xl">
           Login to your account
         </Title>

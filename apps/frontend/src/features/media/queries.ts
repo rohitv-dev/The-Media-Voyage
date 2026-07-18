@@ -7,6 +7,8 @@ import type {
   MediaDetailedRecord,
   UserMediaQuerySchema,
   UserMediaDropdowns,
+  MediaPickerQuery,
+  MediaPickerRecord,
 } from "@media-voyage/shared/api";
 
 async function getUserMedia() {
@@ -44,6 +46,20 @@ async function getUserMediaDropdowns() {
 
 export function getDashboardStats() {
   return api<DashboardStatsResponse>("/user-media/dashboard/stats");
+}
+
+export function getMediaPickerPath(filters: MediaPickerQuery) {
+  const params = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(filters)) {
+    if (value) params.set(key, value);
+  }
+
+  return `/user-media/pick${params.size ? `?${params.toString()}` : ""}`;
+}
+
+export function pickPlannedMedia(filters: MediaPickerQuery) {
+  return api<MediaPickerRecord | null>(getMediaPickerPath(filters));
 }
 
 export function userMediaDetailedOptions(id: string) {

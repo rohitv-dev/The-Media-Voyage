@@ -5,21 +5,26 @@ import {
   Stack,
   Grid,
   Card,
+  Flex,
   Group,
   Title,
   Checkbox,
+  Collapse,
   Select,
   NumberInput,
   Progress,
+  SimpleGrid,
   TagsInput,
   Textarea,
   Button,
   Text,
   TextInput,
+  UnstyledButton,
   Autocomplete,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useForm } from "@mantine/form";
+import { useDisclosure, useMediaQuery } from "@mantine/hooks";
 import { showNotification } from "@mantine/notifications";
 import type {
   SourceMediaRecord,
@@ -38,6 +43,7 @@ import {
   IconClipboard,
   IconPencil,
   IconCheck,
+  IconChevronDown,
   IconLock,
 } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -49,6 +55,59 @@ import {
 } from "../queries";
 import { MediaTitleSelect } from "./MediaTitleSelect";
 import { useState } from "react";
+import type { ReactNode } from "react";
+
+function CollapsibleSectionHeading({
+  icon,
+  title,
+  description,
+  opened,
+  onToggle,
+}: {
+  icon: ReactNode;
+  title: string;
+  description: string;
+  opened: boolean;
+  onToggle: () => void;
+}) {
+  const heading = (
+    <Group gap="xs" align="center" wrap="nowrap">
+      {icon}
+      <Stack gap={0} style={{ minWidth: 0 }}>
+        <Text fw={600} size="lg">
+          {title}
+        </Text>
+        <Text size="xs" c="dimmed">
+          {description}
+        </Text>
+      </Stack>
+    </Group>
+  );
+
+  return (
+    <>
+      <UnstyledButton
+        hiddenFrom="sm"
+        w="100%"
+        onClick={onToggle}
+        aria-expanded={opened}
+      >
+        <Group justify="space-between" wrap="nowrap" gap="sm">
+          {heading}
+          <IconChevronDown
+            size={18}
+            style={{
+              flexShrink: 0,
+              transform: opened ? "rotate(180deg)" : undefined,
+            }}
+          />
+        </Group>
+      </UnstyledButton>
+
+      <Group visibleFrom="sm">{heading}</Group>
+    </>
+  );
+}
 
 type MediaFormProps =
   | {
@@ -80,7 +139,6 @@ const addInitialValues: UserMediaFormSchema = {
   tags: [],
   visibility: "private",
   customFields: undefined,
-  lastProgressUpdate: undefined,
   seasonsProgress: undefined,
 };
 
@@ -114,6 +172,9 @@ export function MediaForm(props: MediaFormProps) {
   const router = useRouter();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const isMobile = useMediaQuery("(max-width: 47.99em)");
+  const [trackingOpened, { toggle: toggleTracking }] = useDisclosure(false);
+  const [notesOpened, { toggle: toggleNotes }] = useDisclosure(false);
 
   const form = useForm<UserMediaFormSchema>({
     initialValues: isAddMode ? addInitialValues : props.initialValues,
@@ -127,6 +188,7 @@ export function MediaForm(props: MediaFormProps) {
         isAddMode && !value.trim() ? "Title is required" : undefined,
     },
   });
+  const isCompleted = form.values.status === "completed";
 
   const showMutationError = (error: Error) => {
     let message = "Unable to save this media. Please try again.";
@@ -158,9 +220,11 @@ export function MediaForm(props: MediaFormProps) {
     });
   };
 
-  form.watch("status", ({ value }) => {
+  form.watch("status", ({ value, previousValue }) => {
     if (value === "completed") {
       form.setFieldValue("progress", 100);
+    } else if (previousValue === "completed") {
+      form.setFieldValue("completedAt", undefined);
     }
   });
 
@@ -261,41 +325,55 @@ export function MediaForm(props: MediaFormProps) {
   };
 
   return (
-    <Container pt="sm">
+    <Container pt="sm" px={{ base: "xs", md: "sm" }}>
       <Stack gap="lg" pb="lg">
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <Grid gap="xs">
             <Grid.Col span={{ xs: 12 }}>
-              <Card withBorder shadow="sm" p="lg" h="100%">
-                <Stack gap="xs">
-                  <Group justify="space-between">
-                    <Group align="center" gap="md">
-                      <IconMovie size={40} stroke={1.5} />
-                      <Stack gap={0}>
-                        <Title order={2}>
-                          {isAddMode
-                            ? "Add Media to Your Collection"
-                            : "Update Media Details"}
-                        </Title>
-                        <Text c="dimmed" size="xs">
-                          {isAddMode
-                            ? "Track movies, shows, books, and games and keep notes on your journey"
-                            : "Update your media entry and keep your collection current"}
-                        </Text>
-                      </Stack>
-                    </Group>
-                    <Checkbox
-                      label="Mark as Favorite ⭐"
-                      {...form.getInputProps("favorite", {
-                        type: "checkbox",
-                      })}
+              <Card
+                withBorder
+                shadow="sm"
+                p={{ base: "md", sm: "lg" }}
+                h="100%"
+              >
+                <Flex
+                  direction={{ base: "column", sm: "row" }}
+                  align={{ base: "stretch", sm: "center" }}
+                  justify="space-between"
+                  gap={{ base: "md", sm: "lg" }}
+                >
+                  <Group align="center" gap="md" wrap="nowrap">
+                    <IconMovie
+                      size={32}
+                      stroke={1.5}
+                      style={{ flexShrink: 0 }}
                     />
+                    <Stack gap={2} style={{ minWidth: 0 }}>
+                      <Title order={2} fz={{ base: 24, sm: 30 }} lh={1.2}>
+                        {isAddMode
+                          ? "Add Media to Your Collection"
+                          : "Update Media Details"}
+                      </Title>
+                      <Text c="dimmed" size="xs">
+                        {isAddMode
+                          ? "Track movies, shows, books, and games and keep notes on your journey"
+                          : "Update your media entry and keep your collection current"}
+                      </Text>
+                    </Stack>
                   </Group>
-                </Stack>
+
+                  <Checkbox
+                    w={{ base: "100%", sm: "auto" }}
+                    label="Mark as Favorite ⭐"
+                    {...form.getInputProps("favorite", {
+                      type: "checkbox",
+                    })}
+                  />
+                </Flex>
               </Card>
             </Grid.Col>
 
-            <Grid.Col span={{ xs: 12, lg: 7 }}>
+            <Grid.Col span={{ xs: 12, md: 7 }}>
               <Card withBorder shadow="sm" p="lg" h="100%">
                 <Stack gap="md">
                   <Group gap="xs" align="center">
@@ -309,6 +387,51 @@ export function MediaForm(props: MediaFormProps) {
                       </Text>
                     </Stack>
                   </Group>
+
+                  <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+                    <Select
+                      label="Type"
+                      placeholder="Select media type"
+                      variant="filled"
+                      data={mediaTypeEnumValues.map((val) => ({
+                        value: val,
+                        label: capitalizeWords(val),
+                      }))}
+                      readOnly={!isAddMode}
+                      rightSection={
+                        !isAddMode ? (
+                          <IconLock size={18} stroke={1.5} color="#868e96" />
+                        ) : undefined
+                      }
+                      onClick={(e) => {
+                        if (!isAddMode) e.stopPropagation();
+                      }}
+                      {...form.getInputProps("type")}
+                      onChange={(value) => {
+                        if (!value) return;
+
+                        form.setFieldValue(
+                          "type",
+                          value as UserMediaFormSchema["type"],
+                        );
+
+                        form.setFieldValue("title", "");
+                        setSearch("");
+                        setMediaRecord(null);
+                      }}
+                    />
+
+                    <Select
+                      label="Visibility"
+                      placeholder="Who can see this?"
+                      variant="filled"
+                      data={visibilityEnumValues.map((val) => ({
+                        value: val,
+                        label: capitalizeWords(val),
+                      }))}
+                      {...form.getInputProps("visibility")}
+                    />
+                  </SimpleGrid>
 
                   {isAddMode ? (
                     <MediaTitleSelect
@@ -342,53 +465,11 @@ export function MediaForm(props: MediaFormProps) {
                       }
                     />
                   )}
-
-                  <Group grow gap="md">
-                    <Select
-                      label="Type"
-                      placeholder="Select media type"
-                      variant="filled"
-                      data={mediaTypeEnumValues.map((val) => ({
-                        value: val,
-                        label: capitalizeWords(val),
-                      }))}
-                      readOnly={!isAddMode}
-                      rightSection={
-                        !isAddMode ? (
-                          <IconLock size={18} stroke={1.5} color="#868e96" />
-                        ) : undefined
-                      }
-                      onClick={(e) => {
-                        if (!isAddMode) e.stopPropagation();
-                      }}
-                      {...form.getInputProps("type")}
-                      onChange={(value) => {
-                        if (value) {
-                          form.setFieldValue(
-                            "type",
-                            value as UserMediaFormSchema["type"],
-                          );
-                          setMediaRecord(null);
-                        }
-                      }}
-                    />
-
-                    <Select
-                      label="Visibility"
-                      placeholder="Who can see this?"
-                      variant="filled"
-                      data={visibilityEnumValues.map((val) => ({
-                        value: val,
-                        label: capitalizeWords(val),
-                      }))}
-                      {...form.getInputProps("visibility")}
-                    />
-                  </Group>
                 </Stack>
               </Card>
             </Grid.Col>
 
-            <Grid.Col span={{ xs: 12, lg: 5 }}>
+            <Grid.Col span={{ xs: 12, md: 5 }}>
               <Card withBorder shadow="sm" p="lg" h="100%">
                 <Stack gap="md">
                   <Group gap="xs" align="center">
@@ -402,7 +483,7 @@ export function MediaForm(props: MediaFormProps) {
                       </Text>
                     </Stack>
                   </Group>
-                  <Group grow gap="md">
+                  <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
                     <Select
                       label="Status"
                       placeholder="Choose status"
@@ -418,17 +499,19 @@ export function MediaForm(props: MediaFormProps) {
                       label="Rating"
                       placeholder="8.5"
                       variant="filled"
+                      inputMode="decimal"
                       min={0}
                       max={10}
                       decimalScale={1}
                       {...form.getInputProps("rating")}
                     />
-                  </Group>
+                  </SimpleGrid>
 
                   <Stack gap="xs">
                     <NumberInput
                       variant="filled"
                       label="Progress"
+                      inputMode="numeric"
                       min={0}
                       max={100}
                       step={5}
@@ -446,124 +529,132 @@ export function MediaForm(props: MediaFormProps) {
               </Card>
             </Grid.Col>
 
-            <Grid.Col span={{ xs: 12, lg: 6 }}>
+            <Grid.Col span={{ xs: 12, md: 6 }}>
               <Card withBorder shadow="sm" p="lg">
-                <Stack gap="md">
-                  <Group gap="xs" align="center">
-                    <IconClipboard size={20} stroke={2} />
-                    <Stack gap={0}>
-                      <Text fw={600} size="lg">
-                        Progress & Tracking
-                      </Text>
-                      <Text size="xs" c="dimmed">
-                        Keep track of progress, ratings, and completion dates
-                      </Text>
-                    </Stack>
-                  </Group>
+                <CollapsibleSectionHeading
+                  icon={<IconClipboard size={20} stroke={2} />}
+                  title="Progress & Tracking"
+                  description="Keep track of progress, ratings, and completion dates"
+                  opened={trackingOpened}
+                  onToggle={toggleTracking}
+                />
 
-                  <Group grow gap="md">
-                    <DateInput
-                      label="Started At"
-                      placeholder="Select date"
+                <Collapse expanded={!isMobile || trackingOpened}>
+                  <Stack gap="md" mt="md">
+                    <SimpleGrid
+                      cols={{ base: 1, sm: isCompleted ? 2 : 1 }}
+                      spacing="md"
+                    >
+                      <DateInput
+                        label="Started At"
+                        placeholder="Select date"
+                        variant="filled"
+                        clearable
+                        {...form.getInputProps("startedAt")}
+                      />
+
+                      {isCompleted && (
+                        <DateInput
+                          label="Completed At"
+                          placeholder="Select date"
+                          variant="filled"
+                          clearable
+                          {...form.getInputProps("completedAt")}
+                        />
+                      )}
+                    </SimpleGrid>
+
+                    <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+                      <NumberInput
+                        label="Time Spent"
+                        placeholder="120"
+                        variant="filled"
+                        inputMode="numeric"
+                        min={0}
+                        suffix=" min"
+                        description="Approximate time spent"
+                        {...form.getInputProps("timeSpent")}
+                      />
+
+                      <NumberInput
+                        label="Rewatches"
+                        placeholder="0"
+                        variant="filled"
+                        inputMode="numeric"
+                        min={0}
+                        description="Number of revisits"
+                        {...form.getInputProps("rewatches")}
+                      />
+                    </SimpleGrid>
+
+                    <Autocomplete
+                      label="Source"
+                      placeholder="Netflix, Steam, Kindle..."
                       variant="filled"
+                      description="Where you consumed it"
+                      data={props.dropdowns.sources}
+                      {...form.getInputProps("source")}
+                    />
+
+                    <TagsInput
+                      label="Tags"
+                      placeholder="Science Fiction, Horror..."
+                      variant="filled"
+                      data={props.dropdowns.tags}
                       clearable
-                      {...form.getInputProps("startedAt")}
+                      description="Press Enter or comma to add a tag"
+                      {...form.getInputProps("tags")}
+                      value={form.values.tags ?? []}
+                      onChange={(tags) =>
+                        form.setFieldValue("tags", normalizeTags(tags))
+                      }
                     />
-
-                    <DateInput
-                      label="Completed At"
-                      placeholder="Select date"
-                      variant="filled"
-                      clearable
-                      {...form.getInputProps("completedAt")}
-                    />
-                  </Group>
-
-                  <Group grow gap="md">
-                    <NumberInput
-                      label="Time Spent"
-                      placeholder="120"
-                      variant="filled"
-                      min={0}
-                      suffix=" min"
-                      description="Approximate time spent"
-                      {...form.getInputProps("timeSpent")}
-                    />
-
-                    <NumberInput
-                      label="Rewatches"
-                      placeholder="0"
-                      variant="filled"
-                      min={0}
-                      description="Number of revisits"
-                      {...form.getInputProps("rewatches")}
-                    />
-                  </Group>
-
-                  <Autocomplete
-                    label="Source"
-                    placeholder="Netflix, Steam, Kindle..."
-                    variant="filled"
-                    description="Where you consumed it"
-                    data={props.dropdowns.sources}
-                    {...form.getInputProps("source")}
-                  />
-
-                  <TagsInput
-                    label="Tags"
-                    placeholder="Science Fiction, Horror..."
-                    variant="filled"
-                    data={props.dropdowns.tags}
-                    clearable
-                    description="Press Enter or comma to add a tag"
-                    {...form.getInputProps("tags")}
-                    value={form.values.tags ?? []}
-                    onChange={(tags) =>
-                      form.setFieldValue("tags", normalizeTags(tags))
-                    }
-                  />
-                </Stack>
+                  </Stack>
+                </Collapse>
               </Card>
             </Grid.Col>
 
-            <Grid.Col span={{ xs: 12, lg: 6 }}>
+            <Grid.Col span={{ xs: 12, md: 6 }}>
               <Card withBorder shadow="sm" p="lg" h="100%">
-                <Stack gap="md">
-                  <Group gap="xs" align="center">
-                    <IconPencil size={20} stroke={2} />
-                    <Stack gap={0}>
-                      <Text fw={600} size="lg">
-                        Personal Notes
-                      </Text>
-                      <Text size="xs" c="dimmed">
-                        Capture your thoughts and observations
-                      </Text>
-                    </Stack>
-                  </Group>
+                <CollapsibleSectionHeading
+                  icon={<IconPencil size={20} stroke={2} />}
+                  title="Personal Notes"
+                  description="Capture your thoughts and observations"
+                  opened={notesOpened}
+                  onToggle={toggleNotes}
+                />
 
-                  <Textarea
-                    label="Review"
-                    placeholder="Share your thoughts about this media..."
-                    variant="filled"
-                    rows={6}
-                    description="Your thoughts and opinions"
-                    {...form.getInputProps("review")}
-                  />
+                <Collapse expanded={!isMobile || notesOpened}>
+                  <Stack gap="md" mt="md">
+                    <Textarea
+                      label="Review"
+                      placeholder="Share your thoughts about this media..."
+                      variant="filled"
+                      rows={6}
+                      description="Your thoughts and opinions"
+                      {...form.getInputProps("review")}
+                    />
 
-                  <Textarea
-                    label="Notes"
-                    placeholder="Private notes, memorable moments, recommendations..."
-                    variant="filled"
-                    rows={4}
-                    description="Private notes visible only to you"
-                    {...form.getInputProps("notes")}
-                  />
-                </Stack>
+                    <Textarea
+                      label="Notes"
+                      placeholder="Private notes, memorable moments, recommendations..."
+                      variant="filled"
+                      rows={4}
+                      description="Private notes visible only to you"
+                      {...form.getInputProps("notes")}
+                    />
+                  </Stack>
+                </Collapse>
               </Card>
             </Grid.Col>
 
             <Grid.Col span={{ xs: 12 }}>
-              <Group justify="flex-end" gap="md">
+              <SimpleGrid
+                cols={{ base: 1, xs: 2 }}
+                spacing="md"
+                w={{ base: "100%", xs: 320 }}
+                ml="auto"
+              >
                 <Button
                   variant="light"
                   disabled={addMutation.isPending || updateMutation.isPending}
@@ -589,7 +680,7 @@ export function MediaForm(props: MediaFormProps) {
                 >
                   {isAddMode ? "Save Media" : "Update Media"}
                 </Button>
-              </Group>
+              </SimpleGrid>
             </Grid.Col>
           </Grid>
         </form>

@@ -3,7 +3,6 @@ import {
   userMediaFilterQueryOptions,
 } from "#/features/media/queries";
 import {
-  Badge,
   Box,
   Button,
   Container,
@@ -25,14 +24,16 @@ import { showErrorNotification } from "#/utils/notifications";
 import { useDisclosure, useLocalStorage, useMediaQuery } from "@mantine/hooks";
 import { AnimatePresence, motion } from "motion/react";
 import { MediaFilterCard } from "#/features/media/components/MediaFilterCard";
-import { capitalizeWords } from "#/utils/stringFunctions";
-import { IconFilter } from "@tabler/icons-react";
+import { MediaPickerModal } from "#/features/media/components/MediaPickerModal";
+import { collectionQueryOptions } from "#/features/mediaCollection/queries";
+import { IconDice5, IconFilter } from "@tabler/icons-react";
 
 export const Route = createFileRoute("/_authenticated/media/")({
   validateSearch: userMediaQuerySchema,
   loaderDeps: ({ search }) => search,
   loader: ({ context: { queryClient }, deps }) => {
     queryClient.ensureQueryData(userMediaDropdownOptions);
+    queryClient.ensureQueryData(collectionQueryOptions);
     queryClient.ensureQueryData(userMediaFilterQueryOptions(deps));
   },
   component: RouteComponent,
@@ -41,6 +42,7 @@ export const Route = createFileRoute("/_authenticated/media/")({
 function RouteComponent() {
   const search = Route.useSearch();
   const { data: dropdowns } = useQuery(userMediaDropdownOptions);
+  const { data: collections } = useQuery(collectionQueryOptions);
   const { data, isFetching, isError } = useQuery({
     ...userMediaFilterQueryOptions(search),
     placeholderData: keepPreviousData,
@@ -53,6 +55,8 @@ function RouteComponent() {
   });
 
   const [opened, { open, close }] = useDisclosure();
+  const [pickerOpened, { open: openPicker, close: closePicker }] =
+    useDisclosure();
 
   const [filters, setFilters] = useState<UserMediaQuerySchema>(search);
 
@@ -111,55 +115,30 @@ function RouteComponent() {
                 </Text>
                 {isFetching && <Loader size="xs" />}
               </Group>
-              <Box hiddenFrom="lg">
+              <Group gap="xs">
                 <Button
                   size="xs"
-                  leftSection={<IconFilter size={16} />}
-                  onClick={open}
+                  variant="light"
+                  leftSection={<IconDice5 size={16} />}
+                  onClick={openPicker}
                 >
-                  Filters
+                  Pick for me
                 </Button>
-              </Box>
+                <Box hiddenFrom="lg">
+                  <Button
+                    size="xs"
+                    leftSection={<IconFilter size={16} />}
+                    onClick={open}
+                  >
+                    Filters
+                  </Button>
+                </Box>
+              </Group>
             </Group>
             <Text color="dimmed" size="sm">
               Click any card to view the full details, or use the action button
               to update.
             </Text>
-            <Group mt="sm" wrap="wrap">
-              {search.status?.map((val) => (
-                <Badge key={val} color="teal">
-                  {capitalizeWords(val)}
-                </Badge>
-              ))}
-              {search.type?.map((val) => (
-                <Badge key={val} color="teal">
-                  {capitalizeWords(val)}
-                </Badge>
-              ))}
-              {search.favorite && <Badge color="pink">Favorites</Badge>}
-              {(search.minRating !== undefined ||
-                search.maxRating !== undefined) && (
-                <Badge color="yellow">
-                  Rating {search.minRating ?? 0}–{search.maxRating ?? 10}
-                </Badge>
-              )}
-              {(search.createdFrom || search.createdTo) && (
-                <Badge color="blue">
-                  Added {search.createdFrom ?? "any time"} to{" "}
-                  {search.createdTo ?? "now"}
-                </Badge>
-              )}
-              {search.sources?.map((source) => (
-                <Badge key={source} color="grape">
-                  {source}
-                </Badge>
-              ))}
-              {search.tags?.map((tag) => (
-                <Badge key={tag} color="cyan">
-                  #{tag}
-                </Badge>
-              ))}
-            </Group>
           </Stack>
         </Group>
 
@@ -251,6 +230,18 @@ function RouteComponent() {
           dropdowns={dropdowns ?? { sources: [], tags: [] }}
         />
       </Drawer>
+
+      <MediaPickerModal
+        opened={pickerOpened}
+        onClose={closePicker}
+        sources={dropdowns?.sources ?? []}
+        tags={dropdowns?.tags ?? []}
+        collections={collections ?? []}
+        onView={(id) => {
+          closePicker();
+          navigate({ to: "/media/view/$id", params: { id } });
+        }}
+      />
     </Container>
   );
 }

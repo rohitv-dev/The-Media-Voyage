@@ -1,5 +1,9 @@
 import { authClient } from "#/auth/authClient";
-import { showSuccessNotification } from "#/utils/notifications";
+import { downloadApiFile } from "#/lib/api";
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from "#/utils/notifications";
 import {
   Container,
   Card,
@@ -11,7 +15,7 @@ import {
   Button,
   Text,
 } from "@mantine/core";
-import { IconCheck, IconX, IconEdit } from "@tabler/icons-react";
+import { IconCheck, IconDownload, IconEdit, IconX } from "@tabler/icons-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
@@ -23,6 +27,7 @@ function RouteComponent() {
   const { data } = authClient.useSession();
 
   const [editingName, setEditingName] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [name, setName] = useState(data?.user.name);
 
   const handleSave = async () => {
@@ -38,68 +43,120 @@ function RouteComponent() {
     setEditingName(false);
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+
+    try {
+      const { blob, filename } = await downloadApiFile("/user-media/export");
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = downloadUrl;
+      link.download = filename ?? `media-voyage-${Date.now()}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(downloadUrl);
+
+      showSuccessNotification({
+        title: "Export ready",
+        message: "Your library backup has been downloaded.",
+      });
+    } catch (error) {
+      showErrorNotification({
+        title: "Export failed",
+        message:
+          error instanceof Error ? error.message : "Could not export library",
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <Container size="sm" py="xl">
-      <Card withBorder radius="lg" p="xl">
-        <Stack align="center" gap="xl">
-          <Avatar
-            src={data?.user.image}
-            radius={999}
-            size={120}
-            name={data?.user.name}
-          />
+      <Stack gap="lg">
+        <Card withBorder radius="lg" p="xl">
+          <Stack align="center" gap="xl">
+            <Avatar
+              src={data?.user.image}
+              radius={999}
+              size={120}
+              name={data?.user.name}
+            />
 
-          <Stack gap="xs" w="100%">
-            {editingName ? (
-              <Group align="flex-end">
-                <TextInput
-                  flex={1}
-                  value={name}
-                  onChange={(e) => setName(e.currentTarget.value)}
-                  label="Display Name"
-                />
+            <Stack gap="xs" w="100%">
+              {editingName ? (
+                <Group align="flex-end">
+                  <TextInput
+                    flex={1}
+                    value={name}
+                    onChange={(e) => setName(e.currentTarget.value)}
+                    label="Display Name"
+                  />
 
-                <ActionIcon
-                  color="green"
-                  size="lg"
-                  variant="light"
-                  onClick={handleSave}
-                >
-                  <IconCheck size={18} />
-                </ActionIcon>
+                  <ActionIcon
+                    color="green"
+                    size="lg"
+                    variant="light"
+                    onClick={handleSave}
+                  >
+                    <IconCheck size={18} />
+                  </ActionIcon>
 
-                <ActionIcon
-                  color="red"
-                  size="lg"
-                  variant="light"
-                  onClick={handleCancel}
-                >
-                  <IconX size={18} />
-                </ActionIcon>
-              </Group>
-            ) : (
-              <Group justify="center">
-                <Text fw={700} size="xl">
-                  {data?.user.name}
-                </Text>
+                  <ActionIcon
+                    color="red"
+                    size="lg"
+                    variant="light"
+                    onClick={handleCancel}
+                  >
+                    <IconX size={18} />
+                  </ActionIcon>
+                </Group>
+              ) : (
+                <Group justify="center">
+                  <Text fw={700} size="xl">
+                    {data?.user.name}
+                  </Text>
 
-                <ActionIcon
-                  variant="subtle"
-                  onClick={() => setEditingName(true)}
-                >
-                  <IconEdit size={18} />
-                </ActionIcon>
-              </Group>
-            )}
+                  <ActionIcon
+                    variant="subtle"
+                    onClick={() => setEditingName(true)}
+                  >
+                    <IconEdit size={18} />
+                  </ActionIcon>
+                </Group>
+              )}
 
-            <Text ta="center" c="dimmed">
-              {data?.user.email}
-            </Text>
+              <Text ta="center" c="dimmed">
+                {data?.user.email}
+              </Text>
+            </Stack>
+
+            <Button variant="light">Change Profile Picture</Button>
           </Stack>
+        </Card>
 
-          <Button variant="light">Change Profile Picture</Button>
-        </Stack>
-      </Card>
+        <Card withBorder radius="lg" p="lg">
+          <Group justify="space-between" align="center" wrap="wrap" gap="md">
+            <Stack gap={3} flex={1} miw={220}>
+              <Text fw={700}>Your data</Text>
+              <Text size="sm" c="dimmed">
+                Download a CSV backup of every item in your library.
+              </Text>
+            </Stack>
+
+            <Button
+              variant="light"
+              leftSection={<IconDownload size={18} />}
+              loading={exporting}
+              onClick={handleExport}
+            >
+              Export library
+            </Button>
+          </Group>
+        </Card>
+      </Stack>
     </Container>
   );
 }

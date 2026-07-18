@@ -14,15 +14,45 @@ export const mediaRecordSchema = z.object({
   type: mediaSelectSchema.shape.type,
 
   status: userMediaSelectSchema.shape.status,
+  progress: userMediaSelectSchema.shape.progress,
   rating: userMediaSelectSchema.shape.rating,
   favorite: userMediaSelectSchema.shape.favorite,
   source: userMediaSelectSchema.shape.source,
+  lastProgressUpdate: userMediaSelectSchema.shape.lastProgressUpdate,
 
   createdAt: userMediaSelectSchema.shape.createdAt,
   updatedAt: userMediaSelectSchema.shape.updatedAt,
 });
 
 export type MediaRecord = z.infer<typeof mediaRecordSchema>;
+
+export const mediaPickerQuerySchema = z.object({
+  type: z.enum(mediaTypeEnum.enumValues).optional(),
+  source: z.string().trim().min(1).optional(),
+  tag: z.string().trim().min(1).optional(),
+  collectionId: z.uuid().optional(),
+});
+
+export type MediaPickerQuery = z.infer<typeof mediaPickerQuerySchema>;
+
+export const mediaPickerRecordSchema = mediaRecordSchema.extend({
+  imageUrl: mediaSelectSchema.shape.imageUrl,
+  tags: userMediaSelectSchema.shape.tags,
+});
+
+export type MediaPickerRecord = z.infer<typeof mediaPickerRecordSchema>;
+
+export const userMediaQuickActionSchema = z
+  .object({
+    favorite: z.boolean().optional(),
+    status: userMediaSelectSchema.shape.status.optional(),
+    progress: z.number().int().min(0).max(100).optional(),
+  })
+  .refine((data) => Object.values(data).some((value) => value !== undefined), {
+    message: "At least one quick action is required",
+  });
+
+export type UserMediaQuickAction = z.infer<typeof userMediaQuickActionSchema>;
 
 export const mediaDetailedRecordSchema = z.object({
   id: userMediaSelectSchema.shape.id,
@@ -49,6 +79,7 @@ export const mediaDetailedRecordSchema = z.object({
 
   startedAt: userMediaSelectSchema.shape.startedAt,
   completedAt: userMediaSelectSchema.shape.completedAt,
+  lastProgressUpdate: userMediaSelectSchema.shape.lastProgressUpdate,
   createdAt: userMediaSelectSchema.shape.createdAt,
   updatedAt: userMediaSelectSchema.shape.updatedAt,
 });
@@ -97,7 +128,6 @@ export const userMediaFormSchema = userMediaInsertSchema
     visibility: true,
     customFields: true,
     seasonsProgress: true,
-    lastProgressUpdate: true,
     startedAt: true,
     completedAt: true,
   })
