@@ -1,6 +1,7 @@
 import { IgdbResponse, SourceMediaRecord } from "@media-voyage/shared/api";
 import { getAccessToken } from "./twitchAuth";
 import { formatDate } from "@media-voyage/shared/utilities";
+import { env } from "../config";
 
 export async function searchGames(query: string): Promise<SourceMediaRecord[]> {
   const token = await getAccessToken();
@@ -9,7 +10,7 @@ export async function searchGames(query: string): Promise<SourceMediaRecord[]> {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
-      "Client-ID": process.env.IGDB_CLIENT_ID!,
+      "Client-ID": env.IGDB_CLIENT_ID,
     },
     body: `
       fields id,name,cover.image_id,first_release_date;
@@ -29,7 +30,9 @@ export async function searchGames(query: string): Promise<SourceMediaRecord[]> {
     imageUrl: val.cover.image_id
       ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${val.cover.image_id}.jpg`
       : null,
-    releaseDate: val.first_release_date ? formatDate(new Date(val.first_release_date * 1000)) : "",
+    releaseDate: val.first_release_date
+      ? formatDate(new Date(val.first_release_date * 1000))
+      : "",
   }));
 
   console.log(records);

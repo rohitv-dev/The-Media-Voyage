@@ -26,10 +26,18 @@ import {
   IconUser,
 } from "@tabler/icons-react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { collectionQueryOptions } from "#/features/mediaCollection/queries";
+import { getSession } from "#/auth/session";
 
 export const Route = createFileRoute("/_authenticated")({
+  beforeLoad: async () => {
+    const session = await getSession();
+
+    if (!session) {
+      throw redirect({ to: "/auth/login" });
+    }
+  },
   loader: ({ context: { queryClient } }) => {
     queryClient.ensureQueryData(collectionQueryOptions);
   },

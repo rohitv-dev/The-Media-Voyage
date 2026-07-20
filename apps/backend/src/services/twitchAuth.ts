@@ -1,9 +1,11 @@
+import { env } from "../config";
+
 let accessToken: string | null = null;
 let expiresAt = 0;
 
 async function fetchAccessToken() {
   const response = await fetch(
-    `https://id.twitch.tv/oauth2/token?client_id=${process.env.IGDB_CLIENT_ID}&client_secret=${process.env.IGDB_CLIENT_SECRET}&grant_type=client_credentials`,
+    `https://id.twitch.tv/oauth2/token?client_id=${env.IGDB_CLIENT_ID}&client_secret=${env.IGDB_CLIENT_SECRET}&grant_type=client_credentials`,
     {
       method: "POST",
     },

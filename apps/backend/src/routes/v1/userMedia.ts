@@ -55,8 +55,6 @@ async function userMediaRoutes(fastify: FastifyInstance) {
   fastify.post("/", async (request, reply) => {
     const userId = request.userId;
 
-    request.log.info(request.body);
-
     const parsed = userMediaFormSchema.parse(request.body);
 
     const { title, type, externalId, imageUrl, releaseDate, mediaSource } = parsed;

@@ -1,7 +1,8 @@
 import { OmdbResponse, SourceMediaRecord } from "@media-voyage/shared/api";
 import { MediaType } from "@media-voyage/shared/userMediaSchema";
+import { env } from "../config";
 
-const API_KEY = process.env.OMDB_API_KEY!;
+const API_KEY = env.OMDB_API_KEY;
 
 const omdbTypeToMediaType = (type: string): MediaType => {
   if (type === "movie") return "movie";

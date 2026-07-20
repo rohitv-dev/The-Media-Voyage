@@ -1,13 +1,14 @@
 import Fastify from "fastify";
 import { prettifyError, ZodError } from "zod";
 import cors from "@fastify/cors";
+import { env } from "./config";
 
 const fastify = Fastify({
   logger: true,
 });
 
 fastify.register(cors, {
-  origin: "http://localhost:4000",
+  origin: env.FRONTEND_ORIGIN,
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
 });
@@ -41,9 +42,15 @@ fastify.setErrorHandler((error, request, reply) => {
 
 fastify.register(import("./routes/auth"));
 fastify.register(import("./routes/v1/media"), { prefix: "/api/v1/media" });
-fastify.register(import("./routes/v1/userMedia"), { prefix: "/api/v1/user-media" });
-fastify.register(import("./routes/v1/collection"), { prefix: "/api/v1/collection" });
-fastify.register(import("./routes/v1/collectionItem"), { prefix: "/api/v1/collectionItem" });
+fastify.register(import("./routes/v1/userMedia"), {
+  prefix: "/api/v1/user-media",
+});
+fastify.register(import("./routes/v1/collection"), {
+  prefix: "/api/v1/collection",
+});
+fastify.register(import("./routes/v1/collectionItem"), {
+  prefix: "/api/v1/collectionItem",
+});
 
 fastify.get("/health", async () => {
   return { status: "OK" };
@@ -51,8 +58,15 @@ fastify.get("/health", async () => {
 
 const start = async () => {
   try {
-    await fastify.listen({ port: 3000 });
-    console.log("Server is running on http://localhost:3000");
+    await fastify.listen({ host: env.HOST, port: env.PORT });
+    fastify.log.info(
+      {
+        host: env.HOST,
+        port: env.PORT,
+        authUrl: env.BETTER_AUTH_URL,
+      },
+      "Server started",
+    );
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

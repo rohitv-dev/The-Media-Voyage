@@ -139,4 +139,5 @@ apps/backend/api_files
 .agents
 skills-lock.json
 ROADMAP.md
+PROD_ROADMAP.md
 AGENTS.md
