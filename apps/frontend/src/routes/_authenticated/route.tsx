@@ -19,6 +19,7 @@ import { useDisclosure } from "@mantine/hooks";
 import {
   IconBooks,
   IconChevronRight,
+  IconLogout,
   IconMoon,
   IconPlus,
   IconSun,
@@ -29,6 +30,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { collectionQueryOptions } from "#/features/mediaCollection/queries";
 import { getSession } from "#/auth/session";
+import { authClient } from "#/auth/authClient";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
@@ -88,6 +90,11 @@ function RouteComponent() {
   const navigate = Route.useNavigate();
   const [opened, { toggle, close }] = useDisclosure();
   const { data: collections } = useSuspenseQuery(collectionQueryOptions);
+
+  const logout = async () => {
+    await authClient.signOut();
+    navigate({ to: "/auth/login" });
+  };
 
   return (
     <AppShell
@@ -258,6 +265,14 @@ function RouteComponent() {
                 }}
               >
                 My profile
+              </Button>
+              <Button
+                variant="subtle"
+                color="red"
+                leftSection={<IconLogout size={16} />}
+                onClick={logout}
+              >
+                Logout
               </Button>
             </Stack>
           </Box>

@@ -4,6 +4,8 @@ import * as schema from "@media-voyage/shared/schema";
 import { db } from "./db/db";
 import { env } from "./config";
 
+const oneDay = 60 * 60 * 24;
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -14,6 +16,10 @@ export const auth = betterAuth({
   },
   baseURL: env.BETTER_AUTH_URL,
   secret: env.BETTER_AUTH_SECRET,
+  session: {
+    expiresIn: oneDay * 30,
+    updateAge: oneDay,
+  },
   advanced: {
     disableOriginCheck: !env.isProduction,
     useSecureCookies: env.isProduction,

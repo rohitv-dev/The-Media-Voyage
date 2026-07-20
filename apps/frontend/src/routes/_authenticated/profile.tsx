@@ -16,7 +16,7 @@ import {
   Text,
 } from "@mantine/core";
 import { IconCheck, IconDownload, IconEdit, IconX } from "@tabler/icons-react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -24,6 +24,7 @@ export const Route = createFileRoute("/_authenticated/profile")({
 });
 
 function RouteComponent() {
+  const navigate = useNavigate()
   const { data } = authClient.useSession();
 
   const [editingName, setEditingName] = useState(false);
@@ -71,6 +72,11 @@ function RouteComponent() {
     } finally {
       setExporting(false);
     }
+  };
+
+  const logout = async () => {
+    await authClient.signOut();
+    navigate({ to: "/auth/login" });
   };
 
   return (
@@ -156,6 +162,7 @@ function RouteComponent() {
             </Button>
           </Group>
         </Card>
+        <Button variant="light" color="red" onClick={logout}>Logout</Button>
       </Stack>
     </Container>
   );
