@@ -97,12 +97,12 @@ export function MediaFilterCard({
       style={
         compact
           ? {
-              position: "sticky",
-              top: 84,
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden",
-            }
+            position: "sticky",
+            top: 84,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+          }
           : undefined
       }
     >
@@ -111,11 +111,11 @@ export function MediaFilterCard({
         style={
           compact
             ? {
-                flex: 1,
-                minHeight: 0,
-                overflowY: "auto",
-                scrollbarGutter: "stable",
-              }
+              flex: 1,
+              minHeight: 0,
+              overflowY: "auto",
+              scrollbarGutter: "stable",
+            }
             : undefined
         }
       >
@@ -131,6 +131,11 @@ export function MediaFilterCard({
           onChange={(e) =>
             updateFilters({ ...filters, search: e.target.value })
           }
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              applyFilters()
+            }
+          }}
         />
 
         <SimpleGrid cols={compact ? 1 : 2} spacing="xs">

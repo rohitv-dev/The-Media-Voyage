@@ -20,21 +20,17 @@ import type {
 } from "@media-voyage/shared/api";
 import type { Status } from "@media-voyage/shared/userMediaSchema";
 import {
-  IconBook,
   IconCheck,
-  IconDeviceGamepad2,
-  IconDeviceTv,
   IconDotsVertical,
   IconHeart,
   IconHeartFilled,
-  IconMovie,
   IconClockPause,
 } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { motion, useReducedMotion } from "motion/react";
-import { useEffect, useState } from "react";
 import type { KeyboardEvent } from "react";
+import { getStatusColor, getTypeIcon } from "../functions";
 
 interface MediaCardProps {
   media: MediaRecord;
@@ -51,33 +47,13 @@ const statuses: Array<{ value: Status; label: string }> = [
   { value: "dropped", label: "Dropped" },
 ];
 
-function getStatusColor(status: Status) {
-  switch (status) {
-    case "completed":
-      return "green";
-    case "in_progress":
-      return "blue";
-    case "planned":
-      return "orange";
-    case "dropped":
-      return "red";
-    case "on_hold":
-      return "yellow";
-    case "revisiting":
-      return "violet";
-  }
-}
-
 export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
   const queryClient = useQueryClient();
   const reduceMotion = useReducedMotion();
-  const [displayMedia, setDisplayMedia] = useState(media);
   const staleProgressDays =
-    displayMedia.status === "in_progress"
-      ? getStaleProgressDays(displayMedia.lastProgressUpdate)
+    media.status === "in_progress"
+      ? getStaleProgressDays(media.lastProgressUpdate)
       : null;
-
-  useEffect(() => setDisplayMedia(media), [media]);
 
   const quickActionMutation = useMutation({
     mutationFn: (action: UserMediaQuickAction) =>
@@ -86,36 +62,25 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(action),
       }),
-    onSuccess: setDisplayMedia,
     onError: (error) =>
       showErrorNotification({
         title: "Quick action failed",
         message: error.message,
       }),
-    onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: ["user-media"] });
-      void queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
-    },
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["user-media"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] }),
+      ]),
   });
 
-  const getTypeIcon = () => {
-    switch (displayMedia.type) {
-      case "movie":
-        return <IconMovie size={18} />;
-      case "show":
-        return <IconDeviceTv size={18} />;
-      case "game":
-        return <IconDeviceGamepad2 size={18} />;
-      case "book":
-        return <IconBook size={18} />;
-    }
-  };
-
   const runQuickAction = (action: UserMediaQuickAction) => {
+    if (quickActionMutation.isPending) return;
+
     quickActionMutation.mutate(action);
   };
 
-  const openMedia = () => onView?.(displayMedia.id);
+  const openMedia = () => onView?.(media.id);
 
   const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.target !== event.currentTarget) return;
@@ -133,8 +98,9 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
           variant="subtle"
           color="gray"
           size="sm"
-          aria-label={`Quick actions for ${displayMedia.title}`}
+          aria-label={`Quick actions for ${media.title}`}
           loading={quickActionMutation.isPending}
+          disabled={quickActionMutation.isPending}
           onClick={(event) => event.stopPropagation()}
         >
           <IconDotsVertical size={17} />
@@ -145,20 +111,23 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
         <Menu.Label>Quick actions</Menu.Label>
         <Menu.Item
           leftSection={
-            displayMedia.favorite ? (
+            media.favorite ? (
               <IconHeartFilled size={16} color="var(--mantine-color-red-6)" />
             ) : (
               <IconHeart size={16} />
             )
           }
-          onClick={() => runQuickAction({ favorite: !displayMedia.favorite })}
+          disabled={quickActionMutation.isPending}
+          onClick={() => runQuickAction({ favorite: !media.favorite })}
         >
-          {displayMedia.favorite ? "Remove favorite" : "Add to favorites"}
+          {media.favorite ? "Remove favorite" : "Add to favorites"}
         </Menu.Item>
 
         <Menu.Sub>
           <Menu.Sub.Target>
-            <Menu.Sub.Item>Change status</Menu.Sub.Item>
+            <Menu.Sub.Item disabled={quickActionMutation.isPending}>
+              Change status
+            </Menu.Sub.Item>
           </Menu.Sub.Target>
           <Menu.Sub.Dropdown>
             {statuses.map((status) => (
@@ -166,11 +135,12 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
                 key={status.value}
                 color={getStatusColor(status.value)}
                 rightSection={
-                  displayMedia.status === status.value ? (
+                  media.status === status.value ? (
                     <IconCheck size={15} />
                   ) : undefined
                 }
                 onClick={() => runQuickAction({ status: status.value })}
+                disabled={quickActionMutation.isPending}
               >
                 {status.label}
               </Menu.Item>
@@ -180,8 +150,8 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
 
         <Menu.Sub>
           <Menu.Sub.Target>
-            <Menu.Sub.Item>
-              Progress · {displayMedia.progress ?? 0}%
+            <Menu.Sub.Item disabled={quickActionMutation.isPending}>
+              Progress · {media.progress ?? 0}%
             </Menu.Sub.Item>
           </Menu.Sub.Target>
           <Menu.Sub.Dropdown>
@@ -189,11 +159,12 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
               <Menu.Item
                 key={progress}
                 rightSection={
-                  displayMedia.progress === progress ? (
+                  media.progress === progress ? (
                     <IconCheck size={15} />
                   ) : undefined
                 }
                 onClick={() => runQuickAction({ progress })}
+                disabled={quickActionMutation.isPending}
               >
                 Set to {progress}%
               </Menu.Item>
@@ -215,9 +186,9 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
         reduceMotion
           ? undefined
           : {
-              y: -4,
-              boxShadow: "0 12px 30px rgba(0,0,0,0.15)",
-            }
+            y: -4,
+            boxShadow: "0 12px 30px rgba(0,0,0,0.15)",
+          }
       }
       transition={{ type: "spring", stiffness: 350, damping: 25 }}
       onClick={openMedia}
@@ -229,14 +200,14 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
         <Stack gap="sm">
           <Group justify="space-between" align="flex-start" wrap="nowrap">
             <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
-              {getTypeIcon()}
+              {getTypeIcon(media.type)}
               <Title order={5} lineClamp={2} fw={600}>
-                {displayMedia.title}
+                {media.title}
               </Title>
             </Group>
 
             <Group gap={4} wrap="nowrap">
-              {displayMedia.favorite && (
+              {media.favorite && (
                 <IconHeartFilled size={18} color="red" aria-label="Favorite" />
               )}
               {renderQuickActionsMenu()}
@@ -245,71 +216,71 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
 
           <Group gap={6} wrap="wrap">
             <Badge size="sm" variant="light">
-              {displayMedia.type}
+              {media.type}
             </Badge>
             <Badge
               size="sm"
-              color={getStatusColor(displayMedia.status)}
+              color={getStatusColor(media.status)}
               variant="filled"
             >
-              {displayMedia.status.replaceAll("_", " ")}
+              {media.status.replaceAll("_", " ")}
             </Badge>
           </Group>
 
-          {(displayMedia.rating != null || displayMedia.source) && (
+          {(media.rating != null || media.source) && (
             <Stack gap={4}>
-              {displayMedia.rating != null && (
+              {media.rating != null && (
                 <Rating
                   readOnly
                   size="sm"
-                  value={displayMedia.rating / 2}
+                  value={media.rating / 2}
                   fractions={2}
                 />
               )}
-              {displayMedia.source && (
+              {media.source && (
                 <Text size="sm" truncate>
-                  {displayMedia.source}
+                  {media.source}
                 </Text>
               )}
             </Stack>
           )}
 
-          {(displayMedia.status === "in_progress" ||
-            displayMedia.status === "on_hold") && (
-            <Stack gap={6} mt={4}>
-              <Group gap="xs" wrap="nowrap">
-                <Progress value={displayMedia.progress ?? 0} flex={1} />
-                <Text size="xs" c="dimmed" w={32} ta="right">
-                  {displayMedia.progress ?? 0}%
-                </Text>
-              </Group>
-              {staleProgressDays !== null && (
-                <Badge
-                  color="orange"
-                  variant="light"
-                  size="sm"
-                  leftSection={<IconClockPause size={13} />}
-                  styles={{ root: { alignSelf: "flex-start" } }}
-                >
-                  Resume? {staleProgressDays} days quiet
-                </Badge>
-              )}
-            </Stack>
-          )}
+          {(media.status === "in_progress" ||
+            media.status === "on_hold") && (
+              <Stack gap={6} mt={4}>
+                <Group gap="xs" wrap="nowrap">
+                  <Progress value={media.progress ?? 0} flex={1} />
+                  <Text size="xs" c="dimmed" w={32} ta="right">
+                    {media.progress ?? 0}%
+                  </Text>
+                </Group>
+                {staleProgressDays !== null && (
+                  <Badge
+                    color="orange"
+                    variant="light"
+                    size="sm"
+                    leftSection={<IconClockPause size={13} />}
+                    styles={{ root: { alignSelf: "flex-start" } }}
+                  >
+                    Resume? {staleProgressDays} days quiet
+                  </Badge>
+                )}
+              </Stack>
+            )}
         </Stack>
 
         <Group justify="space-between" align="flex-end" wrap="nowrap" gap="xs">
           <Text size="xs" c="dimmed" lh={1.4}>
-            Added {dayjs(displayMedia.createdAt).format("MMM DD, YYYY")}
+            Added {dayjs(media.createdAt).format("MMM DD, YYYY")}
             <br />
-            Updated {dayjs(displayMedia.updatedAt).format("MMM DD, YYYY")}
+            Updated {dayjs(media.updatedAt).format("MMM DD, YYYY")}
           </Text>
 
           <Button
             size="xs"
             onClick={(event) => {
               event.stopPropagation();
-              onEdit?.(displayMedia.id);
+              onEdit?.(media.id);
             }}
           >
             Edit

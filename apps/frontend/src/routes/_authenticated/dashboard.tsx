@@ -15,6 +15,7 @@ import type { Variants } from "motion/react";
 import { dashboardStatOptions } from "#/features/media/queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { capitalizeWords } from "#/utils/stringFunctions";
+import { getStatusColor } from "#/features/media/functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   loader: ({ context: { queryClient } }) => {
@@ -48,25 +49,6 @@ const itemVariants: Variants = {
       ease: "easeOut",
     },
   },
-};
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "completed":
-      return "green";
-    case "in_progress":
-      return "blue";
-    case "planned":
-      return "orange";
-    case "dropped":
-      return "red";
-    case "on_hold":
-      return "yellow";
-    case "revisiting":
-      return "violet";
-    default:
-      return "gray";
-  }
 };
 
 function AnimatedCard({ children }: { children: React.ReactNode }) {
@@ -141,7 +123,7 @@ function RouteComponent() {
                       data={data.statusDistribution.map((val) => ({
                         name: String(capitalizeWords(val.status)),
                         value: val.count,
-                        color: getStatusColor(String(val.status)),
+                        color: getStatusColor(val.status),
                       }))}
                       withLabels
                       withTooltip

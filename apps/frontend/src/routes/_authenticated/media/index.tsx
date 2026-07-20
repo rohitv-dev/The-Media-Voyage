@@ -13,6 +13,7 @@ import {
   Loader,
   SimpleGrid,
   Stack,
+  SegmentedControl,
   Text,
 } from "@mantine/core";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
@@ -30,10 +31,15 @@ import { collectionQueryOptions } from "#/features/mediaCollection/queries";
 import {
   IconDice5,
   IconFilter,
+  IconLayoutGrid,
   IconMovie,
   IconPlus,
+  IconTable,
 } from "@tabler/icons-react";
 import { MediaAppliedFilters } from "#/features/media/components/MediaAppliedFilters";
+import { MediaTable } from "#/features/media/components/MediaTable";
+
+type ViewType = "grid" | "table";
 
 export const Route = createFileRoute("/_authenticated/media/")({
   validateSearch: userMediaQuerySchema,
@@ -56,7 +62,7 @@ function RouteComponent() {
   });
   const navigate = useNavigate();
   const isMdDown = useMediaQuery("(max-width: 47.99em)");
-  const [view, setView] = useLocalStorage({
+  const [view, setView] = useLocalStorage<ViewType>({
     key: "media-view",
     defaultValue: "grid",
   });
@@ -129,6 +135,10 @@ function RouteComponent() {
     }
   }, [isMdDown, view, setView]);
 
+  useEffect(() => {
+    setFilters(search);
+  }, [search]);
+
   return (
     <Container fluid pt="md" pb="md">
       <Stack gap="xs">
@@ -142,6 +152,33 @@ function RouteComponent() {
                 {isFetching && <Loader size="xs" />}
               </Group>
               <Group gap="xs">
+                {!isMdDown && <SegmentedControl
+                  size="xs"
+                  aria-label="Choose library view"
+                  value={view}
+                  onChange={setView}
+                  color="indigo"
+                  data={[
+                    {
+                      value: "grid",
+                      label: (
+                        <Group gap={5} wrap="nowrap">
+                          <IconLayoutGrid size={15} />
+                          <Text size="xs">Grid</Text>
+                        </Group>
+                      ),
+                    },
+                    {
+                      value: "table",
+                      label: (
+                        <Group gap={5} wrap="nowrap">
+                          <IconTable size={15} />
+                          <Text size="xs">Table</Text>
+                        </Group>
+                      ),
+                    },
+                  ]}
+                />}
                 <Button
                   size="xs"
                   variant="light"
@@ -162,7 +199,7 @@ function RouteComponent() {
               </Group>
             </Group>
             <Text color="dimmed" size="sm">
-              Click any card to view the full details, or use the action button
+              Select an entry to view the full details, or use the action button
               to update.
             </Text>
 
@@ -172,25 +209,6 @@ function RouteComponent() {
             />
           </Stack>
         </Group>
-
-        {/* <Box>
-          <SegmentedControl
-            visibleFrom="md"
-            size="sm"
-            data={[
-              {
-                label: <IconGridDots />,
-                value: "grid",
-              },
-              {
-                label: <IconList />,
-                value: "list",
-              },
-            ]}
-            value={view}
-            onChange={setView}
-          />
-        </Box> */}
 
         <Flex gap="sm">
           <Box flex="1">
@@ -228,6 +246,8 @@ function RouteComponent() {
                   </Button>
                 </Stack>
               </Card>
+            ) : view === "table" ? (
+              <MediaTable data={data?.data ?? []} />
             ) : (
               <SimpleGrid
                 hidden={view !== "grid"}
@@ -255,7 +275,6 @@ function RouteComponent() {
                       }}
                     >
                       <MediaCard
-                        key={record.id}
                         media={record}
                         onView={(id) =>
                           navigate({
@@ -265,7 +284,10 @@ function RouteComponent() {
                           })
                         }
                         onEdit={(id) =>
-                          navigate({ to: "/media/update/$id", params: { id } })
+                          navigate({
+                            to: "/media/update/$id",
+                            params: { id },
+                          })
                         }
                       />
                     </motion.div>
