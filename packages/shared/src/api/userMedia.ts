@@ -7,6 +7,12 @@ import {
 import { mediaInsertSchema, mediaSelectSchema } from "../schemas/mediaSchema";
 import { mediaTypeEnum, statusEnum } from "../";
 
+export const userMediaIdParamsSchema = z.object({
+  id: userMediaSelectSchema.shape.id,
+});
+
+export type UserMediaIdParams = z.infer<typeof userMediaIdParamsSchema>;
+
 export const mediaRecordSchema = z.object({
   id: userMediaSelectSchema.shape.id,
 

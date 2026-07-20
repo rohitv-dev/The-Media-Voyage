@@ -14,8 +14,6 @@ fastify.register(cors, {
 });
 
 fastify.setErrorHandler((error, request, reply) => {
-  request.log.error(error);
-
   if (error instanceof ZodError) {
     return reply.status(400).send({
       success: false,
@@ -41,19 +39,21 @@ fastify.setErrorHandler((error, request, reply) => {
 });
 
 fastify.register(import("./routes/auth"));
-fastify.register(import("./routes/v1/media"), { prefix: "/api/v1/media" });
-fastify.register(import("./routes/v1/userMedia"), {
+
+fastify.register(import("./routes/v1/media"), {
+  prefix: "/api/v1/media",
+});
+
+fastify.register(import("./routes/v1/user-media"), {
   prefix: "/api/v1/user-media",
 });
+
 fastify.register(import("./routes/v1/collection"), {
   prefix: "/api/v1/collection",
 });
-fastify.register(import("./routes/v1/collectionItem"), {
-  prefix: "/api/v1/collectionItem",
-});
 
-fastify.get("/health", async () => {
-  return { status: "OK" };
+fastify.register(import("./routes/v1/collection-item"), {
+  prefix: "/api/v1/collectionItem",
 });
 
 const start = async () => {

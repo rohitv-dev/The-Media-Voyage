@@ -1,5 +1,15 @@
 import z from "zod";
 import { mediaSelectSchema } from "../schemas";
+import { mediaTypeEnumValues } from "../schemas/userMediaSchema";
+
+export const mediaSearchQuerySchema = z.object({
+  q: z.string().trim().min(1, "Query parameter 'q' is required"),
+  type: z.enum(mediaTypeEnumValues, {
+    message: "Query parameter 'type' is required",
+  }),
+});
+
+export type MediaSearchQuery = z.infer<typeof mediaSearchQuerySchema>;
 
 export interface OmdbMedia {
   Title: string;

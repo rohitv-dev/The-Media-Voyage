@@ -5,6 +5,45 @@ import {
   mediaCollectionSelectSchema,
 } from "../schemas/mediaCollection";
 import { mediaSelectSchema } from "../schemas/mediaSchema";
+import { userMediaSelectSchema } from "../schemas/userMediaSchema";
+
+export const mediaCollectionIdParamsSchema = z.object({
+  collectionId: mediaCollectionSelectSchema.shape.id,
+});
+
+export type MediaCollectionIdParams = z.infer<
+  typeof mediaCollectionIdParamsSchema
+>;
+
+export const mediaCollectionItemParamsSchema =
+  mediaCollectionIdParamsSchema.extend({
+    itemId: mediaCollectionItemSelectSchema.shape.id,
+  });
+
+export type MediaCollectionItemParams = z.infer<
+  typeof mediaCollectionItemParamsSchema
+>;
+
+export const addMediaCollectionItemSchema = z.object({
+  userMediaId: userMediaSelectSchema.shape.id,
+});
+
+export type AddMediaCollectionItem = z.infer<
+  typeof addMediaCollectionItemSchema
+>;
+
+export const reorderMediaCollectionItemsSchema = z.object({
+  items: z.array(
+    z.object({
+      id: mediaCollectionItemSelectSchema.shape.id,
+      position: mediaCollectionItemSelectSchema.shape.position,
+    }),
+  ),
+});
+
+export type ReorderMediaCollectionItems = z.infer<
+  typeof reorderMediaCollectionItemsSchema
+>;
 
 export const mediaCollectionSchema = z.object({
   id: mediaCollectionSelectSchema.shape.id,
