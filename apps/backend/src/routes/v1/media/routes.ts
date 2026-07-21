@@ -2,6 +2,11 @@ import { mediaSearchQuerySchema } from "@media-voyage/shared/api";
 import { fromNodeHeaders } from "better-auth/node";
 import type { FastifyInstance } from "fastify";
 import { auth } from "../../../auth";
+import {
+  AppError,
+  internalServerError,
+  unauthorized,
+} from "../../../errors";
 import { searchMedia } from "./service";
 
 async function mediaRoutes(fastify: FastifyInstance) {
@@ -12,13 +17,19 @@ async function mediaRoutes(fastify: FastifyInstance) {
       });
 
       if (!session) {
-        return reply.status(401).send({ error: "Unauthorized" });
+        throw unauthorized();
       }
 
       request.userId = session.user.id;
     } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+
       request.log.error(error, "Authentication error in media routes");
-      return reply.status(500).send({ error: "Internal authentication error" });
+      throw internalServerError("Internal authentication error", {
+        cause: error,
+      });
     }
   });
 

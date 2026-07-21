@@ -119,6 +119,7 @@ export async function updateUserMedia(
       .update(userMedia)
       .set({
         ...updates,
+        updatedAt: now,
         statusChangedAt: statusChanged ? now : existing.statusChangedAt,
         lastProgressUpdate:
           progressChanged || startedProgress
@@ -178,6 +179,7 @@ export async function updateUserMediaQuickActions(
     const statusChanged =
       quickAction.status !== undefined &&
       quickAction.status !== existing.status;
+
     const updates: Partial<typeof userMedia.$inferInsert> = {
       ...quickAction,
       updatedAt: now,

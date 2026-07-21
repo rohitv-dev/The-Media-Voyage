@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { MediaForm } from "#/features/media/components/MediaForm";
+import { MediaForm } from "#/features/media/components/MediaForm/index";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { userMediaDropdownOptions } from "#/features/media/queries";
 

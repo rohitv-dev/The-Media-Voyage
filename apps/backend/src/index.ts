@@ -1,7 +1,7 @@
 import Fastify from "fastify";
-import { prettifyError, ZodError } from "zod";
 import cors from "@fastify/cors";
 import { env } from "./config";
+import { registerErrorHandler } from "./error-handler";
 
 const fastify = Fastify({
   logger: true,
@@ -13,30 +13,7 @@ fastify.register(cors, {
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
 });
 
-fastify.setErrorHandler((error, request, reply) => {
-  if (error instanceof ZodError) {
-    return reply.status(400).send({
-      success: false,
-      type: "validation",
-      error: "Validation failed",
-      details: prettifyError(error),
-    });
-  }
-
-  if (error instanceof Error) {
-    return reply.status(500).send({
-      success: false,
-      type: "server",
-      error: error.message,
-    });
-  }
-
-  return reply.status(500).send({
-    success: false,
-    type: "server",
-    error: "Unknown error",
-  });
-});
+registerErrorHandler(fastify);
 
 fastify.register(import("./routes/auth"));
 

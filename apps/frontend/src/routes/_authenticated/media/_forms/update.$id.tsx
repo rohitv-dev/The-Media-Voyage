@@ -1,4 +1,4 @@
-import { MediaForm } from "#/features/media/components/MediaForm";
+import { MediaForm } from "#/features/media/components/MediaForm/index";
 import {
   userMediaDetailedOptions,
   userMediaDropdownOptions,
