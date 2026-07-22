@@ -40,6 +40,8 @@ const parsedEnvironment = environmentSchema.safeParse({
   FRONTEND_URL:
     process.env.FRONTEND_URL ??
     (isProduction ? undefined : "http://localhost:4000"),
+  AUTH_COOKIE_DOMAIN: process.env.AUTH_COOKIE_DOMAIN || undefined,
+  SIGNUP_INVITE_CODE: process.env.SIGNUP_INVITE_CODE || undefined,
 });
 
 if (!parsedEnvironment.success) {
