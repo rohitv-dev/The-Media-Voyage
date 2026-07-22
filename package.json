@@ -6,6 +6,7 @@
     "frontend": "pnpm --filter @media-voyage/frontend dev",
     "backend": "pnpm --filter @media-voyage/backend dev",
     "studio": "pnpm --filter @media-voyage/shared studio",
+    "db:push": "pnpm --filter @media-voyage/shared db:push",
     "backend:build": "pnpm --filter @media-voyage/backend build",
     "frontend:build": "pnpm --filter @media-voyage/frontend build"
   }

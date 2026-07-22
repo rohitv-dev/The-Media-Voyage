@@ -1,6 +1,7 @@
 import { OmdbResponse, SourceMediaRecord } from "@media-voyage/shared/api";
 import { MediaType } from "@media-voyage/shared/userMediaSchema";
 import { env } from "../config";
+import { internalServerError } from "../errors";
 
 const API_KEY = env.OMDB_API_KEY;
 
@@ -17,8 +18,9 @@ export async function searchOmdb(query: string): Promise<SourceMediaRecord[]> {
 
   const response = await fetch(url);
 
+
   if (!response.ok) {
-    throw new Error("OMDb request failed");
+    throw internalServerError("OMDb request failed")
   }
 
   const data: OmdbResponse = await response.json();

@@ -51,7 +51,6 @@ async function authRoutes(fastify: FastifyInstance) {
 
       return reply.send({ authenticated: false });
     } catch (error) {
-      console.error("Error checking authentication:", error);
       return reply.status(500).send({
         error: "Failed to check authentication",
         details: error instanceof Error ? error.message : String(error),

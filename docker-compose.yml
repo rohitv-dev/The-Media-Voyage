@@ -1,0 +1,61 @@
+# Local-only stack for testing the Docker images before they go anywhere near
+# Dokploy. Run `docker compose up --build` from the repo root, then visit
+# http://localhost:8080. Create a `.env` file next to this one (gitignored)
+# with the secrets referenced below as ${...} — docker compose loads it
+# automatically.
+#
+# NODE_ENV is deliberately "development" here (see backend.environment)
+# because the app refuses to boot in "production" mode without real HTTPS
+# URLs. On Dokploy you'll set NODE_ENV=production with real domains instead
+# of using this file at all.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: media_voyage
+      POSTGRES_PASSWORD: media_voyage
+      POSTGRES_DB: media_voyage
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      PORT: 3000
+      DATABASE_URL: postgres://media_voyage:media_voyage@postgres:5432/media_voyage
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: http://localhost:3000
+      FRONTEND_URL: http://localhost:8080
+      AUTH_COOKIE_SAME_SITE: lax
+      SIGNUP_INVITE_CODE: ${SIGNUP_INVITE_CODE}
+      IGDB_CLIENT_ID: ${IGDB_CLIENT_ID}
+      IGDB_CLIENT_SECRET: ${IGDB_CLIENT_SECRET}
+      OMDB_API_KEY: ${OMDB_API_KEY}
+    ports:
+      - "3000:3000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+      args:
+        VITE_API_URL: http://localhost:3000
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  postgres_data:

@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "studio": "pnpm drizzle-kit studio"
+    "studio": "pnpm drizzle-kit studio",
+    "db:push": "drizzle-kit push"
   },
   "keywords": [],
   "author": "",

@@ -2,6 +2,7 @@ import { IgdbResponse, SourceMediaRecord } from "@media-voyage/shared/api";
 import { getAccessToken } from "./twitchAuth";
 import { formatDate } from "@media-voyage/shared/utilities";
 import { env } from "../config";
+import { internalServerError } from "../errors";
 
 export async function searchGames(query: string): Promise<SourceMediaRecord[]> {
   const token = await getAccessToken();
@@ -19,6 +20,10 @@ export async function searchGames(query: string): Promise<SourceMediaRecord[]> {
     `,
   });
 
+  if (!response.ok) {
+    throw internalServerError("IGDB request failed")
+  }
+
   const data: IgdbResponse = await response.json();
 
   const records: SourceMediaRecord[] = data.map((val) => ({
@@ -34,8 +39,6 @@ export async function searchGames(query: string): Promise<SourceMediaRecord[]> {
       ? formatDate(new Date(val.first_release_date * 1000))
       : "",
   }));
-
-  console.log(records);
 
   return records;
 }

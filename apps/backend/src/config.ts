@@ -23,6 +23,7 @@ const environmentSchema = z.object({
   IGDB_CLIENT_ID: z.string().min(1, "IGDB_CLIENT_ID is required"),
   IGDB_CLIENT_SECRET: z.string().min(1, "IGDB_CLIENT_SECRET is required"),
   OMDB_API_KEY: z.string().min(1, "OMDB_API_KEY is required"),
+  SIGNUP_INVITE_CODE: z.string().min(1).optional(),
 });
 
 const parsedEnvironment = environmentSchema.safeParse({
@@ -62,6 +63,12 @@ if (environment.NODE_ENV === "production") {
 
   if (!frontendOrigin.startsWith("https://")) {
     throw new Error("FRONTEND_URL must use HTTPS in production");
+  }
+
+  if (!environment.SIGNUP_INVITE_CODE) {
+    throw new Error(
+      "SIGNUP_INVITE_CODE is required in production to keep signup from being wide open",
+    );
   }
 }
 

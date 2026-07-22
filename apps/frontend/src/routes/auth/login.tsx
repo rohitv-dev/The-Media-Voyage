@@ -5,7 +5,6 @@ import {
   Anchor,
   Button,
   Center,
-  Divider,
   Paper,
   PasswordInput,
   Stack,
@@ -82,7 +81,7 @@ function RouteComponent() {
           </Stack>
         </form>
 
-        <Divider my="xl" label="Or continue with" labelPosition="center" />
+        {/* <Divider my="xl" label="Or continue with" labelPosition="center" /> */}
 
         <Text ta="center" mt="md">
           Don't have an account?{" "}
