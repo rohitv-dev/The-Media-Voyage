@@ -38,6 +38,8 @@ import {
 } from "@tabler/icons-react";
 import { MediaAppliedFilters } from "#/features/media/components/MediaAppliedFilters";
 import { MediaTable } from "#/features/media/components/MediaTable";
+import { useFilterPresets } from "#/features/media/hooks/useFilterPresets";
+import { FilterPresetsMenu } from "#/features/media/components/FilterPresetsMenu";
 
 type ViewType = "grid" | "table";
 
@@ -72,6 +74,7 @@ function RouteComponent() {
     useDisclosure();
 
   const [filters, setFilters] = useState<UserMediaQuerySchema>(search);
+  const { presets, savePreset, deletePreset } = useFilterPresets();
 
   const hasAppliedFilters = Boolean(
     search.search ||
@@ -187,6 +190,12 @@ function RouteComponent() {
                 >
                   Pick for me
                 </Button>
+                <FilterPresetsMenu
+                  presets={presets}
+                  onApply={updateAndApplyFilters}
+                  onSave={(name) => savePreset(name, search)}
+                  onDelete={deletePreset}
+                />
                 <Box hiddenFrom="lg">
                   <Button
                     size="xs"

@@ -1,14 +1,11 @@
 import { capitalizeWords } from "#/utils/stringFunctions";
 import {
-  Accordion,
   Box,
   Button,
   Card,
   Checkbox,
   CheckboxGroup,
   Group,
-  MultiSelect,
-  NumberInput,
   Select,
   SimpleGrid,
   Stack,
@@ -16,7 +13,6 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
-import { DateInput } from "@mantine/dates";
 import type {
   UserMediaDropdowns,
   UserMediaQuerySchema,
@@ -25,29 +21,9 @@ import {
   mediaTypeEnumValues,
   statusEnumValues,
 } from "@media-voyage/shared/userMediaSchema";
-import { IconSearch } from "@tabler/icons-react";
-import type { PropsWithChildren } from "react";
-
-function FilterAccordionItem({
-  value,
-  title,
-  children,
-}: PropsWithChildren<{
-  value: string;
-  title: string;
-}>) {
-  return (
-    <Accordion.Item value={value}>
-      <Accordion.Control>
-        <Text size="sm" fw={500}>
-          {title}
-        </Text>
-      </Accordion.Control>
-
-      <Accordion.Panel>{children}</Accordion.Panel>
-    </Accordion.Item>
-  );
-}
+import { IconFilter, IconSearch } from "@tabler/icons-react";
+import { useDisclosure } from "@mantine/hooks";
+import { MoreFiltersModal } from "#/features/media/components/MoreFiltersModal";
 
 type MediaFilterCardsProps = {
   filters: UserMediaQuerySchema;
@@ -75,6 +51,16 @@ export function MediaFilterCard({
     if (order === null) return;
     updateFilters({ ...filters, order });
   };
+
+  const [moreFiltersOpened, { open: openMoreFilters, close: closeMoreFilters }] =
+    useDisclosure();
+
+  const activeMoreFiltersCount = [
+    filters.minRating !== undefined || filters.maxRating !== undefined,
+    filters.createdFrom !== undefined || filters.createdTo !== undefined,
+    (filters.sources?.length ?? 0) > 0,
+    (filters.tags?.length ?? 0) > 0,
+  ].filter(Boolean).length;
 
   const filterActions = (
     <Group grow>
@@ -176,142 +162,55 @@ export function MediaFilterCard({
           }
         />
 
-        <Card.Section
-          mx={compact ? "calc(var(--mantine-spacing-md) * -1)" : undefined}
-        >
-          <Accordion
-            multiple
-            defaultValue={["status", "type"]}
-            chevronIconSize={16}
-            variant="default"
+        <div>
+          <Text size="xs" fw={500} mb={4}>
+            Status
+          </Text>
+          <CheckboxGroup
+            value={filters.status}
+            onChange={(val) => updateFilters({ ...filters, status: val })}
           >
-            <FilterAccordionItem value="status" title="Status">
-              <CheckboxGroup
-                value={filters.status}
-                onChange={(val) => updateFilters({ ...filters, status: val })}
-              >
-                <SimpleGrid cols={2} spacing="xs">
-                  {statusEnumValues.map((value) => (
-                    <Checkbox
-                      key={value}
-                      value={value}
-                      label={capitalizeWords(value)}
-                    />
-                  ))}
-                </SimpleGrid>
-              </CheckboxGroup>
-            </FilterAccordionItem>
-
-            <FilterAccordionItem value="type" title="Type">
-              <CheckboxGroup
-                value={filters.type}
-                onChange={(val) => updateFilters({ ...filters, type: val })}
-              >
-                <SimpleGrid cols={2} spacing="xs">
-                  {mediaTypeEnumValues.map((value) => (
-                    <Checkbox
-                      key={value}
-                      value={value}
-                      label={capitalizeWords(value)}
-                    />
-                  ))}
-                </SimpleGrid>
-              </CheckboxGroup>
-            </FilterAccordionItem>
-
-            <FilterAccordionItem value="rating" title="Rating">
-              <SimpleGrid cols={compact ? 1 : 2} spacing="xs">
-                <NumberInput
-                  size="xs"
-                  placeholder="Min"
-                  min={0}
-                  max={10}
-                  decimalScale={1}
-                  value={filters.minRating ?? ""}
-                  onChange={(value) =>
-                    updateFilters({
-                      ...filters,
-                      minRating: typeof value === "number" ? value : undefined,
-                    })
-                  }
+            <SimpleGrid cols={2} spacing="xs">
+              {statusEnumValues.map((value) => (
+                <Checkbox
+                  key={value}
+                  value={value}
+                  label={capitalizeWords(value)}
                 />
-                <NumberInput
-                  flex="1"
-                  size="xs"
-                  placeholder="Max"
-                  min={0}
-                  max={10}
-                  decimalScale={1}
-                  value={filters.maxRating ?? ""}
-                  onChange={(value) =>
-                    updateFilters({
-                      ...filters,
-                      maxRating: typeof value === "number" ? value : undefined,
-                    })
-                  }
-                />
-              </SimpleGrid>
-            </FilterAccordionItem>
+              ))}
+            </SimpleGrid>
+          </CheckboxGroup>
+        </div>
 
-            <FilterAccordionItem value="dateAdded" title="Date Added">
-              <SimpleGrid cols={compact ? 1 : 2} spacing="xs">
-                <DateInput
-                  size="xs"
-                  placeholder="From"
-                  clearable
-                  value={filters.createdFrom ?? null}
-                  maxDate={filters.createdTo}
-                  onChange={(value) =>
-                    updateFilters({
-                      ...filters,
-                      createdFrom: value ?? undefined,
-                    })
-                  }
+        <div>
+          <Text size="xs" fw={500} mb={4}>
+            Type
+          </Text>
+          <CheckboxGroup
+            value={filters.type}
+            onChange={(val) => updateFilters({ ...filters, type: val })}
+          >
+            <SimpleGrid cols={2} spacing="xs">
+              {mediaTypeEnumValues.map((value) => (
+                <Checkbox
+                  key={value}
+                  value={value}
+                  label={capitalizeWords(value)}
                 />
-                <DateInput
-                  size="xs"
-                  placeholder="To"
-                  clearable
-                  value={filters.createdTo ?? null}
-                  minDate={filters.createdFrom}
-                  onChange={(value) =>
-                    updateFilters({
-                      ...filters,
-                      createdTo: value ?? undefined,
-                    })
-                  }
-                />
-              </SimpleGrid>
-            </FilterAccordionItem>
+              ))}
+            </SimpleGrid>
+          </CheckboxGroup>
+        </div>
 
-            <FilterAccordionItem value="source" title="Source">
-              <MultiSelect
-                size="xs"
-                searchable
-                clearable
-                placeholder="Netflix, Kindle, Steam..."
-                data={dropdowns.sources}
-                value={filters.sources ?? []}
-                onChange={(sources) => updateFilters({ ...filters, sources })}
-              />
-            </FilterAccordionItem>
-
-            <FilterAccordionItem value="tags" title="Tags">
-              <MultiSelect
-                size="xs"
-                searchable
-                clearable
-                placeholder="Choose one or more tags"
-                data={dropdowns.tags}
-                value={filters.tags ?? []}
-                onChange={(tags) => updateFilters({ ...filters, tags })}
-              />
-              <Text size="xs" c="dimmed" mt={6}>
-                Matches entries containing any selected tag.
-              </Text>
-            </FilterAccordionItem>
-          </Accordion>
-        </Card.Section>
+        <Button
+          size="xs"
+          variant="light"
+          leftSection={<IconFilter size={14} />}
+          onClick={openMoreFilters}
+        >
+          More filters
+          {activeMoreFiltersCount > 0 ? ` (${activeMoreFiltersCount})` : ""}
+        </Button>
 
         {!compact && filterActions}
       </Stack>
@@ -328,6 +227,14 @@ export function MediaFilterCard({
           {filterActions}
         </Box>
       )}
+
+      <MoreFiltersModal
+        opened={moreFiltersOpened}
+        onClose={closeMoreFilters}
+        filters={filters}
+        updateFilters={updateFilters}
+        dropdowns={dropdowns}
+      />
     </Card>
   );
 }
