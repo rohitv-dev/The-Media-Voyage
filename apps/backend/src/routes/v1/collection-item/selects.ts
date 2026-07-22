@@ -4,6 +4,7 @@ import {
   mediaCollectionItems,
   userMedia,
 } from "@media-voyage/shared";
+import { userMediaSummarySelect } from "../user-media/selects";
 
 export const collectionIdSelect = {
   id: mediaCollection.id,
@@ -24,4 +25,9 @@ export const collectionItemSelect = {
   type: media.type,
   position: mediaCollectionItems.position,
   createdAt: mediaCollectionItems.createdAt,
+};
+
+export const collectionItemDetailedSelect = {
+  ...userMediaSummarySelect,
+  position: mediaCollectionItems.position,
 };

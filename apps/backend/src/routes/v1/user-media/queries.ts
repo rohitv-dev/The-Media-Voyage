@@ -242,21 +242,9 @@ export async function getUserMediaDropdowns(userId: string) {
   };
 }
 
-function countUserMediaByStatus(userId: string, status: Status) {
-  return db
-    .select({ count: count() })
-    .from(userMedia)
-    .where(and(activeUserMediaCondition(userId), eq(userMedia.status, status)));
-}
-
 export async function getDashboardStats(userId: string) {
   const [
     totalMedia,
-    completed,
-    inProgress,
-    planned,
-    dropped,
-    onHold,
     collections,
     statusDistribution,
     mediaTypeDistribution,
@@ -267,11 +255,6 @@ export async function getDashboardStats(userId: string) {
       .select({ count: count() })
       .from(userMedia)
       .where(activeUserMediaCondition(userId)),
-    countUserMediaByStatus(userId, "completed"),
-    countUserMediaByStatus(userId, "in_progress"),
-    countUserMediaByStatus(userId, "planned"),
-    countUserMediaByStatus(userId, "dropped"),
-    countUserMediaByStatus(userId, "on_hold"),
     db
       .select({ count: count() })
       .from(mediaCollection)
@@ -310,14 +293,19 @@ export async function getDashboardStats(userId: string) {
       .orderBy(sql`date_trunc('month', ${userMedia.completedAt})`),
   ]);
 
+  const statusCounts = Object.fromEntries(
+    statusDistribution.map((row) => [row.status, row.count]),
+  ) as Partial<Record<Status, number>>;
+
   return {
     summary: {
       total_media: totalMedia[0]?.count ?? 0,
-      completed: completed[0]?.count ?? 0,
-      in_progress: inProgress[0]?.count ?? 0,
-      on_hold: onHold[0]?.count ?? 0,
-      planned: planned[0]?.count ?? 0,
-      dropped: dropped[0]?.count ?? 0,
+      completed: statusCounts.completed ?? 0,
+      in_progress: statusCounts.in_progress ?? 0,
+      on_hold: statusCounts.on_hold ?? 0,
+      planned: statusCounts.planned ?? 0,
+      dropped: statusCounts.dropped ?? 0,
+      revisiting: statusCounts.revisiting ?? 0,
       collections: collections[0]?.count ?? 0,
     },
     statusDistribution,

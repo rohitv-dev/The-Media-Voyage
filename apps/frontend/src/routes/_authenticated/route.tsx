@@ -228,7 +228,7 @@ function RouteComponent() {
                     leftSection={<IconBooks size={16} />}
                     onClick={() => {
                       navigate({
-                        to: "/collection/edit/$id",
+                        to: "/collection/view/$id",
                         params: { id: collection.id },
                       });
                       close();

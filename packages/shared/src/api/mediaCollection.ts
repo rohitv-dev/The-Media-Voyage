@@ -6,6 +6,7 @@ import {
 } from "../schemas/mediaCollection";
 import { mediaSelectSchema } from "../schemas/mediaSchema";
 import { userMediaSelectSchema } from "../schemas/userMediaSchema";
+import { mediaRecordSchema } from "./userMedia";
 
 export const mediaCollectionIdParamsSchema = z.object({
   collectionId: mediaCollectionSelectSchema.shape.id,
@@ -84,4 +85,12 @@ export const mediaCollectionItemRecord = z.object({
 
 export type MediaCollectionItemRecord = z.infer<
   typeof mediaCollectionItemRecord
+>;
+
+export const mediaCollectionItemDetailedRecord = mediaRecordSchema.extend({
+  position: mediaCollectionItemSelectSchema.shape.position,
+});
+
+export type MediaCollectionItemDetailedRecord = z.infer<
+  typeof mediaCollectionItemDetailedRecord
 >;

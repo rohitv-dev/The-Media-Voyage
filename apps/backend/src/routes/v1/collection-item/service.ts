@@ -8,6 +8,7 @@ import {
   findOwnedCollection,
   getLastCollectionItemPosition,
   listCollectionItems,
+  listCollectionItemsDetailed,
 } from "./queries";
 
 export async function getOwnedCollectionItems(
@@ -23,6 +24,22 @@ export async function getOwnedCollectionItems(
   return {
     status: "success" as const,
     items: await listCollectionItems(collectionId),
+  };
+}
+
+export async function getOwnedCollectionItemsDetailed(
+  userId: string,
+  collectionId: string,
+) {
+  const collection = await findOwnedCollection(userId, collectionId);
+
+  if (!collection) {
+    return { status: "collection_not_found" as const };
+  }
+
+  return {
+    status: "success" as const,
+    items: await listCollectionItemsDetailed(collectionId),
   };
 }
 

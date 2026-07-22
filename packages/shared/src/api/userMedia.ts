@@ -200,6 +200,8 @@ export type DashboardStatsResponse = {
     planned: number;
     in_progress: number;
     on_hold: number;
+    dropped: number;
+    revisiting: number;
     collections: number;
   };
 

@@ -8,6 +8,7 @@ import { and, asc, eq, isNull, max } from "drizzle-orm";
 import { db } from "../../../db/db";
 import {
   collectionIdSelect,
+  collectionItemDetailedSelect,
   collectionItemIdSelect,
   collectionItemSelect,
   userMediaIdSelect,
@@ -36,6 +37,19 @@ export async function findOwnedCollection(
 export function listCollectionItems(collectionId: string) {
   return db
     .select(collectionItemSelect)
+    .from(mediaCollectionItems)
+    .innerJoin(userMedia, eq(mediaCollectionItems.userMediaId, userMedia.id))
+    .innerJoin(media, eq(userMedia.mediaId, media.id))
+    .where(eq(mediaCollectionItems.collectionId, collectionId))
+    .orderBy(
+      asc(mediaCollectionItems.position),
+      asc(mediaCollectionItems.createdAt),
+    );
+}
+
+export function listCollectionItemsDetailed(collectionId: string) {
+  return db
+    .select(collectionItemDetailedSelect)
     .from(mediaCollectionItems)
     .innerJoin(userMedia, eq(mediaCollectionItems.userMediaId, userMedia.id))
     .innerJoin(media, eq(userMedia.mediaId, media.id))

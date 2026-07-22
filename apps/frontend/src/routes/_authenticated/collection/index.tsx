@@ -1,5 +1,6 @@
 import { collectionQueryOptions } from "#/features/mediaCollection/queries";
 import {
+  ActionIcon,
   Button,
   Card,
   Container,
@@ -8,8 +9,9 @@ import {
   Stack,
   Text,
   Title,
+  Tooltip,
 } from "@mantine/core";
-import { IconBooks, IconPlus } from "@tabler/icons-react";
+import { IconBooks, IconEdit, IconPlus } from "@tabler/icons-react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
@@ -55,31 +57,77 @@ function RouteComponent() {
         ) : (
           <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
             {data.map((collection) => (
-              <Card key={collection.id} withBorder shadow="sm" p="lg">
+              <Card
+                key={collection.id}
+                withBorder
+                shadow="sm"
+                p="lg"
+                role="link"
+                tabIndex={0}
+                onClick={() =>
+                  navigate({
+                    to: "/collection/view/$id",
+                    params: { id: collection.id },
+                  })
+                }
+                onKeyDown={(event) => {
+                  if (event.target !== event.currentTarget) return;
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    navigate({
+                      to: "/collection/view/$id",
+                      params: { id: collection.id },
+                    });
+                  }
+                }}
+                style={{ cursor: "pointer" }}
+              >
                 <Stack gap="sm" h="100%">
-                  <Group justify="space-between" align="flex-start">
-                    <Stack gap={2}>
-                      <Title order={4}>{collection.name}</Title>
+                  <Group justify="space-between" align="flex-start" wrap="nowrap">
+                    <Stack gap={2} style={{ minWidth: 0 }}>
+                      <Title order={4} lineClamp={2}>
+                        {collection.name}
+                      </Title>
                       <Text c="dimmed" size="sm">
                         {collection.description
                           ? String(collection.description)
                           : "No description provided."}
                       </Text>
                     </Stack>
-                    <IconBooks size={18} />
+                    <Group gap={6} wrap="nowrap">
+                      <IconBooks size={18} />
+                      <Tooltip label="Edit collection" withArrow>
+                        <ActionIcon
+                          variant="subtle"
+                          color="gray"
+                          size="sm"
+                          aria-label={`Edit ${collection.name}`}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            navigate({
+                              to: "/collection/edit/$id",
+                              params: { id: collection.id },
+                            });
+                          }}
+                        >
+                          <IconEdit size={16} />
+                        </ActionIcon>
+                      </Tooltip>
+                    </Group>
                   </Group>
 
                   <Button
                     variant="light"
                     mt="auto"
-                    onClick={() =>
+                    onClick={(event) => {
+                      event.stopPropagation();
                       navigate({
-                        to: "/collection/edit/$id",
+                        to: "/collection/view/$id",
                         params: { id: collection.id },
-                      })
-                    }
+                      });
+                    }}
                   >
-                    Edit collection
+                    View collection
                   </Button>
                 </Stack>
               </Card>

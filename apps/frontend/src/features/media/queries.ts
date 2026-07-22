@@ -95,3 +95,13 @@ export const dashboardStatOptions = queryOptions({
   queryKey: ["dashboard-stats"],
   queryFn: getDashboardStats,
 });
+
+export const continueMediaFilters: UserMediaQuerySchema = {
+  status: ["in_progress", "on_hold"],
+  sort: "updatedAt",
+  order: "desc",
+};
+
+export const continueMediaQueryOptions = userMediaFilterQueryOptions(
+  continueMediaFilters,
+);

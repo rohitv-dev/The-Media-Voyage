@@ -10,6 +10,7 @@ import { auth } from "../../../auth";
 import {
   addCollectionItem,
   getOwnedCollectionItems,
+  getOwnedCollectionItemsDetailed,
   removeCollectionItem,
   reorderCollectionItems,
 } from "./service";
@@ -40,6 +41,22 @@ async function collectionItemRoutes(fastify: FastifyInstance) {
       request.params,
     );
     const result = await getOwnedCollectionItems(request.userId, collectionId);
+
+    if (result.status === "collection_not_found") {
+      return reply.status(404).send({ error: "Collection not found" });
+    }
+
+    return reply.send(result.items);
+  });
+
+  fastify.get("/:collectionId/detailed", async (request, reply) => {
+    const { collectionId } = mediaCollectionIdParamsSchema.parse(
+      request.params,
+    );
+    const result = await getOwnedCollectionItemsDetailed(
+      request.userId,
+      collectionId,
+    );
 
     if (result.status === "collection_not_found") {
       return reply.status(404).send({ error: "Collection not found" });
