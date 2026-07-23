@@ -2,8 +2,11 @@ import {
   media,
   mediaCollection,
   mediaCollectionItems,
+  sources,
+  tags,
   userMedia,
   userMediaStatusHistory,
+  userMediaTags,
 } from "@media-voyage/shared";
 import type {
   CalendarActivityEvent,
@@ -14,7 +17,6 @@ import type {
 import type { Status } from "@media-voyage/shared/userMediaSchema";
 import {
   and,
-  arrayOverlaps,
   asc,
   between,
   count,
@@ -41,6 +43,32 @@ import {
   userMediaExportSelect,
   userMediaSummarySelect,
 } from "./selects";
+
+function userMediaIdsWithTags(userId: string, tagNames: string[]) {
+  const normalizedNames = tagNames.map((name) => name.trim().toLowerCase());
+
+  return db
+    .select({ userMediaId: userMediaTags.userMediaId })
+    .from(userMediaTags)
+    .innerJoin(tags, eq(tags.id, userMediaTags.tagId))
+    .where(
+      and(eq(tags.userId, userId), inArray(tags.normalizedName, normalizedNames)),
+    );
+}
+
+function sourceIdsWithNames(userId: string, sourceNames: string[]) {
+  const normalizedNames = sourceNames.map((name) => name.trim().toLowerCase());
+
+  return db
+    .select({ id: sources.id })
+    .from(sources)
+    .where(
+      and(
+        eq(sources.userId, userId),
+        inArray(sources.normalizedName, normalizedNames),
+      ),
+    );
+}
 
 export function ownedUserMediaCondition(userId: string, id: string) {
   return and(
@@ -97,9 +125,15 @@ export async function pickUserMedia(userId: string, filters: MediaPickerQuery) {
   ];
 
   if (filters.type) conditions.push(eq(media.type, filters.type));
-  if (filters.source) conditions.push(eq(userMedia.source, filters.source));
+  if (filters.source) {
+    conditions.push(
+      inArray(userMedia.sourceId, sourceIdsWithNames(userId, [filters.source])),
+    );
+  }
   if (filters.tag) {
-    conditions.push(arrayOverlaps(userMedia.tags, [filters.tag]));
+    conditions.push(
+      inArray(userMedia.id, userMediaIdsWithTags(userId, [filters.tag])),
+    );
   }
 
   if (filters.collectionId) {
@@ -177,10 +211,14 @@ export async function filterUserMedia(
     );
   }
   if (filters.sources?.length) {
-    conditions.push(inArray(userMedia.source, filters.sources));
+    conditions.push(
+      inArray(userMedia.sourceId, sourceIdsWithNames(userId, filters.sources)),
+    );
   }
   if (filters.tags?.length) {
-    conditions.push(arrayOverlaps(userMedia.tags, filters.tags));
+    conditions.push(
+      inArray(userMedia.id, userMediaIdsWithTags(userId, filters.tags)),
+    );
   }
 
   const sortColumns = {
@@ -219,33 +257,20 @@ export function getUserMediaCounts(userId: string) {
 export async function getUserMediaDropdowns(userId: string) {
   const [sourceRows, tagRows] = await Promise.all([
     db
-      .selectDistinct({ source: userMedia.source })
-      .from(userMedia)
-      .where(eq(userMedia.userId, userId)),
+      .select({ name: sources.name })
+      .from(sources)
+      .where(eq(sources.userId, userId))
+      .orderBy(sources.name),
     db
-      .select({ tags: userMedia.tags })
-      .from(userMedia)
-      .where(eq(userMedia.userId, userId)),
+      .select({ name: tags.name })
+      .from(tags)
+      .where(eq(tags.userId, userId))
+      .orderBy(tags.name),
   ]);
 
-  const tagsByNormalizedValue = new Map<string, string>();
-
-  for (const tag of tagRows.flatMap((row) => row.tags ?? [])) {
-    const trimmedTag = tag.trim();
-    const normalizedTag = trimmedTag.toLowerCase();
-
-    if (trimmedTag && !tagsByNormalizedValue.has(normalizedTag)) {
-      tagsByNormalizedValue.set(normalizedTag, trimmedTag);
-    }
-  }
-
   return {
-    sources: sourceRows
-      .map((row) => row.source)
-      .filter((source): source is string => source !== null),
-    tags: [...tagsByNormalizedValue.values()].sort((a, b) =>
-      a.localeCompare(b),
-    ),
+    sources: sourceRows.map((row) => row.name),
+    tags: tagRows.map((row) => row.name),
   };
 }
 

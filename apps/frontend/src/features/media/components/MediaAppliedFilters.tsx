@@ -1,6 +1,8 @@
 import { Group, Pill } from "@mantine/core";
 import type { UserMediaQuerySchema } from "@media-voyage/shared/api";
 import { capitalizeWords } from "#/utils/stringFunctions";
+import { useSourceColorMap } from "#/features/sources/queries";
+import { useTagColorMap } from "#/features/tags/queries";
 import dayjs from "dayjs";
 
 type MediaAppliedFiltersProps = {
@@ -16,6 +18,9 @@ export function MediaAppliedFilters({
   filters,
   updateAndApplyFilters,
 }: MediaAppliedFiltersProps) {
+  const sourceColorMap = useSourceColorMap();
+  const tagColorMap = useTagColorMap();
+
   return (
     <Group gap="xs">
       {filters.search && (
@@ -124,7 +129,7 @@ export function MediaAppliedFilters({
       {filters.sources?.map((val) => (
         <Pill
           key={val}
-          bg="grape"
+          bg={sourceColorMap.get(val) ?? "grape"}
           c="white"
           fw="bold"
           withRemoveButton
@@ -141,7 +146,7 @@ export function MediaAppliedFilters({
       {filters.tags?.map((val) => (
         <Pill
           key={val}
-          bg="grape"
+          bg={tagColorMap.get(val) ?? "grape"}
           c="white"
           fw="bold"
           withRemoveButton

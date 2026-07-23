@@ -10,7 +10,6 @@ export type FilterPreset = {
 };
 
 const STORAGE_KEY = "media-filter-presets";
-const SEEDED_KEY = "media-filter-presets-seeded";
 const MAX_PRESETS = 20;
 
 type SaveResult = { ok: true } | { ok: false; error: string };
@@ -52,24 +51,39 @@ export function useFilterPresets() {
     defaultValue: [],
   });
 
-  const [seeded, setSeeded] = useLocalStorage<boolean>({
-    key: SEEDED_KEY,
-    defaultValue: false,
-  });
-
   useEffect(() => {
-    if (seeded) return;
+    setPresets((prev) => {
+      const seenNames = new Set<string>();
+      const deduped: FilterPreset[] = [];
 
-    setPresets((prev) => [
-      ...prev,
-      ...DEFAULT_PRESETS.map((preset) => ({
-        ...preset,
-        id: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-      })),
-    ]);
-    setSeeded(true);
-  }, [seeded, setPresets, setSeeded]);
+      for (const preset of prev) {
+        const key = preset.name.toLowerCase();
+        if (seenNames.has(key)) continue;
+        seenNames.add(key);
+        deduped.push(preset);
+      }
+
+      const missingDefaults = DEFAULT_PRESETS.filter(
+        (preset) => !seenNames.has(preset.name.toLowerCase()),
+      );
+
+      if (!missingDefaults.length && deduped.length === prev.length) {
+        return prev;
+      }
+
+      return [
+        ...deduped,
+        ...missingDefaults.map((preset) => ({
+          ...preset,
+          id: crypto.randomUUID(),
+          createdAt: new Date().toISOString(),
+        })),
+      ];
+    });
+    // Runs once per mount: dedupes any presets that share a name, then
+    // backfills any of the built-in defaults that are still missing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const savePreset = (
     name: string,

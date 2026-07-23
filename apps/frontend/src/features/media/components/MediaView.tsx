@@ -29,6 +29,8 @@ import type { MediaDetailedRecord } from "@media-voyage/shared/api";
 import { useNavigate } from "@tanstack/react-router";
 import { motion, useReducedMotion } from "motion/react";
 import { getStatusColor } from "#/features/media/functions";
+import { useSourceColorMap } from "#/features/sources/queries";
+import { useTagColorMap } from "#/features/tags/queries";
 
 const formatDate = (value?: Date | string | null) =>
   value ? new Date(value).toLocaleDateString() : "—";
@@ -52,7 +54,7 @@ function MetaItem({ label, value }: { label: string; value: React.ReactNode }) {
       >
         {label}
       </Text>
-      <Text size="sm" fw={600} lh={1.35}>
+      <Text component="div" size="sm" fw={600} lh={1.35}>
         {value}
       </Text>
     </Box>
@@ -102,11 +104,26 @@ export function MediaView({ data }: { data: MediaDetailedRecord }) {
   const navigate = useNavigate();
   const reducedMotion = useReducedMotion() ?? false;
   const progress = Math.min(100, Math.max(0, data.progress ?? 0));
+  const sourceColorMap = useSourceColorMap();
+  const tagColorMap = useTagColorMap();
 
   const metaItems = [
     { label: "Status", value: capitalizeWords(data.status) },
     { label: "Rating", value: formatValue(data.rating?.toFixed(1)) },
-    { label: "Source", value: formatValue(data.source) },
+    {
+      label: "Source",
+      value: data.source ? (
+        <Badge
+          variant="dot"
+          color={sourceColorMap.get(data.source) ?? "gray"}
+          size="sm"
+        >
+          {data.source}
+        </Badge>
+      ) : (
+        "—"
+      ),
+    },
     { label: "Started", value: formatDate(data.startedAt) },
     { label: "Completed", value: formatDate(data.completedAt) },
   ];
@@ -247,7 +264,7 @@ export function MediaView({ data }: { data: MediaDetailedRecord }) {
                           key={tag}
                           radius="xl"
                           variant="dot"
-                          color="gray"
+                          color={tagColorMap.get(tag) ?? "gray"}
                           size="sm"
                         >
                           {tag}

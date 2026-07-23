@@ -1,4 +1,5 @@
 import { capitalizeWords } from "#/utils/stringFunctions";
+import { useSourceColorMap } from "#/features/sources/queries";
 import autoAnimate from "@formkit/auto-animate";
 import {
   ActionIcon,
@@ -35,6 +36,8 @@ function formatDate(value: Date | null | undefined) {
 }
 
 function MediaIdentity({ record }: { record: MediaRecord }) {
+  const sourceColorMap = useSourceColorMap();
+
   return (
     <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
       <ThemeIcon variant="light" color="gray" size={36} radius="sm">
@@ -60,9 +63,13 @@ function MediaIdentity({ record }: { record: MediaRecord }) {
             {capitalizeWords(record.type)}
           </Badge>
           {record.source && (
-            <Text size="xs" c="dimmed" truncate>
+            <Badge
+              variant="dot"
+              color={sourceColorMap.get(record.source) ?? "gray"}
+              size="xs"
+            >
               {record.source}
-            </Text>
+            </Badge>
           )}
         </Group>
       </Stack>

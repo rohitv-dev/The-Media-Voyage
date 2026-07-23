@@ -1,9 +1,16 @@
-import { media, userMedia, userMediaStatusHistory } from "@media-voyage/shared";
+import {
+  media,
+  sources,
+  tags,
+  userMedia,
+  userMediaStatusHistory,
+  userMediaTags,
+} from "@media-voyage/shared";
 import type {
   UserMediaFormSchema,
   UserMediaQuickAction,
 } from "@media-voyage/shared/api";
-import { eq } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../../../db/db";
 import {
   ownedUserMediaCondition,
@@ -11,11 +18,124 @@ import {
 } from "./queries";
 import { userMediaCreatedSelect, userMediaDetailedSelect } from "./selects";
 
+type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+async function syncUserMediaTags(
+  tx: DbTransaction,
+  userId: string,
+  userMediaId: string,
+  tagNames: string[] | null | undefined,
+) {
+  if (tagNames === undefined) return;
+
+  if (tagNames === null) {
+    await tx
+      .delete(userMediaTags)
+      .where(eq(userMediaTags.userMediaId, userMediaId));
+    return;
+  }
+
+  const cleanedNames = [
+    ...new Set(tagNames.map((name) => name.trim()).filter(Boolean)),
+  ];
+
+  if (!cleanedNames.length) {
+    await tx
+      .delete(userMediaTags)
+      .where(eq(userMediaTags.userMediaId, userMediaId));
+    return;
+  }
+
+  const normalizedNames = cleanedNames.map((name) => name.toLowerCase());
+
+  const existingTags = await tx
+    .select()
+    .from(tags)
+    .where(
+      and(eq(tags.userId, userId), inArray(tags.normalizedName, normalizedNames)),
+    );
+
+  const existingByNormalized = new Map(
+    existingTags.map((tag) => [tag.normalizedName, tag]),
+  );
+
+  const missingNames = cleanedNames.filter(
+    (name) => !existingByNormalized.has(name.toLowerCase()),
+  );
+
+  const createdTags = missingNames.length
+    ? await tx
+        .insert(tags)
+        .values(
+          missingNames.map((name) => ({
+            userId,
+            name,
+            normalizedName: name.toLowerCase(),
+          })),
+        )
+        .returning()
+    : [];
+
+  const tagIdByNormalized = new Map(
+    [...existingTags, ...createdTags].map((tag) => [tag.normalizedName, tag.id]),
+  );
+
+  await tx
+    .delete(userMediaTags)
+    .where(eq(userMediaTags.userMediaId, userMediaId));
+
+  await tx.insert(userMediaTags).values(
+    normalizedNames.map((normalizedName) => ({
+      userMediaId,
+      tagId: tagIdByNormalized.get(normalizedName)!,
+    })),
+  );
+}
+
+async function resolveSourceId(
+  tx: DbTransaction,
+  userId: string,
+  sourceName: string | null | undefined,
+): Promise<string | null | undefined> {
+  if (sourceName === undefined) return undefined;
+  if (sourceName === null) return null;
+
+  const trimmed = sourceName.trim();
+  if (!trimmed) return null;
+
+  const normalizedName = trimmed.toLowerCase();
+
+  const [existing] = await tx
+    .select()
+    .from(sources)
+    .where(
+      and(eq(sources.userId, userId), eq(sources.normalizedName, normalizedName)),
+    )
+    .limit(1);
+
+  if (existing) return existing.id;
+
+  const [created] = await tx
+    .insert(sources)
+    .values({ userId, name: trimmed, normalizedName })
+    .returning();
+
+  return created.id;
+}
+
 export async function createUserMedia(
   userId: string,
   input: UserMediaFormSchema,
 ) {
-  const { title, type, externalId, imageUrl, mediaSource } = input;
+  const {
+    title,
+    type,
+    externalId,
+    imageUrl,
+    mediaSource,
+    tags: tagNames,
+    source: sourceName,
+  } = input;
 
   return db.transaction(async (tx) => {
     let mediaId = input.mediaId;
@@ -35,6 +155,8 @@ export async function createUserMedia(
       mediaId = createdMedia.id;
     }
 
+    const sourceId = await resolveSourceId(tx, userId, sourceName);
+
     const statusChangedAt = new Date();
     const [createdUserMedia] = await tx
       .insert(userMedia)
@@ -52,8 +174,7 @@ export async function createUserMedia(
         favorite: input.favorite,
         rewatches: input.rewatches,
         timeSpent: input.timeSpent,
-        source: input.source,
-        tags: input.tags,
+        sourceId: sourceId ?? null,
         visibility: input.visibility,
         customFields: input.customFields,
         seasonsProgress: input.seasonsProgress,
@@ -73,6 +194,8 @@ export async function createUserMedia(
       changedAt: statusChangedAt,
     });
 
+    await syncUserMediaTags(tx, userId, createdUserMedia.id, tagNames);
+
     const [record] = await tx
       .select(userMediaCreatedSelect)
       .from(userMedia)
@@ -89,9 +212,17 @@ export async function updateUserMedia(
   id: string,
   input: UserMediaFormSchema,
 ) {
-  const { title: _title, type: _type, mediaId: _mediaId, ...updates } = input;
+  const {
+    title: _title,
+    type: _type,
+    mediaId: _mediaId,
+    tags: tagNames,
+    source: sourceName,
+    ...updates
+  } = input;
 
   return db.transaction(async (tx) => {
+    const sourceId = await resolveSourceId(tx, userId, sourceName);
     const [existing] = await tx
       .select({
         progress: userMedia.progress,
@@ -118,6 +249,7 @@ export async function updateUserMedia(
       .update(userMedia)
       .set({
         ...updates,
+        ...(sourceId !== undefined ? { sourceId } : {}),
         updatedAt: now,
         statusChangedAt: statusChanged ? now : existing.statusChangedAt,
         lastProgressUpdate:
@@ -144,6 +276,8 @@ export async function updateUserMedia(
         changedAt: now,
       });
     }
+
+    await syncUserMediaTags(tx, userId, updated.id, tagNames);
 
     const [record] = await tx
       .select(userMediaDetailedSelect)
@@ -213,7 +347,11 @@ export async function updateUserMediaQuickActions(
         progress: userMedia.progress,
         rating: userMedia.rating,
         favorite: userMedia.favorite,
-        source: userMedia.source,
+        source: sql<string | null>`(
+          select ${sources.name}
+          from ${sources}
+          where ${sources.id} = ${userMedia.sourceId}
+        )`,
         lastProgressUpdate: userMedia.lastProgressUpdate,
         createdAt: userMedia.createdAt,
         updatedAt: userMedia.updatedAt,

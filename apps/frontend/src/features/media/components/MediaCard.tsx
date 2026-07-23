@@ -1,6 +1,7 @@
 import { api } from "#/lib/api";
 import { showErrorNotification } from "#/utils/notifications";
 import { getStaleProgressDays } from "#/features/media/staleProgress";
+import { useSourceColorMap } from "#/features/sources/queries";
 import {
   ActionIcon,
   Badge,
@@ -50,6 +51,7 @@ const statuses: Array<{ value: Status; label: string }> = [
 export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
   const queryClient = useQueryClient();
   const reduceMotion = useReducedMotion();
+  const sourceColorMap = useSourceColorMap();
   const staleProgressDays =
     media.status === "in_progress"
       ? getStaleProgressDays(media.lastProgressUpdate)
@@ -238,9 +240,14 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
                 />
               )}
               {media.source && (
-                <Text size="sm" truncate>
+                <Badge
+                  variant="dot"
+                  color={sourceColorMap.get(media.source) ?? "gray"}
+                  size="sm"
+                  style={{ alignSelf: "flex-start" }}
+                >
                   {media.source}
-                </Text>
+                </Badge>
               )}
             </Stack>
           )}

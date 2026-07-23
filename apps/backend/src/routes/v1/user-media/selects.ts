@@ -1,4 +1,25 @@
-import { media, userMedia, userMediaStatusHistory } from "@media-voyage/shared";
+import {
+  media,
+  sources,
+  tags,
+  userMedia,
+  userMediaStatusHistory,
+  userMediaTags,
+} from "@media-voyage/shared";
+import { sql } from "drizzle-orm";
+
+const userMediaTagNames = sql<string[]>`(
+  select coalesce(array_agg(${tags.name} order by ${tags.name}), '{}')
+  from ${userMediaTags}
+  inner join ${tags} on ${tags.id} = ${userMediaTags.tagId}
+  where ${userMediaTags.userMediaId} = ${userMedia.id}
+)`;
+
+const userMediaSourceName = sql<string | null>`(
+  select ${sources.name}
+  from ${sources}
+  where ${sources.id} = ${userMedia.sourceId}
+)`;
 
 export const userMediaSummarySelect = {
   id: userMedia.id,
@@ -8,7 +29,7 @@ export const userMediaSummarySelect = {
   progress: userMedia.progress,
   rating: userMedia.rating,
   favorite: userMedia.favorite,
-  source: userMedia.source,
+  source: userMediaSourceName,
   lastProgressUpdate: userMedia.lastProgressUpdate,
   createdAt: userMedia.createdAt,
   updatedAt: userMedia.updatedAt,
@@ -29,8 +50,8 @@ export const userMediaDetailedSelect = {
   favorite: userMedia.favorite,
   rewatches: userMedia.rewatches,
   timeSpent: userMedia.timeSpent,
-  source: userMedia.source,
-  tags: userMedia.tags,
+  source: userMediaSourceName,
+  tags: userMediaTagNames,
   visibility: userMedia.visibility,
   customFields: userMedia.customFields,
   seasonsProgress: userMedia.seasonsProgress,
@@ -55,8 +76,8 @@ export const userMediaCreatedSelect = {
   favorite: userMedia.favorite,
   rewatches: userMedia.rewatches,
   timeSpent: userMedia.timeSpent,
-  source: userMedia.source,
-  tags: userMedia.tags,
+  source: userMediaSourceName,
+  tags: userMediaTagNames,
   visibility: userMedia.visibility,
   customFields: userMedia.customFields,
   seasonsProgress: userMedia.seasonsProgress,
@@ -68,7 +89,7 @@ export const userMediaCreatedSelect = {
 export const mediaPickerSelect = {
   ...userMediaSummarySelect,
   imageUrl: media.imageUrl,
-  tags: userMedia.tags,
+  tags: userMediaTagNames,
 };
 
 export const statusHistorySelect = {
@@ -129,8 +150,8 @@ export const userMediaExportSelect = {
   favorite: userMedia.favorite,
   rewatches: userMedia.rewatches,
   timeSpent: userMedia.timeSpent,
-  trackingSource: userMedia.source,
-  tags: userMedia.tags,
+  trackingSource: userMediaSourceName,
+  tags: userMediaTagNames,
   visibility: userMedia.visibility,
   customFields: userMedia.customFields,
   seasonsProgress: userMedia.seasonsProgress,

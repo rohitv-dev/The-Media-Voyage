@@ -61,6 +61,27 @@ export const media = pgTable(
   ],
 );
 
+export const sources = pgTable(
+  "sources",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .references(() => user.id, { onDelete: "cascade" })
+      .notNull(),
+    name: text("name").notNull(),
+    normalizedName: text("normalized_name").notNull(),
+    color: text("color"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    unique("sources_user_normalized_name_unique").on(
+      table.userId,
+      table.normalizedName,
+    ),
+  ],
+);
+
 // User-specific tracking (the heart)
 export const userMedia = pgTable(
   "user_media",
@@ -91,9 +112,9 @@ export const userMedia = pgTable(
 
     timeSpent: integer("time_spent"),
 
-    source: text("source"), // "Netflix", "Theater", "Kindle", "Steam", etc.
-
-    tags: text("tags").array().default([]), // e.g. ["mind-bending", "comfort-watch", "cry-fest"]
+    sourceId: uuid("source_id").references(() => sources.id, {
+      onDelete: "set null",
+    }),
 
     visibility: visibilityEnum("visibility").default("private"), // 'private' | 'friends' | 'public'
 
@@ -113,6 +134,45 @@ export const userMedia = pgTable(
       table.status,
       table.statusChangedAt,
     ),
+  ],
+);
+
+export const tags = pgTable(
+  "tags",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .references(() => user.id, { onDelete: "cascade" })
+      .notNull(),
+    name: text("name").notNull(),
+    normalizedName: text("normalized_name").notNull(),
+    color: text("color"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    unique("tags_user_normalized_name_unique").on(
+      table.userId,
+      table.normalizedName,
+    ),
+  ],
+);
+
+export const userMediaTags = pgTable(
+  "user_media_tags",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userMediaId: uuid("user_media_id")
+      .references(() => userMedia.id, { onDelete: "cascade" })
+      .notNull(),
+    tagId: uuid("tag_id")
+      .references(() => tags.id, { onDelete: "cascade" })
+      .notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    unique("user_media_tags_unique").on(table.userMediaId, table.tagId),
+    index("user_media_tags_tag_idx").on(table.tagId),
   ],
 );
 
@@ -188,8 +248,40 @@ export const userMediaRelations = relations(userMedia, ({ one, many }) => ({
     fields: [userMedia.mediaId],
     references: [media.id],
   }),
+  source: one(sources, {
+    fields: [userMedia.sourceId],
+    references: [sources.id],
+  }),
   collectionItems: many(mediaCollectionItems),
   statusHistory: many(userMediaStatusHistory),
+  tagLinks: many(userMediaTags),
+}));
+
+export const sourcesRelations = relations(sources, ({ one, many }) => ({
+  user: one(user, {
+    fields: [sources.userId],
+    references: [user.id],
+  }),
+  userMediaEntries: many(userMedia),
+}));
+
+export const tagsRelations = relations(tags, ({ one, many }) => ({
+  user: one(user, {
+    fields: [tags.userId],
+    references: [user.id],
+  }),
+  mediaLinks: many(userMediaTags),
+}));
+
+export const userMediaTagsRelations = relations(userMediaTags, ({ one }) => ({
+  tag: one(tags, {
+    fields: [userMediaTags.tagId],
+    references: [tags.id],
+  }),
+  userMedia: one(userMedia, {
+    fields: [userMediaTags.userMediaId],
+    references: [userMedia.id],
+  }),
 }));
 
 export const userMediaStatusHistoryRelations = relations(

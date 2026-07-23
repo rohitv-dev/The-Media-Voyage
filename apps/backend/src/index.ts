@@ -33,6 +33,14 @@ fastify.register(import("./routes/v1/collection-item"), {
   prefix: "/api/v1/collectionItem",
 });
 
+fastify.register(import("./routes/v1/tags"), {
+  prefix: "/api/v1/tags",
+});
+
+fastify.register(import("./routes/v1/sources"), {
+  prefix: "/api/v1/sources",
+});
+
 const start = async () => {
   try {
     await fastify.listen({ host: env.HOST, port: env.PORT });

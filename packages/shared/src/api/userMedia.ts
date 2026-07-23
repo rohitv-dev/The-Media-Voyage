@@ -23,7 +23,7 @@ export const mediaRecordSchema = z.object({
   progress: userMediaSelectSchema.shape.progress,
   rating: userMediaSelectSchema.shape.rating,
   favorite: userMediaSelectSchema.shape.favorite,
-  source: userMediaSelectSchema.shape.source,
+  source: z.string().nullable(),
   lastProgressUpdate: userMediaSelectSchema.shape.lastProgressUpdate,
 
   createdAt: userMediaSelectSchema.shape.createdAt,
@@ -43,7 +43,7 @@ export type MediaPickerQuery = z.infer<typeof mediaPickerQuerySchema>;
 
 export const mediaPickerRecordSchema = mediaRecordSchema.extend({
   imageUrl: mediaSelectSchema.shape.imageUrl,
-  tags: userMediaSelectSchema.shape.tags,
+  tags: z.array(z.string()),
 });
 
 export type MediaPickerRecord = z.infer<typeof mediaPickerRecordSchema>;
@@ -90,8 +90,8 @@ export const mediaDetailedRecordSchema = z.object({
   favorite: userMediaSelectSchema.shape.favorite,
   rewatches: userMediaSelectSchema.shape.rewatches,
   timeSpent: userMediaSelectSchema.shape.timeSpent,
-  source: userMediaSelectSchema.shape.source,
-  tags: userMediaSelectSchema.shape.tags,
+  source: z.string().nullable(),
+  tags: z.array(z.string()),
   visibility: userMediaSelectSchema.shape.visibility,
   customFields: userMediaSelectSchema.shape.customFields,
   seasonsProgress: seasonsProgressSchema,
@@ -142,8 +142,6 @@ export const userMediaFormSchema = userMediaInsertSchema
     notes: true,
     progress: true,
     rewatches: true,
-    source: true,
-    tags: true,
     timeSpent: true,
     visibility: true,
     customFields: true,
@@ -163,6 +161,8 @@ export const userMediaFormSchema = userMediaInsertSchema
     z.object({
       mediaId: z.string().optional(),
       mediaSource: z.string().optional(),
+      source: z.string().nullable().optional(),
+      tags: z.array(z.string()).nullable().optional(),
     }).shape,
   )
   .extend({

@@ -20,11 +20,13 @@ import {
   IconBooks,
   IconCalendar,
   IconChevronRight,
+  IconDeviceTv,
   IconHelp,
   IconLogout,
   IconMoon,
   IconPlus,
   IconSun,
+  IconTags,
   IconTrendingUp,
   IconUser,
 } from "@tabler/icons-react";
@@ -245,6 +247,24 @@ function RouteComponent() {
               leftSection={<IconCalendar size={19} />}
               onClick={() => {
                 navigate({ to: "/calendar" });
+                close();
+              }}
+            />
+
+            <NavLink
+              label="Tag Management"
+              leftSection={<IconTags size={19} />}
+              onClick={() => {
+                navigate({ to: "/tags" });
+                close();
+              }}
+            />
+
+            <NavLink
+              label="Source Management"
+              leftSection={<IconDeviceTv size={19} />}
+              onClick={() => {
+                navigate({ to: "/sources" });
                 close();
               }}
             />
