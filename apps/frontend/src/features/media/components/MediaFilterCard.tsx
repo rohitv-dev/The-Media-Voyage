@@ -64,10 +64,16 @@ export function MediaFilterCard({
 
   const filterActions = (
     <Group grow>
-      <Button size="xs" variant="light" onClick={resetFilters}>
+      <Button
+        type="button"
+        size="xs"
+        variant="light"
+        data-shortcut="reset-filters"
+        onClick={resetFilters}
+      >
         Reset Filters
       </Button>
-      <Button size="xs" onClick={applyFilters}>
+      <Button type="submit" size="xs">
         Apply Filters
       </Button>
     </Group>
@@ -92,141 +98,156 @@ export function MediaFilterCard({
           : undefined
       }
     >
-      <Stack
-        p={compact ? "md" : undefined}
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          applyFilters();
+        }}
         style={
           compact
             ? {
+              display: "flex",
+              flexDirection: "column",
               flex: 1,
               minHeight: 0,
-              overflowY: "auto",
-              scrollbarGutter: "stable",
+              overflow: "hidden",
             }
             : undefined
         }
       >
-        <Title order={5}>Filters</Title>
-
-        <TextInput
-          value={filters.search ?? ""}
-          variant="filled"
-          placeholder="Search Titles"
-          leftSection={<IconSearch size={16} />}
-          size="xs"
-          radius="sm"
-          onChange={(e) =>
-            updateFilters({ ...filters, search: e.target.value })
+        <Stack
+          p={compact ? "md" : undefined}
+          style={
+            compact
+              ? {
+                flex: 1,
+                minHeight: 0,
+                overflowY: "auto",
+                scrollbarGutter: "stable",
+              }
+              : undefined
           }
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              applyFilters()
+        >
+          <Title order={5}>Filters</Title>
+
+          <TextInput
+            value={filters.search ?? ""}
+            variant="filled"
+            placeholder="Search Titles"
+            leftSection={<IconSearch size={16} />}
+            size="xs"
+            radius="sm"
+            data-shortcut="library-search"
+            onChange={(e) =>
+              updateFilters({ ...filters, search: e.target.value })
             }
-          }}
-        />
-
-        <SimpleGrid cols={compact ? 1 : 2} spacing="xs">
-          <Select
-            label="Sort by"
-            size="xs"
-            allowDeselect={false}
-            value={filters.sort}
-            data={[
-              { value: "updatedAt", label: "Recently updated" },
-              { value: "createdAt", label: "Date added" },
-              { value: "rating", label: "Rating" },
-              { value: "title", label: "Title" },
-            ]}
-            onChange={updateSort}
           />
-          <Select
-            label="Order"
-            size="xs"
-            allowDeselect={false}
-            value={filters.order}
-            data={[
-              { value: "desc", label: "Descending" },
-              { value: "asc", label: "Ascending" },
-            ]}
-            onChange={updateOrder}
+
+          <SimpleGrid cols={compact ? 1 : 2} spacing="xs">
+            <Select
+              label="Sort by"
+              size="xs"
+              allowDeselect={false}
+              value={filters.sort}
+              data={[
+                { value: "updatedAt", label: "Recently updated" },
+                { value: "createdAt", label: "Date added" },
+                { value: "rating", label: "Rating" },
+                { value: "title", label: "Title" },
+              ]}
+              onChange={updateSort}
+            />
+            <Select
+              label="Order"
+              size="xs"
+              allowDeselect={false}
+              value={filters.order}
+              data={[
+                { value: "desc", label: "Descending" },
+                { value: "asc", label: "Ascending" },
+              ]}
+              onChange={updateOrder}
+            />
+          </SimpleGrid>
+
+          <Checkbox
+            label="Favorites only"
+            checked={filters.favorite === true}
+            onChange={(event) =>
+              updateFilters({
+                ...filters,
+                favorite: event.currentTarget.checked ? true : undefined,
+              })
+            }
           />
-        </SimpleGrid>
 
-        <Checkbox
-          label="Favorites only"
-          checked={filters.favorite === true}
-          onChange={(event) =>
-            updateFilters({
-              ...filters,
-              favorite: event.currentTarget.checked ? true : undefined,
-            })
-          }
-        />
+          <div>
+            <Text size="xs" fw={500} mb={4}>
+              Status
+            </Text>
+            <CheckboxGroup
+              value={filters.status}
+              onChange={(val) => updateFilters({ ...filters, status: val })}
+            >
+              <SimpleGrid cols={2} spacing="xs">
+                {statusEnumValues.map((value) => (
+                  <Checkbox
+                    key={value}
+                    value={value}
+                    label={capitalizeWords(value)}
+                  />
+                ))}
+              </SimpleGrid>
+            </CheckboxGroup>
+          </div>
 
-        <div>
-          <Text size="xs" fw={500} mb={4}>
-            Status
-          </Text>
-          <CheckboxGroup
-            value={filters.status}
-            onChange={(val) => updateFilters({ ...filters, status: val })}
+          <div>
+            <Text size="xs" fw={500} mb={4}>
+              Type
+            </Text>
+            <CheckboxGroup
+              value={filters.type}
+              onChange={(val) => updateFilters({ ...filters, type: val })}
+            >
+              <SimpleGrid cols={2} spacing="xs">
+                {mediaTypeEnumValues.map((value) => (
+                  <Checkbox
+                    key={value}
+                    value={value}
+                    label={capitalizeWords(value)}
+                  />
+                ))}
+              </SimpleGrid>
+            </CheckboxGroup>
+          </div>
+
+          <Button
+            type="button"
+            size="xs"
+            variant="light"
+            leftSection={<IconFilter size={14} />}
+            onClick={openMoreFilters}
           >
-            <SimpleGrid cols={2} spacing="xs">
-              {statusEnumValues.map((value) => (
-                <Checkbox
-                  key={value}
-                  value={value}
-                  label={capitalizeWords(value)}
-                />
-              ))}
-            </SimpleGrid>
-          </CheckboxGroup>
-        </div>
+            More filters
+            {activeMoreFiltersCount > 0 ? ` (${activeMoreFiltersCount})` : ""}
+          </Button>
 
-        <div>
-          <Text size="xs" fw={500} mb={4}>
-            Type
-          </Text>
-          <CheckboxGroup
-            value={filters.type}
-            onChange={(val) => updateFilters({ ...filters, type: val })}
+          {!compact && filterActions}
+        </Stack>
+
+        {compact && (
+          <Box
+            p="md"
+            style={{
+              flexShrink: 0,
+              borderTop: "1px solid var(--mantine-color-default-border)",
+              background: "var(--mantine-color-body)",
+            }}
           >
-            <SimpleGrid cols={2} spacing="xs">
-              {mediaTypeEnumValues.map((value) => (
-                <Checkbox
-                  key={value}
-                  value={value}
-                  label={capitalizeWords(value)}
-                />
-              ))}
-            </SimpleGrid>
-          </CheckboxGroup>
-        </div>
-
-        <Button
-          size="xs"
-          variant="light"
-          leftSection={<IconFilter size={14} />}
-          onClick={openMoreFilters}
-        >
-          More filters
-          {activeMoreFiltersCount > 0 ? ` (${activeMoreFiltersCount})` : ""}
-        </Button>
-
-        {!compact && filterActions}
-      </Stack>
-
-      {compact && (
-        <Box
-          p="md"
-          style={{
-            flexShrink: 0,
-            borderTop: "1px solid var(--mantine-color-default-border)",
-            background: "var(--mantine-color-body)",
-          }}
-        >
-          {filterActions}
-        </Box>
-      )}
+            {filterActions}
+          </Box>
+        )}
+      </form>
 
       <MoreFiltersModal
         opened={moreFiltersOpened}

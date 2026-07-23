@@ -15,10 +15,11 @@ import {
   useComputedColorScheme,
   useMantineColorScheme,
 } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
+import { useDisclosure, useHotkeys } from "@mantine/hooks";
 import {
   IconBooks,
   IconChevronRight,
+  IconHelp,
   IconLogout,
   IconMoon,
   IconPlus,
@@ -31,6 +32,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { collectionQueryOptions } from "#/features/mediaCollection/queries";
 import { getSession } from "#/auth/session";
 import { authClient } from "#/auth/authClient";
+import { ShortcutsHelpModal } from "#/components/ShortcutsHelpModal";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
@@ -89,7 +91,38 @@ function ColorSchemeToggle({ mobile = false }: { mobile?: boolean }) {
 function RouteComponent() {
   const navigate = Route.useNavigate();
   const [opened, { toggle, close }] = useDisclosure();
+  const [shortcutsOpened, { open: openShortcuts, close: closeShortcuts }] =
+    useDisclosure();
   const { data: collections } = useSuspenseQuery(collectionQueryOptions);
+
+  useHotkeys([
+    [
+      "/",
+      (event) => {
+        event.preventDefault();
+        document
+          .querySelector<HTMLInputElement>('[data-shortcut="library-search"]')
+          ?.focus();
+      },
+    ],
+    ["c", () => navigate({ to: "/media/add" })],
+    [
+      "r",
+      () =>
+        document
+          .querySelector<HTMLButtonElement>(
+            '[data-shortcut="reset-filters"]',
+          )
+          ?.click(),
+    ],
+    [
+      "?",
+      (event) => {
+        event.preventDefault();
+        openShortcuts();
+      },
+    ],
+  ]);
 
   const logout = async () => {
     await authClient.signOut();
@@ -137,6 +170,19 @@ function RouteComponent() {
           </Group>
 
           <Group gap="md" wrap="nowrap">
+            <Box visibleFrom="sm">
+              <Tooltip label="Keyboard shortcuts" withArrow>
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  size="lg"
+                  aria-label="Keyboard shortcuts"
+                  onClick={openShortcuts}
+                >
+                  <IconHelp size={18} />
+                </ActionIcon>
+              </Tooltip>
+            </Box>
             <Box visibleFrom="sm">
               <ColorSchemeToggle />
             </Box>
@@ -282,6 +328,8 @@ function RouteComponent() {
       <AppShell.Main>
         <Outlet />
       </AppShell.Main>
+
+      <ShortcutsHelpModal opened={shortcutsOpened} onClose={closeShortcuts} />
     </AppShell>
   );
 }
