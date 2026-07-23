@@ -1,24 +1,37 @@
+import { sources, userMedia } from "@media-voyage/shared";
 import {
   sourceIdParamsSchema,
   updateSourceSchema,
 } from "@media-voyage/shared/api";
 import type { FastifyInstance } from "fastify";
+import {
+  deleteNamedEntity,
+  listNamedEntitiesWithUsage,
+  updateNamedEntity,
+} from "../namedEntity";
 import { requireAuth } from "../../../require-auth";
-import { listSourcesWithUsage } from "./queries";
-import { deleteSource, updateSource } from "./service";
 
 async function sourcesRoutes(fastify: FastifyInstance) {
   fastify.addHook("preHandler", requireAuth);
 
   fastify.get("/", async (request, reply) => {
-    const records = await listSourcesWithUsage(request.userId);
+    const records = await listNamedEntitiesWithUsage(
+      sources,
+      userMedia.sourceId,
+      request.userId,
+    );
     return reply.send(records);
   });
 
   fastify.patch("/:sourceId", async (request, reply) => {
     const { sourceId } = sourceIdParamsSchema.parse(request.params);
     const input = updateSourceSchema.parse(request.body);
-    const result = await updateSource(request.userId, sourceId, input);
+    const result = await updateNamedEntity(
+      sources,
+      request.userId,
+      sourceId,
+      input,
+    );
 
     switch (result.status) {
       case "not_found":
@@ -28,13 +41,13 @@ async function sourcesRoutes(fastify: FastifyInstance) {
           .status(409)
           .send({ error: "A source with that name already exists" });
       case "success":
-        return reply.send(result.source);
+        return reply.send(result.entity);
     }
   });
 
   fastify.delete("/:sourceId", async (request, reply) => {
     const { sourceId } = sourceIdParamsSchema.parse(request.params);
-    const result = await deleteSource(request.userId, sourceId);
+    const result = await deleteNamedEntity(sources, request.userId, sourceId);
 
     if (result.status === "not_found") {
       return reply.status(404).send({ error: "Source not found" });
