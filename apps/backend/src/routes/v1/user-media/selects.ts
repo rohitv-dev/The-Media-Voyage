@@ -80,6 +80,35 @@ export const statusHistorySelect = {
   changedAt: userMediaStatusHistory.changedAt,
 };
 
+export const calendarStartedSelect = {
+  id: userMedia.id,
+  mediaId: userMedia.mediaId,
+  title: media.title,
+  type: media.type,
+  status: userMedia.status,
+  startedAt: userMedia.startedAt,
+};
+
+export const calendarCompletedSelect = {
+  id: userMedia.id,
+  mediaId: userMedia.mediaId,
+  title: media.title,
+  type: media.type,
+  status: userMedia.status,
+  completedAt: userMedia.completedAt,
+};
+
+export const calendarStatusChangeSelect = {
+  userMediaId: userMediaStatusHistory.userMediaId,
+  mediaId: userMedia.mediaId,
+  title: media.title,
+  type: media.type,
+  status: userMedia.status,
+  fromStatus: userMediaStatusHistory.fromStatus,
+  toStatus: userMediaStatusHistory.toStatus,
+  changedAt: userMediaStatusHistory.changedAt,
+};
+
 export const userMediaExportSelect = {
   id: userMedia.id,
   userId: userMedia.userId,

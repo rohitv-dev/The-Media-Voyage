@@ -224,3 +224,31 @@ export type DashboardStatsResponse = {
     count: number;
   }[];
 };
+
+export const calendarActivityQuerySchema = z.object({
+  from: z.iso.date(),
+  to: z.iso.date(),
+});
+
+export type CalendarActivityQuery = z.infer<typeof calendarActivityQuerySchema>;
+
+export type CalendarEventType = "started" | "completed" | "status_change";
+
+export type CalendarActivityEvent = {
+  date: string; // YYYY-MM-DD bucket the event falls on
+  eventType: CalendarEventType;
+  occurredAt: string; // ISO timestamp
+  userMediaId: string;
+  mediaId: string;
+  title: string;
+  type: MediaType;
+  status: Status;
+  fromStatus: Status | null;
+  toStatus: Status | null;
+};
+
+export type CalendarActivityResponse = {
+  from: string;
+  to: string;
+  events: CalendarActivityEvent[];
+};

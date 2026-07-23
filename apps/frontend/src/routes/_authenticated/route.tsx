@@ -18,6 +18,7 @@ import {
 import { useDisclosure, useHotkeys } from "@mantine/hooks";
 import {
   IconBooks,
+  IconCalendar,
   IconChevronRight,
   IconHelp,
   IconLogout,
@@ -235,6 +236,15 @@ function RouteComponent() {
               leftSection={<IconBooks size={19} />}
               onClick={() => {
                 navigate({ to: "/media" });
+                close();
+              }}
+            />
+
+            <NavLink
+              label="Activity Calendar"
+              leftSection={<IconCalendar size={19} />}
+              onClick={() => {
+                navigate({ to: "/calendar" });
                 close();
               }}
             />

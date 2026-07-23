@@ -2,6 +2,7 @@ import { fromNodeHeaders } from "better-auth/node";
 import type { FastifyInstance } from "fastify";
 import Papa from "papaparse";
 import {
+  calendarActivityQuerySchema,
   mediaPickerQuerySchema,
   userMediaFormSchema,
   userMediaIdParamsSchema,
@@ -12,6 +13,7 @@ import { auth } from "../../../auth";
 import {
   filterUserMedia,
   findUserMediaById,
+  getCalendarActivity,
   getDashboardStats,
   getUserMediaCounts,
   getUserMediaDropdowns,
@@ -137,6 +139,11 @@ async function userMediaRoutes(fastify: FastifyInstance) {
 
   fastify.get("/dashboard/stats", async (request, reply) => {
     return reply.send(await getDashboardStats(request.userId));
+  });
+
+  fastify.get("/calendar/activity", async (request, reply) => {
+    const range = calendarActivityQuerySchema.parse(request.query);
+    return reply.send(await getCalendarActivity(request.userId, range));
   });
 
   fastify.get("/export", async (request, reply) => {

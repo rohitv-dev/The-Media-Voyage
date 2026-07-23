@@ -1,6 +1,8 @@
 import { api } from "#/lib/api";
 import { queryOptions } from "@tanstack/react-query";
+import dayjs from "dayjs";
 import type {
+  CalendarActivityResponse,
   DashboardStatsResponse,
   UserMediaCounts,
   GetUserMediaResponse,
@@ -95,6 +97,30 @@ export const dashboardStatOptions = queryOptions({
   queryKey: ["dashboard-stats"],
   queryFn: getDashboardStats,
 });
+
+function calendarMonthRange(month: string) {
+  const start = dayjs(`${month}-01`);
+
+  return {
+    from: start.format("YYYY-MM-DD"),
+    to: start.endOf("month").format("YYYY-MM-DD"),
+  };
+}
+
+export function getCalendarActivity(month: string) {
+  const { from, to } = calendarMonthRange(month);
+
+  return api<CalendarActivityResponse>(
+    `/user-media/calendar/activity?from=${from}&to=${to}`,
+  );
+}
+
+export function calendarActivityOptions(month: string) {
+  return queryOptions({
+    queryKey: ["calendar-activity", month],
+    queryFn: () => getCalendarActivity(month),
+  });
+}
 
 export const continueMediaFilters: UserMediaQuerySchema = {
   status: ["in_progress", "on_hold"],

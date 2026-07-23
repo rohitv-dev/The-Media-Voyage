@@ -6,6 +6,8 @@ import {
   userMediaStatusHistory,
 } from "@media-voyage/shared";
 import type {
+  CalendarActivityEvent,
+  CalendarActivityQuery,
   MediaPickerQuery,
   UserMediaQuerySchema,
 } from "@media-voyage/shared/api";
@@ -14,6 +16,7 @@ import {
   and,
   arrayOverlaps,
   asc,
+  between,
   count,
   desc,
   eq,
@@ -23,11 +26,15 @@ import {
   isNotNull,
   isNull,
   lte,
+  notInArray,
   sql,
   type SQL,
 } from "drizzle-orm";
 import { db } from "../../../db/db";
 import {
+  calendarCompletedSelect,
+  calendarStartedSelect,
+  calendarStatusChangeSelect,
   mediaPickerSelect,
   statusHistorySelect,
   userMediaDetailedSelect,
@@ -313,6 +320,107 @@ export async function getDashboardStats(userId: string) {
     ratingDistribution,
     completionTrend,
   };
+}
+
+export async function getCalendarActivity(
+  userId: string,
+  range: CalendarActivityQuery,
+) {
+  const [started, completed, statusChanges] = await Promise.all([
+    db
+      .select(calendarStartedSelect)
+      .from(userMedia)
+      .innerJoin(media, eq(userMedia.mediaId, media.id))
+      .where(
+        and(
+          activeUserMediaCondition(userId),
+          isNotNull(userMedia.startedAt),
+          between(
+            sql`${userMedia.startedAt}::date`,
+            sql`${range.from}::date`,
+            sql`${range.to}::date`
+          )
+        ),
+      ),
+    db
+      .select(calendarCompletedSelect)
+      .from(userMedia)
+      .innerJoin(media, eq(userMedia.mediaId, media.id))
+      .where(
+        and(
+          activeUserMediaCondition(userId),
+          isNotNull(userMedia.completedAt),
+          between(
+            sql`${userMedia.completedAt}::date`,
+            sql`${range.from}::date`,
+            sql`${range.to}::date`
+          )
+        ),
+      ),
+    db
+      .select(calendarStatusChangeSelect)
+      .from(userMediaStatusHistory)
+      .innerJoin(
+        userMedia,
+        eq(userMediaStatusHistory.userMediaId, userMedia.id),
+      )
+      .innerJoin(media, eq(userMedia.mediaId, media.id))
+      .where(
+        and(
+          activeUserMediaCondition(userId),
+          between(
+            sql`${userMediaStatusHistory.changedAt}::date`,
+            sql`${range.from}::date`,
+            sql`${range.to}::date`
+          ),
+          notInArray(userMediaStatusHistory.toStatus, [
+            "in_progress",
+            "completed",
+          ]),
+        ),
+      ),
+  ]);
+
+  const events: CalendarActivityEvent[] = [
+    ...started.map((row) => ({
+      date: row.startedAt!.toISOString().slice(0, 10),
+      occurredAt: row.startedAt!.toISOString(),
+      eventType: "started" as const,
+      userMediaId: row.id,
+      mediaId: row.mediaId,
+      title: row.title,
+      type: row.type,
+      status: row.status,
+      fromStatus: null,
+      toStatus: null,
+    })),
+    ...completed.map((row) => ({
+      date: row.completedAt!.toISOString().slice(0, 10),
+      occurredAt: row.completedAt!.toISOString(),
+      eventType: "completed" as const,
+      userMediaId: row.id,
+      mediaId: row.mediaId,
+      title: row.title,
+      type: row.type,
+      status: row.status,
+      fromStatus: null,
+      toStatus: null,
+    })),
+    ...statusChanges.map((row) => ({
+      date: row.changedAt.toISOString().slice(0, 10),
+      occurredAt: row.changedAt.toISOString(),
+      eventType: "status_change" as const,
+      userMediaId: row.userMediaId,
+      mediaId: row.mediaId,
+      title: row.title,
+      type: row.type,
+      status: row.status,
+      fromStatus: row.fromStatus,
+      toStatus: row.toStatus,
+    })),
+  ];
+
+  return { from: range.from, to: range.to, events };
 }
 
 export function getUserMediaForExport(userId: string) {
