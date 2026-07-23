@@ -43,7 +43,7 @@ const addInitialValues: UserMediaFormSchema = {
   tags: [],
   visibility: "private",
   customFields: undefined,
-  seasonsProgress: undefined,
+  seasonsProgress: [],
 };
 
 function normalizeTags(tags: string[]) {

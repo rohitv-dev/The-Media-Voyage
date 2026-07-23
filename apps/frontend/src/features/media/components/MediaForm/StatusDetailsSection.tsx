@@ -23,7 +23,7 @@ export function StatusDetailsSection() {
 
   return (
     <Grid.Col span={{ xs: 12, md: 5 }}>
-      <Card withBorder shadow="sm" p="lg" h="100%">
+      <Card withBorder shadow="sm" p={{ base: "md", md: "lg" }} h="100%">
         <Stack gap="md">
           <SectionHeading
             icon={<IconChartBar size={20} stroke={2} />}

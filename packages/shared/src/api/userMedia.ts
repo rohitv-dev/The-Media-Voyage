@@ -60,6 +60,19 @@ export const userMediaQuickActionSchema = z
 
 export type UserMediaQuickAction = z.infer<typeof userMediaQuickActionSchema>;
 
+export const seasonProgressEntrySchema = z.object({
+  season: z.number().int().min(1),
+  status: z.enum(statusEnum.enumValues),
+  episodesWatched: z.number().int().min(0).optional(),
+  rating: z.number().min(0).max(10).optional(),
+  notes: z.string().optional(),
+  updatedAt: z.iso.datetime(),
+});
+
+export type SeasonProgressEntry = z.infer<typeof seasonProgressEntrySchema>;
+
+export const seasonsProgressSchema = z.array(seasonProgressEntrySchema);
+
 export const mediaDetailedRecordSchema = z.object({
   id: userMediaSelectSchema.shape.id,
   mediaId: userMediaSelectSchema.shape.mediaId,
@@ -81,7 +94,7 @@ export const mediaDetailedRecordSchema = z.object({
   tags: userMediaSelectSchema.shape.tags,
   visibility: userMediaSelectSchema.shape.visibility,
   customFields: userMediaSelectSchema.shape.customFields,
-  seasonsProgress: userMediaSelectSchema.shape.seasonsProgress,
+  seasonsProgress: seasonsProgressSchema,
 
   startedAt: userMediaSelectSchema.shape.startedAt,
   completedAt: userMediaSelectSchema.shape.completedAt,
@@ -151,7 +164,10 @@ export const userMediaFormSchema = userMediaInsertSchema
       mediaId: z.string().optional(),
       mediaSource: z.string().optional(),
     }).shape,
-  );
+  )
+  .extend({
+    seasonsProgress: seasonsProgressSchema.optional(),
+  });
 
 export type UserMediaFormSchema = z.infer<typeof userMediaFormSchema>;
 

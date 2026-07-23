@@ -53,7 +53,7 @@ export function MediaDetailsSection({
 
   return (
     <Grid.Col span={{ xs: 12, md: 7 }}>
-      <Card withBorder shadow="sm" p="lg" h="100%">
+      <Card withBorder shadow="sm" p={{ base: "md", md: "lg" }} h="100%">
         <Stack gap="md">
           <SectionHeading
             icon={<IconMovie size={20} stroke={2} />}

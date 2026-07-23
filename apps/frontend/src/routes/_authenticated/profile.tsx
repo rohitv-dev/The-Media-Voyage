@@ -139,7 +139,7 @@ function RouteComponent() {
               </Text>
             </Stack>
 
-            <Button variant="light">Change Profile Picture</Button>
+            <Button variant="light" disabled={true}>Change Profile Picture</Button>
           </Stack>
         </Card>
 

@@ -11,13 +11,13 @@ export function SectionHeading({
   description: string;
 }) {
   return (
-    <Group gap="xs" align="center" wrap="nowrap">
+    <Group gap="sm" align="center" wrap="nowrap">
       {icon}
       <Stack gap={0} style={{ minWidth: 0 }}>
-        <Text fw={600} size="lg">
+        <Text fw={600} fz={{ base: "md", md: "lg" }}>
           {title}
         </Text>
-        <Text size="xs" c="dimmed">
+        <Text c="dimmed" fz={{ base: "xs", md: "sm" }}>
           {description}
         </Text>
       </Stack>

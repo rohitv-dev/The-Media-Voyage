@@ -18,6 +18,8 @@ import {
 import { MonthView } from "@mantine/schedule";
 import type { ScheduleEventData } from "@mantine/schedule";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { motion, useReducedMotion } from "motion/react";
+import { IconChevronRight } from "@tabler/icons-react";
 import { z } from "zod";
 import { calendarActivityOptions } from "#/features/media/queries";
 import { getStatusColor } from "#/features/media/functions";
@@ -108,6 +110,7 @@ function RouteComponent() {
   });
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const reduceMotion = useReducedMotion();
 
   const goToMonth = (nextMonth: string) => {
     navigate({ to: "/calendar", search: { month: nextMonth } });
@@ -219,6 +222,7 @@ function RouteComponent() {
           {selectedEvents.map((event, index) => (
             <UnstyledButton
               key={`${event.userMediaId}-${event.eventType}-${index}`}
+              role="link"
               onClick={() => {
                 setSelectedDate(null);
                 navigate({
@@ -227,7 +231,19 @@ function RouteComponent() {
                 });
               }}
             >
-              <Card withBorder radius="md" p="sm">
+              <Card
+                component={motion.div}
+                withBorder
+                radius="md"
+                p="sm"
+                whileHover={
+                  reduceMotion
+                    ? undefined
+                    : { backgroundColor: "var(--mantine-color-default-hover)" }
+                }
+                transition={{ duration: 0.15 }}
+                style={{ cursor: "pointer" }}
+              >
                 <Group justify="space-between" wrap="nowrap">
                   <Stack gap={2}>
                     <Text fw={600} size="sm">
@@ -240,9 +256,12 @@ function RouteComponent() {
                         : ""}
                     </Text>
                   </Stack>
-                  <Badge color={getStatusColor(event.status)}>
-                    {capitalizeWords(event.status)}
-                  </Badge>
+                  <Group gap="xs" wrap="nowrap">
+                    <Badge color={getStatusColor(event.status)}>
+                      {capitalizeWords(event.status)}
+                    </Badge>
+                    <IconChevronRight size={16} color="var(--mantine-color-dimmed)" />
+                  </Group>
                 </Group>
               </Card>
             </UnstyledButton>

@@ -28,8 +28,9 @@ import {
 import type { MediaDetailedRecord } from "@media-voyage/shared/api";
 import { useNavigate } from "@tanstack/react-router";
 import { motion, useReducedMotion } from "motion/react";
+import { getStatusColor } from "#/features/media/functions";
 
-const formatDate = (value?: Date | null) =>
+const formatDate = (value?: Date | string | null) =>
   value ? new Date(value).toLocaleDateString() : "—";
 
 const formatValue = (value?: string | number | null) =>
@@ -326,6 +327,86 @@ export function MediaView({ data }: { data: MediaDetailedRecord }) {
             ))}
           </SimpleGrid>
         </Paper>
+
+        {data.type === "show" && (
+          <Paper
+            withBorder
+            p="xs"
+            style={{
+              overflow: "hidden",
+              borderColor: defaultBorder,
+            }}
+          >
+            <Group justify="space-between" px="md" py="sm">
+              <Text size="sm" fw={800} style={{ color: accentText }}>
+                Seasons
+              </Text>
+              <Text size="xs" c="dimmed">
+                {data.seasonsProgress?.length ?? 0} tracked
+              </Text>
+            </Group>
+
+            <Stack gap={0}>
+              {!data.seasonsProgress || data.seasonsProgress.length === 0 ? (
+                <Box p="md" style={{ borderTop: `1px solid ${defaultBorder}` }}>
+                  <Text size="sm" c="dimmed">
+                    No seasons tracked yet.
+                  </Text>
+                </Box>
+              ) : (
+                [...data.seasonsProgress]
+                  .sort((a, b) => a.season - b.season)
+                  .map((entry) => (
+                    <Box
+                      key={entry.season}
+                      p="md"
+                      style={{ borderTop: `1px solid ${defaultBorder}` }}
+                    >
+                      <Group justify="space-between" wrap="wrap" gap="xs">
+                        <Group gap="xs" wrap="wrap">
+                          <Text size="sm" fw={700}>
+                            Season {entry.season}
+                          </Text>
+                          <Badge
+                            variant="light"
+                            size="sm"
+                            color={getStatusColor(entry.status)}
+                          >
+                            {capitalizeWords(entry.status)}
+                          </Badge>
+                          {entry.episodesWatched !== undefined && (
+                            <Text size="xs" c="dimmed">
+                              {entry.episodesWatched} episodes watched
+                            </Text>
+                          )}
+                          {entry.rating !== undefined && (
+                            <Text size="xs" c="dimmed">
+                              ★ {entry.rating.toFixed(1)}
+                            </Text>
+                          )}
+                        </Group>
+                        <Text size="xs" c="dimmed">
+                          Updated {formatDate(entry.updatedAt)}
+                        </Text>
+                      </Group>
+
+                      {entry.notes?.trim() && (
+                        <Text
+                          size="xs"
+                          c="dimmed"
+                          mt={6}
+                          lh={1.5}
+                          style={{ whiteSpace: "pre-wrap" }}
+                        >
+                          {entry.notes}
+                        </Text>
+                      )}
+                    </Box>
+                  ))
+              )}
+            </Stack>
+          </Paper>
+        )}
 
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
           <ReadingPanel

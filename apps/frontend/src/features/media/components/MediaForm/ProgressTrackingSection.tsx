@@ -14,6 +14,7 @@ import { IconClipboard } from "@tabler/icons-react";
 import type { UserMediaDropdowns } from "@media-voyage/shared/api";
 import { useFormContext } from "./context";
 import { useDisclosure, useMediaQuery } from "@mantine/hooks";
+import { SeasonsProgressField } from "./SeasonsProgressField";
 
 type ProgressTrackingSectionProps = {
   dropdowns: UserMediaDropdowns;
@@ -25,11 +26,12 @@ export function ProgressTrackingSection({
   const form = useFormContext();
   const isMobile = useMediaQuery("(max-width: 47.99em)");
   const isCompleted = form.values.status === "completed";
+  const isShow = form.values.type === "show";
   const [opened, { toggle }] = useDisclosure(false);
 
   return (
     <Grid.Col span={{ xs: 12, md: 6 }}>
-      <Card withBorder shadow="sm" p="lg">
+      <Card withBorder shadow="sm" p={{ base: "md", md: "lg" }}>
         <CollapsibleSectionHeading
           icon={<IconClipboard size={20} stroke={2} />}
           title="Progress & Tracking"
@@ -104,6 +106,8 @@ export function ProgressTrackingSection({
               description="Press Enter or comma to add a tag"
               {...form.getInputProps("tags")}
             />
+
+            {isShow && <SeasonsProgressField />}
           </Stack>
         </Collapse>
       </Card>

@@ -11,7 +11,7 @@ export function PersonalNotesSection() {
 
   return (
     <Grid.Col span={{ xs: 12, md: 6 }}>
-      <Card withBorder shadow="sm" p="lg" h="100%">
+      <Card withBorder shadow="sm" p={{ base: "md", md: "lg" }} h="100%">
         <CollapsibleSectionHeading
           icon={<IconPencil size={20} stroke={2} />}
           title="Personal Notes"
