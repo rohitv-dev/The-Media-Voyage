@@ -5,6 +5,5 @@ export const mediaSearchSelect = {
   title: media.title,
   imageUrl: media.imageUrl,
   type: media.type,
-  releaseDate: media.releaseDate,
   externalId: media.externalId,
 };

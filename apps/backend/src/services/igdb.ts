@@ -1,6 +1,5 @@
 import { IgdbResponse, SourceMediaRecord } from "@media-voyage/shared/api";
 import { getAccessToken } from "./twitchAuth";
-import { formatDate } from "@media-voyage/shared/utilities";
 import { env } from "../config";
 import { internalServerError } from "../errors";
 
@@ -35,9 +34,6 @@ export async function searchGames(query: string): Promise<SourceMediaRecord[]> {
     imageUrl: val.cover.image_id
       ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${val.cover.image_id}.jpg`
       : null,
-    releaseDate: val.first_release_date
-      ? formatDate(new Date(val.first_release_date * 1000))
-      : "",
   }));
 
   return records;

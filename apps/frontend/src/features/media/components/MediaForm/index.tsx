@@ -155,7 +155,6 @@ export function MediaForm(props: MediaFormProps) {
             type: mediaRecord?.type ?? data.type,
             externalId: mediaRecord?.externalId,
             imageUrl: mediaRecord?.imageUrl,
-            releaseDate: mediaRecord?.releaseDate,
             mediaSource: mediaRecord?.source ?? "manual",
           }),
         });

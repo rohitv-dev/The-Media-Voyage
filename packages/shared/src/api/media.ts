@@ -56,7 +56,6 @@ export const mediaResponseSchema = z.object({
   type: mediaSelectSchema.shape.type,
   externalId: mediaSelectSchema.shape.externalId,
   imageUrl: mediaSelectSchema.shape.imageUrl,
-  releaseDate: z.string(),
 });
 
 export type SourceMediaRecord = z.infer<typeof mediaResponseSchema>;

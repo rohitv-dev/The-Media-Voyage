@@ -15,7 +15,7 @@ export async function createUserMedia(
   userId: string,
   input: UserMediaFormSchema,
 ) {
-  const { title, type, externalId, imageUrl, releaseDate, mediaSource } = input;
+  const { title, type, externalId, imageUrl, mediaSource } = input;
 
   return db.transaction(async (tx) => {
     let mediaId = input.mediaId;
@@ -28,7 +28,6 @@ export async function createUserMedia(
           type,
           externalId,
           imageUrl,
-          releaseDate,
           source: mediaSource,
         })
         .returning({ id: media.id });

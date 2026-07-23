@@ -89,7 +89,6 @@ export const userMediaExportSelect = {
   type: media.type,
   description: media.description,
   imageUrl: media.imageUrl,
-  releaseDate: media.releaseDate,
   catalogSource: media.source,
   externalId: media.externalId,
   catalogMetadata: media.metadata,

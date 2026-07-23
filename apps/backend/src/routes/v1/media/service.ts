@@ -17,7 +17,6 @@ export async function searchMedia(
     imageUrl: record.imageUrl,
     type: record.type,
     externalId: record.externalId,
-    releaseDate: record.releaseDate ?? "",
   }));
 
   if (localRecords.length >= 10) {

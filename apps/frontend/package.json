@@ -25,6 +25,7 @@
     "@mantine/hooks": "^9.4.1",
     "@mantine/modals": "^9.4.1",
     "@mantine/notifications": "^9.4.1",
+    "@mantine/schedule": "^9.4.2",
     "@mantine/tiptap": "^9.4.1",
     "@media-voyage/shared": "workspace:*",
     "@tabler/icons-react": "^3.44.0",

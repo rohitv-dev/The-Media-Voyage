@@ -31,7 +31,6 @@ export async function searchOmdb(query: string): Promise<SourceMediaRecord[]> {
     imageUrl: val.Poster,
     type: omdbTypeToMediaType(val.Type),
     externalId: val.imdbID,
-    releaseDate: val.Year,
   }));
 
   return records;

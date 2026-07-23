@@ -28,7 +28,7 @@ interface MediaTitleSelectProps {
 function getMediaOptionValue(media: SourceMediaRecord) {
   return (
     media.id ||
-    `${media.source}:${media.externalId ?? `${media.type}:${media.title}:${media.releaseDate}`}`
+    `${media.source}:${media.externalId ?? `${media.type}:${media.title}`}`
   );
 }
 
@@ -47,7 +47,7 @@ function MediaOption({ media }: { media: SourceMediaRecord }) {
         </Text>
 
         <Text size="xs" c="dimmed">
-          {media.releaseDate} • {media.type}
+          {media.type}
         </Text>
       </Stack>
     </Group>
@@ -90,7 +90,6 @@ export function MediaTitleSelect(props: MediaTitleSelectProps) {
             type: props.type,
             imageUrl: "",
             externalId: "",
-            releaseDate: "",
           });
           props.onSearchChange(props.search);
         } else {

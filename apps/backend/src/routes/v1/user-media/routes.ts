@@ -171,7 +171,6 @@ function toCsvRows(records: Awaited<ReturnType<typeof getUserMediaForExport>>) {
     type: record.type ?? "",
     description: record.description ?? "",
     imageUrl: record.imageUrl ?? "",
-    releaseDate: record.releaseDate ?? "",
     catalogSource: record.catalogSource ?? "",
     externalId: record.externalId ?? "",
     catalogMetadata: JSON.stringify(record.catalogMetadata ?? {}),

@@ -45,7 +45,6 @@ export const media = pgTable(
     originalTitle: text("original_title"),
     description: text("description"),
     imageUrl: text("image_url"),
-    releaseDate: text("release_date"),
     source: text("source"),
     externalId: text("external_id"),
 
