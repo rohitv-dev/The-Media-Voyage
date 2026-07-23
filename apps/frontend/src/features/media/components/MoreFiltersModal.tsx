@@ -1,4 +1,5 @@
 import {
+  Button,
   Group,
   Modal,
   MultiSelect,
@@ -20,7 +21,10 @@ type MoreFiltersModalProps = {
   onClose: () => void;
   filters: UserMediaQuerySchema;
   updateFilters: (filters: UserMediaQuerySchema) => void;
+  applyFilters: () => void;
+  resetFilters: () => void;
   dropdowns: UserMediaDropdowns;
+  fullScreen?: boolean;
 };
 
 export function MoreFiltersModal({
@@ -28,13 +32,27 @@ export function MoreFiltersModal({
   onClose,
   filters,
   updateFilters,
+  applyFilters,
+  resetFilters,
   dropdowns,
+  fullScreen = false,
 }: MoreFiltersModalProps) {
+  const handleApply = () => {
+    applyFilters();
+    onClose();
+  };
+
+  const handleReset = () => {
+    resetFilters();
+    onClose();
+  };
+
   return (
     <Modal
       opened={opened}
       onClose={onClose}
       centered
+      fullScreen={fullScreen}
       title={
         <Group gap="xs">
           <ThemeIcon variant="light">
@@ -148,6 +166,15 @@ export function MoreFiltersModal({
             Matches entries containing any selected tag.
           </Text>
         </div>
+
+        <Group grow>
+          <Button size="xs" variant="light" onClick={handleReset}>
+            Reset Filters
+          </Button>
+          <Button size="xs" onClick={handleApply}>
+            Apply Filters
+          </Button>
+        </Group>
       </Stack>
     </Modal>
   );

@@ -233,7 +233,10 @@ export function MediaFilterCard({
         onClose={closeMoreFilters}
         filters={filters}
         updateFilters={updateFilters}
+        applyFilters={applyFilters}
+        resetFilters={resetFilters}
         dropdowns={dropdowns}
+        fullScreen={!compact}
       />
     </Card>
   );

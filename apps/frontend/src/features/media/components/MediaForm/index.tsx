@@ -17,6 +17,7 @@ import {
   userMediaDetailedOptions,
 } from "../../queries";
 import type { MediaType } from "@media-voyage/shared/userMediaSchema";
+import { useUnsavedChangesBlocker } from "#/hooks/useUnsavedChangesBlocker";
 import { FormActions } from "./FormActions";
 import { FormHeader } from "./FormHeader";
 import { MediaDetailsSection } from "./MediaDetailsSection";
@@ -102,6 +103,8 @@ export function MediaForm(props: MediaFormProps) {
     },
   });
 
+  useUnsavedChangesBlocker(() => form.isDirty());
+
   form.watch("status", ({ value, previousValue }) => {
     if (value === "completed") {
       form.setFieldValue("progress", 100);
@@ -166,6 +169,8 @@ export function MediaForm(props: MediaFormProps) {
     },
 
     onSuccess: async (data) => {
+      form.resetDirty();
+
       showNotification({
         title: isAddMode
           ? "Media Added Successfully"

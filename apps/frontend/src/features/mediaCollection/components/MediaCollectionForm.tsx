@@ -16,6 +16,7 @@ import type { MediaCollectionFormSchema } from "@media-voyage/shared/api";
 import { IconCheck } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
+import { useUnsavedChangesBlocker } from "#/hooks/useUnsavedChangesBlocker";
 
 export function MediaCollectionForm() {
   const navigate = useNavigate();
@@ -28,6 +29,8 @@ export function MediaCollectionForm() {
     },
   });
 
+  useUnsavedChangesBlocker(() => form.isDirty());
+
   const createCollectionMutation = useMutation({
     mutationFn: async (values: MediaCollectionFormSchema) =>
       api("/collection", {
@@ -38,6 +41,8 @@ export function MediaCollectionForm() {
         body: JSON.stringify(values),
       }),
     onSuccess: () => {
+      form.resetDirty();
+
       showNotification({
         title: "Collection created",
         message: "Your collection has been saved successfully.",

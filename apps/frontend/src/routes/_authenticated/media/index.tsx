@@ -193,7 +193,7 @@ function RouteComponent() {
                 <FilterPresetsMenu
                   presets={presets}
                   onApply={updateAndApplyFilters}
-                  onSave={(name) => savePreset(name, search)}
+                  onSave={(name) => savePreset(name, filters)}
                   onDelete={deletePreset}
                 />
                 <Box hiddenFrom="lg">
