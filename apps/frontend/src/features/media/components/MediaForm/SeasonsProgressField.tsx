@@ -13,15 +13,9 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { IconPlus, IconX } from "@tabler/icons-react";
 import dayjs from "dayjs";
-import { statusEnumValues } from "@media-voyage/shared/userMediaSchema";
 import type { SeasonProgressEntry } from "@media-voyage/shared/api";
-import { capitalizeWords } from "#/utils/stringFunctions";
+import { statusOptions } from "../../options";
 import { useFormContext } from "./context";
-
-const statusOptions = statusEnumValues.map((value) => ({
-  value,
-  label: capitalizeWords(value),
-}));
 
 export function SeasonsProgressField() {
   const form = useFormContext();
@@ -128,7 +122,7 @@ export function SeasonsProgressField() {
                     onChange={(value) =>
                       value &&
                       updateSeason(entry, {
-                        status: value as SeasonProgressEntry["status"],
+                        status: value,
                       })
                     }
                   />

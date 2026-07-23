@@ -24,7 +24,7 @@ import type {
   MediaPickerQuery,
   MediaRecord,
 } from "@media-voyage/shared/api";
-import { mediaTypeEnumValues } from "@media-voyage/shared/userMediaSchema";
+import { mediaTypeOptions } from "../options";
 import { IconDice5, IconPlayerPlay, IconRefresh } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "motion/react";
@@ -125,10 +125,7 @@ export function MediaPickerModal({
             label="Media type"
             placeholder="Any type"
             clearable
-            data={mediaTypeEnumValues.map((type) => ({
-              value: type,
-              label: capitalizeWords(type),
-            }))}
+            data={mediaTypeOptions}
             value={filters.type ?? null}
             onChange={(value) =>
               updateFilter("type", value as MediaPickerQuery["type"])

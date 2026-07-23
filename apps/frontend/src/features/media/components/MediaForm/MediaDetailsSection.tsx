@@ -10,24 +10,10 @@ import {
 import type { SourceMediaRecord } from "@media-voyage/shared/api";
 import { IconMovie, IconLock } from "@tabler/icons-react";
 import { MediaTitleSelect } from "../MediaTitleSelect";
-import {
-  mediaTypeEnumValues,
-  visibilityEnumValues,
-} from "@media-voyage/shared/userMediaSchema";
 import type { MediaType } from "@media-voyage/shared/userMediaSchema";
-import { capitalizeWords } from "#/utils/stringFunctions";
+import { mediaTypeOptions, visibilityOptions } from "../../options";
 import { useFormContext } from "./context";
 import type { MouseEventHandler } from "react";
-
-const mediaTypeOptions = mediaTypeEnumValues.map((value) => ({
-  value,
-  label: capitalizeWords(value),
-}));
-
-const visibilityOptions = visibilityEnumValues.map((value) => ({
-  value,
-  label: capitalizeWords(value),
-}));
 
 type MediaDetailsSectionProps = {
   mode: "add" | "update";
