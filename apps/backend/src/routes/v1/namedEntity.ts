@@ -1,6 +1,7 @@
 import { sources, tags } from "@media-voyage/shared";
 import { and, count, eq, ne } from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
+import type { FastifyReply } from "fastify";
 import { db } from "../../db/db";
 
 /**
@@ -149,4 +150,41 @@ export async function deleteNamedEntity(
   await db.delete(table).where(eq(table.id, id));
 
   return { status: "success" };
+}
+
+/**
+ * Map an {@link updateNamedEntity} result onto the HTTP response. `label` is
+ * the lowercase entity noun (e.g. "tag", "source") used in the error copy.
+ */
+export function sendNamedEntityUpdate(
+  reply: FastifyReply,
+  result: UpdateResult,
+  label: string,
+) {
+  const Label = label.charAt(0).toUpperCase() + label.slice(1);
+
+  switch (result.status) {
+    case "not_found":
+      return reply.status(404).send({ error: `${Label} not found` });
+    case "duplicate":
+      return reply
+        .status(409)
+        .send({ error: `A ${label} with that name already exists` });
+    case "success":
+      return reply.send(result.entity);
+  }
+}
+
+/** Map a {@link deleteNamedEntity} result onto the HTTP response. */
+export function sendNamedEntityDelete(
+  reply: FastifyReply,
+  result: DeleteResult,
+  label: string,
+) {
+  if (result.status === "not_found") {
+    const Label = label.charAt(0).toUpperCase() + label.slice(1);
+    return reply.status(404).send({ error: `${Label} not found` });
+  }
+
+  return reply.status(200).send({ success: true });
 }

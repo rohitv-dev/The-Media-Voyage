@@ -4,6 +4,8 @@ import type { FastifyInstance } from "fastify";
 import {
   deleteNamedEntity,
   listNamedEntitiesWithUsage,
+  sendNamedEntityDelete,
+  sendNamedEntityUpdate,
   updateNamedEntity,
 } from "../namedEntity";
 import { requireAuth } from "../../../require-auth";
@@ -25,27 +27,14 @@ async function tagsRoutes(fastify: FastifyInstance) {
     const input = updateTagSchema.parse(request.body);
     const result = await updateNamedEntity(tags, request.userId, tagId, input);
 
-    switch (result.status) {
-      case "not_found":
-        return reply.status(404).send({ error: "Tag not found" });
-      case "duplicate":
-        return reply
-          .status(409)
-          .send({ error: "A tag with that name already exists" });
-      case "success":
-        return reply.send(result.entity);
-    }
+    return sendNamedEntityUpdate(reply, result, "tag");
   });
 
   fastify.delete("/:tagId", async (request, reply) => {
     const { tagId } = tagIdParamsSchema.parse(request.params);
     const result = await deleteNamedEntity(tags, request.userId, tagId);
 
-    if (result.status === "not_found") {
-      return reply.status(404).send({ error: "Tag not found" });
-    }
-
-    return reply.status(200).send({ success: true });
+    return sendNamedEntityDelete(reply, result, "tag");
   });
 }
 

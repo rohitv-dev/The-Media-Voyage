@@ -7,6 +7,8 @@ import type { FastifyInstance } from "fastify";
 import {
   deleteNamedEntity,
   listNamedEntitiesWithUsage,
+  sendNamedEntityDelete,
+  sendNamedEntityUpdate,
   updateNamedEntity,
 } from "../namedEntity";
 import { requireAuth } from "../../../require-auth";
@@ -33,27 +35,14 @@ async function sourcesRoutes(fastify: FastifyInstance) {
       input,
     );
 
-    switch (result.status) {
-      case "not_found":
-        return reply.status(404).send({ error: "Source not found" });
-      case "duplicate":
-        return reply
-          .status(409)
-          .send({ error: "A source with that name already exists" });
-      case "success":
-        return reply.send(result.entity);
-    }
+    return sendNamedEntityUpdate(reply, result, "source");
   });
 
   fastify.delete("/:sourceId", async (request, reply) => {
     const { sourceId } = sourceIdParamsSchema.parse(request.params);
     const result = await deleteNamedEntity(sources, request.userId, sourceId);
 
-    if (result.status === "not_found") {
-      return reply.status(404).send({ error: "Source not found" });
-    }
-
-    return reply.status(200).send({ success: true });
+    return sendNamedEntityDelete(reply, result, "source");
   });
 }
 
