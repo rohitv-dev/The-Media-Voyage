@@ -1,3 +1,4 @@
+import { EmptyState } from "#/components/EmptyState";
 import { collectionQueryOptions } from "#/features/mediaCollection/queries";
 import {
   ActionIcon,
@@ -45,15 +46,11 @@ function RouteComponent() {
         </Group>
 
         {data.length === 0 ? (
-          <Card withBorder p="xl">
-            <Stack align="center" gap="xs">
-              <IconBooks size={36} />
-              <Text fw={600}>No collections yet</Text>
-              <Text c="dimmed" size="sm" ta="center">
-                Create your first collection to group related media.
-              </Text>
-            </Stack>
-          </Card>
+          <EmptyState
+            icon={<IconBooks size={36} />}
+            title="No collections yet"
+            description="Create your first collection to group related media."
+          />
         ) : (
           <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
             {data.map((collection) => (
