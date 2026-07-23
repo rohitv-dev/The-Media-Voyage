@@ -21,7 +21,12 @@ async function getUserMediaDetailedRecord(id: string) {
   return api<MediaDetailedRecord>(`/user-media/${id}`);
 }
 
-async function getUserMediaFilterRecords(filters: UserMediaQuerySchema) {
+/**
+ * Serialize a filter object into a query string (with leading `?`, or empty
+ * when nothing is set). Falsy values are skipped and arrays are JSON-encoded,
+ * matching what the user-media endpoints expect.
+ */
+function buildFilterQuery(filters: Record<string, unknown>): string {
   const params = new URLSearchParams();
 
   for (const [key, value] of Object.entries(filters)) {
@@ -33,8 +38,13 @@ async function getUserMediaFilterRecords(filters: UserMediaQuerySchema) {
     );
   }
 
+  const queryString = params.toString();
+  return queryString ? `?${queryString}` : "";
+}
+
+async function getUserMediaFilterRecords(filters: UserMediaQuerySchema) {
   return api<GetUserMediaResponse>(
-    `/user-media/filter${params.toString() ? `?${params.toString()}` : ""}`,
+    `/user-media/filter${buildFilterQuery(filters)}`,
   );
 }
 
@@ -51,13 +61,7 @@ export function getDashboardStats() {
 }
 
 export function getMediaPickerPath(filters: MediaPickerQuery) {
-  const params = new URLSearchParams();
-
-  for (const [key, value] of Object.entries(filters)) {
-    if (value) params.set(key, value);
-  }
-
-  return `/user-media/pick${params.size ? `?${params.toString()}` : ""}`;
+  return `/user-media/pick${buildFilterQuery(filters)}`;
 }
 
 export function pickPlannedMedia(filters: MediaPickerQuery) {
