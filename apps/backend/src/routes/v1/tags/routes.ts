@@ -1,27 +1,11 @@
 import { tagIdParamsSchema, updateTagSchema } from "@media-voyage/shared/api";
-import { fromNodeHeaders } from "better-auth/node";
 import type { FastifyInstance } from "fastify";
-import { auth } from "../../../auth";
+import { requireAuth } from "../../../require-auth";
 import { listTagsWithUsage } from "./queries";
 import { deleteTag, updateTag } from "./service";
 
 async function tagsRoutes(fastify: FastifyInstance) {
-  fastify.addHook("preHandler", async (request, reply) => {
-    try {
-      const session = await auth.api.getSession({
-        headers: fromNodeHeaders(request.headers),
-      });
-
-      if (!session) {
-        return reply.status(401).send({ error: "Unauthorized" });
-      }
-
-      request.userId = session.user.id;
-    } catch (error) {
-      request.log.error(error, "Authentication error in tags routes");
-      return reply.status(500).send({ error: "Internal authentication error" });
-    }
-  });
+  fastify.addHook("preHandler", requireAuth);
 
   fastify.get("/", async (request, reply) => {
     const records = await listTagsWithUsage(request.userId);

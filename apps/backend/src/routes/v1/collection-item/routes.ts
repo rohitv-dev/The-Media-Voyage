@@ -4,9 +4,8 @@ import {
   mediaCollectionItemParamsSchema,
   reorderMediaCollectionItemsSchema,
 } from "@media-voyage/shared/api";
-import { fromNodeHeaders } from "better-auth/node";
 import type { FastifyInstance } from "fastify";
-import { auth } from "../../../auth";
+import { requireAuth } from "../../../require-auth";
 import {
   addCollectionItem,
   getOwnedCollectionItems,
@@ -16,25 +15,7 @@ import {
 } from "./service";
 
 async function collectionItemRoutes(fastify: FastifyInstance) {
-  fastify.addHook("preHandler", async (request, reply) => {
-    try {
-      const session = await auth.api.getSession({
-        headers: fromNodeHeaders(request.headers),
-      });
-
-      if (!session) {
-        return reply.status(401).send({ error: "Unauthorized" });
-      }
-
-      request.userId = session.user.id;
-    } catch (error) {
-      request.log.error(
-        error,
-        "Authentication error in collection-item routes",
-      );
-      return reply.status(500).send({ error: "Internal authentication error" });
-    }
-  });
+  fastify.addHook("preHandler", requireAuth);
 
   fastify.get("/:collectionId", async (request, reply) => {
     const { collectionId } = mediaCollectionIdParamsSchema.parse(

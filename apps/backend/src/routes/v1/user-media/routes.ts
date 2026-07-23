@@ -1,4 +1,3 @@
-import { fromNodeHeaders } from "better-auth/node";
 import type { FastifyInstance } from "fastify";
 import Papa from "papaparse";
 import {
@@ -9,7 +8,7 @@ import {
   userMediaQuerySchema,
   userMediaQuickActionSchema,
 } from "@media-voyage/shared/api";
-import { auth } from "../../../auth";
+import { requireAuth } from "../../../require-auth";
 import {
   filterUserMedia,
   findUserMediaById,
@@ -29,22 +28,7 @@ import {
 } from "./service";
 
 async function userMediaRoutes(fastify: FastifyInstance) {
-  fastify.addHook("preHandler", async (request, reply) => {
-    try {
-      const session = await auth.api.getSession({
-        headers: fromNodeHeaders(request.headers),
-      });
-
-      if (!session) {
-        return reply.status(401).send({ error: "Unauthorized" });
-      }
-
-      request.userId = session.user.id;
-    } catch (error) {
-      request.log.error(error, "Authentication error in user-media routes");
-      return reply.status(500).send({ error: "Internal authentication error" });
-    }
-  });
+  fastify.addHook("preHandler", requireAuth);
 
   fastify.post("/", async (request, reply) => {
     const input = userMediaFormSchema.parse(request.body);
