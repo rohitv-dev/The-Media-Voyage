@@ -5,12 +5,15 @@ import {
 } from "#/utils/notifications";
 import { getStaleProgressDays } from "#/features/media/staleProgress";
 import { useSourceColorMap } from "#/features/sources/queries";
+import { useCoverArtPreference } from "#/features/media/hooks/useCoverArtPreference";
 import {
   ActionIcon,
+  AspectRatio,
   Badge,
   Button,
   Card,
   Group,
+  Image,
   Menu,
   Progress,
   Rating,
@@ -55,6 +58,8 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
   const queryClient = useQueryClient();
   const reduceMotion = useReducedMotion();
   const sourceColorMap = useSourceColorMap();
+  const [showCoverArt] = useCoverArtPreference();
+  const hasCoverArt = showCoverArt && !!media.imageUrl && media.imageUrl !== "N/A";
   const staleProgressDays =
     media.status === "in_progress"
       ? getStaleProgressDays(media.lastProgressUpdate)
@@ -206,6 +211,14 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
       p={{ base: "sm", sm: "md" }}
       style={{ cursor: onView ? "pointer" : undefined }}
     >
+      {hasCoverArt && (
+        <Card.Section>
+          <AspectRatio ratio={2 / 3}>
+            <Image src={media.imageUrl} alt="" fit="cover" />
+          </AspectRatio>
+        </Card.Section>
+      )}
+
       <Stack justify="space-between" h="100%" gap="sm">
         <Stack gap="sm">
           <Group justify="space-between" align="flex-start" wrap="nowrap">

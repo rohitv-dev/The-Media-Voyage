@@ -7,9 +7,11 @@ import {
 import {
   Container,
   Card,
+  Divider,
   Stack,
   Avatar,
   Group,
+  Switch,
   TextInput,
   ActionIcon,
   Button,
@@ -19,6 +21,7 @@ import { IconCheck, IconDownload, IconEdit, IconX } from "@tabler/icons-react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ThemeOptionsList } from "#/theme/ThemeSwitcher";
+import { useCoverArtPreference } from "#/features/media/hooks/useCoverArtPreference";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: RouteComponent,
@@ -27,6 +30,7 @@ export const Route = createFileRoute("/_authenticated/profile")({
 function RouteComponent() {
   const navigate = useNavigate()
   const { data } = authClient.useSession();
+  const [showCoverArt, setShowCoverArt] = useCoverArtPreference();
 
   const [editingName, setEditingName] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -160,6 +164,26 @@ function RouteComponent() {
               </Text>
             </Stack>
             <ThemeOptionsList />
+
+            <Divider />
+
+            <Group justify="space-between" align="center" wrap="wrap" gap="md">
+              <Stack gap={2} flex={1} miw={200}>
+                <Text size="sm" fw={600}>
+                  Cover art
+                </Text>
+                <Text size="xs" c="dimmed">
+                  Show poster/cover images on media cards.
+                </Text>
+              </Stack>
+              <Switch
+                checked={showCoverArt}
+                onChange={(event) =>
+                  setShowCoverArt(event.currentTarget.checked)
+                }
+                aria-label="Show cover art on media cards"
+              />
+            </Group>
           </Stack>
         </Card>
 

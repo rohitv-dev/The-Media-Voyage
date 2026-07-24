@@ -1,10 +1,13 @@
 import { Card, Stack, Skeleton, Group } from "@mantine/core";
+import { useCoverArtPreference } from "#/features/media/hooks/useCoverArtPreference";
 
 export function MediaCardSkeleton() {
+  const [showCoverArt] = useCoverArtPreference();
+
   return (
     <Card withBorder radius="md" p="md">
       <Stack>
-        <Skeleton animate height={220} radius="md" />
+        {showCoverArt && <Skeleton animate height={220} radius="md" />}
 
         <Skeleton animate height={20} width="70%" />
         <Skeleton animate height={14} width="40%" />
