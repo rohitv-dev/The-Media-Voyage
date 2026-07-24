@@ -1,12 +1,15 @@
 import { sources, userMedia } from "@media-voyage/shared";
 import {
+  sourceFormSchema,
   sourceIdParamsSchema,
   updateSourceSchema,
 } from "@media-voyage/shared/api";
 import type { FastifyInstance } from "fastify";
 import {
+  createNamedEntity,
   deleteNamedEntity,
   listNamedEntitiesWithUsage,
+  sendNamedEntityCreate,
   sendNamedEntityDelete,
   sendNamedEntityUpdate,
   updateNamedEntity,
@@ -23,6 +26,13 @@ async function sourcesRoutes(fastify: FastifyInstance) {
       request.userId,
     );
     return reply.send(records);
+  });
+
+  fastify.post("/", async (request, reply) => {
+    const input = sourceFormSchema.parse(request.body);
+    const result = await createNamedEntity(sources, request.userId, input);
+
+    return sendNamedEntityCreate(reply, result, "source");
   });
 
   fastify.patch("/:sourceId", async (request, reply) => {

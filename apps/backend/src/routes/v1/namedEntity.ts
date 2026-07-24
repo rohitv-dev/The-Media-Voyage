@@ -30,6 +30,10 @@ type UpdateResult =
   | { status: "duplicate" }
   | { status: "success"; entity: NamedEntityRow };
 
+type CreateResult =
+  | { status: "duplicate" }
+  | { status: "success"; entity: NamedEntityRow };
+
 type DeleteResult = { status: "not_found" } | { status: "success" };
 
 /**
@@ -90,6 +94,47 @@ async function findByNormalizedName(
     .limit(1);
 
   return entity ?? null;
+}
+
+async function findByNormalizedNameAny(
+  table: NamedEntityTable,
+  userId: string,
+  normalizedName: string,
+): Promise<NamedEntityRow | null> {
+  const [entity] = await db
+    .select()
+    .from(table)
+    .where(
+      and(eq(table.userId, userId), eq(table.normalizedName, normalizedName)),
+    )
+    .limit(1);
+
+  return entity ?? null;
+}
+
+export async function createNamedEntity(
+  table: NamedEntityTable,
+  userId: string,
+  input: { name: string; color?: string | null },
+): Promise<CreateResult> {
+  const normalizedName = input.name.trim().toLowerCase();
+  const conflict = await findByNormalizedNameAny(table, userId, normalizedName);
+
+  if (conflict) {
+    return { status: "duplicate" };
+  }
+
+  const [created] = await db
+    .insert(table)
+    .values({
+      userId,
+      name: input.name.trim(),
+      normalizedName,
+      color: input.color ?? null,
+    })
+    .returning();
+
+  return { status: "success", entity: created };
 }
 
 export async function updateNamedEntity(
@@ -173,6 +218,21 @@ export function sendNamedEntityUpdate(
     case "success":
       return reply.send(result.entity);
   }
+}
+
+/** Map a {@link createNamedEntity} result onto the HTTP response. */
+export function sendNamedEntityCreate(
+  reply: FastifyReply,
+  result: CreateResult,
+  label: string,
+) {
+  if (result.status === "duplicate") {
+    return reply
+      .status(409)
+      .send({ error: `A ${label} with that name already exists` });
+  }
+
+  return reply.status(201).send(result.entity);
 }
 
 /** Map a {@link deleteNamedEntity} result onto the HTTP response. */

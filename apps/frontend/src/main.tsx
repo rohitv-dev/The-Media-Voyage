@@ -19,10 +19,15 @@ import type { MediaRecord } from "@media-voyage/shared/api";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      // Data only ever changes via this user's own CRUD mutations, so time-
+      // /focus-/reconnect-based revalidation is unnecessary. refetchOnMount
+      // stays at its library default (true) so that a query a mutation just
+      // invalidateQueries()'d — even one for a currently-unmounted screen —
+      // refetches the next time that screen mounts, instead of serving
+      // stale cached data forever.
       staleTime: Infinity,
       gcTime: 1000 * 60 * 60,
       refetchOnWindowFocus: false,
-      refetchOnMount: false,
       refetchOnReconnect: false,
     },
   },

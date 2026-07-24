@@ -1,6 +1,9 @@
 import { EmptyState } from "#/components/EmptyState";
 import { NamedEntityRow } from "#/components/NamedEntityRow";
-import { Container, Stack, Text, Title } from "@mantine/core";
+import { AddNamedEntityModal } from "#/components/AddNamedEntityModal";
+import { Button, Container, Group, Stack, Text, Title } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { IconPlus } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
 type NamedEntity = {
@@ -40,15 +43,23 @@ export function NamedEntityManagementPage<T extends NamedEntity>({
   invalidateKeys,
   filterKey,
 }: NamedEntityManagementPageProps<T>) {
+  const [addOpened, { open: openAdd, close: closeAdd }] = useDisclosure();
+
   return (
     <Container size="md" pt="md" pb="md">
       <Stack gap="md">
-        <Stack gap={2}>
-          <Title order={2}>{title}</Title>
-          <Text c="dimmed" size="sm">
-            {description}
-          </Text>
-        </Stack>
+        <Group justify="space-between" align="flex-start">
+          <Stack gap={2}>
+            <Title order={2}>{title}</Title>
+            <Text c="dimmed" size="sm">
+              {description}
+            </Text>
+          </Stack>
+
+          <Button leftSection={<IconPlus size={16} />} onClick={openAdd}>
+            Add {entityLabel}
+          </Button>
+        </Group>
 
         {entities.length === 0 ? (
           <EmptyState
@@ -71,6 +82,14 @@ export function NamedEntityManagementPage<T extends NamedEntity>({
           </Stack>
         )}
       </Stack>
+
+      <AddNamedEntityModal
+        opened={addOpened}
+        onClose={closeAdd}
+        basePath={basePath}
+        entityLabel={entityLabel}
+        invalidateKeys={invalidateKeys}
+      />
     </Container>
   );
 }

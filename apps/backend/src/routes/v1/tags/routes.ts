@@ -1,9 +1,15 @@
 import { tags, userMediaTags } from "@media-voyage/shared";
-import { tagIdParamsSchema, updateTagSchema } from "@media-voyage/shared/api";
+import {
+  tagFormSchema,
+  tagIdParamsSchema,
+  updateTagSchema,
+} from "@media-voyage/shared/api";
 import type { FastifyInstance } from "fastify";
 import {
+  createNamedEntity,
   deleteNamedEntity,
   listNamedEntitiesWithUsage,
+  sendNamedEntityCreate,
   sendNamedEntityDelete,
   sendNamedEntityUpdate,
   updateNamedEntity,
@@ -20,6 +26,13 @@ async function tagsRoutes(fastify: FastifyInstance) {
       request.userId,
     );
     return reply.send(records);
+  });
+
+  fastify.post("/", async (request, reply) => {
+    const input = tagFormSchema.parse(request.body);
+    const result = await createNamedEntity(tags, request.userId, input);
+
+    return sendNamedEntityCreate(reply, result, "tag");
   });
 
   fastify.patch("/:tagId", async (request, reply) => {
