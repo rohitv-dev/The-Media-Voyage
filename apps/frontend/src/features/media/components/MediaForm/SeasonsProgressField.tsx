@@ -23,6 +23,11 @@ export function SeasonsProgressField() {
   const seasons = form.values.seasonsProgress ?? [];
   const sorted = [...seasons].sort((a, b) => a.season - b.season);
 
+  const seasonCounts = sorted.reduce((counts, entry) => {
+    counts.set(entry.season, (counts.get(entry.season) ?? 0) + 1);
+    return counts;
+  }, new Map<number, number>());
+
   const updateSeason = (
     target: SeasonProgressEntry,
     updates: Partial<SeasonProgressEntry>,
@@ -105,6 +110,11 @@ export function SeasonsProgressField() {
                     w={80}
                     min={1}
                     value={entry.season}
+                    error={
+                      (seasonCounts.get(entry.season) ?? 0) > 1
+                        ? "Duplicate"
+                        : undefined
+                    }
                     onChange={(value) =>
                       updateSeason(entry, {
                         season: typeof value === "number" ? value : entry.season,

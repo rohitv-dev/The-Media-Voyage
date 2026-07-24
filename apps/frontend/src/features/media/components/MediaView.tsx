@@ -15,6 +15,7 @@ import {
   Text,
   ThemeIcon,
   Title,
+  Tooltip,
 } from "@mantine/core";
 import {
   IconArrowLeft,
@@ -22,6 +23,7 @@ import {
   IconEdit,
   IconHeartFilled,
   IconNotebook,
+  IconPencil,
   IconPlayerPlay,
   IconQuote,
 } from "@tabler/icons-react";
@@ -254,6 +256,18 @@ export function MediaView({ data }: { data: MediaDetailedRecord }) {
                       >
                         Favorite
                       </Badge>
+                    )}
+                    {data.catalogSource === "manual" && (
+                      <Tooltip label="This title was entered manually and isn't matched to a verified catalog entry, so it has no synced poster or description">
+                        <Badge
+                          color="orange"
+                          variant="outline"
+                          leftSection={<IconPencil size={12} />}
+                          size="sm"
+                        >
+                          Manually added
+                        </Badge>
+                      </Tooltip>
                     )}
                   </Group>
 

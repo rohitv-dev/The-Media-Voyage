@@ -27,7 +27,7 @@ export interface OmdbRating {
 export interface OmdbSearchResponse {
   Search: OmdbMedia[];
   totalResults: string;
-  Response: string;
+  Response: "True";
 }
 
 export interface OmdbErrorResponse {
@@ -40,7 +40,7 @@ export type OmdbResponse = OmdbSearchResponse;
 export type IgdbRecord = {
   id: number;
   name: string;
-  cover: {
+  cover?: {
     id: number;
     image_id: string;
   };

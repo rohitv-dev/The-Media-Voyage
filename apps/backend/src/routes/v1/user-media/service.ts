@@ -146,7 +146,7 @@ export async function createUserMedia(
         .values({
           title,
           type,
-          externalId,
+          externalId: externalId || null,
           imageUrl,
           source: mediaSource,
         })

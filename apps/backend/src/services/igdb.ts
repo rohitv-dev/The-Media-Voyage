@@ -31,7 +31,7 @@ export async function searchGames(query: string): Promise<SourceMediaRecord[]> {
     externalId: String(val.id),
     title: val.name,
     type: "game",
-    imageUrl: val.cover.image_id
+    imageUrl: val.cover?.image_id
       ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${val.cover.image_id}.jpg`
       : null,
   }));

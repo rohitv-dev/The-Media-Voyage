@@ -81,6 +81,7 @@ export const mediaDetailedRecordSchema = z.object({
   type: mediaSelectSchema.shape.type,
   description: mediaSelectSchema.shape.description,
   imageUrl: mediaSelectSchema.shape.imageUrl,
+  catalogSource: mediaSelectSchema.shape.source,
 
   status: userMediaSelectSchema.shape.status,
   rating: userMediaSelectSchema.shape.rating,
