@@ -12,5 +12,7 @@ body,
 
 body {
   margin: 0;
-  background-color: light-dark(#f8f9fa, #18181b);
+  // Ground colour is driven by the active theme (see ThemeProvider). The
+  // fallback matches the default "Almanac" theme for the initial paint.
+  background-color: var(--app-bg, #f4efe3);
 }

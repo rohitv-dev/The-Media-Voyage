@@ -18,6 +18,7 @@ import {
 import { IconCheck, IconDownload, IconEdit, IconX } from "@tabler/icons-react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { ThemeOptionsList } from "#/theme/ThemeSwitcher";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: RouteComponent,
@@ -147,6 +148,18 @@ function RouteComponent() {
             </Stack>
 
             <Button variant="light" disabled={true}>Change Profile Picture</Button>
+          </Stack>
+        </Card>
+
+        <Card withBorder radius="lg" p="lg">
+          <Stack gap="sm">
+            <Stack gap={3}>
+              <Text fw={700}>Appearance</Text>
+              <Text size="sm" c="dimmed">
+                Pick a theme. Your choice is saved on this device.
+              </Text>
+            </Stack>
+            <ThemeOptionsList />
           </Stack>
         </Card>
 

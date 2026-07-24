@@ -12,8 +12,6 @@ import {
   Text,
   Title,
   Tooltip,
-  useComputedColorScheme,
-  useMantineColorScheme,
 } from "@mantine/core";
 import type { NavLinkProps } from "@mantine/core";
 import { useDisclosure, useHotkeys } from "@mantine/hooks";
@@ -24,9 +22,7 @@ import {
   IconDeviceTv,
   IconHelp,
   IconLogout,
-  IconMoon,
   IconPlus,
-  IconSun,
   IconTags,
   IconTrendingUp,
   IconUser,
@@ -43,6 +39,7 @@ import { collectionQueryOptions } from "#/features/mediaCollection/queries";
 import { getSession } from "#/auth/session";
 import { authClient } from "#/auth/authClient";
 import { ShortcutsHelpModal } from "#/components/ShortcutsHelpModal";
+import { ThemeSwitcher, ThemeOptionsList } from "#/theme/ThemeSwitcher";
 
 const SIDEBAR_ACTIVE_PILL_ID = "sidebar-active-pill";
 
@@ -89,46 +86,6 @@ export const Route = createFileRoute("/_authenticated")({
   },
   component: RouteComponent,
 });
-
-function ColorSchemeToggle({ mobile = false }: { mobile?: boolean }) {
-  const { toggleColorScheme } = useMantineColorScheme({
-    keepTransitions: true,
-  });
-  const computedColorScheme = useComputedColorScheme("light", {
-    getInitialValueInEffect: true,
-  });
-  const isDark = computedColorScheme === "dark";
-  const label = isDark ? "Switch to light mode" : "Switch to dark mode";
-  const icon = isDark ? <IconSun size={18} /> : <IconMoon size={18} />;
-
-  if (mobile) {
-    return (
-      <Button
-        fullWidth
-        variant="light"
-        color="gray"
-        leftSection={icon}
-        onClick={() => toggleColorScheme()}
-      >
-        {isDark ? "Light mode" : "Dark mode"}
-      </Button>
-    );
-  }
-
-  return (
-    <Tooltip label={label} withArrow>
-      <ActionIcon
-        variant="subtle"
-        color="gray"
-        size="lg"
-        aria-label={label}
-        onClick={() => toggleColorScheme()}
-      >
-        {icon}
-      </ActionIcon>
-    </Tooltip>
-  );
-}
 
 function RouteComponent() {
   const navigate = Route.useNavigate();
@@ -230,7 +187,7 @@ function RouteComponent() {
               </Tooltip>
             </Box>
             <Box visibleFrom="sm">
-              <ColorSchemeToggle />
+              <ThemeSwitcher />
             </Box>
             <Button
               visibleFrom="md"
@@ -243,7 +200,7 @@ function RouteComponent() {
             <Box visibleFrom="md">
               <Tooltip label="Profile" withArrow>
                 <Avatar
-                  color="indigo"
+                  color="accent"
                   radius="xl"
                   size="sm"
                   style={{ cursor: "pointer" }}
@@ -369,7 +326,11 @@ function RouteComponent() {
             <Divider my="md" />
             <Stack gap="xs">
               <Box hiddenFrom="sm">
-                <ColorSchemeToggle mobile />
+                <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb={6}>
+                  Theme
+                </Text>
+                <ThemeOptionsList />
+                <Divider my="xs" />
               </Box>
               <Button
                 variant="gradient"
