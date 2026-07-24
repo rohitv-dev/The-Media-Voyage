@@ -80,7 +80,7 @@ function RouteComponent() {
             <Stack gap={2}>
               <Group gap="sm" align="center">
                 <Title order={2}>{collection.name}</Title>
-                <Badge variant="light" color="indigo">
+                <Badge variant="light" color="accent">
                   {items.length} {items.length === 1 ? "item" : "items"}
                 </Badge>
               </Group>

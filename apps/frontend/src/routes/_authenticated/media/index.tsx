@@ -161,7 +161,7 @@ function RouteComponent() {
                   aria-label="Choose library view"
                   value={view}
                   onChange={setView}
-                  color="indigo"
+                  color="accent"
                   data={[
                     {
                       value: "grid",
