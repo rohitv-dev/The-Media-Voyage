@@ -15,6 +15,7 @@ import {
   useComputedColorScheme,
   useMantineColorScheme,
 } from "@mantine/core";
+import type { NavLinkProps } from "@mantine/core";
 import { useDisclosure, useHotkeys } from "@mantine/hooks";
 import {
   IconBooks,
@@ -31,11 +32,49 @@ import {
   IconUser,
 } from "@tabler/icons-react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  redirect,
+  useLocation,
+} from "@tanstack/react-router";
+import { motion, useReducedMotion } from "motion/react";
 import { collectionQueryOptions } from "#/features/mediaCollection/queries";
 import { getSession } from "#/auth/session";
 import { authClient } from "#/auth/authClient";
 import { ShortcutsHelpModal } from "#/components/ShortcutsHelpModal";
+
+const SIDEBAR_ACTIVE_PILL_ID = "sidebar-active-pill";
+
+function SidebarNavLink({ active, ...props }: NavLinkProps) {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <Box pos="relative">
+      {active && (
+        <motion.div
+          layoutId={SIDEBAR_ACTIVE_PILL_ID}
+          transition={
+            reduceMotion
+              ? { duration: 0 }
+              : { type: "spring", stiffness: 500, damping: 40 }
+          }
+          style={{
+            position: "absolute",
+            inset: 0,
+            borderRadius: "var(--mantine-radius-sm)",
+            backgroundColor: "var(--mantine-primary-color-light)",
+          }}
+        />
+      )}
+      <NavLink
+        active={active}
+        style={{ position: "relative", backgroundColor: "transparent" }}
+        {...props}
+      />
+    </Box>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
@@ -97,6 +136,10 @@ function RouteComponent() {
   const [shortcutsOpened, { open: openShortcuts, close: closeShortcuts }] =
     useDisclosure();
   const { data: collections } = useSuspenseQuery(collectionQueryOptions);
+  const { pathname } = useLocation();
+
+  const isActive = (path: string, exact = false) =>
+    exact ? pathname === path : pathname.startsWith(path);
 
   useHotkeys([
     [
@@ -224,54 +267,60 @@ function RouteComponent() {
       >
         <Stack gap={0} p="sm" h="100%">
           <Stack gap={4}>
-            <NavLink
+            <SidebarNavLink
               label="Dashboard"
               leftSection={<IconTrendingUp size={19} />}
+              active={isActive("/dashboard")}
               onClick={() => {
                 navigate({ to: "/dashboard" });
                 close();
               }}
             />
 
-            <NavLink
+            <SidebarNavLink
               label="Library"
               leftSection={<IconBooks size={19} />}
+              active={isActive("/media")}
               onClick={() => {
                 navigate({ to: "/media" });
                 close();
               }}
             />
 
-            <NavLink
+            <SidebarNavLink
               label="Activity Calendar"
               leftSection={<IconCalendar size={19} />}
+              active={isActive("/calendar")}
               onClick={() => {
                 navigate({ to: "/calendar" });
                 close();
               }}
             />
 
-            <NavLink
+            <SidebarNavLink
               label="Tag Management"
               leftSection={<IconTags size={19} />}
+              active={isActive("/tags")}
               onClick={() => {
                 navigate({ to: "/tags" });
                 close();
               }}
             />
 
-            <NavLink
+            <SidebarNavLink
               label="Source Management"
               leftSection={<IconDeviceTv size={19} />}
+              active={isActive("/sources")}
               onClick={() => {
                 navigate({ to: "/sources" });
                 close();
               }}
             />
 
-            <NavLink
+            <SidebarNavLink
               label="Profile"
               leftSection={<IconUser size={19} />}
+              active={isActive("/profile")}
               onClick={() => {
                 navigate({ to: "/profile" });
                 close();
@@ -281,9 +330,9 @@ function RouteComponent() {
             <Divider my="md" />
 
             <Stack gap={4}>
-              <NavLink
+              <SidebarNavLink
                 label="Collections"
-                active={false}
+                active={isActive("/collection", true)}
                 rightSection={<IconChevronRight size={18} />}
                 onClick={() => {
                   navigate({ to: "/collection" });
@@ -293,7 +342,7 @@ function RouteComponent() {
 
               <Stack gap={4} pl="sm">
                 {collections.map((collection) => (
-                  <NavLink
+                  <SidebarNavLink
                     key={collection.id}
                     label={collection.name}
                     description={
@@ -302,6 +351,7 @@ function RouteComponent() {
                         : undefined
                     }
                     leftSection={<IconBooks size={16} />}
+                    active={isActive(`/collection/view/${collection.id}`)}
                     onClick={() => {
                       navigate({
                         to: "/collection/view/$id",

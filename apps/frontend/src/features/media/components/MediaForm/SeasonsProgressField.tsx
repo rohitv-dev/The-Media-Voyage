@@ -196,6 +196,10 @@ export function SeasonsProgressField() {
               </Stack>
             </Card>
           ))}
+
+          <Group justify="flex-end">
+            <Button onClick={close}>Done</Button>
+          </Group>
         </Stack>
       </Modal>
     </>
