@@ -44,6 +44,10 @@ interface ThemeDef {
   fontMono: string;
   /** Default corner radius — part of each theme's personality. */
   radius: "xs" | "sm" | "md" | "lg";
+  /** Optional heading weight override (Mantine's default is 700). */
+  headingWeight?: string;
+  /** Optional multiplier on default heading sizes, e.g. 1.08 for more presence. */
+  headingScale?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -102,6 +106,10 @@ export const THEMES: Record<ThemeId, ThemeDef> = {
     fontBody: BOOK_SERIF,
     fontMono: MONO,
     radius: "sm",
+    // Lora at 700 reads chunky; 600 is a more refined book weight, with a
+    // gentle size bump for presence on the paper ground.
+    headingWeight: "600",
+    headingScale: 1.08,
   },
   terminal: {
     id: "terminal",
@@ -289,6 +297,25 @@ export function buildMantineTheme(def: ThemeDef): MantineThemeOverride {
     colors.gray = grayTuple(def);
   }
 
+  // Headings: font family always, plus optional per-theme weight and a size
+  // multiplier over Mantine's default h1–h6 scale.
+  const headings: NonNullable<MantineThemeOverride["headings"]> = {
+    fontFamily: def.fontHeading,
+    fontWeight: def.headingWeight,
+  };
+  if (def.headingScale) {
+    const s = def.headingScale;
+    const rem = (base: number) => `${(base * s).toFixed(3)}rem`;
+    headings.sizes = {
+      h1: { fontSize: rem(2.125) },
+      h2: { fontSize: rem(1.625) },
+      h3: { fontSize: rem(1.375) },
+      h4: { fontSize: rem(1.125) },
+      h5: { fontSize: rem(1) },
+      h6: { fontSize: rem(0.875) },
+    };
+  }
+
   return createTheme({
     primaryColor: "accent",
     // Use a mid shade so the accent reads the same on light and dark grounds.
@@ -300,7 +327,7 @@ export function buildMantineTheme(def: ThemeDef): MantineThemeOverride {
 
     fontFamily: def.fontBody,
     fontFamilyMonospace: def.fontMono,
-    headings: { fontFamily: def.fontHeading },
+    headings,
 
     defaultRadius: def.radius,
     radius: {
