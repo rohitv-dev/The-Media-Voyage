@@ -8,15 +8,9 @@ import {
   NumberInput,
   Progress,
 } from "@mantine/core";
-import { statusEnumValues } from "@media-voyage/shared/userMediaSchema";
 import { IconChartBar } from "@tabler/icons-react";
-import { capitalizeWords } from "#/utils/stringFunctions";
+import { statusOptions } from "../../options";
 import { useFormContext } from "./context";
-
-const statusOptions = statusEnumValues.map((value) => ({
-  value,
-  label: capitalizeWords(value),
-}));
 
 export function StatusDetailsSection() {
   const form = useFormContext();

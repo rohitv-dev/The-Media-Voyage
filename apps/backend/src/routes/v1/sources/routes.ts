@@ -1,62 +1,48 @@
+import { sources, userMedia } from "@media-voyage/shared";
 import {
   sourceIdParamsSchema,
   updateSourceSchema,
 } from "@media-voyage/shared/api";
-import { fromNodeHeaders } from "better-auth/node";
 import type { FastifyInstance } from "fastify";
-import { auth } from "../../../auth";
-import { listSourcesWithUsage } from "./queries";
-import { deleteSource, updateSource } from "./service";
+import {
+  deleteNamedEntity,
+  listNamedEntitiesWithUsage,
+  sendNamedEntityDelete,
+  sendNamedEntityUpdate,
+  updateNamedEntity,
+} from "../namedEntity";
+import { requireAuth } from "../../../require-auth";
 
 async function sourcesRoutes(fastify: FastifyInstance) {
-  fastify.addHook("preHandler", async (request, reply) => {
-    try {
-      const session = await auth.api.getSession({
-        headers: fromNodeHeaders(request.headers),
-      });
-
-      if (!session) {
-        return reply.status(401).send({ error: "Unauthorized" });
-      }
-
-      request.userId = session.user.id;
-    } catch (error) {
-      request.log.error(error, "Authentication error in sources routes");
-      return reply.status(500).send({ error: "Internal authentication error" });
-    }
-  });
+  fastify.addHook("preHandler", requireAuth);
 
   fastify.get("/", async (request, reply) => {
-    const records = await listSourcesWithUsage(request.userId);
+    const records = await listNamedEntitiesWithUsage(
+      sources,
+      userMedia.sourceId,
+      request.userId,
+    );
     return reply.send(records);
   });
 
   fastify.patch("/:sourceId", async (request, reply) => {
     const { sourceId } = sourceIdParamsSchema.parse(request.params);
     const input = updateSourceSchema.parse(request.body);
-    const result = await updateSource(request.userId, sourceId, input);
+    const result = await updateNamedEntity(
+      sources,
+      request.userId,
+      sourceId,
+      input,
+    );
 
-    switch (result.status) {
-      case "not_found":
-        return reply.status(404).send({ error: "Source not found" });
-      case "duplicate":
-        return reply
-          .status(409)
-          .send({ error: "A source with that name already exists" });
-      case "success":
-        return reply.send(result.source);
-    }
+    return sendNamedEntityUpdate(reply, result, "source");
   });
 
   fastify.delete("/:sourceId", async (request, reply) => {
     const { sourceId } = sourceIdParamsSchema.parse(request.params);
-    const result = await deleteSource(request.userId, sourceId);
+    const result = await deleteNamedEntity(sources, request.userId, sourceId);
 
-    if (result.status === "not_found") {
-      return reply.status(404).send({ error: "Source not found" });
-    }
-
-    return reply.status(200).send({ success: true });
+    return sendNamedEntityDelete(reply, result, "source");
   });
 }
 

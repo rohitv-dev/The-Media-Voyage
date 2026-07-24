@@ -23,6 +23,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { capitalizeWords, formatMonthLabel } from "#/utils/stringFunctions";
 import { getStatusColor } from "#/features/media/functions";
 import { ContinueMediaCard } from "#/features/media/components/ContinueMediaCard";
+import { EmptyState } from "#/components/EmptyState";
 import { IconArrowRight, IconPlayerPlay } from "@tabler/icons-react";
 import type { UserMediaQuerySchema } from "@media-voyage/shared/api";
 import type { MediaType, Status } from "@media-voyage/shared/userMediaSchema";
@@ -360,16 +361,12 @@ function RouteComponent() {
               </Group>
 
               {continueItems.length === 0 ? (
-                <Card withBorder radius="md" p="xl">
-                  <Stack align="center" gap="xs">
-                    <IconPlayerPlay size={32} />
-                    <Text fw={600}>Nothing in progress</Text>
-                    <Text c="dimmed" size="sm" ta="center">
-                      Start or resume something from your library to see it
-                      here.
-                    </Text>
-                  </Stack>
-                </Card>
+                <EmptyState
+                  radius="md"
+                  icon={<IconPlayerPlay size={32} />}
+                  title="Nothing in progress"
+                  description="Start or resume something from your library to see it here."
+                />
               ) : (
                 <SimpleGrid
                   spacing="sm"
