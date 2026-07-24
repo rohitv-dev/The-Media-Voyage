@@ -37,6 +37,8 @@ const router = createRouter({
   routeTree,
   defaultPreload: "intent",
   scrollRestoration: true,
+  defaultPendingMs: 200,
+  defaultPendingMinMs: 200,
   context: {
     queryClient,
   },
