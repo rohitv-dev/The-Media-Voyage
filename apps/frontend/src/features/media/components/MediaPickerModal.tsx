@@ -1,5 +1,6 @@
 import { pickPlannedMedia } from "#/features/media/queries";
 import { api } from "#/lib/api";
+import { EmptyState } from "#/components/EmptyState";
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -227,14 +228,11 @@ export function MediaPickerModal({
             </Card>
           </motion.div>
         ) : (
-          <Card withBorder radius="md" p="xl">
-            <Stack align="center" gap="sm">
-              <Text fw={600}>No planned items match those filters</Text>
-              <Text size="sm" c="dimmed" ta="center">
-                Clear one or more filters and try again.
-              </Text>
-            </Stack>
-          </Card>
+          <EmptyState
+            radius="md"
+            title="No planned items match those filters"
+            description="Clear one or more filters and try again."
+          />
         )}
 
         {pickMutation.isSuccess && (

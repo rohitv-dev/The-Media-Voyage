@@ -22,9 +22,14 @@ import { useParams } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import type { DropResult } from "@hello-pangea/dnd";
+import { confirmDelete } from "#/utils/confirmModal";
 import { motion } from "motion/react";
 import type { Variants } from "motion/react";
 import { capitalizeWords } from "#/utils/stringFunctions";
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from "#/utils/notifications";
 
 type CollectionItemsEditorProps = {
   data: MediaRecord[];
@@ -106,6 +111,10 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
         queryKey: ["collection-items", collectionId],
       });
       setSelectedMediaId(null);
+      showSuccessNotification({ message: "Added to collection" });
+    },
+    onError: (error: Error) => {
+      showErrorNotification({ message: error.message });
     },
   });
 
@@ -118,6 +127,10 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
       await queryClient.invalidateQueries({
         queryKey: ["collection-items", collectionId],
       });
+      showSuccessNotification({ message: "Removed from collection" });
+    },
+    onError: (error: Error) => {
+      showErrorNotification({ message: error.message });
     },
   });
 
@@ -140,12 +153,25 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
         queryKey: ["collection-items", collectionId],
       });
       setCanSaveOrder(false);
+      showSuccessNotification({ message: "Order saved" });
+    },
+    onError: (error: Error) => {
+      showErrorNotification({ message: error.message });
     },
   });
 
   const handleAdd = () => {
     if (!selectedMediaId) return;
     addMutation.mutate(selectedMediaId);
+  };
+
+  const handleRemove = (item: MediaCollectionItemRecord) => {
+    confirmDelete({
+      title: "Remove item",
+      message: `Remove "${item.title}" from this collection?`,
+      confirmLabel: "Remove",
+      onConfirm: () => removeMutation.mutate(item.id),
+    });
   };
 
   const reorder = (
@@ -319,10 +345,9 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
                                     <ActionIcon
                                       color="red"
                                       variant="subtle"
+                                      aria-label={`Remove ${item.title} from collection`}
                                       loading={removeMutation.isPending}
-                                      onClick={() =>
-                                        removeMutation.mutate(item.id)
-                                      }
+                                      onClick={() => handleRemove(item)}
                                     >
                                       <IconX size={16} />
                                     </ActionIcon>

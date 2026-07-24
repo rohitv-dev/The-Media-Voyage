@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import {
   Badge,
@@ -24,6 +24,7 @@ import { z } from "zod";
 import { calendarActivityOptions } from "#/features/media/queries";
 import { getStatusColor } from "#/features/media/functions";
 import { capitalizeWords } from "#/utils/stringFunctions";
+import { showErrorNotification } from "#/utils/notifications";
 import { statusEnumValues } from "@media-voyage/shared/userMediaSchema";
 import type { CalendarActivityEvent } from "@media-voyage/shared/api";
 
@@ -104,13 +105,22 @@ function RouteComponent() {
   const navigate = useNavigate();
   const month = search.month ?? currentMonthToken();
 
-  const { data, isFetching } = useQuery({
+  const { data, isFetching, isError } = useQuery({
     ...calendarActivityOptions(month),
     placeholderData: keepPreviousData,
   });
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const reduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (isError) {
+      showErrorNotification({
+        message: "Failed to load calendar activity",
+        title: "Please try again later",
+      });
+    }
+  }, [isError]);
 
   const goToMonth = (nextMonth: string) => {
     navigate({ to: "/calendar", search: { month: nextMonth } });

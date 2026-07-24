@@ -9,6 +9,7 @@ import type { UserMediaQuerySchema } from "@media-voyage/shared/api";
 import type { FilterPreset } from "#/features/media/hooks/useFilterPresets";
 import { SavePresetModal } from "#/features/media/components/SavePresetModal";
 import { showSuccessNotification } from "#/utils/notifications";
+import { confirmDelete } from "#/utils/confirmModal";
 
 type FilterPresetsMenuProps = {
   presets: FilterPreset[];
@@ -25,6 +26,19 @@ export function FilterPresetsMenu({
 }: FilterPresetsMenuProps) {
   const [saveModalOpened, { open: openSaveModal, close: closeSaveModal }] =
     useDisclosure();
+
+  const handleDelete = (preset: FilterPreset) => {
+    confirmDelete({
+      title: "Delete preset",
+      message: `Are you sure you want to delete the preset "${preset.name}"?`,
+      onConfirm: () => {
+        onDelete(preset.id);
+        showSuccessNotification({
+          message: `Deleted preset "${preset.name}"`,
+        });
+      },
+    });
+  };
 
   return (
     <>
@@ -58,10 +72,7 @@ export function FilterPresetsMenu({
                   aria-label={`Delete preset ${preset.name}`}
                   onClick={(event) => {
                     event.stopPropagation();
-                    onDelete(preset.id);
-                    showSuccessNotification({
-                      message: `Deleted preset "${preset.name}"`,
-                    });
+                    handleDelete(preset);
                   }}
                 >
                   <IconTrash size={14} />

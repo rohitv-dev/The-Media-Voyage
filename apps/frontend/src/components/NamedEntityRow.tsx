@@ -17,6 +17,7 @@ import { IconCheck, IconEdit, IconTrash, IconX } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { confirmDelete } from "#/utils/confirmModal";
 
 type NamedEntity = {
   id: string;
@@ -60,7 +61,10 @@ export function NamedEntityRow<T extends NamedEntity>({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       }),
-    onSuccess: () => invalidate(),
+    onSuccess: () => {
+      invalidate();
+      showSuccessNotification({ message: `Updated ${entityLabel}` });
+    },
     onError: (error: Error) => {
       showErrorNotification({ message: error.message });
     },
@@ -97,6 +101,14 @@ export function NamedEntityRow<T extends NamedEntity>({
   const handleCancelName = () => {
     setName(entity.name);
     setEditing(false);
+  };
+
+  const handleDelete = () => {
+    confirmDelete({
+      title: `Delete ${entityLabel}`,
+      message: `Are you sure you want to delete "${entity.name}"? This will remove it from ${entity.usageCount} ${entity.usageCount === 1 ? "item" : "items"}.`,
+      onConfirm: () => deleteMutation.mutate(),
+    });
   };
 
   return (
@@ -198,7 +210,7 @@ export function NamedEntityRow<T extends NamedEntity>({
               color="red"
               aria-label={`Delete ${entity.name}`}
               loading={deleteMutation.isPending}
-              onClick={() => deleteMutation.mutate()}
+              onClick={handleDelete}
             >
               <IconTrash size={16} />
             </ActionIcon>

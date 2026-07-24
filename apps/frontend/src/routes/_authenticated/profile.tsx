@@ -32,11 +32,18 @@ function RouteComponent() {
   const [name, setName] = useState(data?.user.name);
 
   const handleSave = async () => {
-    await authClient.updateUser({
-      name,
-    });
-    setEditingName(false);
-    showSuccessNotification({ message: "Profile updated successfully!" });
+    try {
+      await authClient.updateUser({
+        name,
+      });
+      setEditingName(false);
+      showSuccessNotification({ message: "Profile updated successfully!" });
+    } catch (error) {
+      showErrorNotification({
+        message:
+          error instanceof Error ? error.message : "Could not update profile",
+      });
+    }
   };
 
   const handleCancel = () => {

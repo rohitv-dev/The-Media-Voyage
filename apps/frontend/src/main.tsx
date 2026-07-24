@@ -13,6 +13,7 @@ import { routeTree } from "./routeTree.gen";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createTheme, MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
+import { ModalsProvider } from "@mantine/modals";
 import type { MediaRecord } from "@media-voyage/shared/api";
 
 const queryClient = new QueryClient({
@@ -92,7 +93,9 @@ if (!rootElement.innerHTML) {
     <QueryClientProvider client={queryClient}>
       <MantineProvider defaultColorScheme="light" theme={theme}>
         <Notifications />
-        <RouterProvider router={router} />
+        <ModalsProvider>
+          <RouterProvider router={router} />
+        </ModalsProvider>
       </MantineProvider>
     </QueryClientProvider>,
   );

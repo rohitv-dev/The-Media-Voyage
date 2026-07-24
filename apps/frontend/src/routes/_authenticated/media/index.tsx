@@ -5,7 +5,6 @@ import {
 import {
   Box,
   Button,
-  Card,
   Container,
   Drawer,
   Flex,
@@ -20,6 +19,8 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { MediaCard } from "#/features/media/components/MediaCard";
+import { MediaCardSkeleton } from "#/features/media/components/MediaCardSkeleton";
+import { EmptyState } from "#/components/EmptyState";
 import type { UserMediaQuerySchema } from "@media-voyage/shared/api";
 import { userMediaQuerySchema } from "@media-voyage/shared/api";
 import { showErrorNotification } from "#/utils/notifications";
@@ -221,40 +222,53 @@ function RouteComponent() {
 
         <Flex gap="sm">
           <Box flex="1">
-            {!isFetching && data?.data.length === 0 ? (
-              <Card withBorder p="xl">
-                <Stack align="center" gap="xs">
-                  <IconMovie size={36} />
-                  <Text fw={600}>
-                    {hasAppliedFilters
-                      ? "No media match these filters"
-                      : "Your library is empty"}
-                  </Text>
-                  <Text c="dimmed" size="sm" ta="center">
-                    {hasAppliedFilters
-                      ? "Clear the filters to see everything in your library."
-                      : "Add your first movie, show, book, or game to get started."}
-                  </Text>
-                  <Button
-                    mt="xs"
-                    variant="light"
-                    leftSection={
-                      hasAppliedFilters ? (
-                        <IconFilter size={16} />
-                      ) : (
-                        <IconPlus size={16} />
-                      )
-                    }
-                    onClick={() =>
-                      hasAppliedFilters
-                        ? resetFilters()
-                        : navigate({ to: "/media/add" })
-                    }
-                  >
-                    {hasAppliedFilters ? "Clear filters" : "Add media"}
-                  </Button>
-                </Stack>
-              </Card>
+            {isFetching && !data ? (
+              <SimpleGrid
+                spacing={{ base: "xs", md: "md" }}
+                cols={{
+                  base: 1,
+                  sm: 2,
+                  lg: 3,
+                  xl: 4,
+                }}
+              >
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <MediaCardSkeleton key={index} />
+                ))}
+              </SimpleGrid>
+            ) : !isFetching && data?.data.length === 0 ? (
+              <EmptyState
+                icon={<IconMovie size={36} />}
+                title={
+                  hasAppliedFilters
+                    ? "No media match these filters"
+                    : "Your library is empty"
+                }
+                description={
+                  hasAppliedFilters
+                    ? "Clear the filters to see everything in your library."
+                    : "Add your first movie, show, book, or game to get started."
+                }
+              >
+                <Button
+                  mt="xs"
+                  variant="light"
+                  leftSection={
+                    hasAppliedFilters ? (
+                      <IconFilter size={16} />
+                    ) : (
+                      <IconPlus size={16} />
+                    )
+                  }
+                  onClick={() =>
+                    hasAppliedFilters
+                      ? resetFilters()
+                      : navigate({ to: "/media/add" })
+                  }
+                >
+                  {hasAppliedFilters ? "Clear filters" : "Add media"}
+                </Button>
+              </EmptyState>
             ) : view === "table" ? (
               <MediaTable data={data?.data ?? []} />
             ) : (

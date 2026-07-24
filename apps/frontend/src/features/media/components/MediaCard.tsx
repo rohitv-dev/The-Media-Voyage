@@ -1,5 +1,8 @@
 import { api } from "#/lib/api";
-import { showErrorNotification } from "#/utils/notifications";
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from "#/utils/notifications";
 import { getStaleProgressDays } from "#/features/media/staleProgress";
 import { useSourceColorMap } from "#/features/sources/queries";
 import {
@@ -63,6 +66,11 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(action),
+      }),
+    onSuccess: () =>
+      showSuccessNotification({
+        message: "Updated",
+        autoClose: 1500,
       }),
     onError: (error) =>
       showErrorNotification({

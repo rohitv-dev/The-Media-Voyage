@@ -1,4 +1,5 @@
 import { MediaCard } from "#/features/media/components/MediaCard";
+import { EmptyState } from "#/components/EmptyState";
 import {
   collectionItemsDetailedQueryOptions,
   collectionQueryOptions,
@@ -6,7 +7,6 @@ import {
 import {
   Badge,
   Button,
-  Card,
   Container,
   Group,
   SimpleGrid,
@@ -42,23 +42,20 @@ function RouteComponent() {
   if (!collection) {
     return (
       <Container size="xl" pt="md" pb="md">
-        <Card withBorder p="xl">
-          <Stack align="center" gap="xs">
-            <IconBooks size={36} />
-            <Text fw={600}>Collection not found</Text>
-            <Text c="dimmed" size="sm" ta="center">
-              This collection doesn't exist or is no longer available to you.
-            </Text>
-            <Button
-              mt="xs"
-              variant="light"
-              leftSection={<IconArrowLeft size={16} />}
-              onClick={() => navigate({ to: "/collection" })}
-            >
-              Back to collections
-            </Button>
-          </Stack>
-        </Card>
+        <EmptyState
+          icon={<IconBooks size={36} />}
+          title="Collection not found"
+          description="This collection doesn't exist or is no longer available to you."
+        >
+          <Button
+            mt="xs"
+            variant="light"
+            leftSection={<IconArrowLeft size={16} />}
+            onClick={() => navigate({ to: "/collection" })}
+          >
+            Back to collections
+          </Button>
+        </EmptyState>
       </Container>
     );
   }
@@ -105,23 +102,20 @@ function RouteComponent() {
         </Stack>
 
         {items.length === 0 ? (
-          <Card withBorder p="xl">
-            <Stack align="center" gap="xs">
-              <IconBooks size={36} />
-              <Text fw={600}>This collection doesn't have any items yet</Text>
-              <Text c="dimmed" size="sm" ta="center">
-                Add media to this collection to see it here.
-              </Text>
-              <Button
-                mt="xs"
-                variant="light"
-                leftSection={<IconEdit size={16} />}
-                onClick={goToEdit}
-              >
-                Edit collection
-              </Button>
-            </Stack>
-          </Card>
+          <EmptyState
+            icon={<IconBooks size={36} />}
+            title="This collection doesn't have any items yet"
+            description="Add media to this collection to see it here."
+          >
+            <Button
+              mt="xs"
+              variant="light"
+              leftSection={<IconEdit size={16} />}
+              onClick={goToEdit}
+            >
+              Edit collection
+            </Button>
+          </EmptyState>
         ) : (
           <SimpleGrid
             spacing={{ base: "xs", md: "md" }}
