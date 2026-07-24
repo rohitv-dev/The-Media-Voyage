@@ -20,7 +20,9 @@ export type ThemeId =
   | "reel"
   | "almanac"
   | "terminal"
-  | "nightshift";
+  | "nightshift"
+  | "obsidian"
+  | "overcast";
 
 interface ThemeDef {
   id: ThemeId;
@@ -129,6 +131,34 @@ export const THEMES: Record<ThemeId, ThemeDef> = {
     fontMono: MONO,
     radius: "lg",
   },
+  obsidian: {
+    id: "obsidian",
+    label: "Obsidian",
+    blurb: "True black, OLED-friendly monochrome",
+    scheme: "dark",
+    accent: "#ececec",
+    bg: "#000000",
+    surface: "#101012",
+    text: "#f4f4f5",
+    fontHeading: SANS,
+    fontBody: SANS,
+    fontMono: MONO,
+    radius: "md",
+  },
+  overcast: {
+    id: "overcast",
+    label: "Overcast",
+    blurb: "Soft light grey, cool and calm",
+    scheme: "light",
+    accent: "#4a5b70",
+    bg: "#e8eaed",
+    surface: "#ffffff",
+    text: "#23262b",
+    fontHeading: SANS,
+    fontBody: SANS,
+    fontMono: MONO,
+    radius: "md",
+  },
 };
 
 export const THEME_ORDER: ThemeId[] = [
@@ -137,6 +167,8 @@ export const THEME_ORDER: ThemeId[] = [
   "almanac",
   "terminal",
   "nightshift",
+  "obsidian",
+  "overcast",
 ];
 
 export const DEFAULT_THEME: ThemeId = "almanac";
