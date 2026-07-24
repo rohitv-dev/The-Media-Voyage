@@ -1,7 +1,20 @@
 import { fromNodeHeaders } from "better-auth/node";
-import { FastifyInstance } from "fastify";
+import { FastifyInstance, FastifyRequest } from "fastify";
 import { auth } from "../auth";
 import { env } from "../config";
+
+// Only credential-guessing endpoints need a tight limit. Session checks
+// (get-session) fire on every route navigation and must stay generous.
+const SENSITIVE_AUTH_PATHS = [
+  "/api/auth/sign-in",
+  "/api/auth/sign-up",
+  "/api/auth/forget-password",
+  "/api/auth/reset-password",
+];
+
+function isSensitiveAuthPath(url: string) {
+  return SENSITIVE_AUTH_PATHS.some((path) => url.startsWith(path));
+}
 
 async function authRoutes(fastify: FastifyInstance) {
   fastify.route({
@@ -9,7 +22,10 @@ async function authRoutes(fastify: FastifyInstance) {
     url: "/api/auth/*",
     config: {
       rateLimit: {
-        max: 5,
+        keyGenerator: (request: FastifyRequest) =>
+          `${request.ip}:${isSensitiveAuthPath(request.url) ? "auth-sensitive" : "auth-routine"}`,
+        max: (request: FastifyRequest) =>
+          isSensitiveAuthPath(request.url) ? 5 : 100,
         timeWindow: "1 minute",
       },
     },
