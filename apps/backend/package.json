@@ -17,6 +17,7 @@
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.6.13",
     "@fastify/cors": "^11.2.0",
+    "@fastify/rate-limit": "^11.1.0",
     "@media-voyage/shared": "workspace:*",
     "better-auth": "^1.6.13",
     "dotenv": "^17.4.2",

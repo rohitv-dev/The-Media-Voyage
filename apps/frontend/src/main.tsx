@@ -15,6 +15,7 @@ import { createTheme, MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import { ModalsProvider } from "@mantine/modals";
 import type { MediaRecord } from "@media-voyage/shared/api";
+import { FullScreenLoader } from "#/components/FullScreenLoader";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,6 +40,7 @@ const router = createRouter({
   scrollRestoration: true,
   defaultPendingMs: 200,
   defaultPendingMinMs: 200,
+  defaultPendingComponent: FullScreenLoader,
   context: {
     queryClient,
   },

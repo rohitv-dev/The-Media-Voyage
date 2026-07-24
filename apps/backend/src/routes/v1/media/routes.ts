@@ -6,10 +6,21 @@ import { searchMedia } from "./service";
 async function mediaRoutes(fastify: FastifyInstance) {
   fastify.addHook("preHandler", requireAuth);
 
-  fastify.get("/search", async (request, reply) => {
-    const query = mediaSearchQuerySchema.parse(request.query);
-    return reply.send(await searchMedia(query));
-  });
+  fastify.get(
+    "/search",
+    {
+      config: {
+        rateLimit: {
+          max: 20,
+          timeWindow: "1 minute",
+        },
+      },
+    },
+    async (request, reply) => {
+      const query = mediaSearchQuerySchema.parse(request.query);
+      return reply.send(await searchMedia(query));
+    },
+  );
 }
 
 export default mediaRoutes;

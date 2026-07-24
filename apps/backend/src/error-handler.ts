@@ -27,6 +27,16 @@ export function registerErrorHandler(fastify: FastifyInstance) {
     }
 
     const fastifyError = error as FastifyError;
+    if (fastifyError.statusCode === 429) {
+      return reply.status(429).send({
+        success: false,
+        type: "rate_limit",
+        code: "RATE_LIMIT_EXCEEDED",
+        error: fastifyError.message || "Too many requests",
+        requestId: request.id,
+      });
+    }
+
     if (fastifyError.validation) {
       request.log.warn({ err: error }, "Request validation failed");
       return reply.status(400).send({

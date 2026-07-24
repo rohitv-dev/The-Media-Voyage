@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import rateLimit from "@fastify/rate-limit";
 import { env } from "./config";
 import { registerErrorHandler } from "./error-handler";
 
@@ -11,6 +12,11 @@ fastify.register(cors, {
   origin: env.FRONTEND_ORIGIN,
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+});
+
+fastify.register(rateLimit, {
+  max: 200,
+  timeWindow: "1 minute",
 });
 
 registerErrorHandler(fastify);
