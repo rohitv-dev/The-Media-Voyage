@@ -9,6 +9,7 @@ import {
   Stack,
   Text,
   Textarea,
+  Title,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconPlus, IconX } from "@tabler/icons-react";
@@ -79,7 +80,7 @@ export function SeasonsProgressField() {
       <Modal
         opened={opened}
         onClose={close}
-        title="Seasons"
+        title={<Title order={4}>Seasons</Title>}
         size="lg"
       >
         <Stack gap="sm">
@@ -90,7 +91,7 @@ export function SeasonsProgressField() {
               leftSection={<IconPlus size={14} />}
               onClick={addSeason}
             >
-              Add season
+              Add Season
             </Button>
           </Group>
 
@@ -170,7 +171,6 @@ export function SeasonsProgressField() {
                   />
 
                   <ActionIcon
-                    color="red"
                     variant="subtle"
                     onClick={() => removeSeason(entry)}
                     aria-label={`Remove season ${entry.season}`}

@@ -185,7 +185,6 @@ export function MediaTitleSelect(props: MediaTitleSelectProps) {
                   <Group gap="sm" wrap="nowrap">
                     <ThemeIcon
                       variant="light"
-                      color="orange"
                       size={32}
                       radius="sm"
                     >

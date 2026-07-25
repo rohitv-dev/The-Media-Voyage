@@ -195,7 +195,7 @@ function RouteComponent() {
               leftSection={<IconPlus size={16} />}
               onClick={() => navigate({ to: "/media/add" })}
             >
-              Add media
+              Add Media
             </Button>
             <Box visibleFrom="md">
               <Tooltip label="Profile" withArrow>
@@ -325,22 +325,21 @@ function RouteComponent() {
           <Box hiddenFrom="md" mt="auto">
             <Divider my="md" />
             <Stack gap="xs">
-              <Box hiddenFrom="sm">
+              {/* <Box hiddenFrom="sm">
                 <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb={6}>
                   Theme
                 </Text>
                 <ThemeOptionsList />
                 <Divider my="xs" />
-              </Box>
+              </Box> */}
               <Button
-                variant="gradient"
                 leftSection={<IconPlus size={16} />}
                 onClick={() => {
                   navigate({ to: "/media/add" });
                   close();
                 }}
               >
-                Add media
+                Add Media
               </Button>
               <Button
                 variant="light"

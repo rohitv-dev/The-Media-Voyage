@@ -113,8 +113,13 @@ export function NamedEntityRow<T extends NamedEntity>({
 
   return (
     <Card withBorder p="sm">
-      <Group justify="space-between" wrap="nowrap">
-        <Group gap="sm" wrap="nowrap" flex={1} style={{ minWidth: 0 }}>
+      <Group justify="space-between" wrap="wrap" gap="xs">
+        <Group
+          gap="sm"
+          wrap="nowrap"
+          flex={{ base: "1 1 100%", sm: 1 }}
+          style={{ minWidth: 0 }}
+        >
           <ColorInput
             value={color}
             onChange={setColor}
@@ -148,7 +153,7 @@ export function NamedEntityRow<T extends NamedEntity>({
           )}
         </Group>
 
-        <Group gap="xs" wrap="nowrap">
+        <Group gap="xs" wrap="nowrap" ml={{ base: "auto", sm: 0 }}>
           <Tooltip
             label={`View ${entity.usageCount === 1 ? "item" : "items"} in library`}
             withArrow

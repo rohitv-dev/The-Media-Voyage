@@ -108,7 +108,7 @@ export function MediaPickerModal({
       size="lg"
       title={
         <Group gap="xs">
-          <ThemeIcon variant="light" color="violet" radius="xl">
+          <ThemeIcon variant="light" radius="xl">
             <IconDice5 size={18} />
           </ThemeIcon>
           <Text fw={700}>What should I pick?</Text>
@@ -202,7 +202,7 @@ export function MediaPickerModal({
                   />
                 )}
                 <Stack gap="xs" flex={1}>
-                  <Badge variant="light" color="violet" w="fit-content">
+                  <Badge variant="light" w="fit-content">
                     {capitalizeWords(picked.type)}
                   </Badge>
                   <Title order={3}>{picked.title}</Title>

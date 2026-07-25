@@ -60,7 +60,6 @@ export function StatusDetailsSection() {
               value={form.values.progress ?? 0}
               size="lg"
               radius="xl"
-              color="teal"
             />
           </Stack>
         </Stack>

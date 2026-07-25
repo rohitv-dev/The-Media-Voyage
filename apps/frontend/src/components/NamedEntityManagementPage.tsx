@@ -48,7 +48,7 @@ export function NamedEntityManagementPage<T extends NamedEntity>({
   return (
     <Container size="md" pt="md" pb="md">
       <Stack gap="md">
-        <Group justify="space-between" align="flex-start">
+        <Group justify="space-between" align="flex-start" gap="sm" wrap="wrap">
           <Stack gap={2}>
             <Title order={2}>{title}</Title>
             <Text c="dimmed" size="sm">
@@ -56,7 +56,11 @@ export function NamedEntityManagementPage<T extends NamedEntity>({
             </Text>
           </Stack>
 
-          <Button leftSection={<IconPlus size={16} />} onClick={openAdd}>
+          <Button
+            leftSection={<IconPlus size={16} />}
+            onClick={openAdd}
+            w={{ base: "100%", sm: "auto" }}
+          >
             Add {entityLabel}
           </Button>
         </Group>

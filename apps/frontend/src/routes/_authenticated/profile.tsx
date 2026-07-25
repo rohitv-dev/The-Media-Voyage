@@ -15,6 +15,7 @@ import {
   TextInput,
   ActionIcon,
   Button,
+  SegmentedControl,
   Text,
 } from "@mantine/core";
 import { IconCheck, IconDownload, IconEdit, IconX } from "@tabler/icons-react";
@@ -22,6 +23,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ThemeOptionsList } from "#/theme/ThemeSwitcher";
 import { useCoverArtPreference } from "#/features/media/hooks/useCoverArtPreference";
+import { useCoverArtSizePreference } from "#/features/media/hooks/useCoverArtSizePreference";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: RouteComponent,
@@ -31,6 +33,7 @@ function RouteComponent() {
   const navigate = useNavigate()
   const { data } = authClient.useSession();
   const [showCoverArt, setShowCoverArt] = useCoverArtPreference();
+  const [coverArtSize, setCoverArtSize] = useCoverArtSizePreference();
 
   const [editingName, setEditingName] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -182,6 +185,29 @@ function RouteComponent() {
                   setShowCoverArt(event.currentTarget.checked)
                 }
                 aria-label="Show cover art on media cards"
+              />
+            </Group>
+
+            <Group justify="space-between" align="center" wrap="wrap" gap="md">
+              <Stack gap={2} flex={1} miw={200}>
+                <Text size="sm" fw={600}>
+                  Image size
+                </Text>
+                <Text size="xs" c="dimmed">
+                  Choose how much space poster/cover images use on media cards.
+                </Text>
+              </Stack>
+              <SegmentedControl
+                size="xs"
+                value={coverArtSize}
+                onChange={(value) => setCoverArtSize(value as typeof coverArtSize)}
+                aria-label="Choose media card image size"
+                data={[
+                  { value: "full", label: "Full" },
+                  { value: "large", label: "Large" },
+                  { value: "medium", label: "Medium" },
+                  { value: "small", label: "Small" },
+                ]}
               />
             </Group>
           </Stack>
