@@ -13,6 +13,7 @@ import { useState } from "react";
 import type { MouseEventHandler } from "react";
 import { FormProvider, useForm } from "./context";
 import { api } from "#/lib/api";
+import { confirmDelete } from "#/utils/confirmModal";
 import { Container, Stack, Grid } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import {
@@ -295,6 +296,56 @@ export function MediaForm(props: MediaFormProps) {
     saveMutation.mutate(values);
   };
 
+  const deleteMutation = useMutation({
+    mutationFn: () => {
+      if (isAddMode) throw new Error("Cannot delete an unsaved entry");
+      return api<{ success: boolean }>(`/user-media/${props.id}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: async () => {
+      form.resetDirty();
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["user-media"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] }),
+        queryClient.invalidateQueries({ queryKey: ["collection"] }),
+        queryClient.invalidateQueries({ queryKey: ["collection-items"] }),
+        queryClient.invalidateQueries({
+          queryKey: ["collection-items-detailed"],
+        }),
+      ]);
+
+      showNotification({
+        title: "Media Deleted",
+        message: !isAddMode
+          ? `${props.initialValues.title} has been removed from your library`
+          : undefined,
+        color: "teal",
+      });
+
+      navigate({ to: "/media" });
+    },
+    onError: (error: Error) => {
+      showNotification({
+        title: "Could not delete media",
+        message: error.message,
+        color: "red",
+        position: "top-center",
+      });
+    },
+  });
+
+  const handleDelete = () => {
+    if (isAddMode || deleteMutation.isPending) return;
+
+    confirmDelete({
+      title: "Delete media",
+      message: `Are you sure you want to delete "${props.initialValues.title}"? It will be removed from your library.`,
+      onConfirm: () => deleteMutation.mutate(),
+    });
+  };
+
   const handleCancel = () => {
     if (canGoBack) {
       router.history.back();
@@ -336,6 +387,8 @@ export function MediaForm(props: MediaFormProps) {
                 mode={mode}
                 onCancel={handleCancel}
                 isPending={saveMutation.isPending}
+                onDelete={isAddMode ? undefined : handleDelete}
+                isDeletePending={deleteMutation.isPending}
               />
             </Grid>
           </form>

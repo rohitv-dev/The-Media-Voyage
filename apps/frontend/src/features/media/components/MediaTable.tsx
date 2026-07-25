@@ -1,3 +1,9 @@
+import { api } from "#/lib/api";
+import { confirmDelete } from "#/utils/confirmModal";
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from "#/utils/notifications";
 import { capitalizeWords } from "#/utils/stringFunctions";
 import { useSourceColorMap } from "#/features/sources/queries";
 import autoAnimate from "@formkit/auto-animate";
@@ -19,7 +25,9 @@ import {
   IconCheck,
   IconEdit,
   IconHeartFilled,
+  IconTrash,
 } from "@tabler/icons-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import dayjs from "dayjs";
 import { useReducedMotion } from "motion/react";
@@ -118,6 +126,7 @@ function ProgressCell({ record }: { record: MediaRecord }) {
 
 export function MediaTable({ data }: MediaTableProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const reduceMotion = useReducedMotion();
   const autoAnimateInitialized = useRef(false);
 
@@ -130,6 +139,44 @@ export function MediaTable({ data }: MediaTableProps) {
     },
     [reduceMotion],
   );
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) =>
+      api<{ success: boolean }>(`/user-media/${id}`, {
+        method: "DELETE",
+      }),
+    onSuccess: async (_data, id) => {
+      const record = data.find((entry) => entry.id === id);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["user-media"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] }),
+        queryClient.invalidateQueries({ queryKey: ["collection"] }),
+        queryClient.invalidateQueries({ queryKey: ["collection-items"] }),
+        queryClient.invalidateQueries({
+          queryKey: ["collection-items-detailed"],
+        }),
+      ]);
+      showSuccessNotification({
+        message: `Deleted "${record?.title ?? "entry"}"`,
+        autoClose: 1500,
+      });
+    },
+    onError: (error) =>
+      showErrorNotification({
+        title: "Delete failed",
+        message: error.message,
+      }),
+  });
+
+  const requestDelete = (record: MediaRecord) => {
+    if (deleteMutation.isPending) return;
+
+    confirmDelete({
+      title: "Delete media",
+      message: `Are you sure you want to delete "${record.title}"? It will be removed from your library.`,
+      onConfirm: () => deleteMutation.mutate(record.id),
+    });
+  };
 
   return (
     <Paper withBorder radius="md" style={{ overflow: "hidden" }}>
@@ -218,24 +265,44 @@ export function MediaTable({ data }: MediaTableProps) {
           {
             accessor: "actions",
             title: "",
-            width: 52,
+            width: 84,
             textAlign: "right",
             render: (record) => (
-              <Tooltip label={`Update ${record.title}`} withArrow>
-                <ActionIcon
-                  variant="subtle"
-                  aria-label={`Update ${record.title}`}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    navigate({
-                      to: "/media/update/$id",
-                      params: { id: record.id },
-                    });
-                  }}
-                >
-                  <IconEdit size={17} />
-                </ActionIcon>
-              </Tooltip>
+              <Group gap={4} wrap="nowrap" justify="flex-end">
+                <Tooltip label={`Update ${record.title}`} withArrow>
+                  <ActionIcon
+                    variant="subtle"
+                    aria-label={`Update ${record.title}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      navigate({
+                        to: "/media/update/$id",
+                        params: { id: record.id },
+                      });
+                    }}
+                  >
+                    <IconEdit size={17} />
+                  </ActionIcon>
+                </Tooltip>
+                <Tooltip label={`Delete ${record.title}`} withArrow>
+                  <ActionIcon
+                    variant="subtle"
+                    color="red"
+                    aria-label={`Delete ${record.title}`}
+                    loading={
+                      deleteMutation.isPending &&
+                      deleteMutation.variables === record.id
+                    }
+                    disabled={deleteMutation.isPending}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      requestDelete(record);
+                    }}
+                  >
+                    <IconTrash size={17} />
+                  </ActionIcon>
+                </Tooltip>
+              </Group>
             ),
           },
         ]}

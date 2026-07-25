@@ -32,7 +32,7 @@ export async function searchGames(query: string): Promise<SourceMediaRecord[]> {
     title: val.name,
     type: "game",
     imageUrl: val.cover?.image_id
-      ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${val.cover.image_id}.jpg`
+      ? `https://images.igdb.com/igdb/image/upload/t_1080p/${val.cover.image_id}.jpg`
       : null,
   }));
 
