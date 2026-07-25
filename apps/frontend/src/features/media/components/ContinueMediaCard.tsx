@@ -1,7 +1,17 @@
-import { Badge, Card, Group, Progress, Stack, Text } from "@mantine/core";
+import {
+  AspectRatio,
+  Badge,
+  Card,
+  Group,
+  Image,
+  Progress,
+  Stack,
+  Text,
+} from "@mantine/core";
 import type { MediaRecord } from "@media-voyage/shared/api";
 import { motion, useReducedMotion } from "motion/react";
 import type { KeyboardEvent } from "react";
+import { useCoverArtPreference } from "#/features/media/hooks/useCoverArtPreference";
 import { getStatusColor, getTypeIcon } from "../functions";
 
 interface ContinueMediaCardProps {
@@ -11,6 +21,8 @@ interface ContinueMediaCardProps {
 
 export function ContinueMediaCard({ media, onView }: ContinueMediaCardProps) {
   const reduceMotion = useReducedMotion();
+  const [showCoverArt] = useCoverArtPreference();
+  const hasCoverArt = showCoverArt && !!media.imageUrl && media.imageUrl !== "N/A";
   const progress = media.progress ?? 0;
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -40,6 +52,14 @@ export function ContinueMediaCard({ media, onView }: ContinueMediaCardProps) {
       onKeyDown={handleKeyDown}
       style={{ cursor: "pointer" }}
     >
+      {hasCoverArt && (
+        <Card.Section>
+          <AspectRatio ratio={2 / 3}>
+            <Image src={media.imageUrl} alt="" fit="cover" />
+          </AspectRatio>
+        </Card.Section>
+      )}
+
       <Stack gap={8}>
         <Group gap={6} wrap="nowrap">
           {getTypeIcon(media.type)}

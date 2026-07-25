@@ -5,12 +5,19 @@ import {
 } from "#/utils/notifications";
 import { getStaleProgressDays } from "#/features/media/staleProgress";
 import { useSourceColorMap } from "#/features/sources/queries";
+import { useCoverArtPreference } from "#/features/media/hooks/useCoverArtPreference";
+import {
+  COVER_ART_SIZE_RATIOS,
+  useCoverArtSizePreference,
+} from "#/features/media/hooks/useCoverArtSizePreference";
 import {
   ActionIcon,
+  AspectRatio,
   Badge,
   Button,
   Card,
   Group,
+  Image,
   Menu,
   Progress,
   Rating,
@@ -55,6 +62,13 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
   const queryClient = useQueryClient();
   const reduceMotion = useReducedMotion();
   const sourceColorMap = useSourceColorMap();
+  const [showCoverArt] = useCoverArtPreference();
+  const [coverArtSize] = useCoverArtSizePreference();
+  const hasCoverArt = showCoverArt && !!media.imageUrl && media.imageUrl !== "N/A";
+  const imageObjectPosition =
+    coverArtSize === "medium" || coverArtSize === "small"
+      ? "center top"
+      : "center";
   const staleProgressDays =
     media.status === "in_progress"
       ? getStaleProgressDays(media.lastProgressUpdate)
@@ -106,7 +120,6 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
       <Menu.Target>
         <ActionIcon
           variant="subtle"
-          color="gray"
           size="sm"
           aria-label={`Quick actions for ${media.title}`}
           loading={quickActionMutation.isPending}
@@ -122,7 +135,7 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
         <Menu.Item
           leftSection={
             media.favorite ? (
-              <IconHeartFilled size={16} color="var(--mantine-color-red-6)" />
+              <IconHeartFilled size={16} color="red" />
             ) : (
               <IconHeart size={16} />
             )
@@ -206,7 +219,20 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
       p={{ base: "sm", sm: "md" }}
       style={{ cursor: onView ? "pointer" : undefined }}
     >
-      <Stack justify="space-between" h="100%" gap="sm">
+      {hasCoverArt && (
+        <Card.Section>
+          <AspectRatio ratio={COVER_ART_SIZE_RATIOS[coverArtSize]}>
+            <Image
+              src={media.imageUrl}
+              alt=""
+              fit="cover"
+              style={{ objectPosition: imageObjectPosition }}
+            />
+          </AspectRatio>
+        </Card.Section>
+      )}
+
+      <Stack justify="space-between" h="100%" gap="sm" mt={hasCoverArt ? "sm" : "0"}>
         <Stack gap="sm">
           <Group justify="space-between" align="flex-start" wrap="nowrap">
             <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
@@ -271,7 +297,6 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
                 </Group>
                 {staleProgressDays !== null && (
                   <Badge
-                    color="orange"
                     variant="light"
                     size="sm"
                     leftSection={<IconClockPause size={13} />}

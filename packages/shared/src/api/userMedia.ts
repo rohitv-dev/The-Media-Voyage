@@ -18,6 +18,7 @@ export const mediaRecordSchema = z.object({
 
   title: mediaSelectSchema.shape.title,
   type: mediaSelectSchema.shape.type,
+  imageUrl: mediaSelectSchema.shape.imageUrl,
 
   status: userMediaSelectSchema.shape.status,
   progress: userMediaSelectSchema.shape.progress,

@@ -15,7 +15,7 @@ import {
   Title,
   UnstyledButton,
 } from "@mantine/core";
-import { MonthView } from "@mantine/schedule";
+import { MobileMonthView, MonthView } from "@mantine/schedule";
 import type { ScheduleEventData } from "@mantine/schedule";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "motion/react";
@@ -172,29 +172,47 @@ function RouteComponent() {
   }, [data]);
 
   return (
-    <Container size="lg" py="xl">
-      <Stack gap="lg">
-        <Group justify="space-between" align="center">
-          <Title order={2}>Activity Calendar</Title>
-          {isFetching && <Loader size="xs" />}
-        </Group>
+    <Container size="lg" py="md">
+      <Stack>
+        <Stack gap="xs">
+          <Group justify="space-between" align="center">
+            <Title order={2}>Activity Calendar</Title>
+            {isFetching && <Loader size="xs" />}
+          </Group>
 
-        <Text c="dimmed" size="sm">
-          Days you started, completed, or changed the status of something in
-          your library.
-        </Text>
-
-        <SimpleGrid cols={{ base: 2, xs: 4 }} spacing="sm">
-          <MonthStat label="Started" value={monthStats.started} />
-          <MonthStat label="Completed" value={monthStats.completed} />
-          <MonthStat label="Status changes" value={monthStats.statusChanges} />
-          <MonthStat label="Titles active" value={monthStats.activeTitles} />
-        </SimpleGrid>
+          <Text c="dimmed" size="sm">
+            Days you started, completed, or changed the status of something in
+            your library.
+          </Text>
+        </Stack>
 
         <StatusLegend />
 
         <Card withBorder radius="md" p="md">
+          <MobileMonthView hiddenFrom="md"
+            date={`${month}-01`}
+            onDateChange={(newDate) =>
+              goToMonth(dayjs(newDate).format("YYYY-MM"))
+            }
+            events={scheduleEvents}
+            onEventClick={(event) =>
+              navigate({
+                to: "/media/view/$id",
+                params: { id: (event.payload as EventPayload).userMediaId },
+              })
+            }
+            onDayClick={(date) => {
+              if (eventsByDate.get(date)?.length) setSelectedDate(date);
+            }}
+            styles={{
+              mobileMonthViewEventsList: {
+                display: "none"
+              },
+            }}
+          />
+
           <MonthView
+            visibleFrom="md"
             date={`${month}-01`}
             onDateChange={(newDate) =>
               goToMonth(dayjs(newDate).format("YYYY-MM"))
@@ -212,11 +230,18 @@ function RouteComponent() {
             onDayClick={(date) => {
               if (eventsByDate.get(date)?.length) setSelectedDate(date);
             }}
-            maxEventsPerDay={3}
+            maxEventsPerDay={2}
             viewSelectProps={{ views: ["month"] }}
-            styles={{ monthView: { minHeight: 600 } }}
+            styles={{ monthView: { minHeight: "calc(100dvh - 220px)" } }}
           />
         </Card>
+
+        <SimpleGrid cols={{ base: 2, xs: 4 }} spacing="sm">
+          <MonthStat label="Started" value={monthStats.started} />
+          <MonthStat label="Completed" value={monthStats.completed} />
+          <MonthStat label="Status changes" value={monthStats.statusChanges} />
+          <MonthStat label="Titles active" value={monthStats.activeTitles} />
+        </SimpleGrid>
       </Stack>
 
       <Modal

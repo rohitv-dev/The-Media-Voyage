@@ -135,7 +135,6 @@ export function MediaView({ data }: { data: MediaDetailedRecord }) {
       <Stack gap="md">
         <Button
           variant="subtle"
-          color="gray"
           leftSection={<IconArrowLeft size={16} />}
           px={0}
           fw={600}
@@ -250,7 +249,6 @@ export function MediaView({ data }: { data: MediaDetailedRecord }) {
                     )}
                     {data.favorite && (
                       <Badge
-                        color="yellow"
                         leftSection={<IconHeartFilled size={12} />}
                         size="sm"
                       >
@@ -260,7 +258,6 @@ export function MediaView({ data }: { data: MediaDetailedRecord }) {
                     {data.catalogSource === "manual" && (
                       <Tooltip label="This title was entered manually and isn't matched to a verified catalog entry, so it has no synced poster or description">
                         <Badge
-                          color="orange"
                           variant="outline"
                           leftSection={<IconPencil size={12} />}
                           size="sm"

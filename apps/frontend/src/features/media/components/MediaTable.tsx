@@ -40,7 +40,7 @@ function MediaIdentity({ record }: { record: MediaRecord }) {
 
   return (
     <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
-      <ThemeIcon variant="light" color="gray" size={36} radius="sm">
+      <ThemeIcon variant="light" size={36} radius="sm">
         {getTypeIcon(record.type)}
       </ThemeIcon>
 
@@ -52,14 +52,14 @@ function MediaIdentity({ record }: { record: MediaRecord }) {
           {record.favorite && (
             <IconHeartFilled
               size={15}
-              color="var(--mantine-color-red-6)"
+              color="red"
               aria-label="Favorite"
             />
           )}
         </Group>
 
         <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-          <Badge size="xs" variant="light" color="gray">
+          <Badge size="xs" variant="light">
             {capitalizeWords(record.type)}
           </Badge>
           {record.source && (
@@ -83,7 +83,7 @@ function ProgressCell({ record }: { record: MediaRecord }) {
   if (record.status === "completed") {
     return (
       <Group gap={6} wrap="nowrap">
-        <ThemeIcon size={22} radius="xl" color="green" variant="light">
+        <ThemeIcon size={22} radius="xl" variant="light">
           <IconCheck size={14} stroke={2.5} />
         </ThemeIcon>
         <Text size="sm" fw={600}>
@@ -224,7 +224,6 @@ export function MediaTable({ data }: MediaTableProps) {
               <Tooltip label={`Update ${record.title}`} withArrow>
                 <ActionIcon
                   variant="subtle"
-                  color="gray"
                   aria-label={`Update ${record.title}`}
                   onClick={(event) => {
                     event.stopPropagation();
