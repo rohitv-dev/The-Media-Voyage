@@ -24,6 +24,7 @@ import {
   IconHelp,
   IconLogout,
   IconPlus,
+  IconSettings,
   IconTags,
   IconTrendingUp,
   IconUser,
@@ -42,7 +43,7 @@ import { friendRequestsQueryOptions } from "#/features/friends/queries";
 import { getSession } from "#/auth/session";
 import { authClient } from "#/auth/authClient";
 import { ShortcutsHelpModal } from "#/components/ShortcutsHelpModal";
-import { ThemeSwitcher, ThemeOptionsList } from "#/theme/ThemeSwitcher";
+import { ThemeSwitcher } from "#/theme/ThemeSwitcher";
 
 const SIDEBAR_ACTIVE_PILL_ID = "sidebar-active-pill";
 
@@ -310,6 +311,16 @@ function RouteComponent() {
               }}
             />
 
+            <SidebarNavLink
+              label="Settings"
+              leftSection={<IconSettings size={19} />}
+              active={isActive("/settings")}
+              onClick={() => {
+                navigate({ to: "/settings" });
+                close();
+              }}
+            />
+
             <Divider my="md" />
 
             <Stack gap={4}>
@@ -351,13 +362,6 @@ function RouteComponent() {
           <Box hiddenFrom="md" mt="auto">
             <Divider my="md" />
             <Stack gap="xs">
-              {/* <Box hiddenFrom="sm">
-                <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb={6}>
-                  Theme
-                </Text>
-                <ThemeOptionsList />
-                <Divider my="xs" />
-              </Box> */}
               <Button
                 leftSection={<IconPlus size={16} />}
                 onClick={() => {
@@ -377,6 +381,17 @@ function RouteComponent() {
                 }}
               >
                 My profile
+              </Button>
+              <Button
+                variant="light"
+                color="gray"
+                leftSection={<IconSettings size={16} />}
+                onClick={() => {
+                  navigate({ to: "/settings" });
+                  close();
+                }}
+              >
+                Settings
               </Button>
               <Button
                 variant="subtle"
