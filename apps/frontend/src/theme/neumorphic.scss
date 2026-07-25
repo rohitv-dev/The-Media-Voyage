@@ -1,0 +1,258 @@
+/**
+ * Neumorphic ("soft UI") surface treatment.
+ *
+ * Active only while a theme with `neu: true` is selected — ThemeProvider puts
+ * `data-neu` on <html>, along with the light-source colours that `neuVars` in
+ * themes.ts derives from that theme's ground. Everything below works through
+ * Mantine's own static class names, so no component in the app needs to know
+ * this theme exists.
+ *
+ * The rules of the style:
+ *   1. No borders. Edges are found by light, not by lines.
+ *   2. Only two states exist. Raised = an object you can act on. Carved in =
+ *      a socket that holds something (a field, a track, a toggle).
+ *   3. One level of extrusion, everywhere. A raised thing inside a raised
+ *      thing is not "more raised" — it's mush. Nesting is expressed by the
+ *      surface/ground colours, not by stacking shadows.
+ *
+ * Light comes from the top-left, but the two states use it differently.
+ *
+ * A recess needs a matched pair — the shade on its near wall and the glow on
+ * its far one is the entire reason it reads as concave.
+ *
+ * A raised element gets only shadow: two layers, a tight one seating it against
+ * the page and a wide diffuse one giving it height. No highlight at all. Both
+ * of the usual ways to add one are worse than leaving it out — an outward white
+ * glow sprays light onto the page *around* the object, which no real light
+ * does, and a crisp inset top edge is a drawn line, which is exactly what this
+ * style is trying to avoid. A raised surface is already the lighter of the two
+ * colours; that's the highlight, and it has no edges.
+ *
+ * Every shadow colour is translucent (see `neuVars`) so the falloff is smooth
+ * and the two cast layers can overlap without going muddy.
+ */
+
+// Mantine derives its dimmed text shade by mixing the text colour toward white.
+// A neu theme's surface is never white — it has to sit next to the ground — so
+// the default lands around 3.5:1 against it, under AA. Re-derive it from the
+// actual surface instead. Mantine declares this on
+// `:root[data-mantine-color-scheme=…]`, so the override has to out-specify that.
+:root[data-neu][data-mantine-color-scheme] {
+  --mantine-color-dimmed: color-mix(
+    in srgb,
+    var(--mantine-color-text) 78%,
+    var(--mantine-color-body)
+  );
+}
+
+[data-neu] {
+  --neu-out: 1px 2px 4px var(--neu-cast), 3px 8px 18px var(--neu-cast-soft);
+  --neu-out-sm: 1px 1px 2px var(--neu-cast), 2px 3px 8px var(--neu-cast-soft);
+  --neu-in:
+    inset 2px 3px 6px var(--neu-shade), inset -2px -3px 6px var(--neu-glow);
+  --neu-in-sm:
+    inset 1px 2px 4px var(--neu-shade), inset -1px -2px 4px var(--neu-glow);
+
+  // ---------------------------------------------------------------------------
+  // Surfaces. Papers already sit on the lighter surface colour, so the shadow
+  // only has to confirm what the colour already says.
+  // ---------------------------------------------------------------------------
+  // `box-shadow` rather than Mantine's --paper-shadow: the shadow prop sets
+  // that variable inline, which would win over anything declared here.
+  .mantine-Paper-root,
+  .mantine-Card-root {
+    border-color: transparent;
+    box-shadow: var(--neu-out);
+  }
+
+  // Rule 3. A panel inside a panel is already distinguished by having the
+  // surface colour against its parent's — a second shadow just smears both.
+  .mantine-Paper-root .mantine-Paper-root,
+  .mantine-Paper-root .mantine-Card-root,
+  .mantine-Card-root .mantine-Paper-root,
+  .mantine-Card-root .mantine-Card-root {
+    box-shadow: none;
+  }
+
+  // Floating layers genuinely are above the page, so they keep a real cast
+  // shadow on top of the extrusion to separate them from what's behind.
+  .mantine-Popover-dropdown,
+  .mantine-Menu-dropdown,
+  .mantine-Modal-content,
+  .mantine-Drawer-content,
+  .mantine-HoverCard-dropdown,
+  .mantine-Notification-root {
+    border-color: transparent;
+    box-shadow:
+      var(--neu-out-sm),
+      0 14px 34px rgb(0 0 0 / 16%);
+  }
+
+  // The shell is two raised panels the content scrolls beneath, so each casts
+  // along the edge it actually has: the header downward, the sidebar sideways.
+  // Both already sit on the surface colour; only their borders need removing,
+  // and those are inline styles in route.tsx, so !important is the only lever.
+  .mantine-AppShell-header,
+  .mantine-AppShell-navbar {
+    border-color: transparent !important;
+  }
+
+  .mantine-AppShell-header {
+    box-shadow:
+      0 1px 3px var(--neu-cast),
+      0 5px 16px var(--neu-cast-soft);
+  }
+
+  // The sidebar paints above the header (Mantine gives it the higher z-index),
+  // so a shadow with no vertical offset blurs *upward* onto the header and draws
+  // a seam across the join — the two are one L-shaped piece and nothing may cast
+  // onto it. Offsetting down and pulling the spread in keeps the shadow on the
+  // content side of the corner, where the header's own cast continues it.
+  .mantine-AppShell-navbar {
+    box-shadow:
+      2px 2px 3px -1px var(--neu-cast),
+      5px 6px 14px -4px var(--neu-cast-soft);
+  }
+
+  // The selected nav item is pressed into the sidebar rather than tinted on top
+  // of it — "carved in" is this style's word for active, and it's the same cue
+  // a held button gets. The accent tint comes from route.tsx; this is the depth.
+  .sidebar-active-pill {
+    box-shadow: var(--neu-in-sm);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pressables — raised at rest, pushed in while held.
+  // ---------------------------------------------------------------------------
+  // Subtle/transparent variants are deliberately flat affordances (header
+  // icons, inline menu triggers); extruding them would make the chrome noisy.
+  .mantine-Button-root,
+  .mantine-ActionIcon-root {
+    &:not([data-variant="subtle"]):not([data-variant="transparent"]) {
+      border-color: transparent;
+      box-shadow: var(--neu-out-sm);
+      transition: box-shadow 130ms ease;
+
+      &:active:not(:disabled):not([data-disabled]):not([data-loading]) {
+        box-shadow: var(--neu-in-sm);
+      }
+
+      &:disabled,
+      &[data-disabled] {
+        box-shadow: none;
+      }
+    }
+  }
+
+  // Buttons are objects, so they stay raised even inside a panel — rule 3
+  // applies to surfaces, not to controls.
+  .mantine-Paper-root .mantine-Button-root,
+  .mantine-Card-root .mantine-Button-root {
+    &:not([data-variant="subtle"]):not([data-variant="transparent"]) {
+      box-shadow: var(--neu-out-sm);
+    }
+  }
+
+  // A keycap is the one thing in the app that is literally a raised physical
+  // object, so it gets the treatment even though you can't click it.
+  .mantine-Kbd-root {
+    border-color: transparent;
+    background-color: var(--mantine-color-body);
+    box-shadow: var(--neu-out-sm);
+  }
+
+  // Buttons inside an input (clear / dropdown sections) are part of the
+  // carved-in field, not separate pressables.
+  .mantine-Input-section {
+    .mantine-ActionIcon-root,
+    .mantine-CloseButton-root {
+      box-shadow: none;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Fields — sockets carved into the surface. The ground colour is what makes
+  // an empty field read as a recess rather than as nothing at all.
+  // ---------------------------------------------------------------------------
+  .mantine-Input-input {
+    border-color: transparent;
+    background-color: var(--app-bg);
+    box-shadow: var(--neu-in-sm);
+
+    &:focus,
+    &:focus-within {
+      border-color: transparent;
+      // Deepen rather than outline: the field sinks further when you're in it.
+      box-shadow:
+        var(--neu-in),
+        0 0 0 2px var(--mantine-primary-color-filled);
+    }
+  }
+
+  // Mantine draws the error state as a red border, which we've removed.
+  .mantine-Input-wrapper[data-error] .mantine-Input-input {
+    box-shadow:
+      var(--neu-in-sm),
+      0 0 0 1px var(--mantine-color-error);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Tracks and toggles — the pieces soft UI is genuinely best at.
+  // ---------------------------------------------------------------------------
+  .mantine-SegmentedControl-root {
+    background: var(--app-bg);
+    box-shadow: var(--neu-in-sm);
+  }
+
+  .mantine-SegmentedControl-indicator {
+    box-shadow: var(--neu-out-sm);
+  }
+
+  .mantine-Progress-root,
+  .mantine-Slider-track {
+    background-color: var(--app-bg);
+    box-shadow: var(--neu-in-sm);
+  }
+
+  .mantine-Slider-thumb {
+    border-color: transparent;
+    box-shadow: var(--neu-out-sm);
+  }
+
+  .mantine-Switch-track {
+    border-color: transparent;
+    box-shadow: var(--neu-in-sm);
+  }
+
+  .mantine-Switch-thumb {
+    box-shadow: var(--neu-out-sm);
+  }
+
+  // An unchecked box is an empty socket; a checked one fills with the accent
+  // and lifts, so the state reads at a glance.
+  .mantine-Checkbox-input,
+  .mantine-Radio-radio {
+    border-color: transparent;
+    background-color: var(--app-bg);
+    box-shadow: var(--neu-in-sm);
+
+    &:checked {
+      box-shadow: var(--neu-out-sm);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Flat by intent: labels and content, not objects. Left alone so the raised
+  // elements keep their meaning.
+  // ---------------------------------------------------------------------------
+  .mantine-Badge-root,
+  .mantine-Pill-root,
+  .mantine-Skeleton-root,
+  .mantine-Tooltip-tooltip,
+  .mantine-Avatar-root,
+  .mantine-ThemeIcon-root,
+  .mantine-Table-table,
+  .mantine-Table-scrollContainer {
+    box-shadow: none;
+  }
+}

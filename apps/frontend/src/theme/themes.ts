@@ -22,7 +22,8 @@ export type ThemeId =
   | "terminal"
   | "nightshift"
   | "obsidian"
-  | "overcast";
+  | "overcast"
+  | "clay";
 
 interface ThemeDef {
   id: ThemeId;
@@ -48,6 +49,13 @@ interface ThemeDef {
   headingWeight?: string;
   /** Optional multiplier on default heading sizes, e.g. 1.08 for more presence. */
   headingScale?: number;
+  /**
+   * Neumorphic ("soft UI") surface treatment: borders are replaced by a paired
+   * highlight and shade, so elements look pressed out of (or into) the page
+   * rather than drawn on it. Wants `surface` only a shade off `bg`, since the
+   * illusion is that it's all one material. See neumorphic.scss.
+   */
+  neu?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -167,6 +175,27 @@ export const THEMES: Record<ThemeId, ThemeDef> = {
     fontMono: MONO,
     radius: "md",
   },
+  clay: {
+    id: "clay",
+    label: "Clay",
+    blurb: "Soft UI — everything pressed out of one sheet",
+    scheme: "light",
+    accent: "#4c5bbd",
+    // Textbook neumorphism makes ground and surface identical and leans on
+    // shadow alone. This app nests panels several deep, and at that density
+    // identical colours collapse into fog — so the ground sits a shade below
+    // the surface. Raised things are lighter *and* lit; recesses are darker
+    // *and* carved. Same material, readable hierarchy.
+    bg: "#dde3ed",
+    surface: "#e9edf4",
+    text: "#333c52",
+    fontHeading: SANS,
+    fontBody: SANS,
+    fontMono: MONO,
+    // Soft UI needs generous corners — sharp edges can't catch the light.
+    radius: "lg",
+    neu: true,
+  },
 };
 
 export const THEME_ORDER: ThemeId[] = [
@@ -177,6 +206,7 @@ export const THEME_ORDER: ThemeId[] = [
   "nightshift",
   "obsidian",
   "overcast",
+  "clay",
 ];
 
 export const DEFAULT_THEME: ThemeId = "almanac";
@@ -217,6 +247,12 @@ function mix(a: string, b: string, t: number): string {
     g1 + (g2 - g1) * t,
     b1 + (b2 - b1) * t,
   );
+}
+
+/** A hex colour as a translucent `rgb()`, for shadows that need to blend. */
+function alpha(hex: string, a: number): string {
+  const [r, g, b] = hexToRgb(hex);
+  return `rgb(${r} ${g} ${b} / ${Math.round(a * 100)}%)`;
 }
 
 const WHITE = "#ffffff";
@@ -278,6 +314,36 @@ function grayTuple(def: ThemeDef): MantineColorsTuple {
     mix(WHITE, text, 0.88),
     text,
   ] as unknown as MantineColorsTuple;
+}
+
+/**
+ * The colours a neumorphic theme's shadows are built from. neumorphic.scss
+ * composes them into the actual raised/inset shadows.
+ *
+ * All four are translucent, which is the whole trick: an opaque shadow colour
+ * has a hard outer limit, so it reads either as a visible line or — once you
+ * blur it enough to hide that — as nothing at all. Translucent tints fall off
+ * smoothly and layer, which is what makes the relief look like light rather
+ * than like drawing.
+ *
+ * `shade`/`glow` are a matched pair lining the near and far walls of a recess;
+ * each is half a cue, so both are fairly strong. `cast`/`cast-soft` are the two
+ * layers of a raised element's shadow — a tight one that seats it against the
+ * page and a wide diffuse one that gives it height.
+ *
+ * On a light ground the dark tones come from the theme's own text colour, so
+ * shadows stay in the theme's hue instead of going neutral grey. On a dark one
+ * they have to be black — there, the text colour *is* the light.
+ */
+export function neuVars(def: ThemeDef): Record<string, string> {
+  const isDark = def.scheme === "dark";
+  const dark = isDark ? BLACK : def.text;
+  return {
+    "--neu-shade": alpha(dark, isDark ? 0.5 : 0.2),
+    "--neu-glow": alpha(WHITE, isDark ? 0.06 : 0.65),
+    "--neu-cast": alpha(dark, isDark ? 0.45 : 0.16),
+    "--neu-cast-soft": alpha(dark, isDark ? 0.3 : 0.1),
+  };
 }
 
 /**
