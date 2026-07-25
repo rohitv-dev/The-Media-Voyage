@@ -1,4 +1,5 @@
 import type {
+  IgdbGame,
   MediaDetailedRecord,
   OmdbMovie,
   OmdbShow,
@@ -31,6 +32,7 @@ const addInitialValues: UserMediaFormSchema = {
   title: "",
   type: "movie",
   description: undefined,
+  metadata: undefined,
 
   status: "planned",
   rating: undefined,
@@ -115,6 +117,17 @@ export function MediaForm(props: MediaFormProps) {
   form.watch("status", ({ value, previousValue }) => {
     if (value === "completed") {
       form.setFieldValue("progress", 100);
+      form.setFieldValue("seasonsProgress", (prev = []) =>
+        prev.map((entry) =>
+          entry.status === "completed"
+            ? entry
+            : {
+              ...entry,
+              status: "completed",
+              updatedAt: new Date().toISOString(),
+            },
+        ),
+      );
     } else if (previousValue === "completed") {
       form.setFieldValue("completedAt", undefined);
     }
@@ -137,6 +150,8 @@ export function MediaForm(props: MediaFormProps) {
   const handleTitleChange = async (record: SourceMediaRecord | null) => {
     setMediaRecord(record);
     form.setFieldValue("description", undefined);
+    form.setFieldValue("metadata", undefined);
+    if (isAddMode) form.setFieldValue("seasonsProgress", []);
 
     if (record) {
       form.setFieldValue("title", record.title);
@@ -148,6 +163,37 @@ export function MediaForm(props: MediaFormProps) {
         );
         if (details.Plot) {
           form.setFieldValue("description", details.Plot);
+        }
+
+        const metadata = {
+          ...(details.Genre ? { genre: details.Genre } : {}),
+          ...(details.Runtime ? { runtime: details.Runtime } : {}),
+        };
+        if (Object.keys(metadata).length > 0) {
+          form.setFieldValue("metadata", metadata);
+        }
+
+        if (isAddMode && record.type === "show" && "totalSeasons" in details) {
+          const totalSeasons = Number(details.totalSeasons);
+          if (Number.isInteger(totalSeasons) && totalSeasons > 0) {
+            form.setFieldValue(
+              "seasonsProgress",
+              Array.from({ length: totalSeasons }, (_, index) => ({
+                season: index + 1,
+                status: "planned" as const,
+                updatedAt: new Date().toISOString(),
+              })),
+            );
+          }
+        }
+      }
+
+      if (record.source === "igdb" && record.externalId) {
+        const details = await api<IgdbGame | null>(
+          `/media/igdb/${record.externalId}`,
+        );
+        if (details?.summary) {
+          form.setFieldValue("description", details.summary);
         }
       }
     }

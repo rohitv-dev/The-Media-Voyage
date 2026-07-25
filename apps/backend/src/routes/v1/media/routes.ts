@@ -1,10 +1,14 @@
 import {
+  mediaDetailsParamsSchema,
   mediaSearchQuerySchema,
-  omdbDetailsParamsSchema,
 } from "@media-voyage/shared/api";
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../../../require-auth";
-import { getOmdbMediaDetails, searchMedia } from "./service";
+import {
+  getIgdbMediaDetails,
+  getOmdbMediaDetails,
+  searchMedia,
+} from "./service";
 
 async function mediaRoutes(fastify: FastifyInstance) {
   fastify.addHook("preHandler", requireAuth);
@@ -36,8 +40,24 @@ async function mediaRoutes(fastify: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      const { id } = omdbDetailsParamsSchema.parse(request.params);
+      const { id } = mediaDetailsParamsSchema.parse(request.params);
       return reply.send(await getOmdbMediaDetails(id));
+    },
+  );
+
+  fastify.get(
+    "/igdb/:id",
+    {
+      config: {
+        rateLimit: {
+          max: 20,
+          timeWindow: "1 minute",
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = mediaDetailsParamsSchema.parse(request.params);
+      return reply.send(await getIgdbMediaDetails(id));
     },
   );
 }

@@ -35,12 +35,13 @@ export function StatusDetailsSection() {
 
             <NumberInput
               label="Rating"
-              placeholder="8.5"
+              placeholder="8"
               variant="filled"
-              inputMode="decimal"
+              inputMode="numeric"
               min={0}
               max={10}
-              decimalScale={1}
+              step={1}
+              allowDecimal={false}
               {...form.getInputProps("rating")}
             />
           </SimpleGrid>

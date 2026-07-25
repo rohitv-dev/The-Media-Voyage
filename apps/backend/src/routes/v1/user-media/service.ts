@@ -21,6 +21,12 @@ import { userMediaCreatedSelect, userMediaDetailedSelect } from "./selects";
 
 type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
+function hasMetadataValues(value: unknown): boolean {
+  return (
+    !!value && typeof value === "object" && Object.keys(value).length > 0
+  );
+}
+
 async function syncUserMediaTags(
   tx: DbTransaction,
   userId: string,
@@ -157,6 +163,7 @@ export async function createUserMedia(
     externalId,
     imageUrl,
     description,
+    metadata,
     mediaSource,
     tags: tagNames,
     source: sourceName,
@@ -167,7 +174,11 @@ export async function createUserMedia(
 
     if (!mediaId && externalId && mediaSource) {
       const [existingMedia] = await tx
-        .select({ id: media.id, description: media.description })
+        .select({
+          id: media.id,
+          description: media.description,
+          metadata: media.metadata,
+        })
         .from(media)
         .where(
           and(
@@ -179,10 +190,21 @@ export async function createUserMedia(
 
       if (existingMedia) {
         mediaId = existingMedia.id;
-        if (description && !existingMedia.description) {
+
+        const metadataUpdate =
+          metadata && !hasMetadataValues(existingMedia.metadata)
+            ? metadata
+            : undefined;
+
+        if ((description && !existingMedia.description) || metadataUpdate) {
           await tx
             .update(media)
-            .set({ description })
+            .set({
+              ...(description && !existingMedia.description
+                ? { description }
+                : {}),
+              ...(metadataUpdate ? { metadata: metadataUpdate } : {}),
+            })
             .where(eq(media.id, existingMedia.id));
         }
       }
@@ -197,6 +219,7 @@ export async function createUserMedia(
           externalId: externalId || null,
           imageUrl,
           description: description || null,
+          metadata: metadata ?? {},
           source: mediaSource,
         })
         .returning({ id: media.id });

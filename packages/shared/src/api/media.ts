@@ -21,17 +21,22 @@ export interface OmdbMedia {
 
 export interface OmdbMovie extends OmdbMedia {
   Plot?: string;
+  Genre?: string;
+  Runtime?: string;
 }
 
 export interface OmdbShow extends OmdbMedia {
   Plot?: string;
+  Genre?: string;
+  Runtime?: string;
+  totalSeasons?: string;
 }
 
-export const omdbDetailsParamsSchema = z.object({
+export const mediaDetailsParamsSchema = z.object({
   id: z.string().trim().min(1, "ID parameter is required"),
 });
 
-export type OmdbDetailsParams = z.infer<typeof omdbDetailsParamsSchema>;
+export type MediaDetailsParams = z.infer<typeof mediaDetailsParamsSchema>;
 
 
 export interface OmdbRating {
@@ -59,10 +64,15 @@ export type IgdbRecord = {
     id: number;
     image_id: string;
   };
-  first_release_date?: number;
 };
 
 export type IgdbResponse = IgdbRecord[];
+
+export type IgdbGame = {
+  id: number;
+  name: string;
+  summary?: string;
+};
 
 export const mediaResponseSchema = z.object({
   source: z.string(),
