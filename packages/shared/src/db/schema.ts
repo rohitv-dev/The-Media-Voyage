@@ -34,6 +34,12 @@ export const visibilityEnum = pgEnum("visibility", [
   "public",
 ]);
 
+export const friendshipStatusEnum = pgEnum("friendship_status", [
+  "pending",
+  "declined",
+  "accepted",
+]);
+
 // Main Media (Canonical)
 export const media = pgTable(
   "media",
@@ -235,9 +241,127 @@ export const mediaCollectionItems = pgTable(
   ],
 );
 
+/**
+ * A friendship is stored as a single directed row: the requester on one side,
+ * the addressee on the other. Nothing mirrors it when accepted, so any lookup
+ * between two people has to check both orderings — see `friendshipBetween` in
+ * the backend friends queries.
+ */
+export const friendships = pgTable(
+  "friendships",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    requesterId: text("requester_id")
+      .references(() => user.id, { onDelete: "cascade" })
+      .notNull(),
+    addresseeId: text("addressee_id")
+      .references(() => user.id, { onDelete: "cascade" })
+      .notNull(),
+    status: friendshipStatusEnum("status").notNull().default("pending"),
+    createdAt: timestamp("created_at").defaultNow(),
+    respondedAt: timestamp("responded_at"),
+  },
+  (table) => [
+    unique("friendships_pair_unique").on(table.requesterId, table.addresseeId),
+    index("friendships_addressee_status_idx").on(
+      table.addresseeId,
+      table.status,
+    ),
+    index("friendships_requester_status_idx").on(
+      table.requesterId,
+      table.status,
+    ),
+  ],
+);
+
+// One reaction per person per entry: +1 like, -1 dislike. Toggling off deletes
+// the row rather than storing a zero.
+export const userMediaReactions = pgTable(
+  "user_media_reactions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userMediaId: uuid("user_media_id")
+      .references(() => userMedia.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: text("user_id")
+      .references(() => user.id, { onDelete: "cascade" })
+      .notNull(),
+    value: integer("value").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    unique("user_media_reactions_unique").on(table.userMediaId, table.userId),
+    index("user_media_reactions_entry_idx").on(table.userMediaId),
+  ],
+);
+
+export const userMediaComments = pgTable(
+  "user_media_comments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userMediaId: uuid("user_media_id")
+      .references(() => userMedia.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: text("user_id")
+      .references(() => user.id, { onDelete: "cascade" })
+      .notNull(),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    index("user_media_comments_entry_created_idx").on(
+      table.userMediaId,
+      table.createdAt,
+    ),
+  ],
+);
+
 export const mediaRelations = relations(media, ({ many }) => ({
   userEntries: many(userMedia),
 }));
+
+export const friendshipsRelations = relations(friendships, ({ one }) => ({
+  requester: one(user, {
+    fields: [friendships.requesterId],
+    references: [user.id],
+    relationName: "friendshipRequester",
+  }),
+  addressee: one(user, {
+    fields: [friendships.addresseeId],
+    references: [user.id],
+    relationName: "friendshipAddressee",
+  }),
+}));
+
+export const userMediaReactionsRelations = relations(
+  userMediaReactions,
+  ({ one }) => ({
+    userMedia: one(userMedia, {
+      fields: [userMediaReactions.userMediaId],
+      references: [userMedia.id],
+    }),
+    user: one(user, {
+      fields: [userMediaReactions.userId],
+      references: [user.id],
+    }),
+  }),
+);
+
+export const userMediaCommentsRelations = relations(
+  userMediaComments,
+  ({ one }) => ({
+    userMedia: one(userMedia, {
+      fields: [userMediaComments.userMediaId],
+      references: [userMedia.id],
+    }),
+    user: one(user, {
+      fields: [userMediaComments.userId],
+      references: [user.id],
+    }),
+  }),
+);
 
 export const userMediaRelations = relations(userMedia, ({ one, many }) => ({
   user: one(user, {
@@ -255,6 +379,8 @@ export const userMediaRelations = relations(userMedia, ({ one, many }) => ({
   collectionItems: many(mediaCollectionItems),
   statusHistory: many(userMediaStatusHistory),
   tagLinks: many(userMediaTags),
+  reactions: many(userMediaReactions),
+  comments: many(userMediaComments),
 }));
 
 export const sourcesRelations = relations(sources, ({ one, many }) => ({
@@ -327,6 +453,11 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
+  // Applied to newly created user_media entries. Exposed through better-auth's
+  // `user.additionalFields`, so it rides along in the session.
+  defaultVisibility: visibilityEnum("default_visibility")
+    .default("private")
+    .notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -396,6 +527,14 @@ export const verification = pgTable(
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
+  sentFriendRequests: many(friendships, {
+    relationName: "friendshipRequester",
+  }),
+  receivedFriendRequests: many(friendships, {
+    relationName: "friendshipAddressee",
+  }),
+  reactions: many(userMediaReactions),
+  comments: many(userMediaComments),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({

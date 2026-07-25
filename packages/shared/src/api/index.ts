@@ -4,3 +4,4 @@ export * from "./errors";
 export * from "./mediaCollection";
 export * from "./tags";
 export * from "./sources";
+export * from "./friends";

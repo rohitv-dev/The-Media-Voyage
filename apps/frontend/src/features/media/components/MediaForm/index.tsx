@@ -67,6 +67,8 @@ type MediaFormProps =
   | {
     mode: "add";
     dropdowns: UserMediaDropdowns;
+    /** Account default that preselects the visibility field on new entries. */
+    defaultVisibility?: UserMediaFormSchema["visibility"];
   }
   | {
     id: string;
@@ -91,7 +93,9 @@ export function MediaForm(props: MediaFormProps) {
   const queryClient = useQueryClient();
 
   const form = useForm({
-    initialValues: isAddMode ? addInitialValues : props.initialValues,
+    initialValues: isAddMode
+      ? { ...addInitialValues, visibility: props.defaultVisibility ?? "private" }
+      : props.initialValues,
     transformValues: (values) => ({
       ...values,
       timeSpent: Number(values.timeSpent) === 0 ? undefined : values.timeSpent,
