@@ -14,6 +14,7 @@ import {
   ActionIcon,
   AspectRatio,
   Badge,
+  Box,
   Button,
   Card,
   Group,
@@ -36,6 +37,7 @@ import {
   IconHeart,
   IconHeartFilled,
   IconClockPause,
+  IconPhotoOff,
 } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -64,7 +66,8 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
   const sourceColorMap = useSourceColorMap();
   const [showCoverArt] = useCoverArtPreference();
   const [coverArtSize] = useCoverArtSizePreference();
-  const hasCoverArt = showCoverArt && !!media.imageUrl && media.imageUrl !== "N/A";
+  const hasImage = !!media.imageUrl && media.imageUrl !== "N/A";
+  const hasCoverArt = showCoverArt;
   const imageObjectPosition =
     coverArtSize === "medium" || coverArtSize === "small"
       ? "center top"
@@ -222,12 +225,28 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
       {hasCoverArt && (
         <Card.Section>
           <AspectRatio ratio={COVER_ART_SIZE_RATIOS[coverArtSize]}>
-            <Image
-              src={media.imageUrl}
-              alt=""
-              fit="cover"
-              style={{ objectPosition: imageObjectPosition }}
-            />
+            {hasImage ? (
+              <Image
+                src={media.imageUrl}
+                alt=""
+                fit="cover"
+                style={{ objectPosition: imageObjectPosition }}
+              />
+            ) : (
+              <Box
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "var(--mantine-color-accent-1)",
+                }}
+              >
+                <IconPhotoOff
+                  size={32}
+                  style={{ color: "var(--mantine-color-accent-6)", opacity: 0.6 }}
+                />
+              </Box>
+            )}
           </AspectRatio>
         </Card.Section>
       )}

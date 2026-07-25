@@ -1,6 +1,7 @@
 import {
   AspectRatio,
   Badge,
+  Box,
   Card,
   Group,
   Image,
@@ -9,6 +10,7 @@ import {
   Text,
 } from "@mantine/core";
 import type { MediaRecord } from "@media-voyage/shared/api";
+import { IconPhotoOff } from "@tabler/icons-react";
 import { motion, useReducedMotion } from "motion/react";
 import type { KeyboardEvent } from "react";
 import { useCoverArtPreference } from "#/features/media/hooks/useCoverArtPreference";
@@ -22,7 +24,8 @@ interface ContinueMediaCardProps {
 export function ContinueMediaCard({ media, onView }: ContinueMediaCardProps) {
   const reduceMotion = useReducedMotion();
   const [showCoverArt] = useCoverArtPreference();
-  const hasCoverArt = showCoverArt && !!media.imageUrl && media.imageUrl !== "N/A";
+  const hasImage = !!media.imageUrl && media.imageUrl !== "N/A";
+  const hasCoverArt = showCoverArt;
   const progress = media.progress ?? 0;
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -55,7 +58,23 @@ export function ContinueMediaCard({ media, onView }: ContinueMediaCardProps) {
       {hasCoverArt && (
         <Card.Section>
           <AspectRatio ratio={2 / 3}>
-            <Image src={media.imageUrl} alt="" fit="cover" />
+            {hasImage ? (
+              <Image src={media.imageUrl} alt="" fit="cover" />
+            ) : (
+              <Box
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "var(--mantine-color-accent-1)",
+                }}
+              >
+                <IconPhotoOff
+                  size={24}
+                  style={{ color: "var(--mantine-color-accent-6)", opacity: 0.6 }}
+                />
+              </Box>
+            )}
           </AspectRatio>
         </Card.Section>
       )}
