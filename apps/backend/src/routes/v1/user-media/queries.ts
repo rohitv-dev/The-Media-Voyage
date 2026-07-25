@@ -33,6 +33,7 @@ import {
   type SQL,
 } from "drizzle-orm";
 import { db } from "../../../db/db";
+import { listReactions } from "../friends/queries";
 import {
   calendarCompletedSelect,
   calendarStartedSelect,
@@ -100,7 +101,11 @@ export async function findUserMediaById(userId: string, id: string) {
     .where(ownedUserMediaCondition(userId, id))
     .limit(1);
 
-  return record ?? null;
+  if (!record) return null;
+
+  const reactions = await listReactions(id);
+
+  return { ...record, reactions };
 }
 
 export async function getUserMediaStatusHistory(userId: string, id: string) {

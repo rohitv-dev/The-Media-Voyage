@@ -7,6 +7,7 @@ import type {
   UserMediaCounts,
   GetUserMediaResponse,
   MediaDetailedRecord,
+  ReactionRecord,
   UserMediaQuerySchema,
   UserMediaDropdowns,
   MediaPickerQuery,
@@ -18,7 +19,9 @@ async function getUserMedia() {
 }
 
 async function getUserMediaDetailedRecord(id: string) {
-  return api<MediaDetailedRecord>(`/user-media/${id}`);
+  return api<MediaDetailedRecord & { reactions: ReactionRecord[] }>(
+    `/user-media/${id}`,
+  );
 }
 
 /**

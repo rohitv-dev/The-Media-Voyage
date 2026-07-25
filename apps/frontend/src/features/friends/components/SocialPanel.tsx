@@ -72,9 +72,15 @@ export function SocialPanel({
     reactions.find((reaction) => reaction.userId === viewerId)?.value ?? null;
 
   const invalidateEntry = () =>
-    queryClient.invalidateQueries({
-      queryKey: ["friends", "entry", { id: userMediaId }],
-    });
+    Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: ["friends", "entry", { id: userMediaId }],
+      }),
+      // Also covers the owner viewing this entry via their own library page.
+      queryClient.invalidateQueries({
+        queryKey: ["user-media", { id: userMediaId }],
+      }),
+    ]);
 
   const reactionMutation = useMutation({
     mutationFn: (value: 1 | -1 | null) => setReaction(userMediaId, value),
