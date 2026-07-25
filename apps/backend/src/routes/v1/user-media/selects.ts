@@ -90,6 +90,11 @@ export const userMediaCreatedSelect = {
   updatedAt: userMedia.updatedAt,
 };
 
+export const trashedUserMediaSelect = {
+  ...userMediaSummarySelect,
+  deletedAt: userMedia.deletedAt,
+};
+
 export const mediaPickerSelect = {
   ...userMediaSummarySelect,
   imageUrl: media.imageUrl,

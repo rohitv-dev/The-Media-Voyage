@@ -40,6 +40,7 @@ import {
   calendarStatusChangeSelect,
   mediaPickerSelect,
   statusHistorySelect,
+  trashedUserMediaSelect,
   userMediaDetailedSelect,
   userMediaExportSelect,
   userMediaSummarySelect,
@@ -91,6 +92,14 @@ export function ownedUserMediaIncludingDeletedCondition(
   id: string,
 ) {
   return and(eq(userMedia.id, id), eq(userMedia.userId, userId));
+}
+
+export function ownedDeletedUserMediaCondition(userId: string, id: string) {
+  return and(
+    eq(userMedia.id, id),
+    eq(userMedia.userId, userId),
+    isNotNull(userMedia.deletedAt),
+  );
 }
 
 export async function findUserMediaById(userId: string, id: string) {
@@ -454,6 +463,15 @@ export async function getCalendarActivity(
   ];
 
   return { from: range.from, to: range.to, events };
+}
+
+export function listDeletedUserMedia(userId: string) {
+  return db
+    .select(trashedUserMediaSelect)
+    .from(userMedia)
+    .innerJoin(media, eq(userMedia.mediaId, media.id))
+    .where(and(eq(userMedia.userId, userId), isNotNull(userMedia.deletedAt)))
+    .orderBy(desc(userMedia.deletedAt));
 }
 
 export function getUserMediaForExport(userId: string) {

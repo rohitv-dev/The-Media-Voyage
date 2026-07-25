@@ -14,6 +14,7 @@ import type {
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../../../db/db";
 import {
+  ownedDeletedUserMediaCondition,
   ownedUserMediaCondition,
   ownedUserMediaIncludingDeletedCondition,
 } from "./queries";
@@ -460,6 +461,25 @@ export async function deleteUserMedia(userId: string, id: string) {
     .update(userMedia)
     .set({ deletedAt: now, updatedAt: now })
     .where(ownedUserMediaCondition(userId, id))
+    .returning({ id: userMedia.id });
+
+  return deleted ?? null;
+}
+
+export async function restoreUserMedia(userId: string, id: string) {
+  const [restored] = await db
+    .update(userMedia)
+    .set({ deletedAt: null, updatedAt: new Date() })
+    .where(ownedDeletedUserMediaCondition(userId, id))
+    .returning({ id: userMedia.id });
+
+  return restored ?? null;
+}
+
+export async function permanentlyDeleteUserMedia(userId: string, id: string) {
+  const [deleted] = await db
+    .delete(userMedia)
+    .where(ownedDeletedUserMediaCondition(userId, id))
     .returning({ id: userMedia.id });
 
   return deleted ?? null;

@@ -71,7 +71,10 @@ export function ContinueMediaCard({ media, onView }: ContinueMediaCardProps) {
               >
                 <IconPhotoOff
                   size={24}
-                  style={{ color: "var(--mantine-color-accent-6)", opacity: 0.6 }}
+                  style={{
+                    color: "var(--mantine-color-accent-6)",
+                    opacity: 0.6,
+                  }}
                 />
               </Box>
             )}
@@ -79,20 +82,18 @@ export function ContinueMediaCard({ media, onView }: ContinueMediaCardProps) {
         </Card.Section>
       )}
 
-      <Stack gap={8}>
-        <Group gap={6} wrap="nowrap">
-          {getTypeIcon(media.type)}
-          <Text fw={600} size="sm" lineClamp={1} style={{ flex: 1 }}>
-            {media.title}
-          </Text>
-          <Badge
-            size="xs"
-            color={getStatusColor(media.status)}
-            variant="light"
-          >
+      <Stack gap={8} mt={hasCoverArt ? "sm" : 0}>
+        <Stack gap={6}>
+          <Group gap="xs">
+            {getTypeIcon(media.type)}
+            <Text fw={600} size="sm" lineClamp={1} style={{ flex: 1 }}>
+              {media.title}
+            </Text>
+          </Group>
+          <Badge size="xs" color={getStatusColor(media.status)} variant="light">
             {media.status.replaceAll("_", " ")}
           </Badge>
-        </Group>
+        </Stack>
 
         <Group gap="xs" wrap="nowrap">
           <Progress value={progress} flex={1} size="sm" />

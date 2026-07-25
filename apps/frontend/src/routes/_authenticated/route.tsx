@@ -26,6 +26,7 @@ import {
   IconPlus,
   IconSettings,
   IconTags,
+  IconTrash,
   IconTrendingUp,
   IconUser,
   IconUsers,
@@ -298,6 +299,16 @@ function RouteComponent() {
               active={isActive("/sources")}
               onClick={() => {
                 navigate({ to: "/sources" });
+                close();
+              }}
+            />
+
+            <SidebarNavLink
+              label="Trash"
+              leftSection={<IconTrash size={19} />}
+              active={isActive("/trash")}
+              onClick={() => {
+                navigate({ to: "/trash" });
                 close();
               }}
             />

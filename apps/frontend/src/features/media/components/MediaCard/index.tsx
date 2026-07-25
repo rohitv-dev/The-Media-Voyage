@@ -66,10 +66,12 @@ export function MediaCard({
       style={{ cursor: onView ? "pointer" : undefined }}
     >
       {showCoverArt && (
-        <MediaCardCoverArt
-          imageUrl={media.imageUrl}
-          coverArtSize={coverArtSize}
-        />
+        <Card.Section>
+          <MediaCardCoverArt
+            imageUrl={media.imageUrl}
+            coverArtSize={coverArtSize}
+          />
+        </Card.Section>
       )}
 
       <Stack

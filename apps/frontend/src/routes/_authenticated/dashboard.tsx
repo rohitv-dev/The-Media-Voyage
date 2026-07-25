@@ -14,6 +14,7 @@ import {
 } from "@mantine/core";
 import { AnimatePresence, motion } from "motion/react";
 import type { Variants } from "motion/react";
+import { useMediaQuery } from "@mantine/hooks";
 import {
   continueMediaFilters,
   continueMediaQueryOptions,
@@ -111,7 +112,7 @@ function StatCard({
       <Card
         withBorder
         radius="md"
-        p="md"
+        p={{ base: "xs", sm: "md" }}
         role={onClick ? "button" : undefined}
         tabIndex={onClick ? 0 : undefined}
         onClick={onClick}
@@ -124,12 +125,14 @@ function StatCard({
         }}
         style={onClick ? { cursor: "pointer" } : undefined}
       >
-        <Stack gap={4}>
-          <Text c="dimmed" size="sm">
+        <Stack gap={2}>
+          <Text c="dimmed" size="xs" truncate>
             {label}
           </Text>
 
-          <Title order={2}>{value}</Title>
+          <Title order={3} fz={{ base: "h4", sm: "h2" }}>
+            {value}
+          </Title>
         </Stack>
       </Card>
     </AnimatedCard>
@@ -141,6 +144,10 @@ function RouteComponent() {
   const { data } = useSuspenseQuery(dashboardStatOptions);
   const { data: continueData } = useSuspenseQuery(continueMediaQueryOptions);
   const continueItems = continueData.data.slice(0, 6);
+  const isMobile = useMediaQuery("(max-width: 36em)");
+  const pieChartSize = isMobile ? 160 : 220;
+  const barChartHeight = isMobile ? 220 : 320;
+  const typeBarChartHeight = isMobile ? 240 : 350;
 
   const statusChartData = data.statusDistribution.map((val) => ({
     status: val.status,
@@ -168,16 +175,21 @@ function RouteComponent() {
   };
 
   return (
-    <Container size="xl" py="xl">
+    <Container size="xl" py={{ base: "md", sm: "xl" }} px={{ base: "xs", sm: "md" }}>
       <motion.div variants={pageVariants} initial="hidden" animate="visible">
-        <Stack gap="xl">
+        <Stack gap="md">
           <motion.div variants={itemVariants}>
             <Group justify="space-between">
-              <Title>Statistics</Title>
+              <Title order={2} fz={{ base: "h3", sm: "h1" }}>
+                Statistics
+              </Title>
             </Group>
           </motion.div>
 
-          <SimpleGrid cols={{ base: 2, md: 4, lg: 6 }}>
+          <SimpleGrid
+            cols={{ base: 2, xs: 3, md: 4, lg: 6 }}
+            spacing={{ base: "xs", sm: "md" }}
+          >
             {Object.entries(data.summary).map(([type, value]) => (
               <StatCard
                 key={type}
@@ -190,20 +202,20 @@ function RouteComponent() {
             ))}
           </SimpleGrid>
 
-          <Grid>
+          <Grid gap={{ base: "sm", sm: "md" }}>
             <Grid.Col span={{ base: 12, md: 6 }}>
               <AnimatedCard>
-                <Card withBorder radius="md" p="lg">
-                  <Stack>
+                <Card withBorder radius="md" p={{ base: "sm", sm: "lg" }}>
+                  <Stack gap="sm">
                     <Title order={4}>Status Distribution</Title>
 
                     <Text size="sm" c="dimmed">
                       Percentage of media in each status.
                     </Text>
 
-                    <Center h={320}>
+                    <Center h={barChartHeight}>
                       <PieChart
-                        size={220}
+                        size={pieChartSize}
                         data={statusChartData.map((item) => ({
                           key: item.status,
                           name: item.label,
@@ -228,8 +240,8 @@ function RouteComponent() {
 
             <Grid.Col span={{ base: 12, md: 6 }}>
               <AnimatedCard>
-                <Card withBorder radius="md" p="lg">
-                  <Stack>
+                <Card withBorder radius="md" p={{ base: "sm", sm: "lg" }}>
+                  <Stack gap="sm">
                     <Title order={4}>Media by Status</Title>
 
                     <Text size="sm" c="dimmed">
@@ -237,7 +249,7 @@ function RouteComponent() {
                     </Text>
 
                     <BarChart
-                      h={320}
+                      h={barChartHeight}
                       data={statusChartData.map((item) => ({
                         status: item.label,
                         count: item.count,
@@ -260,8 +272,8 @@ function RouteComponent() {
 
             <Grid.Col span={12}>
               <AnimatedCard>
-                <Card withBorder radius="md" p="lg">
-                  <Stack>
+                <Card withBorder radius="md" p={{ base: "sm", sm: "lg" }}>
+                  <Stack gap="sm">
                     <Title order={4}>Media by Type</Title>
 
                     <Text size="sm" c="dimmed">
@@ -269,7 +281,7 @@ function RouteComponent() {
                     </Text>
 
                     <BarChart
-                      h={350}
+                      h={typeBarChartHeight}
                       data={typeChartData.map((item) => ({
                         type: item.label,
                         count: item.count,
@@ -292,8 +304,8 @@ function RouteComponent() {
 
             <Grid.Col span={{ base: 12, md: 6 }}>
               <AnimatedCard>
-                <Card withBorder radius="md" p="lg">
-                  <Stack>
+                <Card withBorder radius="md" p={{ base: "sm", sm: "lg" }}>
+                  <Stack gap="sm">
                     <Title order={4}>Ratings Distribution</Title>
 
                     <Text size="sm" c="dimmed">
@@ -301,7 +313,7 @@ function RouteComponent() {
                     </Text>
 
                     <BarChart
-                      h={300}
+                      h={barChartHeight}
                       data={data.ratingDistribution.map((val) => ({
                         rating: val.rating,
                         count: val.count,
@@ -321,8 +333,8 @@ function RouteComponent() {
 
             <Grid.Col span={{ base: 12, md: 6 }}>
               <AnimatedCard>
-                <Card withBorder radius="md" p="lg">
-                  <Stack>
+                <Card withBorder radius="md" p={{ base: "sm", sm: "lg" }}>
+                  <Stack gap="sm">
                     <Title order={4}>Completion Trend</Title>
 
                     <Text size="sm" c="dimmed">
@@ -330,7 +342,7 @@ function RouteComponent() {
                     </Text>
 
                     <BarChart
-                      h={300}
+                      h={barChartHeight}
                       data={data.completionTrend.map((val) => ({
                         month: formatMonthLabel(val.month),
                         count: val.count,
@@ -369,7 +381,7 @@ function RouteComponent() {
                 />
               ) : (
                 <SimpleGrid
-                  spacing="sm"
+                  spacing={{ base: "xs", sm: "sm" }}
                   cols={{ base: 2, sm: 3, md: 4, lg: 6 }}
                 >
                   <AnimatePresence mode="popLayout">

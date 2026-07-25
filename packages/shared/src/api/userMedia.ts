@@ -125,6 +125,24 @@ export const getUserMediaResponseSchema = z.object({
 
 export type GetUserMediaResponse = z.infer<typeof getUserMediaResponseSchema>;
 
+export const trashedUserMediaRecordSchema = mediaRecordSchema.extend({
+  deletedAt: userMediaSelectSchema.shape.deletedAt,
+});
+
+export type TrashedUserMediaRecord = z.infer<
+  typeof trashedUserMediaRecordSchema
+>;
+
+export const getTrashedUserMediaResponseSchema = z.object({
+  success: z.boolean(),
+  count: z.number(),
+  data: z.array(trashedUserMediaRecordSchema),
+});
+
+export type GetTrashedUserMediaResponse = z.infer<
+  typeof getTrashedUserMediaResponseSchema
+>;
+
 export const userMediaFieldsSchema = userMediaInsertSchema.omit({
   id: true,
   userId: true,

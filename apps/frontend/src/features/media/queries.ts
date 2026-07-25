@@ -5,6 +5,7 @@ import type {
   CalendarActivityResponse,
   DashboardStatsResponse,
   UserMediaCounts,
+  GetTrashedUserMediaResponse,
   GetUserMediaResponse,
   MediaDetailedRecord,
   ReactionRecord,
@@ -81,6 +82,15 @@ export function userMediaDetailedOptions(id: string) {
 export const userMediaQueryOptions = queryOptions({
   queryKey: ["user-media"],
   queryFn: getUserMedia,
+});
+
+async function getDeletedUserMedia() {
+  return api<GetTrashedUserMediaResponse>("/user-media/trash");
+}
+
+export const trashedUserMediaQueryOptions = queryOptions({
+  queryKey: ["user-media", "trash"],
+  queryFn: getDeletedUserMedia,
 });
 
 export function userMediaFilterQueryOptions(filters: UserMediaQuerySchema) {

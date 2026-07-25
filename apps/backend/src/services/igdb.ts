@@ -3,7 +3,7 @@ import { getAccessToken } from "./twitchAuth";
 import { env } from "../config";
 import { internalServerError } from "../errors";
 
-export async function searchGames(query: string): Promise<SourceMediaRecord[]> {
+async function fetchIgdbSearch(query: string): Promise<IgdbResponse> {
   const token = await getAccessToken();
 
   const response = await fetch("https://api.igdb.com/v4/games", {
@@ -23,7 +23,17 @@ export async function searchGames(query: string): Promise<SourceMediaRecord[]> {
     throw internalServerError("IGDB request failed")
   }
 
-  const data: IgdbResponse = await response.json();
+  return response.json();
+}
+
+// Occasionally returns an empty result for a query that succeeds moments
+// later on an identical retry (same flakiness as OMDb's search endpoint).
+export async function searchGames(query: string): Promise<SourceMediaRecord[]> {
+  let data = await fetchIgdbSearch(query);
+
+  if (data.length === 0) {
+    data = await fetchIgdbSearch(query);
+  }
 
   const records: SourceMediaRecord[] = data.map((val) => ({
     id: "",

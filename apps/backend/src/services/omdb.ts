@@ -23,7 +23,9 @@ const omdbTypeToMediaType = (type: string): MediaType => {
   return "movie";
 };
 
-export async function searchOmdb(query: string): Promise<SourceMediaRecord[]> {
+async function fetchOmdbSearch(
+  query: string,
+): Promise<OmdbResponse | OmdbErrorResponse> {
   const url = new URL("https://www.omdbapi.com/");
   url.searchParams.set("apikey", API_KEY);
   url.searchParams.set("s", query);
@@ -34,7 +36,18 @@ export async function searchOmdb(query: string): Promise<SourceMediaRecord[]> {
     throw internalServerError("OMDb request failed");
   }
 
-  const data: OmdbResponse | OmdbErrorResponse = await response.json();
+  return response.json();
+}
+
+// OMDb's search endpoint is occasionally flaky, returning "Movie not
+// found!" for a query that succeeds moments later on an identical retry.
+// A single retry on an empty result works around this.
+export async function searchOmdb(query: string): Promise<SourceMediaRecord[]> {
+  let data = await fetchOmdbSearch(query);
+
+  if (data.Response === "False") {
+    data = await fetchOmdbSearch(query);
+  }
 
   if (data.Response === "False") {
     return [];

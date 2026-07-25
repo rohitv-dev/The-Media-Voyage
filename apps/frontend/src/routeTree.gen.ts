@@ -13,6 +13,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as AuthenticatedTrashRouteImport } from './routes/_authenticated/trash'
 import { Route as AuthenticatedTagsRouteImport } from './routes/_authenticated/tags'
 import { Route as AuthenticatedSourcesRouteImport } from './routes/_authenticated/sources'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -51,6 +52,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/auth/login',
   path: '/auth/login',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedTrashRoute = AuthenticatedTrashRouteImport.update({
+  id: '/trash',
+  path: '/trash',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedTagsRoute = AuthenticatedTagsRouteImport.update({
   id: '/tags',
@@ -168,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/sources': typeof AuthenticatedSourcesRoute
   '/tags': typeof AuthenticatedTagsRoute
+  '/trash': typeof AuthenticatedTrashRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/media': typeof AuthenticatedMediaFormsRouteRouteWithChildren
@@ -192,6 +199,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/sources': typeof AuthenticatedSourcesRoute
   '/tags': typeof AuthenticatedTagsRoute
+  '/trash': typeof AuthenticatedTrashRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/media': typeof AuthenticatedMediaIndexRoute
@@ -217,6 +225,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/sources': typeof AuthenticatedSourcesRoute
   '/_authenticated/tags': typeof AuthenticatedTagsRoute
+  '/_authenticated/trash': typeof AuthenticatedTrashRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/_authenticated/media/_forms': typeof AuthenticatedMediaFormsRouteRouteWithChildren
@@ -243,6 +252,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sources'
     | '/tags'
+    | '/trash'
     | '/auth/login'
     | '/auth/register'
     | '/media'
@@ -267,6 +277,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sources'
     | '/tags'
+    | '/trash'
     | '/auth/login'
     | '/auth/register'
     | '/media'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/sources'
     | '/_authenticated/tags'
+    | '/_authenticated/trash'
     | '/auth/login'
     | '/auth/register'
     | '/_authenticated/media/_forms'
@@ -344,6 +356,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/login'
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/trash': {
+      id: '/_authenticated/trash'
+      path: '/trash'
+      fullPath: '/trash'
+      preLoaderRoute: typeof AuthenticatedTrashRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/tags': {
       id: '/_authenticated/tags'
@@ -504,6 +523,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSourcesRoute: typeof AuthenticatedSourcesRoute
   AuthenticatedTagsRoute: typeof AuthenticatedTagsRoute
+  AuthenticatedTrashRoute: typeof AuthenticatedTrashRoute
   AuthenticatedMediaFormsRouteRoute: typeof AuthenticatedMediaFormsRouteRouteWithChildren
   AuthenticatedCollectionAddRoute: typeof AuthenticatedCollectionAddRoute
   AuthenticatedFriendsUserIdRoute: typeof AuthenticatedFriendsUserIdRoute
@@ -524,6 +544,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSourcesRoute: AuthenticatedSourcesRoute,
   AuthenticatedTagsRoute: AuthenticatedTagsRoute,
+  AuthenticatedTrashRoute: AuthenticatedTrashRoute,
   AuthenticatedMediaFormsRouteRoute:
     AuthenticatedMediaFormsRouteRouteWithChildren,
   AuthenticatedCollectionAddRoute: AuthenticatedCollectionAddRoute,

@@ -52,8 +52,10 @@ export function MediaFilterCard({
     updateFilters({ ...filters, order });
   };
 
-  const [moreFiltersOpened, { open: openMoreFilters, close: closeMoreFilters }] =
-    useDisclosure();
+  const [
+    moreFiltersOpened,
+    { open: openMoreFilters, close: closeMoreFilters },
+  ] = useDisclosure();
 
   const activeMoreFiltersCount = [
     filters.minRating !== undefined || filters.maxRating !== undefined,
@@ -89,12 +91,12 @@ export function MediaFilterCard({
       style={
         compact
           ? {
-            position: "sticky",
-            top: 84,
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-          }
+              position: "sticky",
+              top: 84,
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+            }
           : undefined
       }
     >
@@ -106,12 +108,12 @@ export function MediaFilterCard({
         style={
           compact
             ? {
-              display: "flex",
-              flexDirection: "column",
-              flex: 1,
-              minHeight: 0,
-              overflow: "hidden",
-            }
+                display: "flex",
+                flexDirection: "column",
+                flex: 1,
+                minHeight: 0,
+                overflow: "hidden",
+              }
             : undefined
         }
       >
@@ -120,11 +122,11 @@ export function MediaFilterCard({
           style={
             compact
               ? {
-                flex: 1,
-                minHeight: 0,
-                overflowY: "auto",
-                scrollbarGutter: "stable",
-              }
+                  flex: 1,
+                  minHeight: 0,
+                  overflowY: "auto",
+                  scrollbarGutter: "stable",
+                }
               : undefined
           }
         >

@@ -18,12 +18,15 @@ import {
   getUserMediaDropdowns,
   getUserMediaForExport,
   getUserMediaStatusHistory,
+  listDeletedUserMedia,
   listUserMedia,
   pickUserMedia,
 } from "./queries";
 import {
   createUserMedia,
   deleteUserMedia,
+  permanentlyDeleteUserMedia,
+  restoreUserMedia,
   updateUserMedia,
   updateUserMediaQuickActions,
 } from "./service";
@@ -69,6 +72,38 @@ async function userMediaRoutes(fastify: FastifyInstance) {
 
     if (!record) {
       return reply.status(404).send({ error: "User media not found" });
+    }
+
+    return reply.send({ success: true });
+  });
+
+  fastify.get("/trash", async (request, reply) => {
+    const records = await listDeletedUserMedia(request.userId);
+
+    return reply.send({
+      success: true,
+      count: records.length,
+      data: records,
+    });
+  });
+
+  fastify.post("/:id/restore", async (request, reply) => {
+    const { id } = userMediaIdParamsSchema.parse(request.params);
+    const record = await restoreUserMedia(request.userId, id);
+
+    if (!record) {
+      return reply.status(404).send({ error: "Deleted user media not found" });
+    }
+
+    return reply.send({ success: true });
+  });
+
+  fastify.delete("/:id/permanent", async (request, reply) => {
+    const { id } = userMediaIdParamsSchema.parse(request.params);
+    const record = await permanentlyDeleteUserMedia(request.userId, id);
+
+    if (!record) {
+      return reply.status(404).send({ error: "Deleted user media not found" });
     }
 
     return reply.send({ success: true });

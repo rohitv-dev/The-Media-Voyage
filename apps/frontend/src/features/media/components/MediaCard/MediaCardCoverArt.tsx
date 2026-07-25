@@ -1,4 +1,4 @@
-import { AspectRatio, Box, Card, Image } from "@mantine/core";
+import { AspectRatio, Box, Image } from "@mantine/core";
 import { IconPhotoOff } from "@tabler/icons-react";
 import { COVER_ART_SIZE_RATIOS } from "../../hooks/useCoverArtSizePreference";
 import type { CoverArtSize } from "../../hooks/useCoverArtSizePreference";
@@ -19,34 +19,32 @@ export function MediaCardCoverArt({
       : "center";
 
   return (
-    <Card.Section>
-      <AspectRatio ratio={COVER_ART_SIZE_RATIOS[coverArtSize]}>
-        {hasImage ? (
-          <Image
-            src={imageUrl}
-            alt=""
-            fit="cover"
-            style={{ objectPosition: imageObjectPosition }}
-          />
-        ) : (
-          <Box
+    <AspectRatio ratio={COVER_ART_SIZE_RATIOS[coverArtSize]}>
+      {hasImage ? (
+        <Image
+          src={imageUrl}
+          alt=""
+          fit="cover"
+          style={{ objectPosition: imageObjectPosition }}
+        />
+      ) : (
+        <Box
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "var(--mantine-color-accent-1)",
+          }}
+        >
+          <IconPhotoOff
+            size={32}
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: "var(--mantine-color-accent-1)",
+              color: "var(--mantine-color-accent-6)",
+              opacity: 0.6,
             }}
-          >
-            <IconPhotoOff
-              size={32}
-              style={{
-                color: "var(--mantine-color-accent-6)",
-                opacity: 0.6,
-              }}
-            />
-          </Box>
-        )}
-      </AspectRatio>
-    </Card.Section>
+          />
+        </Box>
+      )}
+    </AspectRatio>
   );
 }
