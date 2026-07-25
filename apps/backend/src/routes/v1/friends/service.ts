@@ -18,6 +18,7 @@ import {
   friendshipBetween,
   requireViewableUserMedia,
 } from "./queries";
+import { resolveFriendRequest } from "./policy";
 
 /**
  * Sends a request by email. If the other person already has a pending request
@@ -35,44 +36,49 @@ export async function sendFriendRequest(userId: string, email: string) {
   }
 
   const existing = await friendshipBetween(userId, target.id);
+  const outcome = resolveFriendRequest(userId, existing);
 
-  if (existing?.status === "accepted") {
-    throw conflict(`You and ${target.name} are already friends`);
-  }
+  switch (outcome.type) {
+    case "already_friends":
+      throw conflict(`You and ${target.name} are already friends`);
 
-  if (existing?.status === "pending") {
-    if (existing.requesterId === userId) {
+    case "already_requested":
       throw conflict(`You already have a pending request to ${target.name}`);
+
+    case "accept_existing": {
+      const [accepted] = await db
+        .update(friendships)
+        .set({ status: "accepted", respondedAt: new Date() })
+        .where(eq(friendships.id, outcome.friendshipId))
+        .returning();
+
+      return { friendship: accepted, autoAccepted: true };
     }
 
-    // They asked first — accept rather than creating a second row.
-    const [accepted] = await db
-      .update(friendships)
-      .set({ status: "accepted", respondedAt: new Date() })
-      .where(eq(friendships.id, existing.id))
-      .returning();
+    // A previously declined pair is replaced outright, so the new request is
+    // always stored with the current requester on the requester side.
+    case "replace_existing":
+    case "create": {
+      const [friendship] = await db.transaction(async (tx) => {
+        if (outcome.type === "replace_existing") {
+          await tx
+            .delete(friendships)
+            .where(eq(friendships.id, outcome.friendshipId));
+        }
 
-    return { friendship: accepted, autoAccepted: true };
+        return tx
+          .insert(friendships)
+          .values({
+            requesterId: userId,
+            addresseeId: target.id,
+            status: "pending",
+          })
+          .returning();
+      });
+
+      return { friendship, autoAccepted: false };
+    }
   }
-
-  // A previously declined pair is replaced outright, so the new request is
-  // always stored with the current requester on the requester side.
-  const [friendship] = await db.transaction(async (tx) => {
-    if (existing) {
-      await tx.delete(friendships).where(eq(friendships.id, existing.id));
-    }
-
-    return tx
-      .insert(friendships)
-      .values({
-        requesterId: userId,
-        addresseeId: target.id,
-        status: "pending",
-      })
-      .returning();
-  });
-
-  return { friendship, autoAccepted: false };
 }
 
 export async function respondToFriendRequest(

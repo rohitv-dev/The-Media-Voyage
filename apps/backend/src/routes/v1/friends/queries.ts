@@ -13,6 +13,7 @@ import type {
 import { and, count, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "../../../db/db";
 import { notFound } from "../../../errors";
+import { canViewEntry } from "./policy";
 import {
   commentRecordSelect,
   friendMediaDetailedSelect,
@@ -97,17 +98,18 @@ export async function requireViewableUserMedia(
     .limit(1);
 
   if (!entry) throw notFound("Entry not found");
-  if (entry.ownerId === viewerId) return entry;
-  if (entry.visibility === "public") return entry;
 
-  if (
-    entry.visibility === "friends" &&
-    (await areFriends(viewerId, entry.ownerId))
-  ) {
-    return entry;
+  // Only pay for the friendship lookup when the rule actually depends on it.
+  const isFriend =
+    entry.ownerId !== viewerId && entry.visibility === "friends"
+      ? await areFriends(viewerId, entry.ownerId)
+      : false;
+
+  if (!canViewEntry(viewerId, entry, isFriend)) {
+    throw notFound("Entry not found");
   }
 
-  throw notFound("Entry not found");
+  return entry;
 }
 
 async function countSharedEntries(friendIds: string[]) {
