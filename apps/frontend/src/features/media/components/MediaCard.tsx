@@ -49,6 +49,10 @@ interface MediaCardProps {
   media: MediaRecord;
   onView?: (id: string) => void;
   onEdit?: (id: string) => void;
+  /** Someone else's entry: no quick actions, no edit. */
+  readOnly?: boolean;
+  /** Replaces the Edit button — used for social counts on friends' entries. */
+  footerRight?: React.ReactNode;
 }
 
 const statuses: Array<{ value: Status; label: string }> = [
@@ -60,7 +64,13 @@ const statuses: Array<{ value: Status; label: string }> = [
   { value: "dropped", label: "Dropped" },
 ];
 
-export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
+export function MediaCard({
+  media,
+  onView,
+  onEdit,
+  readOnly,
+  footerRight,
+}: MediaCardProps) {
   const queryClient = useQueryClient();
   const reduceMotion = useReducedMotion();
   const sourceColorMap = useSourceColorMap();
@@ -265,7 +275,7 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
               {media.favorite && (
                 <IconHeartFilled size={18} color="red" aria-label="Favorite" />
               )}
-              {renderQuickActionsMenu()}
+              {!readOnly && renderQuickActionsMenu()}
             </Group>
           </Group>
 
@@ -335,15 +345,18 @@ export function MediaCard({ media, onView, onEdit }: MediaCardProps) {
             Updated {dayjs(media.updatedAt).format("MMM DD, YYYY")}
           </Text>
 
-          <Button
-            size="xs"
-            onClick={(event) => {
-              event.stopPropagation();
-              onEdit?.(media.id);
-            }}
-          >
-            Edit
-          </Button>
+          {footerRight ??
+            (!readOnly && (
+              <Button
+                size="xs"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onEdit?.(media.id);
+                }}
+              >
+                Edit
+              </Button>
+            ))}
         </Group>
       </Stack>
     </Card>

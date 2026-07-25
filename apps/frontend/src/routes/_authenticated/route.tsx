@@ -2,6 +2,7 @@ import {
   ActionIcon,
   AppShell,
   Avatar,
+  Badge,
   Box,
   Burger,
   Button,
@@ -23,11 +24,13 @@ import {
   IconHelp,
   IconLogout,
   IconPlus,
+  IconSettings,
   IconTags,
   IconTrendingUp,
   IconUser,
+  IconUsers,
 } from "@tabler/icons-react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import {
   createFileRoute,
   Outlet,
@@ -36,10 +39,11 @@ import {
 } from "@tanstack/react-router";
 import { motion, useReducedMotion } from "motion/react";
 import { collectionQueryOptions } from "#/features/mediaCollection/queries";
+import { friendRequestsQueryOptions } from "#/features/friends/queries";
 import { getSession } from "#/auth/session";
 import { authClient } from "#/auth/authClient";
 import { ShortcutsHelpModal } from "#/components/ShortcutsHelpModal";
-import { ThemeSwitcher, ThemeOptionsList } from "#/theme/ThemeSwitcher";
+import { ThemeSwitcher } from "#/theme/ThemeSwitcher";
 
 const SIDEBAR_ACTIVE_PILL_ID = "sidebar-active-pill";
 
@@ -80,6 +84,10 @@ export const Route = createFileRoute("/_authenticated")({
     if (!session) {
       throw redirect({ to: "/auth/login" });
     }
+
+    // Exposed to child routes so forms can read account preferences (e.g.
+    // defaultVisibility) synchronously, without a session-loading flicker.
+    return { session };
   },
   loader: ({ context: { queryClient } }) => {
     queryClient.ensureQueryData(collectionQueryOptions);
@@ -93,7 +101,9 @@ function RouteComponent() {
   const [shortcutsOpened, { open: openShortcuts, close: closeShortcuts }] =
     useDisclosure();
   const { data: collections } = useSuspenseQuery(collectionQueryOptions);
+  const { data: friendRequests } = useQuery(friendRequestsQueryOptions);
   const { pathname } = useLocation();
+  const pendingRequests = friendRequests?.incoming.length ?? 0;
 
   const isActive = (path: string, exact = false) =>
     exact ? pathname === path : pathname.startsWith(path);
@@ -255,6 +265,23 @@ function RouteComponent() {
             />
 
             <SidebarNavLink
+              label="Friends"
+              leftSection={<IconUsers size={19} />}
+              rightSection={
+                pendingRequests > 0 ? (
+                  <Badge size="sm" circle>
+                    {pendingRequests}
+                  </Badge>
+                ) : undefined
+              }
+              active={isActive("/friends")}
+              onClick={() => {
+                navigate({ to: "/friends" });
+                close();
+              }}
+            />
+
+            <SidebarNavLink
               label="Tag Management"
               leftSection={<IconTags size={19} />}
               active={isActive("/tags")}
@@ -280,6 +307,16 @@ function RouteComponent() {
               active={isActive("/profile")}
               onClick={() => {
                 navigate({ to: "/profile" });
+                close();
+              }}
+            />
+
+            <SidebarNavLink
+              label="Settings"
+              leftSection={<IconSettings size={19} />}
+              active={isActive("/settings")}
+              onClick={() => {
+                navigate({ to: "/settings" });
                 close();
               }}
             />
@@ -325,13 +362,6 @@ function RouteComponent() {
           <Box hiddenFrom="md" mt="auto">
             <Divider my="md" />
             <Stack gap="xs">
-              {/* <Box hiddenFrom="sm">
-                <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb={6}>
-                  Theme
-                </Text>
-                <ThemeOptionsList />
-                <Divider my="xs" />
-              </Box> */}
               <Button
                 leftSection={<IconPlus size={16} />}
                 onClick={() => {
@@ -351,6 +381,17 @@ function RouteComponent() {
                 }}
               >
                 My profile
+              </Button>
+              <Button
+                variant="light"
+                color="gray"
+                leftSection={<IconSettings size={16} />}
+                onClick={() => {
+                  navigate({ to: "/settings" });
+                  close();
+                }}
+              >
+                Settings
               </Button>
               <Button
                 variant="subtle"

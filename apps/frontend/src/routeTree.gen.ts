@@ -15,15 +15,20 @@ import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthenticatedTagsRouteImport } from './routes/_authenticated/tags'
 import { Route as AuthenticatedSourcesRouteImport } from './routes/_authenticated/sources'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedMediaIndexRouteImport } from './routes/_authenticated/media/index'
+import { Route as AuthenticatedFriendsIndexRouteImport } from './routes/_authenticated/friends/index'
 import { Route as AuthenticatedCollectionIndexRouteImport } from './routes/_authenticated/collection/index'
+import { Route as AuthenticatedFriendsUserIdRouteImport } from './routes/_authenticated/friends/$userId'
 import { Route as AuthenticatedCollectionAddRouteImport } from './routes/_authenticated/collection/add'
 import { Route as AuthenticatedMediaFormsRouteRouteImport } from './routes/_authenticated/media/_forms/route'
 import { Route as AuthenticatedMediaViewIdRouteImport } from './routes/_authenticated/media/view.$id'
 import { Route as AuthenticatedMediaFormsAddRouteImport } from './routes/_authenticated/media/_forms/add'
+import { Route as AuthenticatedFriendsMediaIdRouteImport } from './routes/_authenticated/friends/media.$id'
+import { Route as AuthenticatedFriendsCollectionsCollectionIdRouteImport } from './routes/_authenticated/friends/collections.$collectionId'
 import { Route as AuthenticatedCollectionViewIdRouteImport } from './routes/_authenticated/collection/view.$id'
 import { Route as AuthenticatedCollectionEditIdRouteImport } from './routes/_authenticated/collection/edit.$id'
 import { Route as AuthenticatedMediaFormsUpdateIdRouteImport } from './routes/_authenticated/media/_forms/update.$id'
@@ -57,6 +62,11 @@ const AuthenticatedSourcesRoute = AuthenticatedSourcesRouteImport.update({
   path: '/sources',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -77,10 +87,22 @@ const AuthenticatedMediaIndexRoute = AuthenticatedMediaIndexRouteImport.update({
   path: '/media/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFriendsIndexRoute =
+  AuthenticatedFriendsIndexRouteImport.update({
+    id: '/friends/',
+    path: '/friends/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCollectionIndexRoute =
   AuthenticatedCollectionIndexRouteImport.update({
     id: '/collection/',
     path: '/collection/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFriendsUserIdRoute =
+  AuthenticatedFriendsUserIdRouteImport.update({
+    id: '/friends/$userId',
+    path: '/friends/$userId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedCollectionAddRoute =
@@ -107,6 +129,18 @@ const AuthenticatedMediaFormsAddRoute =
     path: '/add',
     getParentRoute: () => AuthenticatedMediaFormsRouteRoute,
   } as any)
+const AuthenticatedFriendsMediaIdRoute =
+  AuthenticatedFriendsMediaIdRouteImport.update({
+    id: '/friends/media/$id',
+    path: '/friends/media/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFriendsCollectionsCollectionIdRoute =
+  AuthenticatedFriendsCollectionsCollectionIdRouteImport.update({
+    id: '/friends/collections/$collectionId',
+    path: '/friends/collections/$collectionId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCollectionViewIdRoute =
   AuthenticatedCollectionViewIdRouteImport.update({
     id: '/collection/view/$id',
@@ -131,16 +165,21 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof AuthenticatedCalendarRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/sources': typeof AuthenticatedSourcesRoute
   '/tags': typeof AuthenticatedTagsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/media': typeof AuthenticatedMediaFormsRouteRouteWithChildren
   '/collection/add': typeof AuthenticatedCollectionAddRoute
+  '/friends/$userId': typeof AuthenticatedFriendsUserIdRoute
   '/collection/': typeof AuthenticatedCollectionIndexRoute
+  '/friends/': typeof AuthenticatedFriendsIndexRoute
   '/media/': typeof AuthenticatedMediaIndexRoute
   '/collection/edit/$id': typeof AuthenticatedCollectionEditIdRoute
   '/collection/view/$id': typeof AuthenticatedCollectionViewIdRoute
+  '/friends/collections/$collectionId': typeof AuthenticatedFriendsCollectionsCollectionIdRoute
+  '/friends/media/$id': typeof AuthenticatedFriendsMediaIdRoute
   '/media/add': typeof AuthenticatedMediaFormsAddRoute
   '/media/view/$id': typeof AuthenticatedMediaViewIdRoute
   '/media/update/$id': typeof AuthenticatedMediaFormsUpdateIdRoute
@@ -150,15 +189,20 @@ export interface FileRoutesByTo {
   '/calendar': typeof AuthenticatedCalendarRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/sources': typeof AuthenticatedSourcesRoute
   '/tags': typeof AuthenticatedTagsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/media': typeof AuthenticatedMediaIndexRoute
   '/collection/add': typeof AuthenticatedCollectionAddRoute
+  '/friends/$userId': typeof AuthenticatedFriendsUserIdRoute
   '/collection': typeof AuthenticatedCollectionIndexRoute
+  '/friends': typeof AuthenticatedFriendsIndexRoute
   '/collection/edit/$id': typeof AuthenticatedCollectionEditIdRoute
   '/collection/view/$id': typeof AuthenticatedCollectionViewIdRoute
+  '/friends/collections/$collectionId': typeof AuthenticatedFriendsCollectionsCollectionIdRoute
+  '/friends/media/$id': typeof AuthenticatedFriendsMediaIdRoute
   '/media/add': typeof AuthenticatedMediaFormsAddRoute
   '/media/view/$id': typeof AuthenticatedMediaViewIdRoute
   '/media/update/$id': typeof AuthenticatedMediaFormsUpdateIdRoute
@@ -170,16 +214,21 @@ export interface FileRoutesById {
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/sources': typeof AuthenticatedSourcesRoute
   '/_authenticated/tags': typeof AuthenticatedTagsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/_authenticated/media/_forms': typeof AuthenticatedMediaFormsRouteRouteWithChildren
   '/_authenticated/collection/add': typeof AuthenticatedCollectionAddRoute
+  '/_authenticated/friends/$userId': typeof AuthenticatedFriendsUserIdRoute
   '/_authenticated/collection/': typeof AuthenticatedCollectionIndexRoute
+  '/_authenticated/friends/': typeof AuthenticatedFriendsIndexRoute
   '/_authenticated/media/': typeof AuthenticatedMediaIndexRoute
   '/_authenticated/collection/edit/$id': typeof AuthenticatedCollectionEditIdRoute
   '/_authenticated/collection/view/$id': typeof AuthenticatedCollectionViewIdRoute
+  '/_authenticated/friends/collections/$collectionId': typeof AuthenticatedFriendsCollectionsCollectionIdRoute
+  '/_authenticated/friends/media/$id': typeof AuthenticatedFriendsMediaIdRoute
   '/_authenticated/media/_forms/add': typeof AuthenticatedMediaFormsAddRoute
   '/_authenticated/media/view/$id': typeof AuthenticatedMediaViewIdRoute
   '/_authenticated/media/_forms/update/$id': typeof AuthenticatedMediaFormsUpdateIdRoute
@@ -191,16 +240,21 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/dashboard'
     | '/profile'
+    | '/settings'
     | '/sources'
     | '/tags'
     | '/auth/login'
     | '/auth/register'
     | '/media'
     | '/collection/add'
+    | '/friends/$userId'
     | '/collection/'
+    | '/friends/'
     | '/media/'
     | '/collection/edit/$id'
     | '/collection/view/$id'
+    | '/friends/collections/$collectionId'
+    | '/friends/media/$id'
     | '/media/add'
     | '/media/view/$id'
     | '/media/update/$id'
@@ -210,15 +264,20 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/dashboard'
     | '/profile'
+    | '/settings'
     | '/sources'
     | '/tags'
     | '/auth/login'
     | '/auth/register'
     | '/media'
     | '/collection/add'
+    | '/friends/$userId'
     | '/collection'
+    | '/friends'
     | '/collection/edit/$id'
     | '/collection/view/$id'
+    | '/friends/collections/$collectionId'
+    | '/friends/media/$id'
     | '/media/add'
     | '/media/view/$id'
     | '/media/update/$id'
@@ -229,16 +288,21 @@ export interface FileRouteTypes {
     | '/_authenticated/calendar'
     | '/_authenticated/dashboard'
     | '/_authenticated/profile'
+    | '/_authenticated/settings'
     | '/_authenticated/sources'
     | '/_authenticated/tags'
     | '/auth/login'
     | '/auth/register'
     | '/_authenticated/media/_forms'
     | '/_authenticated/collection/add'
+    | '/_authenticated/friends/$userId'
     | '/_authenticated/collection/'
+    | '/_authenticated/friends/'
     | '/_authenticated/media/'
     | '/_authenticated/collection/edit/$id'
     | '/_authenticated/collection/view/$id'
+    | '/_authenticated/friends/collections/$collectionId'
+    | '/_authenticated/friends/media/$id'
     | '/_authenticated/media/_forms/add'
     | '/_authenticated/media/view/$id'
     | '/_authenticated/media/_forms/update/$id'
@@ -295,6 +359,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSourcesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/profile': {
       id: '/_authenticated/profile'
       path: '/profile'
@@ -323,11 +394,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMediaIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/friends/': {
+      id: '/_authenticated/friends/'
+      path: '/friends'
+      fullPath: '/friends/'
+      preLoaderRoute: typeof AuthenticatedFriendsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/collection/': {
       id: '/_authenticated/collection/'
       path: '/collection'
       fullPath: '/collection/'
       preLoaderRoute: typeof AuthenticatedCollectionIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/friends/$userId': {
+      id: '/_authenticated/friends/$userId'
+      path: '/friends/$userId'
+      fullPath: '/friends/$userId'
+      preLoaderRoute: typeof AuthenticatedFriendsUserIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/collection/add': {
@@ -357,6 +442,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/media/add'
       preLoaderRoute: typeof AuthenticatedMediaFormsAddRouteImport
       parentRoute: typeof AuthenticatedMediaFormsRouteRoute
+    }
+    '/_authenticated/friends/media/$id': {
+      id: '/_authenticated/friends/media/$id'
+      path: '/friends/media/$id'
+      fullPath: '/friends/media/$id'
+      preLoaderRoute: typeof AuthenticatedFriendsMediaIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/friends/collections/$collectionId': {
+      id: '/_authenticated/friends/collections/$collectionId'
+      path: '/friends/collections/$collectionId'
+      fullPath: '/friends/collections/$collectionId'
+      preLoaderRoute: typeof AuthenticatedFriendsCollectionsCollectionIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/collection/view/$id': {
       id: '/_authenticated/collection/view/$id'
@@ -402,14 +501,19 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSourcesRoute: typeof AuthenticatedSourcesRoute
   AuthenticatedTagsRoute: typeof AuthenticatedTagsRoute
   AuthenticatedMediaFormsRouteRoute: typeof AuthenticatedMediaFormsRouteRouteWithChildren
   AuthenticatedCollectionAddRoute: typeof AuthenticatedCollectionAddRoute
+  AuthenticatedFriendsUserIdRoute: typeof AuthenticatedFriendsUserIdRoute
   AuthenticatedCollectionIndexRoute: typeof AuthenticatedCollectionIndexRoute
+  AuthenticatedFriendsIndexRoute: typeof AuthenticatedFriendsIndexRoute
   AuthenticatedMediaIndexRoute: typeof AuthenticatedMediaIndexRoute
   AuthenticatedCollectionEditIdRoute: typeof AuthenticatedCollectionEditIdRoute
   AuthenticatedCollectionViewIdRoute: typeof AuthenticatedCollectionViewIdRoute
+  AuthenticatedFriendsCollectionsCollectionIdRoute: typeof AuthenticatedFriendsCollectionsCollectionIdRoute
+  AuthenticatedFriendsMediaIdRoute: typeof AuthenticatedFriendsMediaIdRoute
   AuthenticatedMediaViewIdRoute: typeof AuthenticatedMediaViewIdRoute
 }
 
@@ -417,15 +521,21 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSourcesRoute: AuthenticatedSourcesRoute,
   AuthenticatedTagsRoute: AuthenticatedTagsRoute,
   AuthenticatedMediaFormsRouteRoute:
     AuthenticatedMediaFormsRouteRouteWithChildren,
   AuthenticatedCollectionAddRoute: AuthenticatedCollectionAddRoute,
+  AuthenticatedFriendsUserIdRoute: AuthenticatedFriendsUserIdRoute,
   AuthenticatedCollectionIndexRoute: AuthenticatedCollectionIndexRoute,
+  AuthenticatedFriendsIndexRoute: AuthenticatedFriendsIndexRoute,
   AuthenticatedMediaIndexRoute: AuthenticatedMediaIndexRoute,
   AuthenticatedCollectionEditIdRoute: AuthenticatedCollectionEditIdRoute,
   AuthenticatedCollectionViewIdRoute: AuthenticatedCollectionViewIdRoute,
+  AuthenticatedFriendsCollectionsCollectionIdRoute:
+    AuthenticatedFriendsCollectionsCollectionIdRoute,
+  AuthenticatedFriendsMediaIdRoute: AuthenticatedFriendsMediaIdRoute,
   AuthenticatedMediaViewIdRoute: AuthenticatedMediaViewIdRoute,
 }
 

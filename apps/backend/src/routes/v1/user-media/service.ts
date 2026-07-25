@@ -2,6 +2,7 @@ import {
   media,
   sources,
   tags,
+  user,
   userMedia,
   userMediaStatusHistory,
   userMediaTags,
@@ -123,6 +124,20 @@ async function resolveSourceId(
   return created.id;
 }
 
+/**
+ * New entries inherit the account's default visibility unless the form set one
+ * explicitly, so sharing a library doesn't mean revisiting every new addition.
+ */
+async function resolveDefaultVisibility(tx: DbTransaction, userId: string) {
+  const [row] = await tx
+    .select({ defaultVisibility: user.defaultVisibility })
+    .from(user)
+    .where(eq(user.id, userId))
+    .limit(1);
+
+  return row?.defaultVisibility ?? "private";
+}
+
 export async function createUserMedia(
   userId: string,
   input: UserMediaFormSchema,
@@ -175,7 +190,8 @@ export async function createUserMedia(
         rewatches: input.rewatches,
         timeSpent: input.timeSpent,
         sourceId: sourceId ?? null,
-        visibility: input.visibility,
+        visibility:
+          input.visibility ?? (await resolveDefaultVisibility(tx, userId)),
         customFields: input.customFields,
         seasonsProgress: input.seasonsProgress,
       })

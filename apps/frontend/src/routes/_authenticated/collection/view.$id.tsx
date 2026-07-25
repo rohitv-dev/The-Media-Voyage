@@ -1,4 +1,5 @@
 import { MediaCard } from "#/features/media/components/MediaCard";
+import { CollectionVisibilityControl } from "#/features/mediaCollection/components/CollectionVisibilityControl";
 import { EmptyState } from "#/components/EmptyState";
 import {
   collectionItemsDetailedQueryOptions,
@@ -91,13 +92,17 @@ function RouteComponent() {
               </Text>
             </Stack>
 
-            <Button
-              variant="light"
-              leftSection={<IconEdit size={16} />}
-              onClick={goToEdit}
-            >
-              Edit collection
-            </Button>
+            <Group gap="md" wrap="wrap">
+              <CollectionVisibilityControl collection={collection} />
+
+              <Button
+                variant="light"
+                leftSection={<IconEdit size={16} />}
+                onClick={goToEdit}
+              >
+                Edit collection
+              </Button>
+            </Group>
           </Group>
         </Stack>
 

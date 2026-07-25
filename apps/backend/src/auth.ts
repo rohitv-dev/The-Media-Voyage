@@ -15,6 +15,17 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  user: {
+    additionalFields: {
+      // Visibility applied to newly created library entries. Surfaced in the
+      // session so the profile screen can read and update it directly.
+      defaultVisibility: {
+        type: "string",
+        required: false,
+        defaultValue: "private",
+      },
+    },
+  },
   baseURL: env.BETTER_AUTH_URL,
   secret: env.BETTER_AUTH_SECRET,
   session: {

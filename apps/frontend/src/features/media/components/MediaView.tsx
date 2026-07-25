@@ -102,8 +102,36 @@ function ReadingPanel({
   );
 }
 
-export function MediaView({ data }: { data: MediaDetailedRecord }) {
+/**
+ * Friend-facing payloads omit `notes` (owner-only) and `visibility`, so both
+ * keys are optional here while an owner's full record stays assignable.
+ */
+type MediaViewData = Omit<MediaDetailedRecord, "notes" | "visibility"> &
+  Partial<Pick<MediaDetailedRecord, "notes" | "visibility">>;
+
+type MediaViewProps = {
+  data: MediaViewData;
+  /** Hides the owner-only Update action. */
+  readOnly?: boolean;
+  onBack?: () => void;
+  backLabel?: string;
+  /** Overrides the "<type> / library entry" kicker above the title. */
+  eyebrow?: string;
+  /** Rendered below the review/notes panels — used for the social panel. */
+  footer?: React.ReactNode;
+};
+
+export function MediaView({
+  data,
+  readOnly,
+  onBack,
+  backLabel = "Back to library",
+  eyebrow,
+  footer,
+}: MediaViewProps) {
   const navigate = useNavigate();
+  // Absent (rather than empty) notes mean the viewer isn't the owner.
+  const showNotes = data.notes !== undefined;
   const reducedMotion = useReducedMotion() ?? false;
   const progress = Math.min(100, Math.max(0, data.progress ?? 0));
   const sourceColorMap = useSourceColorMap();
@@ -139,9 +167,9 @@ export function MediaView({ data }: { data: MediaDetailedRecord }) {
           px={0}
           fw={600}
           style={{ alignSelf: "flex-start" }}
-          onClick={() => navigate({ to: "/media" })}
+          onClick={() => (onBack ? onBack() : navigate({ to: "/media" }))}
         >
-          Back to library
+          {backLabel}
         </Button>
 
         <motion.div
@@ -204,7 +232,7 @@ export function MediaView({ data }: { data: MediaDetailedRecord }) {
                     mb="xs"
                     style={{ letterSpacing: "0.05em", color: accentText }}
                   >
-                    {capitalizeWords(data.type)} / library entry
+                    {eyebrow ?? `${capitalizeWords(data.type)} / library entry`}
                   </Text>
 
                   <Group
@@ -223,19 +251,21 @@ export function MediaView({ data }: { data: MediaDetailedRecord }) {
                     >
                       {data.title}
                     </Title>
-                    <Button
-                      w={{ base: "100%", xs: "auto" }}
-                      flex="0 0 auto"
-                      leftSection={<IconEdit size={16} />}
-                      onClick={() =>
-                        navigate({
-                          to: "/media/update/$id",
-                          params: { id: data.id },
-                        })
-                      }
-                    >
-                      Update
-                    </Button>
+                    {!readOnly && (
+                      <Button
+                        w={{ base: "100%", xs: "auto" }}
+                        flex="0 0 auto"
+                        leftSection={<IconEdit size={16} />}
+                        onClick={() =>
+                          navigate({
+                            to: "/media/update/$id",
+                            params: { id: data.id },
+                          })
+                        }
+                      >
+                        Update
+                      </Button>
+                    )}
                   </Group>
 
                   <Group gap={6} mt={{ base: "sm", sm: "md" }}>
@@ -306,7 +336,11 @@ export function MediaView({ data }: { data: MediaDetailedRecord }) {
                           )}
                         </ThemeIcon>
                         <Text size="xs" fw={700}>
-                          {progress === 100 ? "Completed" : "Your progress"}
+                          {progress === 100
+                            ? "Completed"
+                            : readOnly
+                              ? "Progress"
+                              : "Your progress"}
                         </Text>
                       </Group>
                       <Text size="xs" c="dimmed" fw={700}>
@@ -436,7 +470,7 @@ export function MediaView({ data }: { data: MediaDetailedRecord }) {
           </Paper>
         )}
 
-        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+        <SimpleGrid cols={{ base: 1, sm: showNotes ? 2 : 1 }} spacing="md">
           <ReadingPanel
             icon={<IconQuote size={17} />}
             title="Review"
@@ -444,14 +478,18 @@ export function MediaView({ data }: { data: MediaDetailedRecord }) {
           >
             {data.review?.trim() || "No review has been added yet."}
           </ReadingPanel>
-          <ReadingPanel
-            icon={<IconNotebook size={17} />}
-            title="Notes"
-            reducedMotion={reducedMotion}
-          >
-            {data.notes?.trim() || "No notes have been added yet."}
-          </ReadingPanel>
+          {showNotes && (
+            <ReadingPanel
+              icon={<IconNotebook size={17} />}
+              title="Notes"
+              reducedMotion={reducedMotion}
+            >
+              {data.notes?.trim() || "No notes have been added yet."}
+            </ReadingPanel>
+          )}
         </SimpleGrid>
+
+        {footer}
       </Stack>
     </Container>
   );

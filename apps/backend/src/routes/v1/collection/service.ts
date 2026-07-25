@@ -1,6 +1,12 @@
-import { mediaCollection } from "@media-voyage/shared";
-import type { MediaCollectionFormSchema } from "@media-voyage/shared/api";
+import { mediaCollection, userMedia } from "@media-voyage/shared";
+import type {
+  MediaCollectionFormSchema,
+  MediaCollectionUpdateSchema,
+} from "@media-voyage/shared/api";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "../../../db/db";
+import { isStricterThan } from "../friends/policy";
+import { requireOwnedCollection, userMediaInCollection } from "./queries";
 
 export async function createMediaCollection(
   userId: string,
@@ -17,4 +23,73 @@ export async function createMediaCollection(
     .returning();
 
   return collection;
+}
+
+export async function updateMediaCollection(
+  userId: string,
+  collectionId: string,
+  input: MediaCollectionUpdateSchema,
+) {
+  await requireOwnedCollection(userId, collectionId);
+
+  const [collection] = await db
+    .update(mediaCollection)
+    .set({ ...input, updatedAt: new Date() })
+    .where(
+      and(
+        eq(mediaCollection.id, collectionId),
+        eq(mediaCollection.userId, userId),
+      ),
+    )
+    .returning();
+
+  return collection;
+}
+
+/**
+ * Widens entries in a collection that are stricter than the collection itself,
+ * bringing them up to its visibility. Only ever called after the owner has
+ * explicitly confirmed — a collection's visibility never overrides an entry's
+ * own on read.
+ */
+export async function bumpCollectionEntryVisibility(
+  userId: string,
+  collectionId: string,
+) {
+  const collection = await requireOwnedCollection(userId, collectionId);
+  const target = collection.visibility;
+
+  // A private collection shares nothing, so there is nothing to widen to.
+  if (!target || target === "private") return { updated: 0 };
+
+  const candidates = await db
+    .select({ id: userMedia.id, visibility: userMedia.visibility })
+    .from(userMedia)
+    .where(
+      and(
+        eq(userMedia.userId, userId),
+        userMediaInCollection(collectionId),
+        isNull(userMedia.deletedAt),
+      ),
+    );
+
+  const stricterIds = candidates
+    .filter((entry) => isStricterThan(entry.visibility, target))
+    .map((entry) => entry.id);
+
+  if (!stricterIds.length) return { updated: 0 };
+
+  const updated = await db
+    .update(userMedia)
+    .set({ visibility: target, updatedAt: new Date() })
+    .where(
+      and(
+        eq(userMedia.userId, userId),
+        isNull(userMedia.deletedAt),
+        inArray(userMedia.id, stricterIds),
+      ),
+    )
+    .returning({ id: userMedia.id });
+
+  return { updated: updated.length };
 }
