@@ -19,6 +19,21 @@ export interface OmdbMedia {
   Poster: string;
 }
 
+export interface OmdbMovie extends OmdbMedia {
+  Plot?: string;
+}
+
+export interface OmdbShow extends OmdbMedia {
+  Plot?: string;
+}
+
+export const omdbDetailsParamsSchema = z.object({
+  id: z.string().trim().min(1, "ID parameter is required"),
+});
+
+export type OmdbDetailsParams = z.infer<typeof omdbDetailsParamsSchema>;
+
+
 export interface OmdbRating {
   Source: string;
   Value: string;

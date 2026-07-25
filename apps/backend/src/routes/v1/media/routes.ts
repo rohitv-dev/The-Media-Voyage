@@ -1,7 +1,10 @@
-import { mediaSearchQuerySchema } from "@media-voyage/shared/api";
+import {
+  mediaSearchQuerySchema,
+  omdbDetailsParamsSchema,
+} from "@media-voyage/shared/api";
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../../../require-auth";
-import { searchMedia } from "./service";
+import { getOmdbMediaDetails, searchMedia } from "./service";
 
 async function mediaRoutes(fastify: FastifyInstance) {
   fastify.addHook("preHandler", requireAuth);
@@ -21,6 +24,23 @@ async function mediaRoutes(fastify: FastifyInstance) {
       return reply.send(await searchMedia(query));
     },
   );
+
+  fastify.get(
+    "/omdb/:id",
+    {
+      config: {
+        rateLimit: {
+          max: 20,
+          timeWindow: "1 minute",
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = omdbDetailsParamsSchema.parse(request.params);
+      return reply.send(await getOmdbMediaDetails(id));
+    },
+  );
 }
 
 export default mediaRoutes;
+

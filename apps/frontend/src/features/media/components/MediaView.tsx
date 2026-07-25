@@ -184,24 +184,8 @@ export function MediaView({
               position: "relative",
               overflow: "hidden",
               borderColor: defaultBorder,
-              background:
-                "radial-gradient(circle at 96% 0%, light-dark(rgba(99, 102, 241, 0.14), rgba(129, 140, 248, 0.18)), transparent 30%), linear-gradient(135deg, var(--mantine-color-default) 0%, var(--mantine-color-body) 100%)",
             }}
           >
-            <Box
-              pos="absolute"
-              top={-92}
-              right={-72}
-              w={220}
-              h={220}
-              style={{
-                border:
-                  "1px solid light-dark(rgba(99, 102, 241, 0.14), rgba(129, 140, 248, 0.18))",
-                borderRadius: "50%",
-                pointerEvents: "none",
-              }}
-            />
-
             <Grid
               gap={{ base: "sm", sm: "lg" }}
               align="flex-start"

@@ -1,5 +1,7 @@
 import type {
   MediaDetailedRecord,
+  OmdbMovie,
+  OmdbShow,
   SourceMediaRecord,
   UserMediaDropdowns,
   UserMediaFormSchema,
@@ -28,6 +30,7 @@ import { StatusDetailsSection } from "./StatusDetailsSection";
 const addInitialValues: UserMediaFormSchema = {
   title: "",
   type: "movie",
+  description: undefined,
 
   status: "planned",
   rating: undefined,
@@ -122,6 +125,7 @@ export function MediaForm(props: MediaFormProps) {
 
     form.setFieldValue("type", type);
     form.setFieldValue("title", "");
+    form.setFieldValue("description", undefined);
     setSearch("");
     setMediaRecord(null);
   };
@@ -130,20 +134,35 @@ export function MediaForm(props: MediaFormProps) {
     if (!isAddMode) event.stopPropagation();
   };
 
-  const handleTitleChange = (record: SourceMediaRecord | null) => {
+  const handleTitleChange = async (record: SourceMediaRecord | null) => {
     setMediaRecord(record);
+    form.setFieldValue("description", undefined);
+
     if (record) {
       form.setFieldValue("title", record.title);
       form.setFieldValue("type", record.type);
+
+      if (record.source === "omdb" && record.externalId) {
+        const details = await api<OmdbMovie | OmdbShow>(
+          `/media/omdb/${record.externalId}`,
+        );
+        if (details.Plot) {
+          form.setFieldValue("description", details.Plot);
+        }
+      }
     }
   };
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
     form.setFieldValue("title", value);
-    setMediaRecord((current) =>
-      current && current.title !== value ? null : current,
-    );
+    setMediaRecord((current) => {
+      if (current && current.title !== value) {
+        form.setFieldValue("description", undefined);
+        return null;
+      }
+      return current;
+    });
   };
 
   const saveMutation = useMutation({
@@ -160,6 +179,7 @@ export function MediaForm(props: MediaFormProps) {
             externalId: mediaRecord?.externalId,
             imageUrl: mediaRecord?.imageUrl,
             mediaSource: mediaRecord?.source ?? "manual",
+            description: data.description,
           }),
         });
       }

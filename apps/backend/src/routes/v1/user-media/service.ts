@@ -53,7 +53,10 @@ async function syncUserMediaTags(
     .select()
     .from(tags)
     .where(
-      and(eq(tags.userId, userId), inArray(tags.normalizedName, normalizedNames)),
+      and(
+        eq(tags.userId, userId),
+        inArray(tags.normalizedName, normalizedNames),
+      ),
     );
 
   const existingByNormalized = new Map(
@@ -78,7 +81,10 @@ async function syncUserMediaTags(
     : [];
 
   const tagIdByNormalized = new Map(
-    [...existingTags, ...createdTags].map((tag) => [tag.normalizedName, tag.id]),
+    [...existingTags, ...createdTags].map((tag) => [
+      tag.normalizedName,
+      tag.id,
+    ]),
   );
 
   await tx
@@ -110,7 +116,10 @@ async function resolveSourceId(
     .select()
     .from(sources)
     .where(
-      and(eq(sources.userId, userId), eq(sources.normalizedName, normalizedName)),
+      and(
+        eq(sources.userId, userId),
+        eq(sources.normalizedName, normalizedName),
+      ),
     )
     .limit(1);
 
@@ -147,6 +156,7 @@ export async function createUserMedia(
     type,
     externalId,
     imageUrl,
+    description,
     mediaSource,
     tags: tagNames,
     source: sourceName,
@@ -154,6 +164,29 @@ export async function createUserMedia(
 
   return db.transaction(async (tx) => {
     let mediaId = input.mediaId;
+
+    if (!mediaId && externalId && mediaSource) {
+      const [existingMedia] = await tx
+        .select({ id: media.id, description: media.description })
+        .from(media)
+        .where(
+          and(
+            eq(media.source, mediaSource),
+            eq(media.externalId, externalId),
+          ),
+        )
+        .limit(1);
+
+      if (existingMedia) {
+        mediaId = existingMedia.id;
+        if (description && !existingMedia.description) {
+          await tx
+            .update(media)
+            .set({ description })
+            .where(eq(media.id, existingMedia.id));
+        }
+      }
+    }
 
     if (!mediaId) {
       const [createdMedia] = await tx
@@ -163,6 +196,7 @@ export async function createUserMedia(
           type,
           externalId: externalId || null,
           imageUrl,
+          description: description || null,
           source: mediaSource,
         })
         .returning({ id: media.id });
@@ -395,4 +429,15 @@ export async function updateUserMediaQuickActions(
 
     return { ...updated, ...catalogRecord };
   });
+}
+
+export async function deleteUserMedia(userId: string, id: string) {
+  const now = new Date();
+  const [deleted] = await db
+    .update(userMedia)
+    .set({ deletedAt: now, updatedAt: now })
+    .where(ownedUserMediaCondition(userId, id))
+    .returning({ id: userMedia.id });
+
+  return deleted ?? null;
 }

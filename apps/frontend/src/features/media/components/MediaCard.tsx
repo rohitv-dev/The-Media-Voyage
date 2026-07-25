@@ -1,4 +1,5 @@
 import { api } from "#/lib/api";
+import { confirmDelete } from "#/utils/confirmModal";
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -38,6 +39,7 @@ import {
   IconHeartFilled,
   IconClockPause,
   IconPhotoOff,
+  IconTrash,
 } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -111,11 +113,51 @@ export function MediaCard({
       ]),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: () =>
+      api<{ success: boolean }>(`/user-media/${media.id}`, {
+        method: "DELETE",
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["user-media"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] }),
+        queryClient.invalidateQueries({ queryKey: ["collection"] }),
+        queryClient.invalidateQueries({ queryKey: ["collection-items"] }),
+        queryClient.invalidateQueries({
+          queryKey: ["collection-items-detailed"],
+        }),
+      ]);
+      showSuccessNotification({
+        message: `Deleted "${media.title}"`,
+        autoClose: 1500,
+      });
+    },
+    onError: (error) =>
+      showErrorNotification({
+        title: "Delete failed",
+        message: error.message,
+      }),
+  });
+
   const runQuickAction = (action: UserMediaQuickAction) => {
-    if (quickActionMutation.isPending) return;
+    if (quickActionMutation.isPending || deleteMutation.isPending) return;
 
     quickActionMutation.mutate(action);
   };
+
+  const requestDelete = () => {
+    if (deleteMutation.isPending) return;
+
+    confirmDelete({
+      title: "Delete media",
+      message: `Are you sure you want to delete "${media.title}"? It will be removed from your library.`,
+      onConfirm: () => deleteMutation.mutate(),
+    });
+  };
+
+  const isActionPending =
+    quickActionMutation.isPending || deleteMutation.isPending;
 
   const openMedia = () => onView?.(media.id);
 
@@ -135,8 +177,8 @@ export function MediaCard({
           variant="subtle"
           size="sm"
           aria-label={`Quick actions for ${media.title}`}
-          loading={quickActionMutation.isPending}
-          disabled={quickActionMutation.isPending}
+          loading={isActionPending}
+          disabled={isActionPending}
           onClick={(event) => event.stopPropagation()}
         >
           <IconDotsVertical size={17} />
@@ -153,7 +195,7 @@ export function MediaCard({
               <IconHeart size={16} />
             )
           }
-          disabled={quickActionMutation.isPending}
+          disabled={isActionPending}
           onClick={() => runQuickAction({ favorite: !media.favorite })}
         >
           {media.favorite ? "Remove favorite" : "Add to favorites"}
@@ -161,7 +203,7 @@ export function MediaCard({
 
         <Menu.Sub>
           <Menu.Sub.Target>
-            <Menu.Sub.Item disabled={quickActionMutation.isPending}>
+            <Menu.Sub.Item disabled={isActionPending}>
               Change status
             </Menu.Sub.Item>
           </Menu.Sub.Target>
@@ -176,7 +218,7 @@ export function MediaCard({
                   ) : undefined
                 }
                 onClick={() => runQuickAction({ status: status.value })}
-                disabled={quickActionMutation.isPending}
+                disabled={isActionPending}
               >
                 {status.label}
               </Menu.Item>
@@ -186,7 +228,7 @@ export function MediaCard({
 
         <Menu.Sub>
           <Menu.Sub.Target>
-            <Menu.Sub.Item disabled={quickActionMutation.isPending}>
+            <Menu.Sub.Item disabled={isActionPending}>
               Progress · {media.progress ?? 0}%
             </Menu.Sub.Item>
           </Menu.Sub.Target>
@@ -200,13 +242,23 @@ export function MediaCard({
                   ) : undefined
                 }
                 onClick={() => runQuickAction({ progress })}
-                disabled={quickActionMutation.isPending}
+                disabled={isActionPending}
               >
                 Set to {progress}%
               </Menu.Item>
             ))}
           </Menu.Sub.Dropdown>
         </Menu.Sub>
+
+        <Menu.Divider />
+        <Menu.Item
+          color="red"
+          leftSection={<IconTrash size={16} />}
+          disabled={isActionPending}
+          onClick={requestDelete}
+        >
+          Delete
+        </Menu.Item>
       </Menu.Dropdown>
     </Menu>
   );
@@ -222,9 +274,9 @@ export function MediaCard({
         reduceMotion
           ? undefined
           : {
-            y: -4,
-            boxShadow: "0 12px 30px rgba(0,0,0,0.15)",
-          }
+              y: -4,
+              boxShadow: "0 12px 30px rgba(0,0,0,0.15)",
+            }
       }
       transition={{ type: "spring", stiffness: 350, damping: 25 }}
       onClick={openMedia}
@@ -253,7 +305,10 @@ export function MediaCard({
               >
                 <IconPhotoOff
                   size={32}
-                  style={{ color: "var(--mantine-color-accent-6)", opacity: 0.6 }}
+                  style={{
+                    color: "var(--mantine-color-accent-6)",
+                    opacity: 0.6,
+                  }}
                 />
               </Box>
             )}
@@ -261,7 +316,12 @@ export function MediaCard({
         </Card.Section>
       )}
 
-      <Stack justify="space-between" h="100%" gap="sm" mt={hasCoverArt ? "sm" : "0"}>
+      <Stack
+        justify="space-between"
+        h="100%"
+        gap="sm"
+        mt={hasCoverArt ? "sm" : "0"}
+      >
         <Stack gap="sm">
           <Group justify="space-between" align="flex-start" wrap="nowrap">
             <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
@@ -315,27 +375,26 @@ export function MediaCard({
             </Stack>
           )}
 
-          {(media.status === "in_progress" ||
-            media.status === "on_hold") && (
-              <Stack gap={6} mt={4}>
-                <Group gap="xs" wrap="nowrap">
-                  <Progress value={media.progress ?? 0} flex={1} />
-                  <Text size="xs" c="dimmed" w={32} ta="right">
-                    {media.progress ?? 0}%
-                  </Text>
-                </Group>
-                {staleProgressDays !== null && (
-                  <Badge
-                    variant="light"
-                    size="sm"
-                    leftSection={<IconClockPause size={13} />}
-                    styles={{ root: { alignSelf: "flex-start" } }}
-                  >
-                    Resume? {staleProgressDays} days quiet
-                  </Badge>
-                )}
-              </Stack>
-            )}
+          {(media.status === "in_progress" || media.status === "on_hold") && (
+            <Stack gap={6} mt={4}>
+              <Group gap="xs" wrap="nowrap">
+                <Progress value={media.progress ?? 0} flex={1} />
+                <Text size="xs" c="dimmed" w={32} ta="right">
+                  {media.progress ?? 0}%
+                </Text>
+              </Group>
+              {staleProgressDays !== null && (
+                <Badge
+                  variant="light"
+                  size="sm"
+                  leftSection={<IconClockPause size={13} />}
+                  styles={{ root: { alignSelf: "flex-start" } }}
+                >
+                  Resume? {staleProgressDays} days quiet
+                </Badge>
+              )}
+            </Stack>
+          )}
         </Stack>
 
         <Group justify="space-between" align="flex-end" wrap="nowrap" gap="xs">
@@ -347,15 +406,33 @@ export function MediaCard({
 
           {footerRight ??
             (!readOnly && (
-              <Button
-                size="xs"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onEdit?.(media.id);
-                }}
-              >
-                Edit
-              </Button>
+              <Group gap="xs" wrap="nowrap">
+                {onEdit && (
+                  <Button
+                    size="xs"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onEdit(media.id);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                )}
+                <Button
+                  size="xs"
+                  variant="subtle"
+                  color="red"
+                  leftSection={<IconTrash size={14} />}
+                  loading={deleteMutation.isPending}
+                  disabled={isActionPending}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    requestDelete();
+                  }}
+                >
+                  Delete
+                </Button>
+              </Group>
             ))}
         </Group>
       </Stack>

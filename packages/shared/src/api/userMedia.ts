@@ -157,6 +157,7 @@ export const userMediaFormSchema = userMediaInsertSchema
       type: true,
       imageUrl: true,
       externalId: true,
+      description: true,
     }).shape,
   )
   .extend(

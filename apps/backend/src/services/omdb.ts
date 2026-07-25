@@ -1,6 +1,8 @@
 import {
   OmdbErrorResponse,
+  OmdbMovie,
   OmdbResponse,
+  OmdbShow,
   SourceMediaRecord,
 } from "@media-voyage/shared/api";
 import { MediaType } from "@media-voyage/shared/userMediaSchema";
@@ -22,9 +24,8 @@ export async function searchOmdb(query: string): Promise<SourceMediaRecord[]> {
 
   const response = await fetch(url);
 
-
   if (!response.ok) {
-    throw internalServerError("OMDb request failed")
+    throw internalServerError("OMDb request failed");
   }
 
   const data: OmdbResponse | OmdbErrorResponse = await response.json();
@@ -44,3 +45,27 @@ export async function searchOmdb(query: string): Promise<SourceMediaRecord[]> {
 
   return records;
 }
+
+export async function getOmdbDetails(
+  externalId: string,
+): Promise<OmdbMovie | OmdbShow | null> {
+  const url = new URL("https://www.omdbapi.com/");
+  url.searchParams.set("apikey", API_KEY);
+  url.searchParams.set("i", externalId);
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw internalServerError("OMDb request failed");
+  }
+
+  const data: (OmdbMovie | OmdbShow) & { Response?: string; Error?: string } =
+    await response.json();
+
+  if (data.Response === "False") {
+    return null;
+  }
+
+  return data;
+}
+

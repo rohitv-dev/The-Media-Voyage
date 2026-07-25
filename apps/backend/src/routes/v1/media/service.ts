@@ -1,9 +1,11 @@
 import type {
   MediaSearchQuery,
+  OmdbMovie,
+  OmdbShow,
   SourceMediaRecord,
 } from "@media-voyage/shared/api";
 import { searchGames } from "../../../services/igdb";
-import { searchOmdb } from "../../../services/omdb";
+import { getOmdbDetails, searchOmdb } from "../../../services/omdb";
 import { searchLocalMedia } from "./queries";
 
 export async function searchMedia(
@@ -37,3 +39,10 @@ export async function searchMedia(
 
   return [...localRecords, ...externalRecords];
 }
+
+export async function getOmdbMediaDetails(
+  externalId: string,
+): Promise<OmdbMovie | OmdbShow | null> {
+  return getOmdbDetails(externalId);
+}
+

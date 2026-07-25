@@ -23,6 +23,7 @@ import {
 } from "./queries";
 import {
   createUserMedia,
+  deleteUserMedia,
   updateUserMedia,
   updateUserMediaQuickActions,
 } from "./service";
@@ -60,6 +61,17 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     }
 
     return reply.send(record);
+  });
+
+  fastify.delete("/:id", async (request, reply) => {
+    const { id } = userMediaIdParamsSchema.parse(request.params);
+    const record = await deleteUserMedia(request.userId, id);
+
+    if (!record) {
+      return reply.status(404).send({ error: "User media not found" });
+    }
+
+    return reply.send({ success: true });
   });
 
   fastify.patch("/:id/quick-actions", async (request, reply) => {

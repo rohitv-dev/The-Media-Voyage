@@ -52,7 +52,10 @@ function userMediaIdsWithTags(userId: string, tagNames: string[]) {
     .from(userMediaTags)
     .innerJoin(tags, eq(tags.id, userMediaTags.tagId))
     .where(
-      and(eq(tags.userId, userId), inArray(tags.normalizedName, normalizedNames)),
+      and(
+        eq(tags.userId, userId),
+        inArray(tags.normalizedName, normalizedNames),
+      ),
     );
 }
 
@@ -242,7 +245,7 @@ export function listUserMedia(userId: string) {
     .select(userMediaSummarySelect)
     .from(userMedia)
     .innerJoin(media, eq(userMedia.mediaId, media.id))
-    .where(eq(userMedia.userId, userId))
+    .where(activeUserMediaCondition(userId))
     .orderBy(desc(userMedia.createdAt));
 }
 
@@ -250,7 +253,7 @@ export function getUserMediaCounts(userId: string) {
   return db
     .select({ status: userMedia.status, count: count() })
     .from(userMedia)
-    .where(eq(userMedia.userId, userId))
+    .where(activeUserMediaCondition(userId))
     .groupBy(userMedia.status);
 }
 
@@ -363,8 +366,8 @@ export async function getCalendarActivity(
           between(
             sql`${userMedia.startedAt}::date`,
             sql`${range.from}::date`,
-            sql`${range.to}::date`
-          )
+            sql`${range.to}::date`,
+          ),
         ),
       ),
     db
@@ -378,8 +381,8 @@ export async function getCalendarActivity(
           between(
             sql`${userMedia.completedAt}::date`,
             sql`${range.from}::date`,
-            sql`${range.to}::date`
-          )
+            sql`${range.to}::date`,
+          ),
         ),
       ),
     db
@@ -396,7 +399,7 @@ export async function getCalendarActivity(
           between(
             sql`${userMediaStatusHistory.changedAt}::date`,
             sql`${range.from}::date`,
-            sql`${range.to}::date`
+            sql`${range.to}::date`,
           ),
           notInArray(userMediaStatusHistory.toStatus, [
             "in_progress",
@@ -453,5 +456,5 @@ export function getUserMediaForExport(userId: string) {
     .select(userMediaExportSelect)
     .from(userMedia)
     .innerJoin(media, eq(userMedia.mediaId, media.id))
-    .where(eq(userMedia.userId, userId));
+    .where(activeUserMediaCondition(userId));
 }
