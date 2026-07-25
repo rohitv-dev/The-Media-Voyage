@@ -296,7 +296,7 @@ export function MediaView({
                     )}
                   </Group>
 
-                  {data.tags && data.tags.length > 0 && (
+                  {data.tags.length > 0 && (
                     <Group gap={6} mt="sm">
                       {data.tags.map((tag) => (
                         <Badge
@@ -405,12 +405,12 @@ export function MediaView({
                 Seasons
               </Text>
               <Text size="xs" c="dimmed">
-                {data.seasonsProgress?.length ?? 0} tracked
+                {data.seasonsProgress.length} tracked
               </Text>
             </Group>
 
             <Stack gap={0}>
-              {!data.seasonsProgress || data.seasonsProgress.length === 0 ? (
+              {data.seasonsProgress.length === 0 ? (
                 <Box p="md" style={{ borderTop: `1px solid ${defaultBorder}` }}>
                   <Text size="sm" c="dimmed">
                     No seasons tracked yet.

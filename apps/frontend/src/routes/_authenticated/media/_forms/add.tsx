@@ -16,7 +16,7 @@ function RouteComponent() {
     <MediaForm
       mode="add"
       dropdowns={data}
-      defaultVisibility={toVisibility(session?.user.defaultVisibility)}
+      defaultVisibility={toVisibility(session.user.defaultVisibility)}
     />
   );
 }

@@ -82,7 +82,6 @@ export function useFilterPresets() {
     });
     // Runs once per mount: dedupes any presets that share a name, then
     // backfills any of the built-in defaults that are still missing.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const savePreset = (

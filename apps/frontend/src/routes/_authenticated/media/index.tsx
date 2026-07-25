@@ -156,33 +156,35 @@ function RouteComponent() {
                 {isFetching && <Loader size="xs" />}
               </Group>
               <Group gap="xs">
-                {!isMdDown && <SegmentedControl
-                  size="xs"
-                  aria-label="Choose library view"
-                  value={view}
-                  onChange={setView}
-                  color="accent"
-                  data={[
-                    {
-                      value: "grid",
-                      label: (
-                        <Group gap={5} wrap="nowrap">
-                          <IconLayoutGrid size={15} />
-                          <Text size="xs">Grid</Text>
-                        </Group>
-                      ),
-                    },
-                    {
-                      value: "table",
-                      label: (
-                        <Group gap={5} wrap="nowrap">
-                          <IconTable size={15} />
-                          <Text size="xs">Table</Text>
-                        </Group>
-                      ),
-                    },
-                  ]}
-                />}
+                {!isMdDown && (
+                  <SegmentedControl
+                    size="xs"
+                    aria-label="Choose library view"
+                    value={view}
+                    onChange={setView}
+                    color="accent"
+                    data={[
+                      {
+                        value: "grid",
+                        label: (
+                          <Group gap={5} wrap="nowrap">
+                            <IconLayoutGrid size={15} />
+                            <Text size="xs">Grid</Text>
+                          </Group>
+                        ),
+                      },
+                      {
+                        value: "table",
+                        label: (
+                          <Group gap={5} wrap="nowrap">
+                            <IconTable size={15} />
+                            <Text size="xs">Table</Text>
+                          </Group>
+                        ),
+                      },
+                    ]}
+                  />
+                )}
                 <Button
                   size="xs"
                   variant="light"
@@ -273,7 +275,6 @@ function RouteComponent() {
               <MediaTable data={data?.data ?? []} />
             ) : (
               <SimpleGrid
-                hidden={view !== "grid"}
                 spacing={{ base: "xs", md: "md" }}
                 cols={{
                   base: 1,

@@ -1,5 +1,6 @@
 import { UnstyledButton, Group } from "@mantine/core";
-import { IconChevronDown, type ReactNode } from "@tabler/icons-react";
+import { IconChevronDown } from "@tabler/icons-react";
+import type { ReactNode } from "@tabler/icons-react";
 import { SectionHeading } from "./SectionHeading";
 
 type CollapsibleSectionHeadingProps = {
@@ -8,7 +9,7 @@ type CollapsibleSectionHeadingProps = {
   description: string;
   opened: boolean;
   onToggle: () => void;
-}
+};
 
 export function CollapsibleSectionHeading({
   icon,
@@ -18,11 +19,7 @@ export function CollapsibleSectionHeading({
   onToggle,
 }: CollapsibleSectionHeadingProps) {
   const heading = (
-    <SectionHeading
-      icon={icon}
-      title={title}
-      description={description}
-    />
+    <SectionHeading icon={icon} title={title} description={description} />
   );
 
   return (

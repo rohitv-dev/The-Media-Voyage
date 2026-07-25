@@ -34,7 +34,7 @@ export function CollectionVisibilityControl({
   collection: MediaCollectionRecord;
 }) {
   const queryClient = useQueryClient();
-  const current = (collection.visibility ?? "private") as Visibility;
+  const current = collection.visibility ?? "private";
 
   const refresh = () =>
     Promise.all([
@@ -85,9 +85,7 @@ export function CollectionVisibilityControl({
               </List.Item>
             ))}
             {entries.length > 8 && (
-              <List.Item c="dimmed">
-                and {entries.length - 8} more…
-              </List.Item>
+              <List.Item c="dimmed">and {entries.length - 8} more…</List.Item>
             )}
           </List>
 
@@ -140,7 +138,7 @@ export function CollectionVisibilityControl({
         disabled={visibilityMutation.isPending || bumpMutation.isPending}
         onChange={(value) => {
           if (value === current) return;
-          visibilityMutation.mutate(value as Visibility);
+          visibilityMutation.mutate(value);
         }}
         aria-label="Collection visibility"
         data={[

@@ -168,9 +168,7 @@ function RouteComponent() {
             <SegmentedControl
               size="xs"
               value={coverArtSize}
-              onChange={(value) =>
-                setCoverArtSize(value as typeof coverArtSize)
-              }
+              onChange={setCoverArtSize}
               aria-label="Choose media card image size"
               data={[
                 { value: "full", label: "Full" },
