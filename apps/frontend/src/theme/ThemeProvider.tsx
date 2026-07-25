@@ -10,8 +10,9 @@ import {
 import {
   buildMantineTheme,
   DEFAULT_THEME,
+  neuVars,
   THEMES
-  
+
 } from "./themes";
 import type {ThemeId} from "./themes";
 
@@ -49,8 +50,26 @@ export function AppThemeProvider({ children }: { children: React.ReactNode }) {
   // Keep the raw page background in sync with the active theme so there's no
   // mismatch behind the app shell (and no flash on route transitions).
   useEffect(() => {
-    document.documentElement.style.setProperty("--app-bg", def.bg);
-    document.documentElement.style.colorScheme = def.scheme;
+    const root = document.documentElement;
+    root.style.setProperty("--app-bg", def.bg);
+    root.style.colorScheme = def.scheme;
+
+    // Neumorphic themes swap borders for soft extruded shadows. The whole
+    // treatment lives in neumorphic.scss, gated on this one attribute — so
+    // removing it is all that's needed to switch the treatment off. The custom
+    // properties are cleared anyway rather than left as residue on <html>.
+    const neu = neuVars(def);
+    if (def.neu) {
+      root.dataset.neu = "";
+      for (const [name, value] of Object.entries(neu)) {
+        root.style.setProperty(name, value);
+      }
+    } else {
+      delete root.dataset.neu;
+      for (const name of Object.keys(neu)) {
+        root.style.removeProperty(name);
+      }
+    }
   }, [def]);
 
   const value = useMemo(() => ({ themeId, setThemeId }), [themeId, setThemeId]);

@@ -55,6 +55,7 @@ function SidebarNavLink({ active, ...props }: NavLinkProps) {
       {active && (
         <motion.div
           layoutId={SIDEBAR_ACTIVE_PILL_ID}
+          className={SIDEBAR_ACTIVE_PILL_ID}
           transition={
             reduceMotion
               ? { duration: 0 }
