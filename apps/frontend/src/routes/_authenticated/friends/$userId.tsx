@@ -1,17 +1,22 @@
 import { EmptyState } from "#/components/EmptyState";
 import { FriendMediaGrid } from "#/features/friends/components/FriendMediaGrid";
-import { friendMediaQueryOptions } from "#/features/friends/queries";
+import {
+  friendCollectionsQueryOptions,
+  friendMediaQueryOptions,
+} from "#/features/friends/queries";
 import {
   Avatar,
   Button,
   Container,
   Group,
+  Paper,
+  SimpleGrid,
   Stack,
   Text,
   Title,
 } from "@mantine/core";
-import { IconArrowLeft, IconMovie } from "@tabler/icons-react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { IconArrowLeft, IconBooks, IconMovie } from "@tabler/icons-react";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/friends/$userId")({
@@ -25,6 +30,7 @@ function RouteComponent() {
   const { userId } = Route.useParams();
   const navigate = useNavigate();
   const { data } = useSuspenseQuery(friendMediaQueryOptions(userId));
+  const { data: collections } = useQuery(friendCollectionsQueryOptions(userId));
   const { friend, data: records } = data;
 
   return (
@@ -57,6 +63,42 @@ function RouteComponent() {
           </Stack>
         </Group>
 
+        {collections && collections.length > 0 && (
+          <Stack gap="xs">
+            <Text fw={700}>Collections</Text>
+            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="sm">
+              {collections.map((collection) => (
+                <Paper
+                  key={collection.id}
+                  withBorder
+                  p="md"
+                  radius="md"
+                  style={{ cursor: "pointer" }}
+                  onClick={() =>
+                    navigate({
+                      to: "/friends/collections/$collectionId",
+                      params: { collectionId: collection.id },
+                    })
+                  }
+                >
+                  <Group gap="sm" wrap="nowrap">
+                    <IconBooks size={20} />
+                    <Stack gap={0} style={{ minWidth: 0 }}>
+                      <Text size="sm" fw={600} truncate>
+                        {collection.name}
+                      </Text>
+                      <Text size="xs" c="dimmed">
+                        {collection.itemCount} shared{" "}
+                        {collection.itemCount === 1 ? "item" : "items"}
+                      </Text>
+                    </Stack>
+                  </Group>
+                </Paper>
+              ))}
+            </SimpleGrid>
+          </Stack>
+        )}
+
         {records.length === 0 ? (
           <EmptyState
             icon={<IconMovie size={36} />}
@@ -64,7 +106,10 @@ function RouteComponent() {
             description={`${friend.name} hasn't shared any entries with friends.`}
           />
         ) : (
-          <FriendMediaGrid records={records} />
+          <>
+            <Text fw={700}>All shared entries</Text>
+            <FriendMediaGrid records={records} />
+          </>
         )}
       </Stack>
     </Container>

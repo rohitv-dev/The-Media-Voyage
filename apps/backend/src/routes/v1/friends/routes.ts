@@ -5,6 +5,7 @@ import {
   friendRespondSchema,
   friendUserIdParamsSchema,
   friendshipIdParamsSchema,
+  mediaCollectionIdParamsSchema,
   reactionInputSchema,
   shareLibrarySchema,
   userMediaIdParamsSchema,
@@ -12,9 +13,11 @@ import {
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../../../require-auth";
 import {
+  getFriendCollection,
   getFriendsFeed,
   getViewableUserMediaDetail,
   listComments,
+  listFriendCollections,
   listFriendMedia,
   listFriendRequests,
   listFriends,
@@ -86,6 +89,22 @@ async function friendsRoutes(fastify: FastifyInstance) {
     const { userId } = friendUserIdParamsSchema.parse(request.params);
 
     return reply.send(await listFriendMedia(request.userId, userId));
+  });
+
+  fastify.get("/:userId/collections", async (request, reply) => {
+    const { userId } = friendUserIdParamsSchema.parse(request.params);
+
+    return reply.send(await listFriendCollections(request.userId, userId));
+  });
+
+  fastify.get("/collections/:collectionId", async (request, reply) => {
+    const { collectionId } = mediaCollectionIdParamsSchema.parse(
+      request.params,
+    );
+
+    return reply.send(
+      await getFriendCollection(request.userId, collectionId),
+    );
   });
 
   /* Social ---------------------------------------------------------------- */

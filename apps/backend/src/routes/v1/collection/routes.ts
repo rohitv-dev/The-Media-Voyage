@@ -1,8 +1,16 @@
-import { mediaCollectionFormSchema } from "@media-voyage/shared/api";
+import {
+  mediaCollectionFormSchema,
+  mediaCollectionIdParamsSchema,
+  mediaCollectionUpdateSchema,
+} from "@media-voyage/shared/api";
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../../../require-auth";
-import { listMediaCollections } from "./queries";
-import { createMediaCollection } from "./service";
+import { findStricterEntries, listMediaCollections } from "./queries";
+import {
+  bumpCollectionEntryVisibility,
+  createMediaCollection,
+  updateMediaCollection,
+} from "./service";
 
 async function collectionRoutes(fastify: FastifyInstance) {
   fastify.addHook("preHandler", requireAuth);
@@ -16,6 +24,39 @@ async function collectionRoutes(fastify: FastifyInstance) {
     const input = mediaCollectionFormSchema.parse(request.body);
     const collection = await createMediaCollection(request.userId, input);
     return reply.status(201).send(collection);
+  });
+
+  fastify.patch("/:collectionId", async (request, reply) => {
+    const { collectionId } = mediaCollectionIdParamsSchema.parse(
+      request.params,
+    );
+    const input = mediaCollectionUpdateSchema.parse(request.body);
+
+    return reply.send(
+      await updateMediaCollection(request.userId, collectionId, input),
+    );
+  });
+
+  /**
+   * Entries the collection's visibility would not reach on its own. The UI
+   * asks for this after saving a wider visibility, to offer the bump.
+   */
+  fastify.get("/:collectionId/visibility-mismatch", async (request, reply) => {
+    const { collectionId } = mediaCollectionIdParamsSchema.parse(
+      request.params,
+    );
+
+    return reply.send(await findStricterEntries(request.userId, collectionId));
+  });
+
+  fastify.post("/:collectionId/bump-visibility", async (request, reply) => {
+    const { collectionId } = mediaCollectionIdParamsSchema.parse(
+      request.params,
+    );
+
+    return reply.send(
+      await bumpCollectionEntryVisibility(request.userId, collectionId),
+    );
   });
 }
 

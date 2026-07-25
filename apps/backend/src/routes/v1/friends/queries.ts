@@ -1,6 +1,8 @@
 import {
   friendships,
   media,
+  mediaCollection,
+  mediaCollectionItems,
   user,
   userMedia,
   userMediaComments,
@@ -13,7 +15,7 @@ import type {
 import { and, count, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "../../../db/db";
 import { notFound } from "../../../errors";
-import { canViewEntry } from "./policy";
+import { canView } from "./policy";
 import {
   commentRecordSelect,
   friendMediaDetailedSelect,
@@ -105,7 +107,7 @@ export async function requireViewableUserMedia(
       ? await areFriends(viewerId, entry.ownerId)
       : false;
 
-  if (!canViewEntry(viewerId, entry, isFriend)) {
+  if (!canView(viewerId, entry, isFriend)) {
     throw notFound("Entry not found");
   }
 
@@ -249,6 +251,131 @@ export async function listFriendMedia(viewerId: string, friendId: string) {
     .orderBy(desc(userMedia.updatedAt));
 
   return { friend, data };
+}
+
+/**
+ * Counts, per collection, the items a non-owner may actually see. A collection
+ * can be shared while some of its entries stay private, so this is the honest
+ * number rather than the raw item count.
+ *
+ * Done as a grouped query merged in JS rather than a correlated subquery: the
+ * join puts two `id` columns in scope, which drizzle's `sql` interpolation
+ * renders unqualified and Postgres then rejects as ambiguous.
+ */
+async function countVisibleCollectionItems(collectionIds: string[]) {
+  if (!collectionIds.length) return new Map<string, number>();
+
+  const rows = await db
+    .select({
+      collectionId: mediaCollectionItems.collectionId,
+      total: count(),
+    })
+    .from(mediaCollectionItems)
+    .innerJoin(userMedia, eq(userMedia.id, mediaCollectionItems.userMediaId))
+    .where(
+      and(
+        inArray(mediaCollectionItems.collectionId, collectionIds),
+        isNull(userMedia.deletedAt),
+        inArray(userMedia.visibility, [...SHARED_VISIBILITIES]),
+      ),
+    )
+    .groupBy(mediaCollectionItems.collectionId);
+
+  return new Map(rows.map((row) => [row.collectionId, row.total]));
+}
+
+export async function listFriendCollections(
+  viewerId: string,
+  friendId: string,
+) {
+  await getFriend(viewerId, friendId);
+
+  const collections = await db
+    .select({
+      id: mediaCollection.id,
+      name: mediaCollection.name,
+      description: mediaCollection.description,
+      createdAt: mediaCollection.createdAt,
+    })
+    .from(mediaCollection)
+    .where(
+      and(
+        eq(mediaCollection.userId, friendId),
+        inArray(mediaCollection.visibility, [...SHARED_VISIBILITIES]),
+      ),
+    )
+    .orderBy(mediaCollection.name);
+
+  const counts = await countVisibleCollectionItems(
+    collections.map((collection) => collection.id),
+  );
+
+  return collections.map((collection) => ({
+    ...collection,
+    itemCount: counts.get(collection.id) ?? 0,
+  }));
+}
+
+/**
+ * A shared collection and the items inside it that the viewer may see.
+ *
+ * The collection's own visibility gates access to the collection; each entry's
+ * visibility independently gates the entry. A private entry filed in a shared
+ * collection stays hidden.
+ */
+export async function getFriendCollection(
+  viewerId: string,
+  collectionId: string,
+) {
+  const [collection] = await db
+    .select({
+      id: mediaCollection.id,
+      name: mediaCollection.name,
+      description: mediaCollection.description,
+      ownerId: mediaCollection.userId,
+      ownerName: user.name,
+      visibility: mediaCollection.visibility,
+    })
+    .from(mediaCollection)
+    .innerJoin(user, eq(user.id, mediaCollection.userId))
+    .where(eq(mediaCollection.id, collectionId))
+    .limit(1);
+
+  if (!collection) throw notFound("Collection not found");
+
+  const isFriend =
+    collection.ownerId !== viewerId && collection.visibility === "friends"
+      ? await areFriends(viewerId, collection.ownerId)
+      : false;
+
+  if (!canView(viewerId, collection, isFriend)) {
+    throw notFound("Collection not found");
+  }
+
+  const isOwner = collection.ownerId === viewerId;
+
+  const data = await db
+    .select(friendMediaSummarySelect(viewerId))
+    .from(mediaCollectionItems)
+    .innerJoin(userMedia, eq(userMedia.id, mediaCollectionItems.userMediaId))
+    .innerJoin(media, eq(media.id, userMedia.mediaId))
+    .innerJoin(user, eq(user.id, userMedia.userId))
+    .where(
+      and(
+        eq(mediaCollectionItems.collectionId, collectionId),
+        isNull(userMedia.deletedAt),
+        // The owner sees everything of their own; anyone else only the
+        // entries that are themselves shared.
+        ...(isOwner
+          ? []
+          : [inArray(userMedia.visibility, [...SHARED_VISIBILITIES])]),
+      ),
+    )
+    .orderBy(mediaCollectionItems.position);
+
+  const { visibility: _visibility, ...publicCollection } = collection;
+
+  return { collection: publicCollection, data };
 }
 
 export async function getFriendsFeed(viewerId: string, limit = 20) {

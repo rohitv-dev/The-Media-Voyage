@@ -8,9 +8,13 @@
  * live Postgres. See policy.test.ts.
  */
 
-type Visibility = "private" | "friends" | "public" | null;
+export type Visibility = "private" | "friends" | "public" | null;
 
-export type ViewableEntry = {
+/**
+ * Anything owned by a user and shared by a visibility setting. Both user_media
+ * entries and collections have this shape, and both obey the same rule.
+ */
+export type ShareableResource = {
   ownerId: string;
   visibility: Visibility;
 };
@@ -23,22 +27,51 @@ export type FriendshipRow = {
 };
 
 /**
- * Whether `viewerId` may see an entry.
+ * Whether `viewerId` may see a shared resource (an entry or a collection).
  *
  * `isFriend` must already account for an *accepted* friendship in either
  * direction. A null visibility is treated as private, matching the column's
- * default, so an entry never becomes visible by omission.
+ * default, so nothing ever becomes visible by omission.
  */
-export function canViewEntry(
+export function canView(
   viewerId: string,
-  entry: ViewableEntry,
+  resource: ShareableResource,
   isFriend: boolean,
 ): boolean {
-  if (entry.ownerId === viewerId) return true;
-  if (entry.visibility === "public") return true;
-  if (entry.visibility === "friends") return isFriend;
+  if (resource.ownerId === viewerId) return true;
+  if (resource.visibility === "public") return true;
+  if (resource.visibility === "friends") return isFriend;
 
   return false;
+}
+
+/**
+ * Visibility ordered from most to least restrictive. Used to compare a
+ * collection against the entries inside it — never to grant access, which is
+ * always `canView`'s job.
+ */
+const VISIBILITY_RANK: Record<Exclude<Visibility, null>, number> = {
+  private: 0,
+  friends: 1,
+  public: 2,
+};
+
+export function visibilityRank(visibility: Visibility): number {
+  // Null behaves as private here for the same reason it does in canView.
+  return visibility === null ? 0 : VISIBILITY_RANK[visibility];
+}
+
+/**
+ * True when `entry` is more restrictive than `target`, i.e. sharing a
+ * collection at `target` would not be enough to make that entry visible.
+ *
+ * A collection's visibility deliberately does NOT override an entry's own.
+ * An entry marked private stays invisible wherever it is filed; the only way
+ * to widen it is to change the entry, which is what the bump flow does with
+ * the owner's explicit consent.
+ */
+export function isStricterThan(entry: Visibility, target: Visibility): boolean {
+  return visibilityRank(entry) < visibilityRank(target);
 }
 
 export type FriendRequestOutcome =

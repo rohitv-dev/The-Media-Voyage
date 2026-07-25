@@ -64,6 +64,33 @@ export type MediaCollectionFormSchema = z.infer<
   typeof mediaCollectionFormSchema
 >;
 
+export const mediaCollectionUpdateSchema = mediaCollectionFormSchema.partial();
+
+export type MediaCollectionUpdateSchema = z.infer<
+  typeof mediaCollectionUpdateSchema
+>;
+
+/**
+ * Entries inside a collection whose own visibility is stricter than the
+ * collection's, i.e. the ones a viewer still would not see. Offered to the
+ * owner as an explicit "bump these too?" step — a collection never overrides
+ * an entry's own visibility silently.
+ */
+export const collectionVisibilityMismatchSchema = z.object({
+  collectionVisibility: mediaCollectionSelectSchema.shape.visibility,
+  entries: z.array(
+    z.object({
+      userMediaId: userMediaSelectSchema.shape.id,
+      title: mediaSelectSchema.shape.title,
+      visibility: userMediaSelectSchema.shape.visibility,
+    }),
+  ),
+});
+
+export type CollectionVisibilityMismatch = z.infer<
+  typeof collectionVisibilityMismatchSchema
+>;
+
 export const mediaCollectionRecord = z.object({
   id: mediaCollectionSelectSchema.shape.id,
   name: mediaCollectionSelectSchema.shape.name,

@@ -28,6 +28,7 @@ import { Route as AuthenticatedMediaFormsRouteRouteImport } from './routes/_auth
 import { Route as AuthenticatedMediaViewIdRouteImport } from './routes/_authenticated/media/view.$id'
 import { Route as AuthenticatedMediaFormsAddRouteImport } from './routes/_authenticated/media/_forms/add'
 import { Route as AuthenticatedFriendsMediaIdRouteImport } from './routes/_authenticated/friends/media.$id'
+import { Route as AuthenticatedFriendsCollectionsCollectionIdRouteImport } from './routes/_authenticated/friends/collections.$collectionId'
 import { Route as AuthenticatedCollectionViewIdRouteImport } from './routes/_authenticated/collection/view.$id'
 import { Route as AuthenticatedCollectionEditIdRouteImport } from './routes/_authenticated/collection/edit.$id'
 import { Route as AuthenticatedMediaFormsUpdateIdRouteImport } from './routes/_authenticated/media/_forms/update.$id'
@@ -134,6 +135,12 @@ const AuthenticatedFriendsMediaIdRoute =
     path: '/friends/media/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedFriendsCollectionsCollectionIdRoute =
+  AuthenticatedFriendsCollectionsCollectionIdRouteImport.update({
+    id: '/friends/collections/$collectionId',
+    path: '/friends/collections/$collectionId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCollectionViewIdRoute =
   AuthenticatedCollectionViewIdRouteImport.update({
     id: '/collection/view/$id',
@@ -171,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/media/': typeof AuthenticatedMediaIndexRoute
   '/collection/edit/$id': typeof AuthenticatedCollectionEditIdRoute
   '/collection/view/$id': typeof AuthenticatedCollectionViewIdRoute
+  '/friends/collections/$collectionId': typeof AuthenticatedFriendsCollectionsCollectionIdRoute
   '/friends/media/$id': typeof AuthenticatedFriendsMediaIdRoute
   '/media/add': typeof AuthenticatedMediaFormsAddRoute
   '/media/view/$id': typeof AuthenticatedMediaViewIdRoute
@@ -193,6 +201,7 @@ export interface FileRoutesByTo {
   '/friends': typeof AuthenticatedFriendsIndexRoute
   '/collection/edit/$id': typeof AuthenticatedCollectionEditIdRoute
   '/collection/view/$id': typeof AuthenticatedCollectionViewIdRoute
+  '/friends/collections/$collectionId': typeof AuthenticatedFriendsCollectionsCollectionIdRoute
   '/friends/media/$id': typeof AuthenticatedFriendsMediaIdRoute
   '/media/add': typeof AuthenticatedMediaFormsAddRoute
   '/media/view/$id': typeof AuthenticatedMediaViewIdRoute
@@ -218,6 +227,7 @@ export interface FileRoutesById {
   '/_authenticated/media/': typeof AuthenticatedMediaIndexRoute
   '/_authenticated/collection/edit/$id': typeof AuthenticatedCollectionEditIdRoute
   '/_authenticated/collection/view/$id': typeof AuthenticatedCollectionViewIdRoute
+  '/_authenticated/friends/collections/$collectionId': typeof AuthenticatedFriendsCollectionsCollectionIdRoute
   '/_authenticated/friends/media/$id': typeof AuthenticatedFriendsMediaIdRoute
   '/_authenticated/media/_forms/add': typeof AuthenticatedMediaFormsAddRoute
   '/_authenticated/media/view/$id': typeof AuthenticatedMediaViewIdRoute
@@ -243,6 +253,7 @@ export interface FileRouteTypes {
     | '/media/'
     | '/collection/edit/$id'
     | '/collection/view/$id'
+    | '/friends/collections/$collectionId'
     | '/friends/media/$id'
     | '/media/add'
     | '/media/view/$id'
@@ -265,6 +276,7 @@ export interface FileRouteTypes {
     | '/friends'
     | '/collection/edit/$id'
     | '/collection/view/$id'
+    | '/friends/collections/$collectionId'
     | '/friends/media/$id'
     | '/media/add'
     | '/media/view/$id'
@@ -289,6 +301,7 @@ export interface FileRouteTypes {
     | '/_authenticated/media/'
     | '/_authenticated/collection/edit/$id'
     | '/_authenticated/collection/view/$id'
+    | '/_authenticated/friends/collections/$collectionId'
     | '/_authenticated/friends/media/$id'
     | '/_authenticated/media/_forms/add'
     | '/_authenticated/media/view/$id'
@@ -437,6 +450,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFriendsMediaIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/friends/collections/$collectionId': {
+      id: '/_authenticated/friends/collections/$collectionId'
+      path: '/friends/collections/$collectionId'
+      fullPath: '/friends/collections/$collectionId'
+      preLoaderRoute: typeof AuthenticatedFriendsCollectionsCollectionIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/collection/view/$id': {
       id: '/_authenticated/collection/view/$id'
       path: '/collection/view/$id'
@@ -492,6 +512,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMediaIndexRoute: typeof AuthenticatedMediaIndexRoute
   AuthenticatedCollectionEditIdRoute: typeof AuthenticatedCollectionEditIdRoute
   AuthenticatedCollectionViewIdRoute: typeof AuthenticatedCollectionViewIdRoute
+  AuthenticatedFriendsCollectionsCollectionIdRoute: typeof AuthenticatedFriendsCollectionsCollectionIdRoute
   AuthenticatedFriendsMediaIdRoute: typeof AuthenticatedFriendsMediaIdRoute
   AuthenticatedMediaViewIdRoute: typeof AuthenticatedMediaViewIdRoute
 }
@@ -512,6 +533,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMediaIndexRoute: AuthenticatedMediaIndexRoute,
   AuthenticatedCollectionEditIdRoute: AuthenticatedCollectionEditIdRoute,
   AuthenticatedCollectionViewIdRoute: AuthenticatedCollectionViewIdRoute,
+  AuthenticatedFriendsCollectionsCollectionIdRoute:
+    AuthenticatedFriendsCollectionsCollectionIdRoute,
   AuthenticatedFriendsMediaIdRoute: AuthenticatedFriendsMediaIdRoute,
   AuthenticatedMediaViewIdRoute: AuthenticatedMediaViewIdRoute,
 }

@@ -48,6 +48,44 @@ export function friendMediaQueryOptions(userId: string) {
   });
 }
 
+export type FriendCollectionSummary = {
+  id: string;
+  name: string;
+  description: string | null;
+  createdAt: string | null;
+  /** Counts only the items this viewer is allowed to see. */
+  itemCount: number;
+};
+
+export type FriendCollectionDetail = {
+  collection: {
+    id: string;
+    name: string;
+    description: string | null;
+    ownerId: string;
+    ownerName: string;
+  };
+  data: FriendMediaRecord[];
+};
+
+export function friendCollectionsQueryOptions(userId: string) {
+  return queryOptions({
+    queryKey: ["friends", "collections", { userId }],
+    queryFn: () =>
+      api<FriendCollectionSummary[]>(
+        `/friends/${encodeURIComponent(userId)}/collections`,
+      ),
+  });
+}
+
+export function friendCollectionDetailOptions(collectionId: string) {
+  return queryOptions({
+    queryKey: ["friends", "collection", { collectionId }],
+    queryFn: () =>
+      api<FriendCollectionDetail>(`/friends/collections/${collectionId}`),
+  });
+}
+
 export function friendMediaDetailOptions(id: string) {
   return queryOptions({
     queryKey: ["friends", "entry", { id }],

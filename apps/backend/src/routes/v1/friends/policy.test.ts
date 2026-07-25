@@ -17,8 +17,10 @@
  */
 import { describe, expect, it } from "vitest";
 import {
-  canViewEntry,
+  canView,
+  isStricterThan,
   resolveFriendRequest,
+  visibilityRank,
   type FriendshipRow,
 } from "./policy";
 
@@ -26,42 +28,42 @@ const OWNER = "user-owner";
 const FRIEND = "user-friend";
 const STRANGER = "user-stranger";
 
-describe("canViewEntry", () => {
+describe("canView", () => {
   it("lets the owner see their own entry regardless of visibility", () => {
     // Private is the interesting case: everyone else is denied below.
-    expect(canViewEntry(OWNER, { ownerId: OWNER, visibility: "private" }, false)).toBe(true);
+    expect(canView(OWNER, { ownerId: OWNER, visibility: "private" }, false)).toBe(true);
   });
 
   it("lets anyone see a public entry, friend or not", () => {
     const entry = { ownerId: OWNER, visibility: "public" as const };
 
-    expect(canViewEntry(FRIEND, entry, true)).toBe(true);
-    expect(canViewEntry(STRANGER, entry, false)).toBe(true);
+    expect(canView(FRIEND, entry, true)).toBe(true);
+    expect(canView(STRANGER, entry, false)).toBe(true);
   });
 
   it("lets a friend see a friends-visible entry", () => {
     expect(
-      canViewEntry(FRIEND, { ownerId: OWNER, visibility: "friends" }, true),
+      canView(FRIEND, { ownerId: OWNER, visibility: "friends" }, true),
     ).toBe(true);
   });
 
   it("denies a non-friend a friends-visible entry", () => {
     expect(
-      canViewEntry(STRANGER, { ownerId: OWNER, visibility: "friends" }, false),
+      canView(STRANGER, { ownerId: OWNER, visibility: "friends" }, false),
     ).toBe(false);
   });
 
   it("denies a friend a private entry", () => {
     // Being friends is not blanket access — the entry must be shared too.
     expect(
-      canViewEntry(FRIEND, { ownerId: OWNER, visibility: "private" }, true),
+      canView(FRIEND, { ownerId: OWNER, visibility: "private" }, true),
     ).toBe(false);
   });
 
   it("treats missing visibility as private", () => {
     // The column is nullable, so a null must never read as "shared".
-    expect(canViewEntry(FRIEND, { ownerId: OWNER, visibility: null }, true)).toBe(false);
-    expect(canViewEntry(STRANGER, { ownerId: OWNER, visibility: null }, false)).toBe(false);
+    expect(canView(FRIEND, { ownerId: OWNER, visibility: null }, true)).toBe(false);
+    expect(canView(STRANGER, { ownerId: OWNER, visibility: null }, false)).toBe(false);
   });
 
   /**
@@ -92,11 +94,48 @@ describe("canViewEntry", () => {
     it.each(cases)(
       "viewer=$viewer visibility=$visibility isFriend=$isFriend -> $expected",
       ({ viewer, visibility, isFriend, expected }) => {
-        expect(canViewEntry(viewer, { ownerId: OWNER, visibility }, isFriend)).toBe(
+        expect(canView(viewer, { ownerId: OWNER, visibility }, isFriend)).toBe(
           expected,
         );
       },
     );
+  });
+});
+
+describe("visibility strictness", () => {
+  it("orders visibility from most to least restrictive", () => {
+    expect(visibilityRank("private")).toBeLessThan(visibilityRank("friends"));
+    expect(visibilityRank("friends")).toBeLessThan(visibilityRank("public"));
+  });
+
+  it("ranks a missing visibility as private", () => {
+    expect(visibilityRank(null)).toBe(visibilityRank("private"));
+  });
+
+  it("flags an entry stricter than the collection it sits in", () => {
+    // Sharing a collection with friends does not reveal a private entry, so
+    // that entry is what the bump prompt offers to widen.
+    expect(isStricterThan("private", "friends")).toBe(true);
+    expect(isStricterThan("private", "public")).toBe(true);
+    expect(isStricterThan("friends", "public")).toBe(true);
+  });
+
+  it("does not flag entries already at or beyond the collection", () => {
+    expect(isStricterThan("friends", "friends")).toBe(false);
+    expect(isStricterThan("public", "friends")).toBe(false);
+    expect(isStricterThan("public", "public")).toBe(false);
+  });
+
+  it("never flags anything when the collection itself is private", () => {
+    // A private collection shares nothing, so there is nothing to bump.
+    expect(isStricterThan("private", "private")).toBe(false);
+    expect(isStricterThan("friends", "private")).toBe(false);
+    expect(isStricterThan("public", "private")).toBe(false);
+  });
+
+  it("treats a null entry visibility as private when comparing", () => {
+    expect(isStricterThan(null, "friends")).toBe(true);
+    expect(isStricterThan(null, "private")).toBe(false);
   });
 });
 
