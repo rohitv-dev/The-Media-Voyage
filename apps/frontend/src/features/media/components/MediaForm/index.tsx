@@ -168,6 +168,9 @@ export function MediaForm(props: MediaFormProps) {
         const metadata = {
           ...(details.Genre ? { genre: details.Genre } : {}),
           ...(details.Runtime ? { runtime: details.Runtime } : {}),
+          ...(details.imdbRating && details.imdbRating !== "N/A"
+            ? { catalogRating: `${details.imdbRating}/10` }
+            : {}),
         };
         if (Object.keys(metadata).length > 0) {
           form.setFieldValue("metadata", metadata);
@@ -194,6 +197,18 @@ export function MediaForm(props: MediaFormProps) {
         );
         if (details?.summary) {
           form.setFieldValue("description", details.summary);
+        }
+
+        const metadata = {
+          ...(details?.genres?.length
+            ? { genre: details.genres.map((g) => g.name).join(", ") }
+            : {}),
+          ...(details?.rating
+            ? { catalogRating: `${(details.rating / 10).toFixed(1)}/10` }
+            : {}),
+        };
+        if (Object.keys(metadata).length > 0) {
+          form.setFieldValue("metadata", metadata);
         }
       }
     }

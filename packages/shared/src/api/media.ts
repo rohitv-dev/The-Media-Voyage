@@ -23,12 +23,14 @@ export interface OmdbMovie extends OmdbMedia {
   Plot?: string;
   Genre?: string;
   Runtime?: string;
+  imdbRating?: string;
 }
 
 export interface OmdbShow extends OmdbMedia {
   Plot?: string;
   Genre?: string;
   Runtime?: string;
+  imdbRating?: string;
   totalSeasons?: string;
 }
 
@@ -72,6 +74,8 @@ export type IgdbGame = {
   id: number;
   name: string;
   summary?: string;
+  genres?: { id: number; name: string }[];
+  rating?: number;
 };
 
 export const mediaResponseSchema = z.object({

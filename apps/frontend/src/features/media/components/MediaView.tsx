@@ -34,6 +34,12 @@ import { getStatusColor } from "#/features/media/functions";
 import { useSourceColorMap } from "#/features/sources/queries";
 import { useTagColorMap } from "#/features/tags/queries";
 
+type CatalogMetadata = {
+  genre?: string;
+  runtime?: string;
+  catalogRating?: string;
+};
+
 const formatDate = (value?: Date | string | null) =>
   value ? new Date(value).toLocaleDateString() : "—";
 
@@ -137,6 +143,8 @@ export function MediaView({
   const sourceColorMap = useSourceColorMap();
   const tagColorMap = useTagColorMap();
 
+  const catalogMetadata = data.catalogMetadata as CatalogMetadata | null;
+
   const metaItems = [
     { label: "Status", value: capitalizeWords(data.status) },
     { label: "Rating", value: formatValue(data.rating?.toFixed(1)) },
@@ -156,6 +164,12 @@ export function MediaView({
     },
     { label: "Started", value: formatDate(data.startedAt) },
     { label: "Completed", value: formatDate(data.completedAt) },
+    ...(catalogMetadata?.genre
+      ? [{ label: "Genre", value: catalogMetadata.genre }]
+      : []),
+    ...(catalogMetadata?.catalogRating
+      ? [{ label: "Catalog Rating", value: catalogMetadata.catalogRating }]
+      : []),
   ];
 
   return (
@@ -363,7 +377,10 @@ export function MediaView({
               {progress}% tracked
             </Text>
           </Group>
-          <SimpleGrid cols={{ base: 2, xs: 3, sm: 5 }} spacing={0}>
+          <SimpleGrid
+            cols={{ base: 2, xs: 3, sm: metaItems.length }}
+            spacing={0}
+          >
             {metaItems.map((item) => (
               <MetaItem
                 key={item.label}

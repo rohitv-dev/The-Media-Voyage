@@ -51,7 +51,7 @@ export async function getGameDetails(
       "Client-ID": env.IGDB_CLIENT_ID,
     },
     body: `
-      fields id,name,summary;
+      fields id,name,summary,genres.name,rating;
       where id = ${Number(externalId)};
     `,
   });

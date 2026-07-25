@@ -44,6 +44,7 @@ export const userMediaDetailedSelect = {
   description: media.description,
   imageUrl: media.imageUrl,
   catalogSource: media.source,
+  catalogMetadata: media.metadata,
   status: userMedia.status,
   rating: userMedia.rating,
   review: userMedia.review,
