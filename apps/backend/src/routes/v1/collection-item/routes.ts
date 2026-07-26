@@ -12,6 +12,10 @@ import {
   getOwnedCollectionItemsDetailed,
   removeCollectionItem,
   reorderCollectionItems,
+  sendAddCollectionItemResult,
+  sendCollectionItemsResult,
+  sendRemoveCollectionItemResult,
+  sendReorderCollectionItemsResult,
 } from "./service";
 
 async function collectionItemRoutes(fastify: FastifyInstance) {
@@ -23,11 +27,7 @@ async function collectionItemRoutes(fastify: FastifyInstance) {
     );
     const result = await getOwnedCollectionItems(request.userId, collectionId);
 
-    if (result.status === "collection_not_found") {
-      return reply.status(404).send({ error: "Collection not found" });
-    }
-
-    return reply.send(result.items);
+    return sendCollectionItemsResult(reply, result);
   });
 
   fastify.get("/:collectionId/detailed", async (request, reply) => {
@@ -39,11 +39,7 @@ async function collectionItemRoutes(fastify: FastifyInstance) {
       collectionId,
     );
 
-    if (result.status === "collection_not_found") {
-      return reply.status(404).send({ error: "Collection not found" });
-    }
-
-    return reply.send(result.items);
+    return sendCollectionItemsResult(reply, result);
   });
 
   fastify.post("/:collectionId", async (request, reply) => {
@@ -57,22 +53,7 @@ async function collectionItemRoutes(fastify: FastifyInstance) {
       userMediaId,
     );
 
-    switch (result.status) {
-      case "collection_not_found":
-        return reply.status(404).send({ error: "Collection not found" });
-      case "user_media_required":
-        return reply.status(400).send({ error: "userMediaId is required" });
-      case "user_media_not_found":
-        return reply
-          .status(404)
-          .send({ error: "Selected media entry not found" });
-      case "already_exists":
-        return reply
-          .status(409)
-          .send({ error: "Media is already in this collection" });
-      case "success":
-        return reply.status(201).send(result.item);
-    }
+    return sendAddCollectionItemResult(reply, result);
   });
 
   fastify.patch("/:collectionId", async (request, reply) => {
@@ -86,14 +67,7 @@ async function collectionItemRoutes(fastify: FastifyInstance) {
       items,
     );
 
-    if (result.status === "collection_not_found") {
-      return reply.status(404).send({ error: "Collection not found" });
-    }
-    if (result.status === "items_required") {
-      return reply.status(400).send({ error: "items are required" });
-    }
-
-    return reply.send({ success: true });
+    return sendReorderCollectionItemsResult(reply, result);
   });
 
   fastify.delete("/:collectionId/:itemId", async (request, reply) => {
@@ -106,14 +80,7 @@ async function collectionItemRoutes(fastify: FastifyInstance) {
       itemId,
     );
 
-    if (result.status === "collection_not_found") {
-      return reply.status(404).send({ error: "Collection not found" });
-    }
-    if (result.status === "item_not_found") {
-      return reply.status(404).send({ error: "Collection item not found" });
-    }
-
-    return reply.status(200).send({ success: true });
+    return sendRemoveCollectionItemResult(reply, result);
   });
 }
 

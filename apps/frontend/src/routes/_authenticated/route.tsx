@@ -116,6 +116,11 @@ function RouteComponent() {
   const isActive = (path: string, exact = false) =>
     exact ? pathname === path : pathname.startsWith(path);
 
+  const goTo = (to: Parameters<typeof navigate>[0]["to"]) => () => {
+    navigate({ to });
+    close();
+  };
+
   useHotkeys([
     [
       "/",
@@ -131,9 +136,7 @@ function RouteComponent() {
       "r",
       () =>
         document
-          .querySelector<HTMLButtonElement>(
-            '[data-shortcut="reset-filters"]',
-          )
+          .querySelector<HTMLButtonElement>('[data-shortcut="reset-filters"]')
           ?.click(),
     ],
     [
@@ -247,30 +250,21 @@ function RouteComponent() {
               label="Dashboard"
               leftSection={<IconTrendingUp size={19} />}
               active={isActive("/dashboard")}
-              onClick={() => {
-                navigate({ to: "/dashboard" });
-                close();
-              }}
+              onClick={goTo("/dashboard")}
             />
 
             <SidebarNavLink
               label="Library"
               leftSection={<IconBooks size={19} />}
               active={isActive("/media")}
-              onClick={() => {
-                navigate({ to: "/media" });
-                close();
-              }}
+              onClick={goTo("/media")}
             />
 
             <SidebarNavLink
               label="Activity Calendar"
               leftSection={<IconCalendar size={19} />}
               active={isActive("/calendar")}
-              onClick={() => {
-                navigate({ to: "/calendar" });
-                close();
-              }}
+              onClick={goTo("/calendar")}
             />
 
             <SidebarNavLink
@@ -284,60 +278,42 @@ function RouteComponent() {
                 ) : undefined
               }
               active={isActive("/friends")}
-              onClick={() => {
-                navigate({ to: "/friends" });
-                close();
-              }}
+              onClick={goTo("/friends")}
             />
 
             <SidebarNavLink
               label="Tag Management"
               leftSection={<IconTags size={19} />}
               active={isActive("/tags")}
-              onClick={() => {
-                navigate({ to: "/tags" });
-                close();
-              }}
+              onClick={goTo("/tags")}
             />
 
             <SidebarNavLink
               label="Source Management"
               leftSection={<IconDeviceTv size={19} />}
               active={isActive("/sources")}
-              onClick={() => {
-                navigate({ to: "/sources" });
-                close();
-              }}
+              onClick={goTo("/sources")}
             />
 
             <SidebarNavLink
               label="Trash"
               leftSection={<IconTrash size={19} />}
               active={isActive("/trash")}
-              onClick={() => {
-                navigate({ to: "/trash" });
-                close();
-              }}
+              onClick={goTo("/trash")}
             />
 
             <SidebarNavLink
               label="Profile"
               leftSection={<IconUser size={19} />}
               active={isActive("/profile")}
-              onClick={() => {
-                navigate({ to: "/profile" });
-                close();
-              }}
+              onClick={goTo("/profile")}
             />
 
             <SidebarNavLink
               label="Settings"
               leftSection={<IconSettings size={19} />}
               active={isActive("/settings")}
-              onClick={() => {
-                navigate({ to: "/settings" });
-                close();
-              }}
+              onClick={goTo("/settings")}
             />
 
             <Divider my="md" />
@@ -347,10 +323,7 @@ function RouteComponent() {
                 label="Collections"
                 active={isActive("/collection", true)}
                 rightSection={<IconChevronRight size={18} />}
-                onClick={() => {
-                  navigate({ to: "/collection" });
-                  close();
-                }}
+                onClick={goTo("/collection")}
               />
 
               <Stack gap={4} pl="sm">
@@ -383,10 +356,7 @@ function RouteComponent() {
             <Stack gap="xs">
               <Button
                 leftSection={<IconPlus size={16} />}
-                onClick={() => {
-                  navigate({ to: "/media/add" });
-                  close();
-                }}
+                onClick={goTo("/media/add")}
               >
                 Add Media
               </Button>
@@ -394,10 +364,7 @@ function RouteComponent() {
                 variant="light"
                 color="gray"
                 leftSection={<IconUser size={16} />}
-                onClick={() => {
-                  navigate({ to: "/profile" });
-                  close();
-                }}
+                onClick={goTo("/profile")}
               >
                 My profile
               </Button>
@@ -405,10 +372,7 @@ function RouteComponent() {
                 variant="light"
                 color="gray"
                 leftSection={<IconSettings size={16} />}
-                onClick={() => {
-                  navigate({ to: "/settings" });
-                  close();
-                }}
+                onClick={goTo("/settings")}
               >
                 Settings
               </Button>

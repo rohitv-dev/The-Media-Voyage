@@ -1,38 +1,15 @@
-import {
-  media,
-  mediaCollection,
-  mediaCollectionItems,
-  userMedia,
-} from "@media-voyage/shared";
+import { media, mediaCollectionItems, userMedia } from "@media-voyage/shared";
 import { and, asc, eq, isNull, max } from "drizzle-orm";
 import { db } from "../../../db/db";
+import { findOwnedCollection } from "../collection/queries";
 import {
-  collectionIdSelect,
   collectionItemDetailedSelect,
   collectionItemIdSelect,
   collectionItemSelect,
   userMediaIdSelect,
 } from "./selects";
 
-export function ownedCollectionCondition(userId: string, collectionId: string) {
-  return and(
-    eq(mediaCollection.id, collectionId),
-    eq(mediaCollection.userId, userId),
-  );
-}
-
-export async function findOwnedCollection(
-  userId: string,
-  collectionId: string,
-) {
-  const [collection] = await db
-    .select(collectionIdSelect)
-    .from(mediaCollection)
-    .where(ownedCollectionCondition(userId, collectionId))
-    .limit(1);
-
-  return collection ?? null;
-}
+export { findOwnedCollection };
 
 export function listCollectionItems(collectionId: string) {
   return db

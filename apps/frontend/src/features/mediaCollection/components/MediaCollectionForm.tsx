@@ -11,12 +11,15 @@ import {
   Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { showNotification } from "@mantine/notifications";
 import type { MediaCollectionFormSchema } from "@media-voyage/shared/api";
 import { IconCheck } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useUnsavedChangesBlocker } from "#/hooks/useUnsavedChangesBlocker";
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from "#/utils/notifications";
 
 export function MediaCollectionForm() {
   const navigate = useNavigate();
@@ -46,18 +49,15 @@ export function MediaCollectionForm() {
     onSuccess: () => {
       form.resetDirty();
 
-      showNotification({
+      showSuccessNotification({
         title: "Collection created",
         message: "Your collection has been saved successfully.",
-        color: "teal",
       });
       navigate({ to: "/media" });
     },
     onError: () => {
-      showNotification({
-        title: "Error",
+      showErrorNotification({
         message: "Unable to create the collection right now.",
-        color: "red",
       });
     },
   });

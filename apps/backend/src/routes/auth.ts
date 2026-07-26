@@ -2,6 +2,7 @@ import { fromNodeHeaders } from "better-auth/node";
 import { FastifyInstance, FastifyRequest } from "fastify";
 import { auth } from "../auth";
 import { env } from "../config";
+import { internalServerError } from "../errors";
 
 // Only credential-guessing endpoints need a tight limit. Session checks
 // (get-session) fire on every route navigation and must stay generous.
@@ -49,35 +50,11 @@ async function authRoutes(fastify: FastifyInstance) {
         response.headers.forEach((value, key) => reply.header(key, value));
         return reply.send(response.body ? await response.text() : null);
       } catch (error) {
-        fastify.log.error(`Authentication Error: ${error}`);
-        return reply.status(500).send({
-          error: "Internal authentication error",
-          code: "AUTH_FAILURE",
+        throw internalServerError("Internal authentication error", {
+          cause: error,
         });
       }
     },
-  });
-
-  fastify.get("/auth-check", async (request, reply) => {
-    try {
-      const session = await auth.api.getSession({
-        headers: fromNodeHeaders(request.headers),
-      });
-
-      if (session) {
-        return reply.send({
-          authenticated: true,
-          user: session.user,
-        });
-      }
-
-      return reply.send({ authenticated: false });
-    } catch (error) {
-      return reply.status(500).send({
-        error: "Failed to check authentication",
-        details: error instanceof Error ? error.message : String(error),
-      });
-    }
   });
 }
 

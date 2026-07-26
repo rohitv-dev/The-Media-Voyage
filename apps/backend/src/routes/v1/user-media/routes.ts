@@ -8,6 +8,7 @@ import {
   userMediaQuerySchema,
   userMediaQuickActionSchema,
 } from "@media-voyage/shared/api";
+import { internalServerError } from "../../../errors";
 import { requireAuth } from "../../../require-auth";
 import {
   filterUserMedia,
@@ -178,25 +179,23 @@ async function userMediaRoutes(fastify: FastifyInstance) {
   });
 
   fastify.get("/export", async (request, reply) => {
+    let records;
+
     try {
-      const records = await getUserMediaForExport(request.userId);
-      const csv = Papa.unparse(toCsvRows(records), { header: true });
-
-      reply.header("Content-Type", "text/csv");
-      reply.header(
-        "Content-Disposition",
-        `attachment; filename="user-media-${request.userId}-${Date.now()}.csv"`,
-      );
-
-      return reply.send(csv);
+      records = await getUserMediaForExport(request.userId);
     } catch (error) {
-      request.log.error(error, "User-media CSV export failed");
-      return reply.status(500).send({
-        success: false,
-        error: "Failed to export data",
-        details: error instanceof Error ? error.message : String(error),
-      });
+      throw internalServerError("Failed to export data", { cause: error });
     }
+
+    const csv = Papa.unparse(toCsvRows(records), { header: true });
+
+    reply.header("Content-Type", "text/csv");
+    reply.header(
+      "Content-Disposition",
+      `attachment; filename="user-media-${request.userId}-${Date.now()}.csv"`,
+    );
+
+    return reply.send(csv);
   });
 }
 

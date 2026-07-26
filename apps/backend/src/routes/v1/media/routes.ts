@@ -3,12 +3,10 @@ import {
   mediaSearchQuerySchema,
 } from "@media-voyage/shared/api";
 import type { FastifyInstance } from "fastify";
+import { getGameDetails } from "../../../services/igdb";
+import { getOmdbDetails } from "../../../services/omdb";
 import { requireAuth } from "../../../require-auth";
-import {
-  getIgdbMediaDetails,
-  getOmdbMediaDetails,
-  searchMedia,
-} from "./service";
+import { searchMedia } from "./service";
 
 async function mediaRoutes(fastify: FastifyInstance) {
   fastify.addHook("preHandler", requireAuth);
@@ -41,7 +39,7 @@ async function mediaRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       const { id } = mediaDetailsParamsSchema.parse(request.params);
-      return reply.send(await getOmdbMediaDetails(id));
+      return reply.send(await getOmdbDetails(id));
     },
   );
 
@@ -57,7 +55,7 @@ async function mediaRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       const { id } = mediaDetailsParamsSchema.parse(request.params);
-      return reply.send(await getIgdbMediaDetails(id));
+      return reply.send(await getGameDetails(id));
     },
   );
 }

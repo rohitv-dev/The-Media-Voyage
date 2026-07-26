@@ -17,7 +17,7 @@ async function collectionRoutes(fastify: FastifyInstance) {
 
   fastify.get("/", async (request, reply) => {
     const collections = await listMediaCollections(request.userId);
-    return reply.status(201).send(collections);
+    return reply.send(collections);
   });
 
   fastify.post("/", async (request, reply) => {

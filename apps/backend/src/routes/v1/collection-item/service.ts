@@ -1,6 +1,7 @@
 import { mediaCollectionItems } from "@media-voyage/shared";
 import type { ReorderMediaCollectionItems } from "@media-voyage/shared/api";
 import { and, eq } from "drizzle-orm";
+import type { FastifyReply } from "fastify";
 import { db } from "../../../db/db";
 import {
   findCollectionItem,
@@ -141,4 +142,71 @@ export async function removeCollectionItem(
   }
 
   return { status: "success" as const };
+}
+
+/** Map a {@link getOwnedCollectionItems}/{@link getOwnedCollectionItemsDetailed} result onto the HTTP response. */
+export function sendCollectionItemsResult(
+  reply: FastifyReply,
+  result:
+    | Awaited<ReturnType<typeof getOwnedCollectionItems>>
+    | Awaited<ReturnType<typeof getOwnedCollectionItemsDetailed>>,
+) {
+  if (result.status === "collection_not_found") {
+    return reply.status(404).send({ error: "Collection not found" });
+  }
+
+  return reply.send(result.items);
+}
+
+/** Map an {@link addCollectionItem} result onto the HTTP response. */
+export function sendAddCollectionItemResult(
+  reply: FastifyReply,
+  result: Awaited<ReturnType<typeof addCollectionItem>>,
+) {
+  switch (result.status) {
+    case "collection_not_found":
+      return reply.status(404).send({ error: "Collection not found" });
+    case "user_media_required":
+      return reply.status(400).send({ error: "userMediaId is required" });
+    case "user_media_not_found":
+      return reply
+        .status(404)
+        .send({ error: "Selected media entry not found" });
+    case "already_exists":
+      return reply
+        .status(409)
+        .send({ error: "Media is already in this collection" });
+    case "success":
+      return reply.status(201).send(result.item);
+  }
+}
+
+/** Map a {@link reorderCollectionItems} result onto the HTTP response. */
+export function sendReorderCollectionItemsResult(
+  reply: FastifyReply,
+  result: Awaited<ReturnType<typeof reorderCollectionItems>>,
+) {
+  switch (result.status) {
+    case "collection_not_found":
+      return reply.status(404).send({ error: "Collection not found" });
+    case "items_required":
+      return reply.status(400).send({ error: "items are required" });
+    case "success":
+      return reply.send({ success: true });
+  }
+}
+
+/** Map a {@link removeCollectionItem} result onto the HTTP response. */
+export function sendRemoveCollectionItemResult(
+  reply: FastifyReply,
+  result: Awaited<ReturnType<typeof removeCollectionItem>>,
+) {
+  switch (result.status) {
+    case "collection_not_found":
+      return reply.status(404).send({ error: "Collection not found" });
+    case "item_not_found":
+      return reply.status(404).send({ error: "Collection item not found" });
+    case "success":
+      return reply.status(200).send({ success: true });
+  }
 }

@@ -17,7 +17,8 @@ export function listMediaCollections(userId: string) {
     .where(eq(mediaCollection.userId, userId));
 }
 
-export async function requireOwnedCollection(
+/** Base ownership-check primitive, shared with the collection-item routes. */
+export async function findOwnedCollection(
   userId: string,
   collectionId: string,
 ) {
@@ -36,6 +37,15 @@ export async function requireOwnedCollection(
       ),
     )
     .limit(1);
+
+  return collection ?? null;
+}
+
+export async function requireOwnedCollection(
+  userId: string,
+  collectionId: string,
+) {
+  const collection = await findOwnedCollection(userId, collectionId);
 
   if (!collection) throw notFound("Collection not found");
 

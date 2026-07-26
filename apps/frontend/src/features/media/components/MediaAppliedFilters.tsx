@@ -4,6 +4,7 @@ import { capitalizeWords } from "#/utils/stringFunctions";
 import { useSourceColorMap } from "#/features/sources/queries";
 import { useTagColorMap } from "#/features/tags/queries";
 import dayjs from "dayjs";
+import type { ReactNode } from "react";
 
 type MediaAppliedFiltersProps = {
   filters: UserMediaQuerySchema;
@@ -12,6 +13,22 @@ type MediaAppliedFiltersProps = {
 
 function removeArrayValue<T>(values: T[] | undefined, value: T) {
   return values?.filter((currentValue) => currentValue !== value) ?? [];
+}
+
+function FilterPill({
+  bg = "grape",
+  onRemove,
+  children,
+}: {
+  bg?: string;
+  onRemove: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <Pill bg={bg} c="white" fw="bold" withRemoveButton onRemove={onRemove}>
+      {children}
+    </Pill>
+  );
 }
 
 export function MediaAppliedFilters({
@@ -24,38 +41,26 @@ export function MediaAppliedFilters({
   return (
     <Group gap="xs">
       {filters.search && (
-        <Pill
-          bg="grape"
-          c="white"
-          fw="bold"
-          withRemoveButton
+        <FilterPill
           onRemove={() =>
             updateAndApplyFilters({ ...filters, search: undefined })
           }
         >
           Search: {filters.search}
-        </Pill>
+        </FilterPill>
       )}
       {filters.favorite && (
-        <Pill
-          bg="grape"
-          c="white"
-          fw="bold"
-          withRemoveButton
+        <FilterPill
           onRemove={() =>
             updateAndApplyFilters({ ...filters, favorite: undefined })
           }
         >
           Favorites only
-        </Pill>
+        </FilterPill>
       )}
       {filters.status?.map((val) => (
-        <Pill
+        <FilterPill
           key={val}
-          bg="grape"
-          c="white"
-          fw="bold"
-          withRemoveButton
           onRemove={() =>
             updateAndApplyFilters({
               ...filters,
@@ -64,15 +69,11 @@ export function MediaAppliedFilters({
           }
         >
           Status: {capitalizeWords(val)}
-        </Pill>
+        </FilterPill>
       ))}
       {filters.type?.map((val) => (
-        <Pill
+        <FilterPill
           key={val}
-          bg="grape"
-          c="white"
-          fw="bold"
-          withRemoveButton
           onRemove={() =>
             updateAndApplyFilters({
               ...filters,
@@ -81,14 +82,10 @@ export function MediaAppliedFilters({
           }
         >
           Type: {capitalizeWords(val)}
-        </Pill>
+        </FilterPill>
       ))}
       {(filters.minRating !== undefined || filters.maxRating !== undefined) && (
-        <Pill
-          bg="grape"
-          c="white"
-          fw="bold"
-          withRemoveButton
+        <FilterPill
           onRemove={() =>
             updateAndApplyFilters({
               ...filters,
@@ -98,41 +95,30 @@ export function MediaAppliedFilters({
           }
         >
           Rating: {filters.minRating ?? 0} to {filters.maxRating ?? 10}
-        </Pill>
+        </FilterPill>
       )}
       {filters.createdFrom && (
-        <Pill
-          bg="grape"
-          c="white"
-          fw="bold"
-          withRemoveButton
+        <FilterPill
           onRemove={() =>
             updateAndApplyFilters({ ...filters, createdFrom: undefined })
           }
         >
           Added from: {dayjs(filters.createdFrom).format("MMM DD, YYYY")}
-        </Pill>
+        </FilterPill>
       )}
       {filters.createdTo && (
-        <Pill
-          bg="grape"
-          c="white"
-          fw="bold"
-          withRemoveButton
+        <FilterPill
           onRemove={() =>
             updateAndApplyFilters({ ...filters, createdTo: undefined })
           }
         >
           Added to: {dayjs(filters.createdTo).format("MMM DD, YYYY")}
-        </Pill>
+        </FilterPill>
       )}
       {filters.sources?.map((val) => (
-        <Pill
+        <FilterPill
           key={val}
           bg={sourceColorMap.get(val) ?? "grape"}
-          c="white"
-          fw="bold"
-          withRemoveButton
           onRemove={() =>
             updateAndApplyFilters({
               ...filters,
@@ -141,15 +127,12 @@ export function MediaAppliedFilters({
           }
         >
           Source: {val}
-        </Pill>
+        </FilterPill>
       ))}
       {filters.tags?.map((val) => (
-        <Pill
+        <FilterPill
           key={val}
           bg={tagColorMap.get(val) ?? "grape"}
-          c="white"
-          fw="bold"
-          withRemoveButton
           onRemove={() =>
             updateAndApplyFilters({
               ...filters,
@@ -158,7 +141,7 @@ export function MediaAppliedFilters({
           }
         >
           Tag: {val}
-        </Pill>
+        </FilterPill>
       ))}
     </Group>
   );

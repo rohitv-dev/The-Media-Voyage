@@ -1,14 +1,5 @@
-import {
-  media,
-  mediaCollection,
-  mediaCollectionItems,
-  userMedia,
-} from "@media-voyage/shared";
+import { media, mediaCollectionItems, userMedia } from "@media-voyage/shared";
 import { userMediaSummarySelect } from "../user-media/selects";
-
-export const collectionIdSelect = {
-  id: mediaCollection.id,
-};
 
 export const userMediaIdSelect = {
   id: userMedia.id,

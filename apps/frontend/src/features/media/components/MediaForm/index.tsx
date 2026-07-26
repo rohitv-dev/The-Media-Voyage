@@ -13,15 +13,18 @@ import { useState } from "react";
 import type { MouseEventHandler } from "react";
 import { FormProvider, useForm } from "./context";
 import { api } from "#/lib/api";
-import { confirmDelete } from "#/utils/confirmModal";
 import { Container, Stack, Grid } from "@mantine/core";
-import { showNotification } from "@mantine/notifications";
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from "#/utils/notifications";
 import {
   userMediaDropdownOptions,
   userMediaDetailedOptions,
 } from "../../queries";
 import type { MediaType } from "@media-voyage/shared/userMediaSchema";
 import { useUnsavedChangesBlocker } from "#/hooks/useUnsavedChangesBlocker";
+import { useDeleteMedia } from "../../hooks/useDeleteMedia";
 import { FormActions } from "./FormActions";
 import { FormHeader } from "./FormHeader";
 import { MediaDetailsSection } from "./MediaDetailsSection";
@@ -52,6 +55,15 @@ const addInitialValues: UserMediaFormSchema = {
   seasonsProgress: [],
 };
 
+function setCatalogMetadata(
+  form: ReturnType<typeof useForm>,
+  metadata: Record<string, string>,
+) {
+  if (Object.keys(metadata).length > 0) {
+    form.setFieldValue("metadata", metadata);
+  }
+}
+
 function normalizeTags(tags: string[]) {
   const seen = new Set<string>();
   const result: string[] = [];
@@ -71,17 +83,17 @@ function normalizeTags(tags: string[]) {
 
 type MediaFormProps =
   | {
-    mode: "add";
-    dropdowns: UserMediaDropdowns;
-    /** Account default that preselects the visibility field on new entries. */
-    defaultVisibility?: UserMediaFormSchema["visibility"];
-  }
+      mode: "add";
+      dropdowns: UserMediaDropdowns;
+      /** Account default that preselects the visibility field on new entries. */
+      defaultVisibility?: UserMediaFormSchema["visibility"];
+    }
   | {
-    id: string;
-    mode: "update";
-    initialValues: UserMediaFormSchema;
-    dropdowns: UserMediaDropdowns;
-  };
+      id: string;
+      mode: "update";
+      initialValues: UserMediaFormSchema;
+      dropdowns: UserMediaDropdowns;
+    };
 
 export function MediaForm(props: MediaFormProps) {
   const { mode } = props;
@@ -100,7 +112,10 @@ export function MediaForm(props: MediaFormProps) {
 
   const form = useForm({
     initialValues: isAddMode
-      ? { ...addInitialValues, visibility: props.defaultVisibility ?? "private" }
+      ? {
+          ...addInitialValues,
+          visibility: props.defaultVisibility ?? "private",
+        }
       : props.initialValues,
     transformValues: (values) => ({
       ...values,
@@ -123,10 +138,10 @@ export function MediaForm(props: MediaFormProps) {
           entry.status === "completed"
             ? entry
             : {
-              ...entry,
-              status: "completed",
-              updatedAt: new Date().toISOString(),
-            },
+                ...entry,
+                status: "completed",
+                updatedAt: new Date().toISOString(),
+              },
         ),
       );
     } else if (previousValue === "completed") {
@@ -166,16 +181,13 @@ export function MediaForm(props: MediaFormProps) {
           form.setFieldValue("description", details.Plot);
         }
 
-        const metadata = {
+        setCatalogMetadata(form, {
           ...(details.Genre ? { genre: details.Genre } : {}),
           ...(details.Runtime ? { runtime: details.Runtime } : {}),
           ...(details.imdbRating && details.imdbRating !== "N/A"
             ? { catalogRating: `${details.imdbRating}/10` }
             : {}),
-        };
-        if (Object.keys(metadata).length > 0) {
-          form.setFieldValue("metadata", metadata);
-        }
+        });
 
         if (isAddMode && record.type === "show" && "totalSeasons" in details) {
           const totalSeasons = Number(details.totalSeasons);
@@ -200,17 +212,14 @@ export function MediaForm(props: MediaFormProps) {
           form.setFieldValue("description", details.summary);
         }
 
-        const metadata = {
+        setCatalogMetadata(form, {
           ...(details?.genres?.length
             ? { genre: details.genres.map((g) => g.name).join(", ") }
             : {}),
           ...(details?.rating
             ? { catalogRating: `${(details.rating / 10).toFixed(1)}/10` }
             : {}),
-        };
-        if (Object.keys(metadata).length > 0) {
-          form.setFieldValue("metadata", metadata);
-        }
+        });
       }
     }
   };
@@ -256,12 +265,11 @@ export function MediaForm(props: MediaFormProps) {
     onSuccess: async (data) => {
       form.resetDirty();
 
-      showNotification({
+      showSuccessNotification({
         title: isAddMode
           ? "Media Added Successfully"
           : "Media Updated Successfully",
         message: `${data.title} has been ${isAddMode ? "added to your list" : "updated"}`,
-        color: "teal",
       });
 
       await Promise.all([
@@ -276,18 +284,16 @@ export function MediaForm(props: MediaFormProps) {
         isAddMode
           ? { to: "/media" }
           : {
-            to: "/media/view/$id",
-            params: { id: props.id },
-          },
+              to: "/media/view/$id",
+              params: { id: props.id },
+            },
       );
     },
 
     onError: (error: Error) => {
-      showNotification({
+      showErrorNotification({
         title: isAddMode ? "Could not add media" : "Could not update media",
         message: error.message,
-        color: "red",
-        position: "top-center",
       });
     },
   });
@@ -296,53 +302,15 @@ export function MediaForm(props: MediaFormProps) {
     saveMutation.mutate(values);
   };
 
-  const deleteMutation = useMutation({
-    mutationFn: () => {
-      if (isAddMode) throw new Error("Cannot delete an unsaved entry");
-      return api<{ success: boolean }>(`/user-media/${props.id}`, {
-        method: "DELETE",
-      });
-    },
-    onSuccess: async () => {
-      form.resetDirty();
-
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["user-media"] }),
-        queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] }),
-        queryClient.invalidateQueries({ queryKey: ["collection"] }),
-        queryClient.invalidateQueries({ queryKey: ["collection-items"] }),
-        queryClient.invalidateQueries({
-          queryKey: ["collection-items-detailed"],
-        }),
-      ]);
-
-      showNotification({
-        title: "Media Deleted",
-        message: !isAddMode
-          ? `${props.initialValues.title} has been removed from your library`
-          : undefined,
-        color: "teal",
-      });
-
-      navigate({ to: "/media" });
-    },
-    onError: (error: Error) => {
-      showNotification({
-        title: "Could not delete media",
-        message: error.message,
-        color: "red",
-        position: "top-center",
-      });
-    },
-  });
+  const { requestDelete: requestDeleteMedia, isDeletePending } =
+    useDeleteMedia();
 
   const handleDelete = () => {
-    if (isAddMode || deleteMutation.isPending) return;
+    if (isAddMode || isDeletePending) return;
 
-    confirmDelete({
-      title: "Delete media",
-      message: `Are you sure you want to delete "${props.initialValues.title}"? It will be removed from your library.`,
-      onConfirm: () => deleteMutation.mutate(),
+    requestDeleteMedia(props.id, props.initialValues.title, () => {
+      form.resetDirty();
+      navigate({ to: "/media" });
     });
   };
 
@@ -356,9 +324,9 @@ export function MediaForm(props: MediaFormProps) {
       isAddMode
         ? { to: "/media" }
         : {
-          to: "/media/view/$id",
-          params: { id: props.id },
-        },
+            to: "/media/view/$id",
+            params: { id: props.id },
+          },
     );
   };
 
@@ -379,16 +347,14 @@ export function MediaForm(props: MediaFormProps) {
                 onSearchChange={handleSearchChange}
               />
               <StatusDetailsSection />
-              <ProgressTrackingSection
-                dropdowns={props.dropdowns}
-              />
+              <ProgressTrackingSection dropdowns={props.dropdowns} />
               <PersonalNotesSection />
               <FormActions
                 mode={mode}
                 onCancel={handleCancel}
                 isPending={saveMutation.isPending}
                 onDelete={isAddMode ? undefined : handleDelete}
-                isDeletePending={deleteMutation.isPending}
+                isDeletePending={isDeletePending}
               />
             </Grid>
           </form>
