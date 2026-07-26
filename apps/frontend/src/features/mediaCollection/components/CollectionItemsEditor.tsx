@@ -213,7 +213,7 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
       reorder(items, result.source.index, result.destination!.index),
     );
 
-    setCanSaveOrder((o) => !o);
+    setCanSaveOrder(true);
   };
 
   return (

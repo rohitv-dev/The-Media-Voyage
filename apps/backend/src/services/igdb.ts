@@ -3,6 +3,13 @@ import { getAccessToken } from "./twitchAuth";
 import { env } from "../config";
 import { internalServerError } from "../errors";
 
+// Apicalypse has no parameterized-query support, so the search string must be
+// escaped before interpolation to avoid breaking out of the `search "..."`
+// clause and injecting arbitrary query statements.
+function escapeApicalypseString(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
 async function fetchIgdbSearch(query: string): Promise<IgdbResponse> {
   const token = await getAccessToken();
 
@@ -14,7 +21,7 @@ async function fetchIgdbSearch(query: string): Promise<IgdbResponse> {
     },
     body: `
       fields id,name,cover.image_id;
-      search "${query}";
+      search "${escapeApicalypseString(query)}";
       limit 10;
     `,
   });

@@ -175,7 +175,7 @@ export async function updateNamedEntity(
   const [updated] = await db
     .update(table)
     .set(updates)
-    .where(eq(table.id, id))
+    .where(and(eq(table.id, id), eq(table.userId, userId)))
     .returning();
 
   return { status: "success", entity: updated };
@@ -192,7 +192,9 @@ export async function deleteNamedEntity(
     return { status: "not_found" };
   }
 
-  await db.delete(table).where(eq(table.id, id));
+  await db
+    .delete(table)
+    .where(and(eq(table.id, id), eq(table.userId, userId)));
 
   return { status: "success" };
 }

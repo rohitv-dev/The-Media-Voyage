@@ -11,6 +11,7 @@ import {
 import type {
   FriendRecord,
   FriendRequestsResponse,
+  SeasonProgressEntry,
 } from "@media-voyage/shared/api";
 import { and, count, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "../../../db/db";
@@ -417,7 +418,14 @@ export async function getViewableUserMediaDetail(
 
   const reactions = await listReactions(userMediaId);
 
-  return { ...record, reactions };
+  // Season notes are as personal as the top-level notes field (already
+  // stripped in friendMediaDetailedSelect), but live inside the
+  // seasonsProgress JSON blob so they need to be scrubbed here instead.
+  const seasonsProgress = (
+    record.seasonsProgress as SeasonProgressEntry[]
+  ).map(({ notes: _seasonNotes, ...season }) => season);
+
+  return { ...record, seasonsProgress, reactions };
 }
 
 export function listReactions(userMediaId: string) {

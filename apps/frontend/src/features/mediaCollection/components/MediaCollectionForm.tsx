@@ -27,6 +27,9 @@ export function MediaCollectionForm() {
       description: "",
       visibility: "private",
     },
+    validate: {
+      name: (value) => (value.trim() ? null : "Name is required"),
+    },
   });
 
   useUnsavedChangesBlocker(() => form.isDirty());

@@ -58,8 +58,8 @@ function RouteComponent() {
         },
       });
 
-      if ((res as any).error) {
-        throw new Error((res as any).error.message);
+      if (res.error) {
+        throw new Error(res.error.message ?? "Registration failed");
       }
 
       navigate({ to: "/media" });
