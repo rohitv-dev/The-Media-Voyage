@@ -1,12 +1,15 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
+import compress from "@fastify/compress";
 import { env } from "./config";
 import { registerErrorHandler } from "./error-handler";
 
 const fastify = Fastify({
   logger: true,
 });
+
+fastify.register(compress, { global: true });
 
 fastify.register(cors, {
   origin: env.FRONTEND_ORIGIN,

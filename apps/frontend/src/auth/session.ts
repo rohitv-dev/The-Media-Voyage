@@ -1,3 +1,4 @@
+import { queryOptions } from '@tanstack/react-query'
 import { authClient } from './authClient'
 
 const RETRY_ATTEMPTS = 8
@@ -6,6 +7,17 @@ const RETRY_DELAY_MS = 1000
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
+
+export const sessionQueryKey = ['session'] as const
+
+// staleTime: Infinity (inherited from the global default) means this only
+// re-fetches on invalidation, so route beforeLoad no longer pays a fresh
+// India<->Europe round trip on every navigation — just on the first load and
+// whenever login/logout invalidates it.
+export const sessionQueryOptions = queryOptions({
+  queryKey: sessionQueryKey,
+  queryFn: getSession,
+})
 
 export async function getSession() {
   for (let attempt = 1; attempt <= RETRY_ATTEMPTS; attempt++) {

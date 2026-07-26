@@ -31,7 +31,11 @@ import {
   IconUser,
   IconUsers,
 } from "@tabler/icons-react";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useQuery,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import {
   createFileRoute,
   Outlet,
@@ -41,7 +45,7 @@ import {
 import { motion, useReducedMotion } from "motion/react";
 import { collectionQueryOptions } from "#/features/mediaCollection/queries";
 import { friendRequestsQueryOptions } from "#/features/friends/queries";
-import { getSession } from "#/auth/session";
+import { sessionQueryKey, sessionQueryOptions } from "#/auth/session";
 import { authClient } from "#/auth/authClient";
 import { ShortcutsHelpModal } from "#/components/ShortcutsHelpModal";
 import { ThemeSwitcher } from "#/theme/ThemeSwitcher";
@@ -80,8 +84,8 @@ function SidebarNavLink({ active, ...props }: NavLinkProps) {
 }
 
 export const Route = createFileRoute("/_authenticated")({
-  beforeLoad: async () => {
-    const session = await getSession();
+  beforeLoad: async ({ context: { queryClient } }) => {
+    const session = await queryClient.ensureQueryData(sessionQueryOptions);
 
     if (!session) {
       throw redirect({ to: "/auth/login" });
@@ -99,6 +103,7 @@ export const Route = createFileRoute("/_authenticated")({
 
 function RouteComponent() {
   const navigate = Route.useNavigate();
+  const queryClient = useQueryClient();
   const [opened, { toggle, close }] = useDisclosure();
   const [shortcutsOpened, { open: openShortcuts, close: closeShortcuts }] =
     useDisclosure();
@@ -141,6 +146,7 @@ function RouteComponent() {
 
   const logout = async () => {
     await authClient.signOut();
+    await queryClient.invalidateQueries({ queryKey: sessionQueryKey });
     navigate({ to: "/auth/login" });
   };
 

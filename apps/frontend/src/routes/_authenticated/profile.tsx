@@ -21,7 +21,9 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { sessionQueryKey } from "#/auth/session";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: RouteComponent,
@@ -29,6 +31,7 @@ export const Route = createFileRoute("/_authenticated/profile")({
 
 function RouteComponent() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data } = authClient.useSession();
 
   const [editingName, setEditingName] = useState(false);
@@ -56,6 +59,7 @@ function RouteComponent() {
 
   const logout = async () => {
     await authClient.signOut();
+    await queryClient.invalidateQueries({ queryKey: sessionQueryKey });
     navigate({ to: "/auth/login" });
   };
 

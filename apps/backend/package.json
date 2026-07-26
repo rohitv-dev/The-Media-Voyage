@@ -17,6 +17,7 @@
   "type": "module",
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.6.13",
+    "@fastify/compress": "^9.1.0",
     "@fastify/cors": "^11.2.0",
     "@fastify/rate-limit": "^11.1.0",
     "@media-voyage/shared": "workspace:*",
