@@ -13,8 +13,13 @@ import {
   Title,
 } from "@mantine/core";
 import { AnimatePresence, motion } from "motion/react";
-import type { Variants } from "motion/react";
 import { useMediaQuery } from "@mantine/hooks";
+import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
+import {
+  fadeUpVariants,
+  gridItemMotionProps,
+  pageStaggerVariants,
+} from "#/utils/motionVariants";
 import {
   continueMediaFilters,
   continueMediaQueryOptions,
@@ -54,44 +59,23 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: RouteComponent,
 });
 
-const pageVariants: Variants = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.05,
-    },
-  },
-};
-
-const itemVariants: Variants = {
-  hidden: {
-    opacity: 0,
-    y: 24,
-    scale: 0.98,
-  },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      duration: 0.35,
-      ease: "easeOut",
-    },
-  },
-};
-
 function AnimatedCard({ children }: { children: React.ReactNode }) {
+  const reduceMotion = useAppReducedMotion();
+
   return (
     <motion.div
-      variants={itemVariants}
-      layout
-      whileHover={{
-        y: -4,
-        transition: {
-          duration: 0.15,
-        },
-      }}
+      variants={fadeUpVariants(reduceMotion)}
+      layout={!reduceMotion}
+      whileHover={
+        reduceMotion
+          ? undefined
+          : {
+              y: -4,
+              transition: {
+                duration: 0.15,
+              },
+            }
+      }
     >
       {children}
     </motion.div>
@@ -144,6 +128,7 @@ function RouteComponent() {
   const { data } = useSuspenseQuery(dashboardStatOptions);
   const { data: continueData } = useSuspenseQuery(continueMediaQueryOptions);
   const continueItems = continueData.data.slice(0, 6);
+  const reduceMotion = useAppReducedMotion();
   const isMobile = useMediaQuery("(max-width: 36em)");
   const pieChartSize = isMobile ? 160 : 220;
   const barChartHeight = isMobile ? 220 : 320;
@@ -176,9 +161,13 @@ function RouteComponent() {
 
   return (
     <Container size="xl" py={{ base: "md", sm: "xl" }} px={{ base: "xs", sm: "md" }}>
-      <motion.div variants={pageVariants} initial="hidden" animate="visible">
+      <motion.div
+        variants={pageStaggerVariants(reduceMotion)}
+        initial="hidden"
+        animate="visible"
+      >
         <Stack gap="md">
-          <motion.div variants={itemVariants}>
+          <motion.div variants={fadeUpVariants(reduceMotion)}>
             <Group justify="space-between">
               <Title order={2} fz={{ base: "h3", sm: "h1" }}>
                 Statistics
@@ -356,7 +345,7 @@ function RouteComponent() {
             </Grid.Col>
           </Grid>
 
-          <motion.div variants={itemVariants}>
+          <motion.div variants={fadeUpVariants(reduceMotion)}>
             <Stack gap="sm">
               <Group justify="space-between" align="center">
                 <Title order={4}>Continue</Title>
@@ -388,14 +377,7 @@ function RouteComponent() {
                     {continueItems.map((item) => (
                       <motion.div
                         key={item.id}
-                        layout
-                        initial={{ opacity: 0, scale: 0.96 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.96 }}
-                        transition={{
-                          duration: 0.2,
-                          layout: { duration: 0.25 },
-                        }}
+                        {...gridItemMotionProps(reduceMotion)}
                       >
                         <ContinueMediaCard
                           media={item}

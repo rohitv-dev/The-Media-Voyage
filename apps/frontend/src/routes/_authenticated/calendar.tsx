@@ -18,7 +18,8 @@ import {
 import { MobileMonthView, MonthView } from "@mantine/schedule";
 import type { ScheduleEventData } from "@mantine/schedule";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
+import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { IconChevronRight } from "@tabler/icons-react";
 import { z } from "zod";
 import { calendarActivityOptions } from "#/features/media/queries";
@@ -111,7 +112,7 @@ function RouteComponent() {
   });
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useAppReducedMotion();
 
   useEffect(() => {
     if (isError) {

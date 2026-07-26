@@ -3,7 +3,8 @@ import { useCoverArtSizePreference } from "#/features/media/hooks/useCoverArtSiz
 import { useMediaCardActions } from "#/features/media/hooks/useMediaCardActions";
 import { Card, Stack } from "@mantine/core";
 import type { MediaRecord } from "@media-voyage/shared/api";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
+import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import type { KeyboardEvent, ReactNode } from "react";
 import { MediaCardContent } from "./MediaCardContent";
 import { MediaCardCoverArt } from "./MediaCardCoverArt";
@@ -27,7 +28,7 @@ export function MediaCard({
   readOnly,
   footerRight,
 }: MediaCardProps) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useAppReducedMotion();
   const [showCoverArt] = useCoverArtPreference();
   const [coverArtSize] = useCoverArtSizePreference();
   const { isActionPending, isDeletePending, requestDelete, runQuickAction } =

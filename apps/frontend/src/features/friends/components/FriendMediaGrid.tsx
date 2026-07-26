@@ -8,6 +8,8 @@ import {
 } from "@tabler/icons-react";
 import { useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "motion/react";
+import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
+import { gridItemMotionProps } from "#/utils/motionVariants";
 
 function SocialCounts({ record }: { record: FriendMediaRecord }) {
   return (
@@ -41,6 +43,7 @@ export function FriendMediaGrid({
   showOwner?: boolean;
 }) {
   const navigate = useNavigate();
+  const reduceMotion = useAppReducedMotion();
 
   return (
     <SimpleGrid
@@ -49,14 +52,7 @@ export function FriendMediaGrid({
     >
       <AnimatePresence mode="popLayout">
         {records.map((record) => (
-          <motion.div
-            key={record.id}
-            layout
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.96 }}
-            transition={{ duration: 0.2 }}
-          >
+          <motion.div key={record.id} {...gridItemMotionProps(reduceMotion)}>
             {showOwner && (
               <Text size="xs" c="dimmed" fw={600} mb={4}>
                 {record.ownerName}

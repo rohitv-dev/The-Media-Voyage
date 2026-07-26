@@ -26,6 +26,8 @@ import { userMediaQuerySchema } from "@media-voyage/shared/api";
 import { showErrorNotification } from "#/utils/notifications";
 import { useDisclosure, useLocalStorage, useMediaQuery } from "@mantine/hooks";
 import { AnimatePresence, motion } from "motion/react";
+import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
+import { gridItemMotionProps } from "#/utils/motionVariants";
 import { MediaFilterCard } from "#/features/media/components/MediaFilterCard";
 import { MediaPickerModal } from "#/features/media/components/MediaPickerModal";
 import { collectionQueryOptions } from "#/features/mediaCollection/queries";
@@ -64,6 +66,7 @@ function RouteComponent() {
     placeholderData: keepPreviousData,
   });
   const navigate = useNavigate();
+  const reduceMotion = useAppReducedMotion();
   const isMdDown = useMediaQuery("(max-width: 47.99em)");
   const [view, setView] = useLocalStorage<ViewType>({
     key: "media-view",
@@ -287,16 +290,7 @@ function RouteComponent() {
                   {data?.data.map((record) => (
                     <motion.div
                       key={record.id}
-                      layout
-                      initial={{ opacity: 0, scale: 0.96 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.96 }}
-                      transition={{
-                        duration: 0.2,
-                        layout: {
-                          duration: 0.25,
-                        },
-                      }}
+                      {...gridItemMotionProps(reduceMotion)}
                     >
                       <MediaCard
                         media={record}

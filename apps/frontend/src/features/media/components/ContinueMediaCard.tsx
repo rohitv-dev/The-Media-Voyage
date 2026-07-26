@@ -11,8 +11,9 @@ import {
 } from "@mantine/core";
 import type { MediaRecord } from "@media-voyage/shared/api";
 import { IconPhotoOff } from "@tabler/icons-react";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import type { KeyboardEvent } from "react";
+import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { useCoverArtPreference } from "#/features/media/hooks/useCoverArtPreference";
 import { getStatusColor, getTypeIcon } from "../functions";
 
@@ -22,7 +23,7 @@ interface ContinueMediaCardProps {
 }
 
 export function ContinueMediaCard({ media, onView }: ContinueMediaCardProps) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useAppReducedMotion();
   const [showCoverArt] = useCoverArtPreference();
   const hasImage = !!media.imageUrl && media.imageUrl !== "N/A";
   const hasCoverArt = showCoverArt;

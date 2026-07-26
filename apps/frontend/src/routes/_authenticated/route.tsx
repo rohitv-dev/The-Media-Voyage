@@ -42,7 +42,8 @@ import {
   redirect,
   useLocation,
 } from "@tanstack/react-router";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
+import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { collectionQueryOptions } from "#/features/mediaCollection/queries";
 import { friendRequestsQueryOptions } from "#/features/friends/queries";
 import { sessionQueryKey, sessionQueryOptions } from "#/auth/session";
@@ -53,7 +54,7 @@ import { ThemeSwitcher } from "#/theme/ThemeSwitcher";
 const SIDEBAR_ACTIVE_PILL_ID = "sidebar-active-pill";
 
 function SidebarNavLink({ active, ...props }: NavLinkProps) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useAppReducedMotion();
 
   return (
     <Box pos="relative">

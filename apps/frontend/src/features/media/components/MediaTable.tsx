@@ -30,7 +30,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import dayjs from "dayjs";
-import { useReducedMotion } from "motion/react";
+import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { useCallback, useRef } from "react";
 import { DataTable } from "mantine-datatable";
 import { getStatusColor, getTypeIcon } from "../functions";
@@ -127,7 +127,7 @@ function ProgressCell({ record }: { record: MediaRecord }) {
 export function MediaTable({ data }: MediaTableProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useAppReducedMotion();
   const autoAnimateInitialized = useRef(false);
 
   const bodyRef = useCallback(

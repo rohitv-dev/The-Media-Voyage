@@ -26,6 +26,8 @@ import { confirmDelete } from "#/utils/confirmModal";
 import { motion } from "motion/react";
 import type { Variants } from "motion/react";
 import { capitalizeWords } from "#/utils/stringFunctions";
+import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
+import { fadeUpEntranceProps } from "#/utils/motionVariants";
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -35,33 +37,48 @@ type CollectionItemsEditorProps = {
   data: MediaRecord[];
 };
 
-const container: Variants = {
-  hidden: {},
-  show: {
-    transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.15,
-    },
-  },
-};
+function containerVariants(reduceMotion: boolean): Variants {
+  if (reduceMotion) {
+    return { hidden: {}, show: {} };
+  }
 
-const listItem: Variants = {
-  hidden: {
-    opacity: 0,
-    y: -20,
-    scale: 0.98,
-  },
-  show: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      type: "spring",
-      stiffness: 400,
-      damping: 28,
+  return {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: 0.08,
+        delayChildren: 0.15,
+      },
     },
-  },
-};
+  };
+}
+
+function listItemVariants(reduceMotion: boolean): Variants {
+  if (reduceMotion) {
+    return {
+      hidden: { opacity: 1, y: 0, scale: 1 },
+      show: { opacity: 1, y: 0, scale: 1 },
+    };
+  }
+
+  return {
+    hidden: {
+      opacity: 0,
+      y: -20,
+      scale: 0.98,
+    },
+    show: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        type: "spring",
+        stiffness: 400,
+        damping: 28,
+      },
+    },
+  };
+}
 
 export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
   const { id: collectionId } = useParams({
@@ -73,6 +90,7 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
   );
   const [canSaveOrder, setCanSaveOrder] = useState(false);
   const queryClient = useQueryClient();
+  const reduceMotion = useAppReducedMotion();
 
   const { data: collectionItems = [], isPending: isLoadingItems } = useQuery({
     queryKey: ["collection-items", collectionId],
@@ -201,19 +219,7 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
   return (
     <Container pt="sm">
       <Stack gap="lg">
-        <motion.div
-          initial={{
-            opacity: 0,
-            y: -15,
-          }}
-          animate={{
-            opacity: 1,
-            y: 0,
-          }}
-          transition={{
-            duration: 0.3,
-          }}
-        >
+        <motion.div {...fadeUpEntranceProps(reduceMotion, -15)}>
           <Card withBorder shadow="sm" p="lg">
             <Stack gap="sm">
               <Title order={2}>Edit Collection Items</Title>
@@ -250,19 +256,7 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
         </motion.div>
 
         <Stack gap="md">
-          <motion.div
-            initial={{
-              opacity: 0,
-              y: -15,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-            }}
-            transition={{
-              duration: 0.3,
-            }}
-          >
+          <motion.div {...fadeUpEntranceProps(reduceMotion, -15)}>
             <Group justify="space-between">
               <Title order={3}>Collection items</Title>
               <Group>
@@ -292,13 +286,16 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
                 {(provided) => (
                   <Box ref={provided.innerRef} {...provided.droppableProps}>
                     <motion.div
-                      variants={container}
+                      variants={containerVariants(reduceMotion)}
                       initial="hidden"
                       animate="show"
                     >
                       <Stack gap="sm">
                         {orderedItems.map((item, index) => (
-                          <motion.div key={item.id} variants={listItem}>
+                          <motion.div
+                            key={item.id}
+                            variants={listItemVariants(reduceMotion)}
+                          >
                             <Draggable
                               key={item.id}
                               draggableId={item.id}

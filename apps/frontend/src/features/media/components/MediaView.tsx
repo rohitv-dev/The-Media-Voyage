@@ -29,7 +29,8 @@ import {
 } from "@tabler/icons-react";
 import type { MediaDetailedRecord } from "@media-voyage/shared/api";
 import { useNavigate } from "@tanstack/react-router";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
+import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { getStatusColor } from "#/features/media/functions";
 import { useSourceColorMap } from "#/features/sources/queries";
 import { useTagColorMap } from "#/features/tags/queries";
@@ -138,7 +139,7 @@ export function MediaView({
   const navigate = useNavigate();
   // Absent (rather than empty) notes mean the viewer isn't the owner.
   const showNotes = data.notes !== undefined;
-  const reducedMotion = useReducedMotion() ?? false;
+  const reducedMotion = useAppReducedMotion();
   const progress = Math.min(100, Math.max(0, data.progress ?? 0));
   const sourceColorMap = useSourceColorMap();
   const tagColorMap = useTagColorMap();

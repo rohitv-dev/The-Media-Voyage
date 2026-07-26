@@ -19,6 +19,8 @@ import { IconArrowLeft, IconBooks, IconEdit } from "@tabler/icons-react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "motion/react";
+import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
+import { gridItemMotionProps } from "#/utils/motionVariants";
 
 export const Route = createFileRoute("/_authenticated/collection/view/$id")({
   loader: ({ context: { queryClient }, params: { id } }) => {
@@ -31,6 +33,7 @@ export const Route = createFileRoute("/_authenticated/collection/view/$id")({
 function RouteComponent() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const reduceMotion = useAppReducedMotion();
   const { data: collections } = useSuspenseQuery(collectionQueryOptions);
   const { data: items } = useSuspenseQuery(
     collectionItemsDetailedQueryOptions(id),
@@ -130,14 +133,7 @@ function RouteComponent() {
               {items.map((record) => (
                 <motion.div
                   key={record.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.96 }}
-                  transition={{
-                    duration: 0.2,
-                    layout: { duration: 0.25 },
-                  }}
+                  {...gridItemMotionProps(reduceMotion)}
                 >
                   <MediaCard
                     media={record}

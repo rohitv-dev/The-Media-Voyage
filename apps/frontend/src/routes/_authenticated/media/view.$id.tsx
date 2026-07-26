@@ -6,6 +6,8 @@ import { userMediaDetailedOptions } from "#/features/media/queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "motion/react";
+import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
+import { fadeUpEntranceProps } from "#/utils/motionVariants";
 
 export const Route = createFileRoute("/_authenticated/media/view/$id")({
   loader: ({ context: { queryClient }, params: { id } }) => {
@@ -19,13 +21,10 @@ function RouteComponent() {
   const { id } = Route.useParams();
   const { data } = useSuspenseQuery(userMediaDetailedOptions(id));
   const { data: session } = authClient.useSession();
+  const reduceMotion = useAppReducedMotion();
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-    >
+    <motion.div {...fadeUpEntranceProps(reduceMotion)}>
       <MediaView
         data={data}
         footer={

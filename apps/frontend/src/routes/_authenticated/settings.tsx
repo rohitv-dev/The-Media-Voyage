@@ -3,6 +3,7 @@ import { SettingRow, SettingsSection } from "#/components/SettingsSection";
 import { shareLibrary } from "#/features/friends/queries";
 import { useCoverArtPreference } from "#/features/media/hooks/useCoverArtPreference";
 import { useCoverArtSizePreference } from "#/features/media/hooks/useCoverArtSizePreference";
+import { useReducedMotionPreference } from "#/hooks/useReducedMotionPreference";
 import { downloadApiFile } from "#/lib/api";
 import { ThemeOptionsList } from "#/theme/ThemeSwitcher";
 import {
@@ -31,6 +32,7 @@ function RouteComponent() {
   const { data } = authClient.useSession();
   const [showCoverArt, setShowCoverArt] = useCoverArtPreference();
   const [coverArtSize, setCoverArtSize] = useCoverArtSizePreference();
+  const [reduceMotion, setReduceMotion] = useReducedMotionPreference();
 
   const [exporting, setExporting] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -144,6 +146,24 @@ function RouteComponent() {
           description="Pick a theme. Your choice is saved on this device."
         >
           <ThemeOptionsList />
+        </SettingsSection>
+
+        <SettingsSection
+          title="Accessibility"
+          description="Saved on this device. Also respects your OS-level reduced motion setting automatically."
+        >
+          <SettingRow
+            title="Reduce motion"
+            description="Turns off page transitions and other large-scale animation."
+          >
+            <Switch
+              checked={reduceMotion}
+              onChange={(event) =>
+                setReduceMotion(event.currentTarget.checked)
+              }
+              aria-label="Reduce motion"
+            />
+          </SettingRow>
         </SettingsSection>
 
         <SettingsSection

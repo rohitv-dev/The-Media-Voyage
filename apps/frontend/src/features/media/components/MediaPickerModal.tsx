@@ -30,6 +30,8 @@ import { IconDice5, IconPlayerPlay, IconRefresh } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import { useState } from "react";
+import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
+import { fadeUpEntranceProps } from "#/utils/motionVariants";
 
 type MediaPickerModalProps = {
   opened: boolean;
@@ -51,6 +53,7 @@ export function MediaPickerModal({
   collections,
 }: MediaPickerModalProps) {
   const queryClient = useQueryClient();
+  const reduceMotion = useAppReducedMotion();
   const [filters, setFilters] = useState<MediaPickerQuery>(emptyFilters);
 
   const pickMutation = useMutation({
@@ -185,9 +188,7 @@ export function MediaPickerModal({
         ) : picked ? (
           <motion.div
             key={picked.id}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25 }}
+            {...fadeUpEntranceProps(reduceMotion, 12)}
           >
             <Card withBorder radius="md" p="lg">
               <Group align="flex-start" wrap="nowrap">
