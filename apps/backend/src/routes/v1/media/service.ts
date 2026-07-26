@@ -31,14 +31,21 @@ export async function searchMedia(
   switch (query.type) {
     case "movie":
     case "show":
-      externalRecords = await searchOmdb(query.q);
+      externalRecords = await searchOmdb(query.q, query.type);
       break;
     case "game":
       externalRecords = await searchGames(query.q);
       break;
   }
 
-  return [...localRecords, ...externalRecords];
+  const localExternalIds = new Set(
+    localRecords.map((record) => record.externalId).filter(Boolean),
+  );
+  const dedupedExternalRecords = externalRecords.filter(
+    (record) => !localExternalIds.has(record.externalId),
+  );
+
+  return [...localRecords, ...dedupedExternalRecords];
 }
 
 export async function getOmdbMediaDetails(

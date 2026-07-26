@@ -24,7 +24,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 
 const sourceLabels: Record<string, string> = {
-  db: "your library",
+  db: "catalog",
   omdb: "OMDb",
   igdb: "IGDB",
 };
@@ -71,6 +71,14 @@ function MediaOption({ media }: { media: SourceMediaRecord }) {
           {media.type}
         </Text>
       </Stack>
+
+      <Badge
+        color={media.source === "db" ? "teal" : "gray"}
+        variant="light"
+        size="sm"
+      >
+        {sourceLabels[media.source] ?? media.source}
+      </Badge>
     </Group>
   );
 }
