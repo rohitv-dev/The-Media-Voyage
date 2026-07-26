@@ -1,4 +1,5 @@
 import { api } from "#/lib/api";
+import { queryKeys } from "#/lib/queryKeys";
 import {
   Avatar,
   Badge,
@@ -91,7 +92,7 @@ export function MediaTitleSelect(props: MediaTitleSelectProps) {
   const isBookSearch = props.type === "book";
 
   const { data = [], isFetching, isError } = useQuery({
-    queryKey: ["media-search", props.type, debouncedSearch],
+    queryKey: queryKeys.mediaSearch(props.type, debouncedSearch),
     enabled: debouncedSearch.trim().length >= 2,
     queryFn: () =>
       api<SourceMediaRecord[]>(

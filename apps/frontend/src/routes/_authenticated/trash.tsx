@@ -2,6 +2,7 @@ import { EmptyState } from "#/components/EmptyState";
 import { getTypeIcon } from "#/features/media/functions";
 import { trashedUserMediaQueryOptions } from "#/features/media/queries";
 import { api } from "#/lib/api";
+import { queryKeys } from "#/lib/queryKeys";
 import { confirmDelete } from "#/utils/confirmModal";
 import {
   showErrorNotification,
@@ -36,8 +37,8 @@ function RouteComponent() {
 
   const invalidate = () =>
     Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["user-media"] }),
-      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats }),
     ]);
 
   const restoreMutation = useMutation({

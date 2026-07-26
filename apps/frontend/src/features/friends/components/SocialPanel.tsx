@@ -1,5 +1,6 @@
 import { authClient } from "#/auth/authClient";
 import { confirmDelete } from "#/utils/confirmModal";
+import { queryKeys } from "#/lib/queryKeys";
 import { showErrorNotification } from "#/utils/notifications";
 import {
   ActionIcon,
@@ -74,11 +75,11 @@ export function SocialPanel({
   const invalidateEntry = () =>
     Promise.all([
       queryClient.invalidateQueries({
-        queryKey: ["friends", "entry", { id: userMediaId }],
+        queryKey: queryKeys.friends.entry(userMediaId),
       }),
       // Also covers the owner viewing this entry via their own library page.
       queryClient.invalidateQueries({
-        queryKey: ["user-media", { id: userMediaId }],
+        queryKey: queryKeys.userMedia.detail(userMediaId),
       }),
     ]);
 
@@ -92,8 +93,10 @@ export function SocialPanel({
     onSettled: () =>
       Promise.all([
         invalidateEntry(),
-        queryClient.invalidateQueries({ queryKey: ["friends", "feed"] }),
-        queryClient.invalidateQueries({ queryKey: ["friends", "media"] }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.friends.feed }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.friends.mediaAll,
+        }),
       ]),
   });
 

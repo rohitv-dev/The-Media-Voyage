@@ -1,4 +1,5 @@
 import { api } from "#/lib/api";
+import { queryKeys } from "#/lib/queryKeys";
 import {
   ActionIcon,
   Badge,
@@ -93,7 +94,7 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
   const reduceMotion = useAppReducedMotion();
 
   const { data: collectionItems = [], isPending: isLoadingItems } = useQuery({
-    queryKey: ["collection-items", collectionId],
+    queryKey: queryKeys.collection.items(collectionId),
     queryFn: () =>
       api<MediaCollectionItemRecord[]>(`/collectionItem/${collectionId}`),
   });
@@ -126,7 +127,7 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ["collection-items", collectionId],
+        queryKey: queryKeys.collection.items(collectionId),
       });
       setSelectedMediaId(null);
       showSuccessNotification({ message: "Added to collection" });
@@ -143,7 +144,7 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ["collection-items", collectionId],
+        queryKey: queryKeys.collection.items(collectionId),
       });
       showSuccessNotification({ message: "Removed from collection" });
     },
@@ -168,7 +169,7 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ["collection-items", collectionId],
+        queryKey: queryKeys.collection.items(collectionId),
       });
       setCanSaveOrder(false);
       showSuccessNotification({ message: "Order saved" });

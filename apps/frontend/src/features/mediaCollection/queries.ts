@@ -1,4 +1,5 @@
 import { api } from "#/lib/api";
+import { queryKeys } from "#/lib/queryKeys";
 import type {
   CollectionVisibilityMismatch,
   MediaCollectionItemDetailedRecord,
@@ -12,13 +13,13 @@ async function getCollections() {
 }
 
 export const collectionQueryOptions = queryOptions({
-  queryKey: ["collection"],
+  queryKey: queryKeys.collection.all,
   queryFn: getCollections,
 });
 
 export const collectionItemsDetailedQueryOptions = (collectionId: string) =>
   queryOptions({
-    queryKey: ["collection-items-detailed", collectionId],
+    queryKey: queryKeys.collection.itemsDetailed(collectionId),
     queryFn: () =>
       api<MediaCollectionItemDetailedRecord[]>(
         `/collectionItem/${collectionId}/detailed`,

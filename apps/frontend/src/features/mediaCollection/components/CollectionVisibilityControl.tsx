@@ -1,3 +1,4 @@
+import { queryKeys } from "#/lib/queryKeys";
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -38,8 +39,8 @@ export function CollectionVisibilityControl({
 
   const refresh = () =>
     Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["collection"] }),
-      queryClient.invalidateQueries({ queryKey: ["user-media"] }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.collection.all }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all }),
     ]);
 
   const bumpMutation = useMutation({

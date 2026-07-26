@@ -1,5 +1,6 @@
 import { pickPlannedMedia } from "#/features/media/queries";
 import { api } from "#/lib/api";
+import { queryKeys } from "#/lib/queryKeys";
 import { EmptyState } from "#/components/EmptyState";
 import {
   showErrorNotification,
@@ -73,8 +74,8 @@ export function MediaPickerModal({
         body: JSON.stringify({ status: "in_progress" }),
       }),
     onSuccess: (record) => {
-      void queryClient.invalidateQueries({ queryKey: ["user-media"] });
-      void queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats });
       showSuccessNotification({
         title: "Journey started",
         message: `${record.title} is now in progress.`,

@@ -25,6 +25,7 @@ import {
 import type { MediaType } from "@media-voyage/shared/userMediaSchema";
 import { useUnsavedChangesBlocker } from "#/hooks/useUnsavedChangesBlocker";
 import { useDeleteMedia } from "../../hooks/useDeleteMedia";
+import { queryKeys } from "#/lib/queryKeys";
 import { FormActions } from "./FormActions";
 import { FormHeader } from "./FormHeader";
 import { MediaDetailsSection } from "./MediaDetailsSection";
@@ -273,7 +274,7 @@ export function MediaForm(props: MediaFormProps) {
       });
 
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["user-media"] }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all }),
         queryClient.invalidateQueries(userMediaDropdownOptions),
         ...(!isAddMode
           ? [queryClient.invalidateQueries(userMediaDetailedOptions(data.id))]

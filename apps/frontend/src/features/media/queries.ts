@@ -1,4 +1,5 @@
 import { api } from "#/lib/api";
+import { queryKeys } from "#/lib/queryKeys";
 import { queryOptions } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import type {
@@ -43,7 +44,7 @@ async function getUserMedia() {
 }
 
 export const userMediaQueryOptions = queryOptions({
-  queryKey: ["user-media"],
+  queryKey: queryKeys.userMedia.all,
   queryFn: getUserMedia,
 });
 
@@ -55,7 +56,7 @@ async function getUserMediaDetailedRecord(id: string) {
 
 export function userMediaDetailedOptions(id: string) {
   return queryOptions({
-    queryKey: ["user-media", { id }],
+    queryKey: queryKeys.userMedia.detail(id),
     queryFn: () => getUserMediaDetailedRecord(id),
   });
 }
@@ -68,7 +69,7 @@ async function getUserMediaFilterRecords(filters: UserMediaQuerySchema) {
 
 export function userMediaFilterQueryOptions(filters: UserMediaQuerySchema) {
   return queryOptions({
-    queryKey: ["user-media", filters],
+    queryKey: queryKeys.userMedia.filtered(filters),
     queryFn: () => getUserMediaFilterRecords(filters),
   });
 }
@@ -78,7 +79,7 @@ async function getDeletedUserMedia() {
 }
 
 export const trashedUserMediaQueryOptions = queryOptions({
-  queryKey: ["user-media", "trash"],
+  queryKey: queryKeys.userMedia.trash,
   queryFn: getDeletedUserMedia,
 });
 
@@ -87,7 +88,7 @@ async function getUserMediaCounts() {
 }
 
 export const userMediaCountOptions = queryOptions({
-  queryKey: ["user-media", "count"],
+  queryKey: queryKeys.userMedia.count,
   queryFn: getUserMediaCounts,
 });
 
@@ -96,7 +97,7 @@ async function getUserMediaDropdowns() {
 }
 
 export const userMediaDropdownOptions = queryOptions({
-  queryKey: ["user-media", "dropdowns"],
+  queryKey: queryKeys.userMedia.dropdowns,
   queryFn: getUserMediaDropdowns,
 });
 
@@ -116,7 +117,7 @@ export function getDashboardStats() {
 }
 
 export const dashboardStatOptions = queryOptions({
-  queryKey: ["dashboard-stats"],
+  queryKey: queryKeys.dashboardStats,
   queryFn: getDashboardStats,
 });
 
@@ -141,7 +142,7 @@ export function getCalendarActivity(month: string) {
 
 export function calendarActivityOptions(month: string) {
   return queryOptions({
-    queryKey: ["calendar-activity", month],
+    queryKey: queryKeys.calendarActivity(month),
     queryFn: () => getCalendarActivity(month),
   });
 }

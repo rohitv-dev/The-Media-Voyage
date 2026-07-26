@@ -1,4 +1,5 @@
 import { api } from "#/lib/api";
+import { queryKeys } from "#/lib/queryKeys";
 import { queryOptions } from "@tanstack/react-query";
 import type {
   CommentFormInput,
@@ -24,23 +25,23 @@ function post<T>(path: string, body: unknown, method = "POST") {
 /* Queries ------------------------------------------------------------------ */
 
 export const friendsQueryOptions = queryOptions({
-  queryKey: ["friends"],
+  queryKey: queryKeys.friends.all,
   queryFn: () => api<FriendRecord[]>("/friends"),
 });
 
 export const friendRequestsQueryOptions = queryOptions({
-  queryKey: ["friends", "requests"],
+  queryKey: queryKeys.friends.requests,
   queryFn: () => api<FriendRequestsResponse>("/friends/requests"),
 });
 
 export const friendsFeedQueryOptions = queryOptions({
-  queryKey: ["friends", "feed"],
+  queryKey: queryKeys.friends.feed,
   queryFn: () => api<FriendMediaRecord[]>("/friends/feed"),
 });
 
 export function friendMediaQueryOptions(userId: string) {
   return queryOptions({
-    queryKey: ["friends", "media", { userId }],
+    queryKey: queryKeys.friends.media(userId),
     queryFn: () =>
       api<FriendMediaListResponse>(
         `/friends/${encodeURIComponent(userId)}/media`,
@@ -70,7 +71,7 @@ export type FriendCollectionDetail = {
 
 export function friendCollectionsQueryOptions(userId: string) {
   return queryOptions({
-    queryKey: ["friends", "collections", { userId }],
+    queryKey: queryKeys.friends.collections(userId),
     queryFn: () =>
       api<FriendCollectionSummary[]>(
         `/friends/${encodeURIComponent(userId)}/collections`,
@@ -80,7 +81,7 @@ export function friendCollectionsQueryOptions(userId: string) {
 
 export function friendCollectionDetailOptions(collectionId: string) {
   return queryOptions({
-    queryKey: ["friends", "collection", { collectionId }],
+    queryKey: queryKeys.friends.collection(collectionId),
     queryFn: () =>
       api<FriendCollectionDetail>(`/friends/collections/${collectionId}`),
   });
@@ -88,14 +89,14 @@ export function friendCollectionDetailOptions(collectionId: string) {
 
 export function friendMediaDetailOptions(id: string) {
   return queryOptions({
-    queryKey: ["friends", "entry", { id }],
+    queryKey: queryKeys.friends.entry(id),
     queryFn: () => api<FriendMediaDetailed>(`/friends/media/${id}`),
   });
 }
 
 export function friendMediaCommentsOptions(id: string) {
   return queryOptions({
-    queryKey: ["friends", "entry", { id }, "comments"],
+    queryKey: queryKeys.friends.comments(id),
     queryFn: () => api<CommentRecord[]>(`/friends/media/${id}/comments`),
   });
 }

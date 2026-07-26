@@ -9,6 +9,7 @@ import {
   sendFriendRequest,
 } from "#/features/friends/queries";
 import { confirmDelete } from "#/utils/confirmModal";
+import { queryKeys } from "#/lib/queryKeys";
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -85,7 +86,7 @@ function RouteComponent() {
   const { data: feed } = useQuery(friendsFeedQueryOptions);
 
   const refreshAll = () =>
-    queryClient.invalidateQueries({ queryKey: ["friends"] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
 
   const requestMutation = useMutation({
     mutationFn: () => sendFriendRequest(email.trim()),

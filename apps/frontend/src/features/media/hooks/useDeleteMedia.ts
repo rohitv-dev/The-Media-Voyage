@@ -1,5 +1,6 @@
 import { api } from "#/lib/api";
 import { confirmDelete } from "#/utils/confirmModal";
+import { queryKeys } from "#/lib/queryKeys";
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -22,12 +23,14 @@ export function useDeleteMedia() {
       }),
     onSuccess: () =>
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["user-media"] }),
-        queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] }),
-        queryClient.invalidateQueries({ queryKey: ["collection"] }),
-        queryClient.invalidateQueries({ queryKey: ["collection-items"] }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.collection.all }),
         queryClient.invalidateQueries({
-          queryKey: ["collection-items-detailed"],
+          queryKey: queryKeys.collection.itemsAll,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.collection.itemsDetailedAll,
         }),
       ]),
     onError: (error) =>

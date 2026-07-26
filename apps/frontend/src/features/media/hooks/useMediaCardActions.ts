@@ -1,4 +1,5 @@
 import { api } from "#/lib/api";
+import { queryKeys } from "#/lib/queryKeys";
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -34,8 +35,8 @@ export function useMediaCardActions(media: MediaRecord) {
       }),
     onSettled: () =>
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["user-media"] }),
-        queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats }),
       ]),
   });
 
