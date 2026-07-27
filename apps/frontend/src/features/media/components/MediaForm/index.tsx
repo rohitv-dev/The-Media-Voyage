@@ -126,6 +126,10 @@ export function MediaForm(props: MediaFormProps) {
     validate: {
       title: (value) =>
         isAddMode && !value.trim() ? "Title is required" : undefined,
+      completedAt: (value, values) =>
+        values.status === "completed" && !value
+          ? "Completed date is required"
+          : undefined,
     },
   });
 
