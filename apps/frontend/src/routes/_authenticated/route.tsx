@@ -13,15 +13,22 @@ import {
   Text,
   Title,
   Tooltip,
+  UnstyledButton,
 } from "@mantine/core";
 import type { NavLinkProps } from "@mantine/core";
-import { useDisclosure, useHotkeys } from "@mantine/hooks";
+import {
+  useDisclosure,
+  useHotkeys,
+  useLocalStorage,
+  useMediaQuery,
+} from "@mantine/hooks";
 import {
   IconBooks,
   IconCalendar,
   IconChevronRight,
   IconDeviceTv,
   IconHelp,
+  IconLayoutSidebar,
   IconLogout,
   IconPlus,
   IconSettings,
@@ -53,8 +60,43 @@ import { ThemeSwitcher } from "#/theme/ThemeSwitcher";
 
 const SIDEBAR_ACTIVE_PILL_ID = "sidebar-active-pill";
 
-function SidebarNavLink({ active, ...props }: NavLinkProps) {
+interface SidebarNavLinkProps extends NavLinkProps {
+  /** Rail mode: icon only, label shown in a tooltip instead. */
+  collapsed?: boolean;
+}
+
+function SidebarNavLink({
+  active,
+  collapsed,
+  label,
+  leftSection,
+  onClick,
+  ...props
+}: SidebarNavLinkProps) {
   const reduceMotion = useAppReducedMotion();
+
+  if (collapsed) {
+    return (
+      <Tooltip label={label} position="right" withArrow>
+        <UnstyledButton
+          onClick={onClick}
+          aria-label={typeof label === "string" ? label : undefined}
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: 40,
+            borderRadius: "var(--mantine-radius-sm)",
+            backgroundColor: active
+              ? "var(--mantine-primary-color-light)"
+              : "transparent",
+          }}
+        >
+          {leftSection}
+        </UnstyledButton>
+      </Tooltip>
+    );
+  }
 
   return (
     <Box pos="relative">
@@ -77,6 +119,9 @@ function SidebarNavLink({ active, ...props }: NavLinkProps) {
       )}
       <NavLink
         active={active}
+        label={label}
+        leftSection={leftSection}
+        onClick={onClick}
         style={{ position: "relative", backgroundColor: "transparent" }}
         {...props}
       />
@@ -106,6 +151,12 @@ function RouteComponent() {
   const navigate = Route.useNavigate();
   const queryClient = useQueryClient();
   const [opened, { toggle, close }] = useDisclosure();
+  const [sidebarOpened, setSidebarOpened] = useLocalStorage<boolean>({
+    key: "media-voyage-sidebar-opened",
+    defaultValue: true,
+  });
+  const isDesktop = useMediaQuery("(min-width: 62em)");
+  const railCollapsed = isDesktop && !sidebarOpened;
   const [shortcutsOpened, { open: openShortcuts, close: closeShortcuts }] =
     useDisclosure();
   const { data: collections } = useSuspenseQuery(collectionQueryOptions);
@@ -158,7 +209,7 @@ function RouteComponent() {
     <AppShell
       header={{ height: 68 }}
       navbar={{
-        width: 260,
+        width: railCollapsed ? 76 : 260,
         breakpoint: "md",
         collapsed: { mobile: !opened },
       }}
@@ -178,6 +229,24 @@ function RouteComponent() {
               size="sm"
               aria-label={opened ? "Close navigation" : "Open navigation"}
             />
+
+            <Tooltip
+              label={sidebarOpened ? "Collapse sidebar" : "Expand sidebar"}
+              withArrow
+            >
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                size="lg"
+                visibleFrom="md"
+                aria-label={
+                  sidebarOpened ? "Collapse sidebar" : "Expand sidebar"
+                }
+                onClick={() => setSidebarOpened((value) => !value)}
+              >
+                <IconLayoutSidebar size={18} />
+              </ActionIcon>
+            </Tooltip>
 
             <Box
               style={{ cursor: "pointer" }}
@@ -251,6 +320,7 @@ function RouteComponent() {
               leftSection={<IconTrendingUp size={19} />}
               active={isActive("/dashboard")}
               onClick={goTo("/dashboard")}
+              collapsed={railCollapsed}
             />
 
             <SidebarNavLink
@@ -258,6 +328,7 @@ function RouteComponent() {
               leftSection={<IconBooks size={19} />}
               active={isActive("/media")}
               onClick={goTo("/media")}
+              collapsed={railCollapsed}
             />
 
             <SidebarNavLink
@@ -265,6 +336,7 @@ function RouteComponent() {
               leftSection={<IconCalendar size={19} />}
               active={isActive("/calendar")}
               onClick={goTo("/calendar")}
+              collapsed={railCollapsed}
             />
 
             <SidebarNavLink
@@ -279,6 +351,7 @@ function RouteComponent() {
               }
               active={isActive("/friends")}
               onClick={goTo("/friends")}
+              collapsed={railCollapsed}
             />
 
             <SidebarNavLink
@@ -286,6 +359,7 @@ function RouteComponent() {
               leftSection={<IconTags size={19} />}
               active={isActive("/tags")}
               onClick={goTo("/tags")}
+              collapsed={railCollapsed}
             />
 
             <SidebarNavLink
@@ -293,6 +367,7 @@ function RouteComponent() {
               leftSection={<IconDeviceTv size={19} />}
               active={isActive("/sources")}
               onClick={goTo("/sources")}
+              collapsed={railCollapsed}
             />
 
             <SidebarNavLink
@@ -300,6 +375,7 @@ function RouteComponent() {
               leftSection={<IconTrash size={19} />}
               active={isActive("/trash")}
               onClick={goTo("/trash")}
+              collapsed={railCollapsed}
             />
 
             <SidebarNavLink
@@ -307,6 +383,7 @@ function RouteComponent() {
               leftSection={<IconUser size={19} />}
               active={isActive("/profile")}
               onClick={goTo("/profile")}
+              collapsed={railCollapsed}
             />
 
             <SidebarNavLink
@@ -314,41 +391,44 @@ function RouteComponent() {
               leftSection={<IconSettings size={19} />}
               active={isActive("/settings")}
               onClick={goTo("/settings")}
+              collapsed={railCollapsed}
             />
 
             <Divider my="md" />
 
-            <Stack gap={4}>
-              <SidebarNavLink
-                label="Collections"
-                active={isActive("/collection", true)}
-                rightSection={<IconChevronRight size={18} />}
-                onClick={goTo("/collection")}
-              />
+            {!railCollapsed && (
+              <Stack gap={4}>
+                <SidebarNavLink
+                  label="Collections"
+                  active={isActive("/collection", true)}
+                  rightSection={<IconChevronRight size={18} />}
+                  onClick={goTo("/collection")}
+                />
 
-              <Stack gap={4} pl="sm">
-                {collections.map((collection) => (
-                  <SidebarNavLink
-                    key={collection.id}
-                    label={collection.name}
-                    description={
-                      collection.description
-                        ? String(collection.description)
-                        : undefined
-                    }
-                    leftSection={<IconBooks size={16} />}
-                    active={isActive(`/collection/view/${collection.id}`)}
-                    onClick={() => {
-                      navigate({
-                        to: "/collection/view/$id",
-                        params: { id: collection.id },
-                      });
-                      close();
-                    }}
-                  />
-                ))}
+                <Stack gap={4} pl="sm">
+                  {collections.map((collection) => (
+                    <SidebarNavLink
+                      key={collection.id}
+                      label={collection.name}
+                      description={
+                        collection.description
+                          ? String(collection.description)
+                          : undefined
+                      }
+                      leftSection={<IconBooks size={16} />}
+                      active={isActive(`/collection/view/${collection.id}`)}
+                      onClick={() => {
+                        navigate({
+                          to: "/collection/view/$id",
+                          params: { id: collection.id },
+                        });
+                        close();
+                      }}
+                    />
+                  ))}
+                </Stack>
               </Stack>
-            </Stack>
+            )}
           </Stack>
 
           <Box hiddenFrom="md" mt="auto">

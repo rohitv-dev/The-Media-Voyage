@@ -315,7 +315,7 @@ function RouteComponent() {
             )}
           </Box>
 
-          <Box visibleFrom="lg" w={248} flex="0 0 248px">
+          <Box visibleFrom="lg" w={288} flex="0 0 288px">
             <MediaFilterCard
               filters={filters}
               applyFilters={applyFilters}

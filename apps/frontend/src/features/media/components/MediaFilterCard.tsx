@@ -84,7 +84,7 @@ export function MediaFilterCard({
   return (
     <Card
       withBorder
-      w={compact ? 260 : "100%"}
+      w={compact ? 288 : "100%"}
       miw={0}
       p={compact ? 0 : undefined}
       mah={compact ? "calc(100dvh - 100px)" : undefined}
