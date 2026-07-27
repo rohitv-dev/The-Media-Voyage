@@ -48,6 +48,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Trigger Dokploy redeploy
+        run: curl -fsS -X POST "${{ secrets.DOKPLOY_BACKEND_WEBHOOK }}"
+
   frontend:
     runs-on: ubuntu-latest
     permissions:
@@ -85,3 +88,6 @@ jobs:
             VITE_API_URL=${{ vars.VITE_API_URL }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Trigger Dokploy redeploy
+        run: curl -fsS -X POST "${{ secrets.DOKPLOY_FRONTEND_WEBHOOK }}"
