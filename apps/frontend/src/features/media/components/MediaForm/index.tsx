@@ -226,6 +226,12 @@ export function MediaForm(props: MediaFormProps) {
             : {}),
         });
       }
+
+      if (record.source === "open_library" && record.genres?.length) {
+        setCatalogMetadata(form, {
+          genre: record.genres.slice(0, 5).join(", "),
+        });
+      }
     }
   };
 

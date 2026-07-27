@@ -1,5 +1,6 @@
 import { api } from "#/lib/api";
 import { queryKeys } from "#/lib/queryKeys";
+import { capitalizeWords } from "#/utils/stringFunctions";
 import {
   Avatar,
   Badge,
@@ -65,7 +66,7 @@ function MediaOption({ media }: { media: SourceMediaRecord }) {
 
       <Stack gap={0} style={{ flex: 1 }}>
         <Text size="sm" fw={500}>
-          {media.title}
+          {media.title} {media.creators ? `(${media.creators.join(", ")})` : ""}
         </Text>
 
         <Text size="xs" c="dimmed">
@@ -78,7 +79,7 @@ function MediaOption({ media }: { media: SourceMediaRecord }) {
         variant="light"
         size="sm"
       >
-        {sourceLabels[media.source] ?? media.source}
+        {capitalizeWords(sourceLabels[media.source] ?? media.source)}
       </Badge>
     </Group>
   );
@@ -91,7 +92,11 @@ export function MediaTitleSelect(props: MediaTitleSelectProps) {
   const trimmedSearch = props.search.trim();
   const isBookSearch = props.type === "book";
 
-  const { data = [], isFetching, isError } = useQuery({
+  const {
+    data = [],
+    isFetching,
+    isError,
+  } = useQuery({
     queryKey: queryKeys.mediaSearch(props.type, debouncedSearch),
     enabled: debouncedSearch.trim().length >= 2,
     queryFn: () =>
@@ -192,11 +197,7 @@ export function MediaTitleSelect(props: MediaTitleSelectProps) {
               <Combobox.Group label="Can't find it?">
                 <ComboboxOption value="$create">
                   <Group gap="sm" wrap="nowrap">
-                    <ThemeIcon
-                      variant="light"
-                      size={32}
-                      radius="sm"
-                    >
+                    <ThemeIcon variant="light" size={32} radius="sm">
                       <IconPlus size={16} />
                     </ThemeIcon>
                     <Stack gap={0}>
@@ -243,7 +244,10 @@ export function MediaTitleSelect(props: MediaTitleSelectProps) {
               size="sm"
               leftSection={<IconCheck size={12} />}
             >
-              Matched from {sourceLabels[props.value.source] ?? props.value.source}
+              Matched from{" "}
+              {capitalizeWords(
+                sourceLabels[props.value.source] ?? props.value.source,
+              )}
             </Badge>
           )}
         </Group>
