@@ -11,7 +11,7 @@ import type {
   UserMediaFormSchema,
   UserMediaQuickAction,
 } from "@media-voyage/shared/api";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "../../../db/db";
 import {
   ownedDeletedUserMediaCondition,
@@ -172,6 +172,31 @@ export async function createUserMedia(
 
   return db.transaction(async (tx) => {
     let mediaId = input.mediaId;
+
+    if (mediaId) {
+      const [existing] = await tx
+        .select({ id: userMedia.id })
+        .from(userMedia)
+        .where(
+          and(
+            eq(userMedia.userId, userId),
+            eq(userMedia.mediaId, mediaId),
+            isNull(userMedia.deletedAt),
+          ),
+        )
+        .limit(1);
+
+      if (existing) {
+        const [record] = await tx
+          .select(userMediaCreatedSelect)
+          .from(userMedia)
+          .innerJoin(media, eq(userMedia.mediaId, media.id))
+          .where(eq(userMedia.id, existing.id))
+          .limit(1);
+
+        return record;
+      }
+    }
 
     if (!mediaId && externalId && mediaSource) {
       const [existingMedia] = await tx

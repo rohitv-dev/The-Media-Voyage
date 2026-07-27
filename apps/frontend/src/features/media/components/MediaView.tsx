@@ -20,6 +20,7 @@ import {
 import {
   IconArrowLeft,
   IconCheck,
+  IconCopy,
   IconEdit,
   IconHeartFilled,
   IconNotebook,
@@ -126,6 +127,9 @@ type MediaViewProps = {
   eyebrow?: string;
   /** Rendered below the review/notes panels — used for the social panel. */
   footer?: React.ReactNode;
+  /** Shows a "Copy to my library" action in place of Update when readOnly. */
+  onCopyToLibrary?: () => void;
+  copyingToLibrary?: boolean;
 };
 
 export function MediaView({
@@ -135,6 +139,8 @@ export function MediaView({
   backLabel = "Back to library",
   eyebrow,
   footer,
+  onCopyToLibrary,
+  copyingToLibrary,
 }: MediaViewProps) {
   const navigate = useNavigate();
   // Absent (rather than empty) notes mean the viewer isn't the owner.
@@ -263,6 +269,17 @@ export function MediaView({
                         }
                       >
                         Update
+                      </Button>
+                    )}
+                    {readOnly && onCopyToLibrary && (
+                      <Button
+                        w={{ base: "100%", xs: "auto" }}
+                        flex="0 0 auto"
+                        leftSection={<IconCopy size={16} />}
+                        loading={copyingToLibrary}
+                        onClick={onCopyToLibrary}
+                      >
+                        Copy to my library
                       </Button>
                     )}
                   </Group>

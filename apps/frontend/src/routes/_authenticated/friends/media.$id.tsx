@@ -4,9 +4,21 @@ import {
   friendMediaDetailOptions,
 } from "#/features/friends/queries";
 import { MediaView } from "#/features/media/components/MediaView";
+import { api } from "#/lib/api";
+import { queryKeys } from "#/lib/queryKeys";
+import { showErrorNotification } from "#/utils/notifications";
 import { capitalizeWords } from "#/utils/stringFunctions";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import type { MediaDetailedRecord } from "@media-voyage/shared/api";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
+import {
+  createFileRoute,
+  useNavigate,
+  useRouter,
+} from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { fadeUpEntranceProps } from "#/utils/motionVariants";
@@ -22,8 +34,36 @@ export const Route = createFileRoute("/_authenticated/friends/media/$id")({
 function RouteComponent() {
   const { id } = Route.useParams();
   const router = useRouter();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data } = useSuspenseQuery(friendMediaDetailOptions(id));
   const reduceMotion = useAppReducedMotion();
+
+  const copyMutation = useMutation({
+    mutationFn: () =>
+      api<MediaDetailedRecord>("/user-media", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mediaId: data.mediaId,
+          title: data.title,
+          type: data.type,
+          status: "planned",
+        }),
+      }),
+    onSuccess: async (record) => {
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.userMedia.all,
+      });
+      navigate({ to: "/media/update/$id", params: { id: record.id } });
+    },
+    onError: (error: Error) => {
+      showErrorNotification({
+        title: "Could not copy to your library",
+        message: error.message,
+      });
+    },
+  });
 
   return (
     <motion.div {...fadeUpEntranceProps(reduceMotion)}>
@@ -33,6 +73,8 @@ function RouteComponent() {
         backLabel="Back"
         onBack={() => router.history.back()}
         eyebrow={`${capitalizeWords(data.type)} / ${data.ownerName}'s entry`}
+        onCopyToLibrary={() => copyMutation.mutate()}
+        copyingToLibrary={copyMutation.isPending}
         footer={
           <SocialPanel
             userMediaId={data.id}
