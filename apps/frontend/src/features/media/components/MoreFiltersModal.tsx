@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Button,
   Group,
   Modal,
@@ -10,7 +11,7 @@ import {
   ThemeIcon,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
-import { IconFilter } from "@tabler/icons-react";
+import { IconFilter, IconX } from "@tabler/icons-react";
 import type {
   UserMediaDropdowns,
   UserMediaQuerySchema,
@@ -81,6 +82,21 @@ export function MoreFiltersModal({
                 max={10}
                 decimalScale={1}
                 value={filters.minRating ?? ""}
+                leftSection={
+                  filters.minRating !== undefined ? (
+                    <ActionIcon
+                      size="xs"
+                      variant="subtle"
+                      color="gray"
+                      aria-label="Clear minimum rating"
+                      onClick={() =>
+                        updateFilters({ ...filters, minRating: undefined })
+                      }
+                    >
+                      <IconX size={14} />
+                    </ActionIcon>
+                  ) : undefined
+                }
                 onChange={(value) =>
                   updateFilters({
                     ...filters,
@@ -96,6 +112,21 @@ export function MoreFiltersModal({
                 max={10}
                 decimalScale={1}
                 value={filters.maxRating ?? ""}
+                leftSection={
+                  filters.maxRating !== undefined ? (
+                    <ActionIcon
+                      size="xs"
+                      variant="subtle"
+                      color="gray"
+                      aria-label="Clear maximum rating"
+                      onClick={() =>
+                        updateFilters({ ...filters, maxRating: undefined })
+                      }
+                    >
+                      <IconX size={14} />
+                    </ActionIcon>
+                  ) : undefined
+                }
                 onChange={(value) =>
                   updateFilters({
                     ...filters,
