@@ -1,5 +1,6 @@
 import { capitalizeWords } from "#/utils/stringFunctions";
 import {
+  ActionIcon,
   Box,
   Button,
   Card,
@@ -21,7 +22,7 @@ import {
   mediaTypeEnumValues,
   statusEnumValues,
 } from "@media-voyage/shared/userMediaSchema";
-import { IconFilter, IconSearch } from "@tabler/icons-react";
+import { IconFilter, IconSearch, IconX } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
 import { MoreFiltersModal } from "#/features/media/components/MoreFiltersModal";
 
@@ -137,6 +138,21 @@ export function MediaFilterCard({
             variant="filled"
             placeholder="Search Titles"
             leftSection={<IconSearch size={16} />}
+            rightSection={
+              filters.search ? (
+                <ActionIcon
+                  size="xs"
+                  variant="subtle"
+                  color="gray"
+                  aria-label="Clear search"
+                  onClick={() =>
+                    updateFilters({ ...filters, search: undefined })
+                  }
+                >
+                  <IconX size={14} />
+                </ActionIcon>
+              ) : undefined
+            }
             size="xs"
             radius="sm"
             data-shortcut="library-search"
