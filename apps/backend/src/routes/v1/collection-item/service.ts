@@ -1,12 +1,12 @@
 import { mediaCollectionItems } from "@media-voyage/shared";
 import type { ReorderMediaCollectionItems } from "@media-voyage/shared/api";
 import { and, eq } from "drizzle-orm";
-import type { FastifyReply } from "fastify";
 import { db } from "../../../db/db";
+import { badRequest, conflict, notFound } from "../../../errors";
+import { requireOwnedCollection } from "../collection/queries";
 import {
   findCollectionItem,
   findOwnedActiveUserMedia,
-  findOwnedCollection,
   getLastCollectionItemPosition,
   listCollectionItems,
   listCollectionItemsDetailed,
@@ -16,32 +16,18 @@ export async function getOwnedCollectionItems(
   userId: string,
   collectionId: string,
 ) {
-  const collection = await findOwnedCollection(userId, collectionId);
+  await requireOwnedCollection(userId, collectionId);
 
-  if (!collection) {
-    return { status: "collection_not_found" as const };
-  }
-
-  return {
-    status: "success" as const,
-    items: await listCollectionItems(collectionId),
-  };
+  return listCollectionItems(collectionId);
 }
 
 export async function getOwnedCollectionItemsDetailed(
   userId: string,
   collectionId: string,
 ) {
-  const collection = await findOwnedCollection(userId, collectionId);
+  await requireOwnedCollection(userId, collectionId);
 
-  if (!collection) {
-    return { status: "collection_not_found" as const };
-  }
-
-  return {
-    status: "success" as const,
-    items: await listCollectionItemsDetailed(collectionId),
-  };
+  return listCollectionItemsDetailed(collectionId);
 }
 
 export async function addCollectionItem(
@@ -49,27 +35,15 @@ export async function addCollectionItem(
   collectionId: string,
   userMediaId: string,
 ) {
-  const collection = await findOwnedCollection(userId, collectionId);
-
-  if (!collection) {
-    return { status: "collection_not_found" as const };
-  }
-
-  if (!userMediaId) {
-    return { status: "user_media_required" as const };
-  }
+  await requireOwnedCollection(userId, collectionId);
 
   const userMediaEntry = await findOwnedActiveUserMedia(userId, userMediaId);
 
-  if (!userMediaEntry) {
-    return { status: "user_media_not_found" as const };
-  }
+  if (!userMediaEntry) throw notFound("Selected media entry not found");
 
   const existing = await findCollectionItem(collectionId, userMediaId);
 
-  if (existing) {
-    return { status: "already_exists" as const };
-  }
+  if (existing) throw conflict("Media is already in this collection");
 
   const lastPosition = await getLastCollectionItemPosition(collectionId);
   const [item] = await db
@@ -81,7 +55,7 @@ export async function addCollectionItem(
     })
     .returning();
 
-  return { status: "success" as const, item };
+  return item;
 }
 
 export async function reorderCollectionItems(
@@ -89,15 +63,9 @@ export async function reorderCollectionItems(
   collectionId: string,
   items: ReorderMediaCollectionItems["items"],
 ) {
-  const collection = await findOwnedCollection(userId, collectionId);
+  await requireOwnedCollection(userId, collectionId);
 
-  if (!collection) {
-    return { status: "collection_not_found" as const };
-  }
-
-  if (!items.length) {
-    return { status: "items_required" as const };
-  }
+  if (!items.length) throw badRequest("items are required");
 
   await Promise.all(
     items.map((item) =>
@@ -112,8 +80,6 @@ export async function reorderCollectionItems(
         ),
     ),
   );
-
-  return { status: "success" as const };
 }
 
 export async function removeCollectionItem(
@@ -121,11 +87,7 @@ export async function removeCollectionItem(
   collectionId: string,
   itemId: string,
 ) {
-  const collection = await findOwnedCollection(userId, collectionId);
-
-  if (!collection) {
-    return { status: "collection_not_found" as const };
-  }
+  await requireOwnedCollection(userId, collectionId);
 
   const deleted = await db
     .delete(mediaCollectionItems)
@@ -137,76 +99,5 @@ export async function removeCollectionItem(
     )
     .returning();
 
-  if (!deleted.length) {
-    return { status: "item_not_found" as const };
-  }
-
-  return { status: "success" as const };
-}
-
-/** Map a {@link getOwnedCollectionItems}/{@link getOwnedCollectionItemsDetailed} result onto the HTTP response. */
-export function sendCollectionItemsResult(
-  reply: FastifyReply,
-  result:
-    | Awaited<ReturnType<typeof getOwnedCollectionItems>>
-    | Awaited<ReturnType<typeof getOwnedCollectionItemsDetailed>>,
-) {
-  if (result.status === "collection_not_found") {
-    return reply.status(404).send({ error: "Collection not found" });
-  }
-
-  return reply.send(result.items);
-}
-
-/** Map an {@link addCollectionItem} result onto the HTTP response. */
-export function sendAddCollectionItemResult(
-  reply: FastifyReply,
-  result: Awaited<ReturnType<typeof addCollectionItem>>,
-) {
-  switch (result.status) {
-    case "collection_not_found":
-      return reply.status(404).send({ error: "Collection not found" });
-    case "user_media_required":
-      return reply.status(400).send({ error: "userMediaId is required" });
-    case "user_media_not_found":
-      return reply
-        .status(404)
-        .send({ error: "Selected media entry not found" });
-    case "already_exists":
-      return reply
-        .status(409)
-        .send({ error: "Media is already in this collection" });
-    case "success":
-      return reply.status(201).send(result.item);
-  }
-}
-
-/** Map a {@link reorderCollectionItems} result onto the HTTP response. */
-export function sendReorderCollectionItemsResult(
-  reply: FastifyReply,
-  result: Awaited<ReturnType<typeof reorderCollectionItems>>,
-) {
-  switch (result.status) {
-    case "collection_not_found":
-      return reply.status(404).send({ error: "Collection not found" });
-    case "items_required":
-      return reply.status(400).send({ error: "items are required" });
-    case "success":
-      return reply.send({ success: true });
-  }
-}
-
-/** Map a {@link removeCollectionItem} result onto the HTTP response. */
-export function sendRemoveCollectionItemResult(
-  reply: FastifyReply,
-  result: Awaited<ReturnType<typeof removeCollectionItem>>,
-) {
-  switch (result.status) {
-    case "collection_not_found":
-      return reply.status(404).send({ error: "Collection not found" });
-    case "item_not_found":
-      return reply.status(404).send({ error: "Collection item not found" });
-    case "success":
-      return reply.status(200).send({ success: true });
-  }
+  if (!deleted.length) throw notFound("Collection item not found");
 }

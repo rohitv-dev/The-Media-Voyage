@@ -1,15 +1,12 @@
 import { media, mediaCollectionItems, userMedia } from "@media-voyage/shared";
 import { and, asc, eq, isNull, max } from "drizzle-orm";
 import { db } from "../../../db/db";
-import { findOwnedCollection } from "../collection/queries";
 import {
   collectionItemDetailedSelect,
   collectionItemIdSelect,
   collectionItemSelect,
   userMediaIdSelect,
 } from "./selects";
-
-export { findOwnedCollection };
 
 export function listCollectionItems(collectionId: string) {
   return db

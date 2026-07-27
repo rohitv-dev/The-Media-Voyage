@@ -46,14 +46,6 @@ export type ReorderMediaCollectionItems = z.infer<
   typeof reorderMediaCollectionItemsSchema
 >;
 
-export const mediaCollectionSchema = z.object({
-  id: mediaCollectionSelectSchema.shape.id,
-  name: mediaCollectionSelectSchema.shape.name,
-  description: mediaCollectionSelectSchema.shape.description,
-});
-
-export type MediaCollection = z.infer<typeof mediaCollectionSchema>;
-
 export const mediaCollectionFormSchema = mediaCollectionInsertSchema.pick({
   name: true,
   description: true,
