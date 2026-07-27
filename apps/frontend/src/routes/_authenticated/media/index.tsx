@@ -14,10 +14,11 @@ import {
   Stack,
   SegmentedControl,
   Text,
+  Title,
 } from "@mantine/core";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MediaCard } from "#/features/media/components/MediaCard";
 import { MediaCardSkeleton } from "#/features/media/components/MediaCardSkeleton";
 import { EmptyState } from "#/components/EmptyState";
@@ -79,6 +80,7 @@ function RouteComponent() {
 
   const [filters, setFilters] = useState<UserMediaQuerySchema>(search);
   const { presets, savePreset, deletePreset } = useFilterPresets();
+  const skipNextSearchSyncRef = useRef(false);
 
   const hasAppliedFilters = Boolean(
     search.search ||
@@ -98,12 +100,14 @@ function RouteComponent() {
   };
 
   const applyFilters = () => {
+    skipNextSearchSyncRef.current = true;
     navigate({ to: "/media", search: filters });
     close();
   };
 
   const updateAndApplyFilters = (newFilters: UserMediaQuerySchema) => {
     updateFilters(newFilters);
+    skipNextSearchSyncRef.current = true;
     navigate({ to: "/media", search: newFilters });
     close();
   };
@@ -123,6 +127,7 @@ function RouteComponent() {
       sort: "updatedAt",
       order: "desc",
     });
+    skipNextSearchSyncRef.current = true;
     close();
     navigate({ to: "/media", search: undefined });
   };
@@ -143,87 +148,88 @@ function RouteComponent() {
   }, [isMdDown, view, setView]);
 
   useEffect(() => {
+    if (skipNextSearchSyncRef.current) {
+      skipNextSearchSyncRef.current = false;
+      return;
+    }
     setFilters(search);
   }, [search]);
 
   return (
     <Container fluid pt="md" pb="md">
-      <Stack gap="xs">
-        <Group justify="apart" align="center" mb="md">
+      <Stack gap="md">
+        <Group justify="space-between" align="flex-start" wrap="wrap" gap="sm">
           <Stack gap={2}>
-            <Group justify="space-between" align="center">
-              <Group>
-                <Text size="lg" fw={700}>
-                  Library
-                </Text>
-                {isFetching && <Loader size="xs" />}
-              </Group>
-              <Group gap="xs">
-                {!isMdDown && (
-                  <SegmentedControl
-                    size="xs"
-                    aria-label="Choose library view"
-                    value={view}
-                    onChange={setView}
-                    color="accent"
-                    data={[
-                      {
-                        value: "grid",
-                        label: (
-                          <Group gap={5} wrap="nowrap">
-                            <IconLayoutGrid size={15} />
-                            <Text size="xs">Grid</Text>
-                          </Group>
-                        ),
-                      },
-                      {
-                        value: "table",
-                        label: (
-                          <Group gap={5} wrap="nowrap">
-                            <IconTable size={15} />
-                            <Text size="xs">Table</Text>
-                          </Group>
-                        ),
-                      },
-                    ]}
-                  />
-                )}
-                <Button
-                  size="xs"
-                  variant="light"
-                  leftSection={<IconDice5 size={16} />}
-                  onClick={openPicker}
-                >
-                  Pick for me
-                </Button>
-                <FilterPresetsMenu
-                  presets={presets}
-                  onApply={updateAndApplyFilters}
-                  onSave={(name) => savePreset(name, filters)}
-                  onDelete={deletePreset}
-                />
-                <Box hiddenFrom="lg">
-                  <Button
-                    size="xs"
-                    leftSection={<IconFilter size={16} />}
-                    onClick={open}
-                  >
-                    Filters
-                  </Button>
-                </Box>
-              </Group>
+            <Group gap="xs">
+              <Title order={2}>Library</Title>
+              {isFetching && <Loader size="xs" />}
             </Group>
-            <Text color="dimmed" size="sm">
+            <Text c="dimmed" size="sm">
               Select an entry to view the full details, or use the action button
               to update.
             </Text>
-
-            <MediaAppliedFilters
-              filters={search}
-              updateAndApplyFilters={updateAndApplyFilters}
-            />
           </Stack>
+
+          <Group gap="xs">
+            {!isMdDown && (
+              <SegmentedControl
+                size="xs"
+                aria-label="Choose library view"
+                value={view}
+                onChange={setView}
+                color="accent"
+                data={[
+                  {
+                    value: "grid",
+                    label: (
+                      <Group gap={5} wrap="nowrap">
+                        <IconLayoutGrid size={15} />
+                        <Text size="xs">Grid</Text>
+                      </Group>
+                    ),
+                  },
+                  {
+                    value: "table",
+                    label: (
+                      <Group gap={5} wrap="nowrap">
+                        <IconTable size={15} />
+                        <Text size="xs">Table</Text>
+                      </Group>
+                    ),
+                  },
+                ]}
+              />
+            )}
+            <Button
+              size="xs"
+              variant="light"
+              leftSection={<IconDice5 size={16} />}
+              onClick={openPicker}
+            >
+              Pick for me
+            </Button>
+            <FilterPresetsMenu
+              presets={presets}
+              onApply={updateAndApplyFilters}
+              onSave={(name) => savePreset(name, filters)}
+              onDelete={deletePreset}
+            />
+            <Box hiddenFrom="lg">
+              <Button
+                size="xs"
+                leftSection={<IconFilter size={16} />}
+                onClick={open}
+              >
+                Filters
+              </Button>
+            </Box>
+          </Group>
         </Group>
+
+        <MediaAppliedFilters
+          filters={search}
+          updateAndApplyFilters={updateAndApplyFilters}
+        />
 
         <Flex gap="sm">
           <Box flex="1">
