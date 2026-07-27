@@ -11,9 +11,12 @@ Media Voyage is a personal media-tracking app for keeping tabs on the movies, sh
 - Dashboard with library stats and quick actions
 - Activity calendar to see consumption history over time
 - Friends: follow other users, browse their libraries and collections, and copy items into your own library
+- Per-entry visibility with a configurable default, plus direct library sharing
 - Trash with restore for soft-deleted entries
 - Tag and source management
-- Media lookup via IGDB (games) and OMDB (movies/shows)
+- Media lookup via IGDB (games), OMDB (movies/shows), and Open Library (books)
+- CSV export of your whole library
+- Appearance settings: light/dark theme, cover art toggle and size, reduced motion
 
 ## Tech Stack
 
@@ -30,7 +33,9 @@ Media Voyage is a personal media-tracking app for keeping tabs on the movies, sh
    pnpm install
    ```
 
-2. Copy `.env.example` to `.env` and fill in the required values (database connection, auth secret, IGDB/OMDB API credentials).
+2. Copy `.env.example` to `.env` and fill in the required values: `DATABASE_URL`, `BETTER_AUTH_SECRET` (32+ random characters), `BETTER_AUTH_URL`, `FRONTEND_URL`, and the IGDB/OMDB credentials. Open Library needs no API key.
+
+   Registration is gated by `SIGNUP_INVITE_CODE` — signups must supply that code, and it is required when `NODE_ENV=production`.
 
 3. Push the database schema:
 
@@ -50,4 +55,15 @@ Media Voyage is a personal media-tracking app for keeping tabs on the movies, sh
 - `apps/backend` — Fastify API
 - `packages/shared` — shared Drizzle schemas, Zod contracts, and types
 
-See [AGENTS.md](AGENTS.md) for detailed contributor guidelines.
+## Scripts
+
+Run from the repo root:
+
+| Script | Description |
+| --- | --- |
+| `pnpm dev` | Run frontend and backend together |
+| `pnpm frontend` / `pnpm backend` | Run just one side |
+| `pnpm lint` | Lint the frontend |
+| `pnpm db:push` | Push the Drizzle schema to the database |
+| `pnpm studio` | Open Drizzle Studio |
+| `pnpm frontend:build` / `pnpm backend:build` | Production builds |

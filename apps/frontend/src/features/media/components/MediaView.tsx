@@ -16,6 +16,7 @@ import {
   ThemeIcon,
   Title,
   Tooltip,
+  UnstyledButton,
 } from "@mantine/core";
 import {
   IconArrowLeft,
@@ -31,6 +32,7 @@ import {
 import type { MediaDetailedRecord } from "@media-voyage/shared/api";
 import { useNavigate } from "@tanstack/react-router";
 import { motion } from "motion/react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { getStatusColor } from "#/features/media/functions";
 import { useSourceColorMap } from "#/features/sources/queries";
@@ -67,6 +69,60 @@ function MetaItem({ label, value }: { label: string; value: React.ReactNode }) {
       <Text component="div" size="sm" fw={600} lh={1.35}>
         {value}
       </Text>
+    </Box>
+  );
+}
+
+function ExpandableDescription({
+  text,
+  reducedMotion,
+}: {
+  text: string;
+  reducedMotion: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [overflowing, setOverflowing] = useState(false);
+  const [heights, setHeights] = useState({ collapsed: 0, full: 0 });
+  const [hovered, setHovered] = useState(false);
+  const textRef = useRef<HTMLParagraphElement>(null);
+
+  useLayoutEffect(() => {
+    const el = textRef.current;
+    if (!el) return;
+
+    const lineHeight = parseFloat(getComputedStyle(el).lineHeight) || 0;
+    const collapsed = lineHeight * 3;
+    const full = el.scrollHeight;
+    setHeights({ collapsed, full });
+    setOverflowing(full - collapsed > 1);
+  }, [text]);
+
+  const showFull = expanded || !overflowing;
+
+  return (
+    <Box maw={680} mt={{ base: "sm", sm: "md" }}>
+      <motion.div
+        style={{ overflow: "hidden" }}
+        initial={false}
+        animate={{ height: showFull ? heights.full : heights.collapsed }}
+        transition={reducedMotion ? { duration: 0 } : { duration: 0.3, ease: "easeInOut" }}
+      >
+        <Text ref={textRef} c="dimmed" size="sm" lh={1.65}>
+          {text}
+        </Text>
+      </motion.div>
+      {overflowing && (
+        <UnstyledButton
+          mt={4}
+          onClick={() => setExpanded((prev) => !prev)}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+        >
+          <Text size="xs" fw={hovered ? 800 : 600} c="primary">
+            {expanded ? "Read less" : "Read more"}
+          </Text>
+        </UnstyledButton>
+      )}
     </Box>
   );
 }
@@ -330,16 +386,13 @@ export function MediaView({
                     </Group>
                   )}
 
-                  <Text
-                    c="dimmed"
-                    size="sm"
-                    lh={1.65}
-                    mt={{ base: "sm", sm: "md" }}
-                    maw={680}
-                  >
-                    {data.description?.trim() ||
-                      "No description available for this media item."}
-                  </Text>
+                  <ExpandableDescription
+                    text={
+                      data.description?.trim() ||
+                      "No description available for this media item."
+                    }
+                    reducedMotion={reducedMotion}
+                  />
 
                   <Box maw={480} mt="auto" pt={{ base: "md", sm: "xl" }}>
                     <Group justify="space-between" gap="xs" mb={6}>
