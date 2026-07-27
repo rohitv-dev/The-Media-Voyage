@@ -1,13 +1,18 @@
 # Media Voyage
 
-Media Voyage is a personal media-tracking app for keeping tabs on the games, movies, and shows you're watching or playing. Track status, progress, ratings, reviews, and collections all in one library.
+Media Voyage is a personal media-tracking app for keeping tabs on the movies, shows, games, and books you're watching, playing, or reading. Track status, progress, ratings, reviews, and collections all in one library, and see what your friends are up to.
 
 ## Features
 
-- Library of media items with status (e.g. playing, watching, completed) and progress tracking
+- Library of movies, shows, games, and books with status, progress, and per-season tracking for shows
+- Grid and table views, filtering (status, type, rating, source, tags, dates), saved filter presets, and a "Pick for me" random picker for your Planned list
 - Ratings, reviews, tags, and favorites
 - Collections for grouping related media
+- Dashboard with library stats and quick actions
 - Activity calendar to see consumption history over time
+- Friends: follow other users, browse their libraries and collections, and copy items into your own library
+- Trash with restore for soft-deleted entries
+- Tag and source management
 - Media lookup via IGDB (games) and OMDB (movies/shows)
 
 ## Tech Stack
