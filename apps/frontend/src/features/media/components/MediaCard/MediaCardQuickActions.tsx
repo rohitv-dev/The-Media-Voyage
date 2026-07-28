@@ -7,6 +7,7 @@ import type { Status } from "@media-voyage/shared/userMediaSchema";
 import {
   IconCheck,
   IconDotsVertical,
+  IconPhotoEdit,
   IconHeart,
   IconHeartFilled,
   IconTrash,
@@ -18,6 +19,7 @@ interface MediaCardQuickActionsProps {
   isPending: boolean;
   onAction: (action: UserMediaQuickAction) => void;
   onDelete: () => void;
+  onEditCover: () => void;
 }
 
 const statuses: Array<{ value: Status; label: string }> = [
@@ -34,6 +36,7 @@ export function MediaCardQuickActions({
   isPending,
   onAction,
   onDelete,
+  onEditCover,
 }: MediaCardQuickActionsProps) {
   return (
     <Menu position="bottom-end" shadow="md" width={210} withinPortal>
@@ -112,6 +115,17 @@ export function MediaCardQuickActions({
             ))}
           </Menu.Sub.Dropdown>
         </Menu.Sub>
+
+        <Menu.Item
+          leftSection={<IconPhotoEdit size={16} />}
+          disabled={isPending || !media.imageUrl || media.imageUrl === "N/A"}
+          onClick={(event) => {
+            event.stopPropagation();
+            onEditCover();
+          }}
+        >
+          Adjust cover crop
+        </Menu.Item>
 
         <Menu.Divider />
         <Menu.Item

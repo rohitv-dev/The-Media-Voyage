@@ -3,6 +3,7 @@ import Papa from "papaparse";
 import {
   calendarActivityQuerySchema,
   mediaPickerQuerySchema,
+  mediaImageFocusSchema,
   userMediaFormSchema,
   userMediaIdParamsSchema,
   userMediaQuerySchema,
@@ -29,6 +30,7 @@ import {
   permanentlyDeleteUserMedia,
   restoreUserMedia,
   updateUserMedia,
+  updateUserMediaImageFocus,
   updateUserMediaQuickActions,
 } from "./service";
 
@@ -114,6 +116,18 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     const { id } = userMediaIdParamsSchema.parse(request.params);
     const input = userMediaQuickActionSchema.parse(request.body);
     const record = await updateUserMediaQuickActions(request.userId, id, input);
+
+    if (!record) {
+      return reply.status(404).send({ error: "User media not found" });
+    }
+
+    return reply.send(record);
+  });
+
+  fastify.patch("/:id/image-focus", async (request, reply) => {
+    const { id } = userMediaIdParamsSchema.parse(request.params);
+    const input = mediaImageFocusSchema.parse(request.body);
+    const record = await updateUserMediaImageFocus(request.userId, id, input);
 
     if (!record) {
       return reply.status(404).send({ error: "User media not found" });

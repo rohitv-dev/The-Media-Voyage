@@ -8,6 +8,7 @@ import {
   userMediaTags,
 } from "@media-voyage/shared";
 import type {
+  MediaImageFocus,
   UserMediaFormSchema,
   UserMediaQuickAction,
 } from "@media-voyage/shared/api";
@@ -23,9 +24,7 @@ import { userMediaCreatedSelect, userMediaDetailedSelect } from "./selects";
 type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 function hasMetadataValues(value: unknown): boolean {
-  return (
-    !!value && typeof value === "object" && Object.keys(value).length > 0
-  );
+  return !!value && typeof value === "object" && Object.keys(value).length > 0;
 }
 
 async function syncUserMediaTags(
@@ -207,10 +206,7 @@ export async function createUserMedia(
         })
         .from(media)
         .where(
-          and(
-            eq(media.source, mediaSource),
-            eq(media.externalId, externalId),
-          ),
+          and(eq(media.source, mediaSource), eq(media.externalId, externalId)),
         )
         .limit(1);
 
@@ -477,6 +473,41 @@ export async function updateUserMediaQuickActions(
       .limit(1);
 
     return { ...updated, ...catalogRecord };
+  });
+}
+
+export async function updateUserMediaImageFocus(
+  userId: string,
+  id: string,
+  input: MediaImageFocus,
+) {
+  return db.transaction(async (tx) => {
+    const [entry] = await tx
+      .select({ mediaId: userMedia.mediaId })
+      .from(userMedia)
+      .where(ownedUserMediaCondition(userId, id))
+      .for("update")
+      .limit(1);
+
+    if (!entry) return null;
+
+    await tx
+      .update(media)
+      .set({
+        imageFocusX: input.imageFocusX,
+        imageFocusY: input.imageFocusY,
+        updatedAt: new Date(),
+      })
+      .where(eq(media.id, entry.mediaId));
+
+    const [record] = await tx
+      .select(userMediaDetailedSelect)
+      .from(userMedia)
+      .innerJoin(media, eq(userMedia.mediaId, media.id))
+      .where(ownedUserMediaCondition(userId, id))
+      .limit(1);
+
+    return record ?? null;
   });
 }
 

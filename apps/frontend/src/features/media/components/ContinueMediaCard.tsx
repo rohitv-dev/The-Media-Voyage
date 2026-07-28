@@ -16,6 +16,7 @@ import type { KeyboardEvent } from "react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { useCoverArtPreference } from "#/features/media/hooks/useCoverArtPreference";
 import { getStatusColor, getTypeIcon } from "../functions";
+import { getImageObjectPosition } from "../imageFocus";
 
 interface ContinueMediaCardProps {
   media: MediaRecord;
@@ -60,7 +61,14 @@ export function ContinueMediaCard({ media, onView }: ContinueMediaCardProps) {
         <Card.Section>
           <AspectRatio ratio={2 / 3}>
             {hasImage ? (
-              <Image src={media.imageUrl} alt="" fit="cover" />
+              <Image
+                src={media.imageUrl}
+                alt=""
+                fit="cover"
+                style={{
+                  objectPosition: getImageObjectPosition("full", media),
+                }}
+              />
             ) : (
               <Box
                 style={{

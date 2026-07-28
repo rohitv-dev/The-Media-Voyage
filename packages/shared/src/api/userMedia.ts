@@ -19,6 +19,8 @@ export const mediaRecordSchema = z.object({
   title: mediaSelectSchema.shape.title,
   type: mediaSelectSchema.shape.type,
   imageUrl: mediaSelectSchema.shape.imageUrl,
+  imageFocusX: mediaSelectSchema.shape.imageFocusX,
+  imageFocusY: mediaSelectSchema.shape.imageFocusY,
 
   status: userMediaSelectSchema.shape.status,
   progress: userMediaSelectSchema.shape.progress,
@@ -82,6 +84,8 @@ export const mediaDetailedRecordSchema = z.object({
   type: mediaSelectSchema.shape.type,
   description: mediaSelectSchema.shape.description,
   imageUrl: mediaSelectSchema.shape.imageUrl,
+  imageFocusX: mediaSelectSchema.shape.imageFocusX,
+  imageFocusY: mediaSelectSchema.shape.imageFocusY,
   catalogSource: mediaSelectSchema.shape.source,
   catalogMetadata: mediaSelectSchema.shape.metadata,
 
@@ -107,6 +111,19 @@ export const mediaDetailedRecordSchema = z.object({
 });
 
 export type MediaDetailedRecord = z.infer<typeof mediaDetailedRecordSchema>;
+
+export const mediaImageFocusSchema = z
+  .object({
+    imageFocusX: z.number().min(0).max(1).nullable(),
+    imageFocusY: z.number().min(0).max(1).nullable(),
+  })
+  .refine(
+    ({ imageFocusX, imageFocusY }) =>
+      (imageFocusX === null) === (imageFocusY === null),
+    { message: "Both image focus coordinates must be set or cleared together" },
+  );
+
+export type MediaImageFocus = z.infer<typeof mediaImageFocusSchema>;
 
 export const getUserDetailedMediaResponseSchema = z.object({
   success: z.boolean(),

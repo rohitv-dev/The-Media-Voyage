@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   pgTable,
   text,
@@ -10,6 +10,8 @@ import {
   pgEnum,
   integer,
   unique,
+  real,
+  check,
 } from "drizzle-orm/pg-core";
 
 export const mediaTypeEnum = pgEnum("media_type", [
@@ -51,6 +53,8 @@ export const media = pgTable(
     originalTitle: text("original_title"),
     description: text("description"),
     imageUrl: text("image_url"),
+    imageFocusX: real("image_focus_x"),
+    imageFocusY: real("image_focus_y"),
     source: text("source"),
     externalId: text("external_id"),
 
@@ -63,6 +67,18 @@ export const media = pgTable(
     unique("media_source_external_id_unique").on(
       table.source,
       table.externalId,
+    ),
+    check(
+      "media_image_focus_x_range",
+      sql`${table.imageFocusX} is null or (${table.imageFocusX} >= 0 and ${table.imageFocusX} <= 1)`,
+    ),
+    check(
+      "media_image_focus_y_range",
+      sql`${table.imageFocusY} is null or (${table.imageFocusY} >= 0 and ${table.imageFocusY} <= 1)`,
+    ),
+    check(
+      "media_image_focus_pair",
+      sql`(${table.imageFocusX} is null) = (${table.imageFocusY} is null)`,
     ),
   ],
 );

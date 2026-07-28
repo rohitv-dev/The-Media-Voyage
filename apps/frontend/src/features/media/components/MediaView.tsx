@@ -25,6 +25,7 @@ import {
   IconEdit,
   IconHeartFilled,
   IconNotebook,
+  IconPhotoEdit,
   IconPencil,
   IconPlayerPlay,
   IconQuote,
@@ -35,8 +36,11 @@ import { motion } from "motion/react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { getStatusColor } from "#/features/media/functions";
+import { useCoverArtSizePreference } from "#/features/media/hooks/useCoverArtSizePreference";
 import { useSourceColorMap } from "#/features/sources/queries";
 import { useTagColorMap } from "#/features/tags/queries";
+import { MediaCoverArtFocusModal } from "./MediaCoverArtFocusModal";
+import { getImageObjectPosition } from "../imageFocus";
 
 type CatalogMetadata = {
   genre?: string;
@@ -105,7 +109,9 @@ function ExpandableDescription({
         style={{ overflow: "hidden" }}
         initial={false}
         animate={{ height: showFull ? heights.full : heights.collapsed }}
-        transition={reducedMotion ? { duration: 0 } : { duration: 0.3, ease: "easeInOut" }}
+        transition={
+          reducedMotion ? { duration: 0 } : { duration: 0.3, ease: "easeInOut" }
+        }
       >
         <Text ref={textRef} c="dimmed" size="sm" lh={1.65}>
           {text}
@@ -201,6 +207,8 @@ export function MediaView({
   const navigate = useNavigate();
   // Absent (rather than empty) notes mean the viewer isn't the owner.
   const showNotes = data.notes !== undefined;
+  const [coverEditorOpen, setCoverEditorOpen] = useState(false);
+  const [coverArtSize] = useCoverArtSizePreference();
   const reducedMotion = useAppReducedMotion();
   const progress = Math.min(100, Math.max(0, data.progress ?? 0));
   const sourceColorMap = useSourceColorMap();
@@ -278,6 +286,7 @@ export function MediaView({
                   style={{
                     width: "100%",
                     aspectRatio: "2 / 3",
+                    objectPosition: getImageObjectPosition("full", data),
                     boxShadow:
                       "light-dark(0 14px 26px rgba(31, 41, 55, 0.16), 0 18px 34px rgba(0, 0, 0, 0.42))",
                   }}
@@ -325,6 +334,17 @@ export function MediaView({
                         }
                       >
                         Update
+                      </Button>
+                    )}
+                    {!readOnly && data.imageUrl && data.imageUrl !== "N/A" && (
+                      <Button
+                        w={{ base: "100%", xs: "auto" }}
+                        flex="0 0 auto"
+                        variant="light"
+                        leftSection={<IconPhotoEdit size={16} />}
+                        onClick={() => setCoverEditorOpen(true)}
+                      >
+                        Adjust cover
                       </Button>
                     )}
                     {readOnly && onCopyToLibrary && (
@@ -562,6 +582,19 @@ export function MediaView({
         </SimpleGrid>
 
         {footer}
+
+        {!readOnly && data.imageUrl && data.imageUrl !== "N/A" && (
+          <MediaCoverArtFocusModal
+            opened={coverEditorOpen}
+            onClose={() => setCoverEditorOpen(false)}
+            mediaId={data.id}
+            title={data.title}
+            imageUrl={data.imageUrl}
+            imageFocusX={data.imageFocusX}
+            imageFocusY={data.imageFocusY}
+            coverArtSize={coverArtSize}
+          />
+        )}
       </Stack>
     </Container>
   );

@@ -6,6 +6,8 @@ import type { MediaRecord } from "@media-voyage/shared/api";
 import { motion } from "motion/react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import type { KeyboardEvent, ReactNode } from "react";
+import { useState } from "react";
+import { MediaCoverArtFocusModal } from "../MediaCoverArtFocusModal";
 import { MediaCardContent } from "./MediaCardContent";
 import { MediaCardCoverArt } from "./MediaCardCoverArt";
 import { MediaCardFooter } from "./MediaCardFooter";
@@ -31,10 +33,14 @@ export function MediaCard({
   const reduceMotion = useAppReducedMotion();
   const [showCoverArt] = useCoverArtPreference();
   const [coverArtSize] = useCoverArtSizePreference();
+  const [coverEditorOpen, setCoverEditorOpen] = useState(false);
   const { isActionPending, isDeletePending, requestDelete, runQuickAction } =
     useMediaCardActions(media);
 
-  const openMedia = () => onView?.(media.id);
+  const openMedia = () => {
+    if (coverEditorOpen) return;
+    onView?.(media.id);
+  };
 
   const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.target !== event.currentTarget) return;
@@ -71,6 +77,8 @@ export function MediaCard({
           <MediaCardCoverArt
             imageUrl={media.imageUrl}
             coverArtSize={coverArtSize}
+            imageFocusX={media.imageFocusX}
+            imageFocusY={media.imageFocusY}
           />
         </Card.Section>
       )}
@@ -91,6 +99,7 @@ export function MediaCard({
                 isPending={isActionPending}
                 onAction={runQuickAction}
                 onDelete={requestDelete}
+                onEditCover={() => setCoverEditorOpen(true)}
               />
             ) : null
           }
@@ -105,6 +114,17 @@ export function MediaCard({
           onDelete={requestDelete}
         />
       </Stack>
+
+      <MediaCoverArtFocusModal
+        opened={coverEditorOpen}
+        onClose={() => setCoverEditorOpen(false)}
+        mediaId={media.id}
+        title={media.title}
+        imageUrl={media.imageUrl}
+        imageFocusX={media.imageFocusX}
+        imageFocusY={media.imageFocusY}
+        coverArtSize={coverArtSize}
+      />
     </Card>
   );
 }
