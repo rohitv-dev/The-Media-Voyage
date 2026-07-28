@@ -1,5 +1,5 @@
 import { pickPlannedMedia } from "#/features/media/queries";
-import { api } from "#/lib/api";
+import { api, getApiErrorMessage } from "#/lib/api";
 import { queryKeys } from "#/lib/queryKeys";
 import { EmptyState } from "#/components/EmptyState";
 import {
@@ -62,7 +62,7 @@ export function MediaPickerModal({
     onError: (error) =>
       showErrorNotification({
         title: "Could not pick an item",
-        message: error.message,
+        message: getApiErrorMessage(error),
       }),
   });
 
@@ -85,7 +85,7 @@ export function MediaPickerModal({
     onError: (error) =>
       showErrorNotification({
         title: "Could not start item",
-        message: error.message,
+        message: getApiErrorMessage(error),
       }),
   });
 

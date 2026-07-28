@@ -1,4 +1,5 @@
 import { authClient } from "#/auth/authClient";
+import { getApiErrorMessage } from "#/lib/api";
 import { showErrorNotification } from "#/utils/notifications";
 import {
   Center,
@@ -66,7 +67,7 @@ function RouteComponent() {
     } catch (err) {
       showErrorNotification({
         title: "Registration Failed",
-        message: String(err),
+        message: getApiErrorMessage(err, "Could not create your account"),
       });
     }
   });

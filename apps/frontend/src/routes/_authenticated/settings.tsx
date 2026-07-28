@@ -4,7 +4,7 @@ import { shareLibrary } from "#/features/friends/queries";
 import { useCoverArtPreference } from "#/features/media/hooks/useCoverArtPreference";
 import { useCoverArtSizePreference } from "#/features/media/hooks/useCoverArtSizePreference";
 import { useReducedMotionPreference } from "#/hooks/useReducedMotionPreference";
-import { downloadApiFile } from "#/lib/api";
+import { downloadApiFile, getApiErrorMessage } from "#/lib/api";
 import { ThemeOptionsList } from "#/theme/ThemeSwitcher";
 import {
   showErrorNotification,
@@ -51,10 +51,7 @@ function RouteComponent() {
       });
     } catch (error) {
       showErrorNotification({
-        message:
-          error instanceof Error
-            ? error.message
-            : "Could not update default visibility",
+        message: getApiErrorMessage(error, "Could not update default visibility"),
       });
     }
   };
@@ -89,10 +86,7 @@ function RouteComponent() {
           });
         } catch (error) {
           showErrorNotification({
-            message:
-              error instanceof Error
-                ? error.message
-                : "Could not update your library",
+            message: getApiErrorMessage(error, "Could not update your library"),
           });
         } finally {
           setSharing(false);
@@ -123,8 +117,7 @@ function RouteComponent() {
     } catch (error) {
       showErrorNotification({
         title: "Export failed",
-        message:
-          error instanceof Error ? error.message : "Could not export library",
+        message: getApiErrorMessage(error, "Could not export library"),
       });
     } finally {
       setExporting(false);

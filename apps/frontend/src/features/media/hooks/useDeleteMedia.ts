@@ -1,4 +1,4 @@
-import { api } from "#/lib/api";
+import { api, getApiErrorMessage } from "#/lib/api";
 import { confirmDelete } from "#/utils/confirmModal";
 import { queryKeys } from "#/lib/queryKeys";
 import {
@@ -36,7 +36,7 @@ export function useDeleteMedia() {
     onError: (error) =>
       showErrorNotification({
         title: "Delete failed",
-        message: error.message,
+        message: getApiErrorMessage(error),
       }),
   });
 

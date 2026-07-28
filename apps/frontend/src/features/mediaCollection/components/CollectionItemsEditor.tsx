@@ -1,4 +1,4 @@
-import { api } from "#/lib/api";
+import { api, getApiErrorMessage } from "#/lib/api";
 import { queryKeys } from "#/lib/queryKeys";
 import {
   ActionIcon,
@@ -136,7 +136,7 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
       showSuccessNotification({ message: "Added to collection" });
     },
     onError: (error: Error) => {
-      showErrorNotification({ message: error.message });
+      showErrorNotification({ message: getApiErrorMessage(error) });
     },
   });
 
@@ -155,7 +155,7 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
       showSuccessNotification({ message: "Removed from collection" });
     },
     onError: (error: Error) => {
-      showErrorNotification({ message: error.message });
+      showErrorNotification({ message: getApiErrorMessage(error) });
     },
   });
 
@@ -184,7 +184,7 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
       showSuccessNotification({ message: "Order saved" });
     },
     onError: (error: Error) => {
-      showErrorNotification({ message: error.message });
+      showErrorNotification({ message: getApiErrorMessage(error) });
     },
   });
 

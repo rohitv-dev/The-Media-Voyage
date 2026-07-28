@@ -12,7 +12,7 @@ import { useCanGoBack, useRouter, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import type { MouseEventHandler } from "react";
 import { FormProvider, useForm } from "./context";
-import { api } from "#/lib/api";
+import { api, getApiErrorMessage } from "#/lib/api";
 import { Container, Stack, Grid } from "@mantine/core";
 import {
   showErrorNotification,
@@ -304,7 +304,7 @@ export function MediaForm(props: MediaFormProps) {
     onError: (error: Error) => {
       showErrorNotification({
         title: isAddMode ? "Could not add media" : "Could not update media",
-        message: error.message,
+        message: getApiErrorMessage(error),
       });
     },
   });

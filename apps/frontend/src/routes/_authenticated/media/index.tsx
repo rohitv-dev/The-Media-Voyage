@@ -24,6 +24,7 @@ import { MediaCardSkeleton } from "#/features/media/components/MediaCardSkeleton
 import { EmptyState } from "#/components/EmptyState";
 import type { UserMediaQuerySchema } from "@media-voyage/shared/api";
 import { userMediaQuerySchema } from "@media-voyage/shared/api";
+import { getApiErrorMessage } from "#/lib/api";
 import { showErrorNotification } from "#/utils/notifications";
 import { useDisclosure, useLocalStorage, useMediaQuery } from "@mantine/hooks";
 import { AnimatePresence, motion } from "motion/react";
@@ -62,7 +63,7 @@ function RouteComponent() {
   const search = Route.useSearch();
   const { data: dropdowns } = useQuery(userMediaDropdownOptions);
   const { data: collections } = useQuery(collectionQueryOptions);
-  const { data, isFetching, isError } = useQuery({
+  const { data, isFetching, isError, error } = useQuery({
     ...userMediaFilterQueryOptions(search),
     placeholderData: keepPreviousData,
   });
@@ -135,11 +136,11 @@ function RouteComponent() {
   useEffect(() => {
     if (isError) {
       showErrorNotification({
-        message: "Failed to load data",
+        message: getApiErrorMessage(error, "Failed to load data"),
         title: "Please try again later",
       });
     }
-  }, [isError]);
+  }, [error, isError]);
 
   useEffect(() => {
     if (isMdDown && view !== "grid") {

@@ -4,7 +4,7 @@ import {
   friendMediaDetailOptions,
 } from "#/features/friends/queries";
 import { MediaView } from "#/features/media/components/MediaView";
-import { api } from "#/lib/api";
+import { api, getApiErrorMessage } from "#/lib/api";
 import { queryKeys } from "#/lib/queryKeys";
 import { showErrorNotification } from "#/utils/notifications";
 import { capitalizeWords } from "#/utils/stringFunctions";
@@ -60,7 +60,7 @@ function RouteComponent() {
     onError: (error: Error) => {
       showErrorNotification({
         title: "Could not copy to your library",
-        message: error.message,
+        message: getApiErrorMessage(error),
       });
     },
   });

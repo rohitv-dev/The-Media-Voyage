@@ -1,5 +1,6 @@
 import { authClient } from "#/auth/authClient";
 import { confirmDelete } from "#/utils/confirmModal";
+import { getApiErrorMessage } from "#/lib/api";
 import { queryKeys } from "#/lib/queryKeys";
 import { showErrorNotification } from "#/utils/notifications";
 import {
@@ -88,7 +89,7 @@ export function SocialPanel({
     onError: (error) =>
       showErrorNotification({
         title: "Could not save reaction",
-        message: error.message,
+        message: getApiErrorMessage(error),
       }),
     onSettled: () =>
       Promise.all([
@@ -106,7 +107,7 @@ export function SocialPanel({
     onError: (error) =>
       showErrorNotification({
         title: "Could not post comment",
-        message: error.message,
+        message: getApiErrorMessage(error),
       }),
     onSettled: invalidateEntry,
   });
@@ -116,7 +117,7 @@ export function SocialPanel({
     onError: (error) =>
       showErrorNotification({
         title: "Could not delete comment",
-        message: error.message,
+        message: getApiErrorMessage(error),
       }),
     onSettled: invalidateEntry,
   });

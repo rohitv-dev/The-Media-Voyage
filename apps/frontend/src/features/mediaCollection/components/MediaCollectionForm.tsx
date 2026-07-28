@@ -1,4 +1,4 @@
-import { api } from "#/lib/api";
+import { api, getApiErrorMessage } from "#/lib/api";
 import {
   Button,
   Card,
@@ -55,9 +55,12 @@ export function MediaCollectionForm() {
       });
       navigate({ to: "/media" });
     },
-    onError: () => {
+    onError: (error) => {
       showErrorNotification({
-        message: "Unable to create the collection right now.",
+        message: getApiErrorMessage(
+          error,
+          "Unable to create the collection right now.",
+        ),
       });
     },
   });

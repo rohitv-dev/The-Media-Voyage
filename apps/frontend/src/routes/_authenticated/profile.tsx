@@ -1,4 +1,5 @@
 import { authClient } from "#/auth/authClient";
+import { getApiErrorMessage } from "#/lib/api";
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -46,8 +47,7 @@ function RouteComponent() {
       showSuccessNotification({ message: "Profile updated successfully!" });
     } catch (error) {
       showErrorNotification({
-        message:
-          error instanceof Error ? error.message : "Could not update profile",
+        message: getApiErrorMessage(error, "Could not update profile"),
       });
     }
   };

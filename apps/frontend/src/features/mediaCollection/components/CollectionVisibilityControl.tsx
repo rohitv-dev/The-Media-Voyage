@@ -1,4 +1,5 @@
 import { queryKeys } from "#/lib/queryKeys";
+import { getApiErrorMessage } from "#/lib/api";
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -52,7 +53,7 @@ export function CollectionVisibilityControl({
     onError: (error) =>
       showErrorNotification({
         title: "Could not update entries",
-        message: error.message,
+        message: getApiErrorMessage(error),
       }),
     onSettled: refresh,
   });
@@ -124,7 +125,7 @@ export function CollectionVisibilityControl({
     onError: (error) =>
       showErrorNotification({
         title: "Could not update collection",
-        message: error.message,
+        message: getApiErrorMessage(error),
       }),
   });
 

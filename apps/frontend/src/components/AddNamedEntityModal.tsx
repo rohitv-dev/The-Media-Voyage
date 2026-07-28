@@ -1,4 +1,4 @@
-import { api } from "#/lib/api";
+import { api, getApiErrorMessage } from "#/lib/api";
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -58,7 +58,7 @@ export function AddNamedEntityModal({
       handleClose();
     },
     onError: (error: Error) => {
-      showErrorNotification({ message: error.message });
+      showErrorNotification({ message: getApiErrorMessage(error) });
     },
   });
 

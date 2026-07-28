@@ -1,4 +1,5 @@
 import { authClient } from "#/auth/authClient";
+import { getApiErrorMessage } from "#/lib/api";
 import { showErrorNotification } from "#/utils/notifications";
 import {
   Text,
@@ -49,7 +50,7 @@ function RouteComponent() {
     } catch (err) {
       showErrorNotification({
         title: "Authentication Failed",
-        message: String(err),
+        message: getApiErrorMessage(err, "Could not sign in"),
       });
     }
   });

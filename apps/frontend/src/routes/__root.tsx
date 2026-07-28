@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Button, Center, Stack, Text, Title } from "@mantine/core";
 import { FullScreenLoader } from "#/components/FullScreenLoader";
 import { frontendConfig } from "#/config";
+import { getApiErrorMessage } from "#/lib/api";
 
 interface RouteContext {
   queryClient: QueryClient;
@@ -48,7 +49,7 @@ function RouteError({ error, reset }: ErrorComponentProps) {
       <Stack align="center" gap="xs">
         <Title order={2}>Something went wrong</Title>
         <Text c="dimmed" ta="center" maw={420}>
-          {error instanceof Error ? error.message : "Please try again."}
+          {getApiErrorMessage(error, "Please try again.")}
         </Text>
         <Button mt="md" onClick={reset}>
           Try again

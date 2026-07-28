@@ -237,6 +237,8 @@
     box-shadow: var(--neu-in-sm);
 
     &:checked {
+      background-color: var(--mantine-primary-color-filled);
+      border-color: var(--mantine-primary-color-filled);
       box-shadow: var(--neu-out-sm);
     }
   }

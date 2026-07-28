@@ -1,7 +1,7 @@
 import { EmptyState } from "#/components/EmptyState";
 import { getTypeIcon } from "#/features/media/functions";
 import { trashedUserMediaQueryOptions } from "#/features/media/queries";
-import { api } from "#/lib/api";
+import { api, getApiErrorMessage } from "#/lib/api";
 import { queryKeys } from "#/lib/queryKeys";
 import { confirmDelete } from "#/utils/confirmModal";
 import {
@@ -55,7 +55,10 @@ function RouteComponent() {
       });
     },
     onError: (error) =>
-      showErrorNotification({ title: "Restore failed", message: error.message }),
+      showErrorNotification({
+        title: "Restore failed",
+        message: getApiErrorMessage(error),
+      }),
   });
 
   const permanentDeleteMutation = useMutation({
@@ -74,7 +77,7 @@ function RouteComponent() {
     onError: (error) =>
       showErrorNotification({
         title: "Permanent delete failed",
-        message: error.message,
+        message: getApiErrorMessage(error),
       }),
   });
 

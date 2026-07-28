@@ -14,6 +14,17 @@ export class ApiError extends Error {
   }
 }
 
+export function getApiErrorMessage(
+  error: unknown,
+  fallback = "Something went wrong",
+) {
+  if (error instanceof ApiError) {
+    return error.data?.details || error.message;
+  }
+
+  return error instanceof Error ? error.message : fallback;
+}
+
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     credentials: "include",

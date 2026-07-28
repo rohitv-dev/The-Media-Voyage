@@ -1,7 +1,6 @@
 import { EmptyState } from "#/components/EmptyState";
 import { collectionQueryOptions } from "#/features/mediaCollection/queries";
 import {
-  ActionIcon,
   Button,
   Card,
   Container,
@@ -10,9 +9,8 @@ import {
   Stack,
   Text,
   Title,
-  Tooltip,
 } from "@mantine/core";
-import { IconBooks, IconEdit, IconPlus } from "@tabler/icons-react";
+import { IconBooks, IconPlus } from "@tabler/icons-react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
@@ -80,7 +78,11 @@ function RouteComponent() {
                 style={{ cursor: "pointer" }}
               >
                 <Stack gap="sm" h="100%">
-                  <Group justify="space-between" align="flex-start" wrap="nowrap">
+                  <Group
+                    justify="space-between"
+                    align="flex-start"
+                    wrap="nowrap"
+                  >
                     <Stack gap={2} style={{ minWidth: 0 }}>
                       <Title order={4} lineClamp={2}>
                         {collection.name}
@@ -91,41 +93,35 @@ function RouteComponent() {
                           : "No description provided."}
                       </Text>
                     </Stack>
-                    <Group gap={6} wrap="nowrap">
-                      <IconBooks size={18} />
-                      <Tooltip label="Edit collection" withArrow>
-                        <ActionIcon
-                          variant="subtle"
-                          color="gray"
-                          size="sm"
-                          aria-label={`Edit ${collection.name}`}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            navigate({
-                              to: "/collection/edit/$id",
-                              params: { id: collection.id },
-                            });
-                          }}
-                        >
-                          <IconEdit size={16} />
-                        </ActionIcon>
-                      </Tooltip>
-                    </Group>
                   </Group>
 
-                  <Button
-                    variant="light"
-                    mt="auto"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      navigate({
-                        to: "/collection/view/$id",
-                        params: { id: collection.id },
-                      });
-                    }}
-                  >
-                    View collection
-                  </Button>
+                  <Group grow>
+                    <Button
+                      mt="auto"
+                      variant="light"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        navigate({
+                          to: "/collection/edit/$id",
+                          params: { id: collection.id },
+                        });
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      mt="auto"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        navigate({
+                          to: "/collection/view/$id",
+                          params: { id: collection.id },
+                        });
+                      }}
+                    >
+                      View
+                    </Button>
+                  </Group>
                 </Stack>
               </Card>
             ))}

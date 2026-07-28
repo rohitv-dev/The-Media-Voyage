@@ -1,4 +1,4 @@
-import { api } from "#/lib/api";
+import { api, getApiErrorMessage } from "#/lib/api";
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -66,7 +66,7 @@ export function NamedEntityRow<T extends NamedEntity>({
       showSuccessNotification({ message: `Updated ${entityLabel}` });
     },
     onError: (error: Error) => {
-      showErrorNotification({ message: error.message });
+      showErrorNotification({ message: getApiErrorMessage(error) });
     },
   });
 
@@ -79,7 +79,7 @@ export function NamedEntityRow<T extends NamedEntity>({
       });
     },
     onError: (error: Error) => {
-      showErrorNotification({ message: error.message });
+      showErrorNotification({ message: getApiErrorMessage(error) });
     },
   });
 

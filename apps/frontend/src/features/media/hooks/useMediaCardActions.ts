@@ -1,4 +1,4 @@
-import { api } from "#/lib/api";
+import { api, getApiErrorMessage } from "#/lib/api";
 import { queryKeys } from "#/lib/queryKeys";
 import {
   showErrorNotification,
@@ -31,7 +31,7 @@ export function useMediaCardActions(media: MediaRecord) {
     onError: (error) =>
       showErrorNotification({
         title: "Quick action failed",
-        message: error.message,
+        message: getApiErrorMessage(error),
       }),
     onSettled: () =>
       Promise.all([

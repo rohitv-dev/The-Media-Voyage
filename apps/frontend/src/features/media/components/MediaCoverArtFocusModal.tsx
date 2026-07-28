@@ -1,4 +1,4 @@
-import { api } from "#/lib/api";
+import { api, getApiErrorMessage } from "#/lib/api";
 import { queryKeys } from "#/lib/queryKeys";
 import {
   showErrorNotification,
@@ -95,7 +95,7 @@ export function MediaCoverArtFocusModal({
     onError: (error: Error) =>
       showErrorNotification({
         title: "Could not update cover crop",
-        message: error.message,
+        message: getApiErrorMessage(error),
       }),
   });
 

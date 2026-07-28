@@ -24,6 +24,7 @@ import { IconChevronRight } from "@tabler/icons-react";
 import { z } from "zod";
 import { calendarActivityOptions } from "#/features/media/queries";
 import { getStatusColor } from "#/features/media/functions";
+import { getApiErrorMessage } from "#/lib/api";
 import { capitalizeWords } from "#/utils/stringFunctions";
 import { showErrorNotification } from "#/utils/notifications";
 import { statusEnumValues } from "@media-voyage/shared/userMediaSchema";
@@ -106,7 +107,7 @@ function RouteComponent() {
   const navigate = useNavigate();
   const month = search.month ?? currentMonthToken();
 
-  const { data, isFetching, isError } = useQuery({
+  const { data, isFetching, isError, error } = useQuery({
     ...calendarActivityOptions(month),
     placeholderData: keepPreviousData,
   });
@@ -117,11 +118,11 @@ function RouteComponent() {
   useEffect(() => {
     if (isError) {
       showErrorNotification({
-        message: "Failed to load calendar activity",
+        message: getApiErrorMessage(error, "Failed to load calendar activity"),
         title: "Please try again later",
       });
     }
-  }, [isError]);
+  }, [error, isError]);
 
   const goToMonth = (nextMonth: string) => {
     navigate({ to: "/calendar", search: { month: nextMonth } });

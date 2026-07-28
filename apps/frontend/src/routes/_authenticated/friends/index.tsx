@@ -8,6 +8,7 @@ import {
   respondToFriendRequest,
   sendFriendRequest,
 } from "#/features/friends/queries";
+import { getApiErrorMessage } from "#/lib/api";
 import { confirmDelete } from "#/utils/confirmModal";
 import { queryKeys } from "#/lib/queryKeys";
 import {
@@ -98,11 +99,12 @@ function RouteComponent() {
           : "Friend request sent.",
       });
     },
-    onError: (error) =>
+    onError: (error) => {
       showErrorNotification({
         title: "Could not send request",
-        message: error.message,
-      }),
+        message: getApiErrorMessage(error),
+      });
+    },
     onSettled: refreshAll,
   });
 
@@ -121,11 +123,13 @@ function RouteComponent() {
             ? "Friend request accepted."
             : "Friend request declined.",
       }),
-    onError: (error) =>
+    onError: (error) => {
+      console.log(error);
       showErrorNotification({
         title: "Could not respond",
-        message: error.message,
-      }),
+        message: getApiErrorMessage(error),
+      });
+    },
     onSettled: refreshAll,
   });
 
@@ -135,7 +139,7 @@ function RouteComponent() {
     onError: (error) =>
       showErrorNotification({
         title: "Could not remove",
-        message: error.message,
+        message: getApiErrorMessage(error),
       }),
     onSettled: refreshAll,
   });
