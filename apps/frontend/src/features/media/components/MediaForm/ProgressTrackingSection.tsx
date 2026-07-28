@@ -15,13 +15,18 @@ import type { UserMediaDropdowns } from "@media-voyage/shared/api";
 import { useFormContext } from "./context";
 import { useDisclosure, useMediaQuery } from "@mantine/hooks";
 import { SeasonsProgressField } from "./SeasonsProgressField";
+import { TimeSpentModal } from "./TimeSpentModal";
 
 type ProgressTrackingSectionProps = {
   dropdowns: UserMediaDropdowns;
+  catalogMetadata?: unknown;
+  isLoadingSeasonInfo?: boolean;
 };
 
 export function ProgressTrackingSection({
   dropdowns,
+  catalogMetadata,
+  isLoadingSeasonInfo = false,
 }: ProgressTrackingSectionProps) {
   const form = useFormContext();
   const isMobile = useMediaQuery("(max-width: 47.99em)");
@@ -66,16 +71,7 @@ export function ProgressTrackingSection({
             </SimpleGrid>
 
             <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-              <NumberInput
-                label="Time Spent"
-                placeholder="120"
-                variant="filled"
-                inputMode="numeric"
-                min={0}
-                suffix=" min"
-                description="Approximate time spent"
-                {...form.getInputProps("timeSpent")}
-              />
+              <TimeSpentModal catalogMetadata={catalogMetadata} />
 
               <NumberInput
                 label="Rewatches"
@@ -107,7 +103,7 @@ export function ProgressTrackingSection({
               {...form.getInputProps("tags")}
             />
 
-            {isShow && <SeasonsProgressField />}
+            {isShow && <SeasonsProgressField isLoading={isLoadingSeasonInfo} />}
           </Stack>
         </Collapse>
       </Card>

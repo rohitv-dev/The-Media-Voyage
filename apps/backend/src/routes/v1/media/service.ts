@@ -1,10 +1,16 @@
-import type { MediaSearchQuery, SourceMediaRecord } from "@media-voyage/shared/api";
+import type {
+  MediaSearchQuery,
+  SourceMediaRecord,
+} from "@media-voyage/shared/api";
 import { searchGames } from "../../../services/igdb";
 import { searchOmdb } from "../../../services/omdb";
-import { searchLocalMedia } from "./queries";
 import { searchOpenLibrary } from "../../../services/openLibrary";
+import { searchTvMaze } from "../../../services/tvMaze";
+import { searchLocalMedia } from "./queries";
 
-export async function searchMedia(query: MediaSearchQuery): Promise<SourceMediaRecord[]> {
+export async function searchMedia(
+  query: MediaSearchQuery,
+): Promise<SourceMediaRecord[]> {
   const localResults = await searchLocalMedia(query);
   const localRecords: SourceMediaRecord[] = localResults.map((record) => ({
     id: record.id,
@@ -23,8 +29,10 @@ export async function searchMedia(query: MediaSearchQuery): Promise<SourceMediaR
 
   switch (query.type) {
     case "movie":
+      externalRecords = await searchOmdb(query.q);
+      break;
     case "show":
-      externalRecords = await searchOmdb(query.q, query.type);
+      externalRecords = await searchTvMaze(query.q);
       break;
     case "game":
       externalRecords = await searchGames(query.q);
@@ -34,8 +42,12 @@ export async function searchMedia(query: MediaSearchQuery): Promise<SourceMediaR
       break;
   }
 
-  const localExternalIds = new Set(localRecords.map((record) => record.externalId).filter(Boolean));
-  const dedupedExternalRecords = externalRecords.filter((record) => !localExternalIds.has(record.externalId));
+  const localExternalIds = new Set(
+    localRecords.map((record) => record.externalId).filter(Boolean),
+  );
+  const dedupedExternalRecords = externalRecords.filter(
+    (record) => !localExternalIds.has(record.externalId),
+  );
 
   return [...localRecords, ...dedupedExternalRecords];
 }

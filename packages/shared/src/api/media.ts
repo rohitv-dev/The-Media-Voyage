@@ -26,14 +26,6 @@ export interface OmdbMovie extends OmdbMedia {
   imdbRating?: string;
 }
 
-export interface OmdbShow extends OmdbMedia {
-  Plot?: string;
-  Genre?: string;
-  Runtime?: string;
-  imdbRating?: string;
-  totalSeasons?: string;
-}
-
 export const mediaDetailsParamsSchema = z.object({
   id: z.string().trim().min(1, "ID parameter is required"),
 });

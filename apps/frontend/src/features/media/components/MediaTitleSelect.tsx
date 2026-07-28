@@ -32,6 +32,7 @@ import { useQuery } from "@tanstack/react-query";
 const sourceLabels: Record<string, string> = {
   db: "catalog",
   omdb: "OMDb",
+  tvmaze: "TVMaze",
   igdb: "IGDB",
 };
 
@@ -150,9 +151,7 @@ function MediaOption({ media }: { media: SourceMediaRecord }) {
       zIndex={400}
     >
       <HoverCard.Target>{optionContent}</HoverCard.Target>
-      <HoverCard.Dropdown p={6}>
-        {previewImage}
-      </HoverCard.Dropdown>
+      <HoverCard.Dropdown p={6}>{previewImage}</HoverCard.Dropdown>
     </HoverCard>
   );
 }

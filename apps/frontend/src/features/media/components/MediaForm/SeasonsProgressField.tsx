@@ -10,15 +10,30 @@ import {
   Text,
   Textarea,
   Title,
+  Loader,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconPlus, IconX } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import type { SeasonProgressEntry } from "@media-voyage/shared/api";
+import { statusEnumValues } from "@media-voyage/shared/userMediaSchema";
 import { statusOptions } from "../../options";
 import { useFormContext } from "./context";
 
-export function SeasonsProgressField() {
+type SeasonsProgressFieldProps = {
+  isLoading?: boolean;
+};
+
+function formatEpisodeCount(entry: SeasonProgressEntry) {
+  const expected = entry.expectedEpisodeCount;
+  return expected !== undefined && expected !== null
+    ? `${expected} episodes`
+    : undefined;
+}
+
+export function SeasonsProgressField({
+  isLoading = false,
+}: SeasonsProgressFieldProps) {
   const form = useFormContext();
   const [opened, { open, close }] = useDisclosure(false);
   const seasons = form.values.seasonsProgress ?? [];
@@ -40,6 +55,25 @@ export function SeasonsProgressField() {
           : entry,
       ),
     );
+  };
+
+  const updateSeasonStatus = (
+    entry: SeasonProgressEntry,
+    status: string | null,
+  ) => {
+    const nextStatus = statusEnumValues.find((value) => value === status);
+    if (!nextStatus) return;
+
+    const episodeCount = entry.expectedEpisodeCount;
+
+    updateSeason(entry, {
+      status: nextStatus,
+      ...(nextStatus === "completed" &&
+      episodeCount !== undefined &&
+      episodeCount !== null
+        ? { episodesWatched: episodeCount }
+        : {}),
+    });
   };
 
   const removeSeason = (target: SeasonProgressEntry) => {
@@ -72,9 +106,17 @@ export function SeasonsProgressField() {
               : "No seasons added yet"}
           </Text>
         </Stack>
-        <Button variant="light" size="xs" onClick={open}>
-          Manage Seasons
-        </Button>
+        <Group gap="xs">
+          {isLoading && (
+            <Group gap={4} c="dimmed">
+              <Loader size="xs" />
+              <Text size="xs">Loading season data...</Text>
+            </Group>
+          )}
+          <Button variant="light" size="xs" onClick={open}>
+            Manage Seasons
+          </Button>
+        </Group>
       </Group>
 
       <Modal
@@ -102,8 +144,19 @@ export function SeasonsProgressField() {
           )}
 
           {sorted.map((entry, index) => (
-            <Card key={`${entry.season}-${index}`} withBorder radius="sm" p="sm">
+            <Card
+              key={`${entry.season}-${index}`}
+              withBorder
+              radius="sm"
+              p="sm"
+            >
               <Stack gap="xs">
+                {formatEpisodeCount(entry) && (
+                  <Text size="xs" c="dimmed">
+                    {formatEpisodeCount(entry)}
+                  </Text>
+                )}
+
                 <Group wrap="wrap" align="flex-end" gap="xs">
                   <NumberInput
                     label="Season"
@@ -118,7 +171,8 @@ export function SeasonsProgressField() {
                     }
                     onChange={(value) =>
                       updateSeason(entry, {
-                        season: typeof value === "number" ? value : entry.season,
+                        season:
+                          typeof value === "number" ? value : entry.season,
                       })
                     }
                   />
@@ -130,20 +184,16 @@ export function SeasonsProgressField() {
                     miw={140}
                     data={statusOptions}
                     value={entry.status}
-                    onChange={(value) =>
-                      value &&
-                      updateSeason(entry, {
-                        status: value,
-                      })
-                    }
+                    onChange={(value) => updateSeasonStatus(entry, value)}
                   />
 
                   <NumberInput
-                    label="Episodes"
-                    placeholder="Episodes"
+                    label="Watched"
+                    placeholder="0"
                     variant="filled"
                     w={110}
                     min={0}
+                    max={entry.expectedEpisodeCount ?? undefined}
                     value={entry.episodesWatched}
                     onChange={(value) =>
                       updateSeason(entry, {

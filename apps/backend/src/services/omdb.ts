@@ -2,10 +2,8 @@ import {
   OmdbErrorResponse,
   OmdbMovie,
   OmdbResponse,
-  OmdbShow,
   SourceMediaRecord,
 } from "@media-voyage/shared/api";
-import { MediaType } from "@media-voyage/shared/userMediaSchema";
 import { env } from "../config";
 import { internalServerError } from "../errors";
 
@@ -17,20 +15,13 @@ const API_KEY = env.OMDB_API_KEY;
 const upscalePoster = (url: string): string =>
   url.replace(/SX\d+|SY\d+/, "SX800");
 
-const omdbTypeToMediaType = (type: string): MediaType => {
-  if (type === "movie") return "movie";
-  if (type === "series") return "show";
-  return "movie";
-};
-
 async function fetchOmdbSearch(
   query: string,
-  type: "movie" | "show",
 ): Promise<OmdbResponse | OmdbErrorResponse> {
   const url = new URL("https://www.omdbapi.com/");
   url.searchParams.set("apikey", API_KEY);
   url.searchParams.set("s", query);
-  url.searchParams.set("type", type === "show" ? "series" : "movie");
+  url.searchParams.set("type", "movie");
 
   const response = await fetch(url);
 
@@ -44,14 +35,11 @@ async function fetchOmdbSearch(
 // OMDb's search endpoint is occasionally flaky, returning "Movie not
 // found!" for a query that succeeds moments later on an identical retry.
 // A single retry on an empty result works around this.
-export async function searchOmdb(
-  query: string,
-  type: "movie" | "show",
-): Promise<SourceMediaRecord[]> {
-  let data = await fetchOmdbSearch(query, type);
+export async function searchOmdb(query: string): Promise<SourceMediaRecord[]> {
+  let data = await fetchOmdbSearch(query);
 
   if (data.Response === "False") {
-    data = await fetchOmdbSearch(query, type);
+    data = await fetchOmdbSearch(query);
   }
 
   if (data.Response === "False") {
@@ -63,7 +51,7 @@ export async function searchOmdb(
     source: "omdb",
     title: val.Title,
     imageUrl: val.Poster === "N/A" ? val.Poster : upscalePoster(val.Poster),
-    type: omdbTypeToMediaType(val.Type),
+    type: "movie",
     externalId: val.imdbID,
   }));
 
@@ -72,10 +60,11 @@ export async function searchOmdb(
 
 export async function getOmdbDetails(
   externalId: string,
-): Promise<OmdbMovie | OmdbShow | null> {
+): Promise<OmdbMovie | null> {
   const url = new URL("https://www.omdbapi.com/");
   url.searchParams.set("apikey", API_KEY);
   url.searchParams.set("i", externalId);
+  url.searchParams.set("type", "movie");
 
   const response = await fetch(url);
 
@@ -83,13 +72,12 @@ export async function getOmdbDetails(
     throw internalServerError("OMDb request failed");
   }
 
-  const data: (OmdbMovie | OmdbShow) & { Response?: string; Error?: string } =
+  const data: OmdbMovie & { Response?: string; Error?: string } =
     await response.json();
 
-  if (data.Response === "False") {
+  if (data.Response === "False" || data.Type !== "movie") {
     return null;
   }
 
   return data;
 }
-

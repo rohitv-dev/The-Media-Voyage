@@ -66,6 +66,9 @@ export type UserMediaQuickAction = z.infer<typeof userMediaQuickActionSchema>;
 export const seasonProgressEntrySchema = z.object({
   season: z.number().int().min(1),
   status: z.enum(statusEnum.enumValues),
+  expectedEpisodeCount: z.number().int().min(0).nullable().optional(),
+  premiereDate: z.string().nullable().optional(),
+  endDate: z.string().nullable().optional(),
   episodesWatched: z.number().int().min(0).optional(),
   rating: z.number().min(0).max(10).optional(),
   notes: z.string().optional(),

@@ -1,8 +1,5 @@
 import type {
-  IgdbGame,
   MediaDetailedRecord,
-  OmdbMovie,
-  OmdbShow,
   SourceMediaRecord,
   UserMediaDropdowns,
   UserMediaFormSchema,
@@ -13,7 +10,9 @@ import { useState } from "react";
 import type { MouseEventHandler } from "react";
 import { FormProvider, useForm } from "./context";
 import { api, getApiErrorMessage } from "#/lib/api";
-import { Container, Stack, Grid } from "@mantine/core";
+import { Container, Grid, Stack, Text } from "@mantine/core";
+import { modals } from "@mantine/modals";
+import { showNotification } from "@mantine/notifications";
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -32,6 +31,8 @@ import { MediaDetailsSection } from "./MediaDetailsSection";
 import { PersonalNotesSection } from "./PersonalNotesSection";
 import { ProgressTrackingSection } from "./ProgressTrackingSection";
 import { StatusDetailsSection } from "./StatusDetailsSection";
+import { formatDuration, getEstimatedTimeSpentMinutes } from "./TimeSpentModal";
+import { hydrateMediaRecord } from "../../providers/hydrateMedia";
 
 const addInitialValues: UserMediaFormSchema = {
   title: "",
@@ -55,15 +56,6 @@ const addInitialValues: UserMediaFormSchema = {
   customFields: undefined,
   seasonsProgress: [],
 };
-
-function setCatalogMetadata(
-  form: ReturnType<typeof useForm>,
-  metadata: Record<string, string>,
-) {
-  if (Object.keys(metadata).length > 0) {
-    form.setFieldValue("metadata", metadata);
-  }
-}
 
 function normalizeTags(tags: string[]) {
   const seen = new Set<string>();
@@ -104,6 +96,10 @@ export function MediaForm(props: MediaFormProps) {
   const [mediaRecord, setMediaRecord] = useState<SourceMediaRecord | null>(
     null,
   );
+  const [catalogMetadata, setCatalogMetadataState] = useState<unknown>(
+    props.mode === "update" ? props.initialValues.metadata : undefined,
+  );
+  const [isLoadingSeasonInfo, setIsLoadingSeasonInfo] = useState(false);
   const [search, setSearch] = useState(
     props.mode === "add" ? "" : props.initialValues.title,
   );
@@ -117,7 +113,9 @@ export function MediaForm(props: MediaFormProps) {
           ...addInitialValues,
           visibility: props.defaultVisibility ?? "private",
         }
-      : props.initialValues,
+      : {
+          ...props.initialValues,
+        },
     transformValues: (values) => ({
       ...values,
       timeSpent: Number(values.timeSpent) === 0 ? undefined : values.timeSpent,
@@ -133,22 +131,68 @@ export function MediaForm(props: MediaFormProps) {
     },
   });
 
+  const catalogMetadataForTimeSpent = catalogMetadata ?? form.values.metadata;
+
   useUnsavedChangesBlocker(() => form.isDirty());
 
   form.watch("status", ({ value, previousValue }) => {
     if (value === "completed") {
       form.setFieldValue("progress", 100);
       form.setFieldValue("seasonsProgress", (prev = []) =>
-        prev.map((entry) =>
-          entry.status === "completed"
-            ? entry
-            : {
-                ...entry,
-                status: "completed",
-                updatedAt: new Date().toISOString(),
-              },
-        ),
+        prev.map((entry) => {
+          const episodeCount = entry.expectedEpisodeCount;
+          const hasKnownEpisodeCount =
+            episodeCount !== undefined && episodeCount !== null;
+          const alreadyComplete =
+            entry.status === "completed" &&
+            (!hasKnownEpisodeCount || entry.episodesWatched === episodeCount);
+
+          if (alreadyComplete) return entry;
+
+          return {
+            ...entry,
+            status: "completed",
+            ...(hasKnownEpisodeCount ? { episodesWatched: episodeCount } : {}),
+            updatedAt: new Date().toISOString(),
+          };
+        }),
       );
+
+      const estimatedMinutes = getEstimatedTimeSpentMinutes(
+        form.values.type,
+        catalogMetadataForTimeSpent,
+        form.values.seasonsProgress,
+      );
+      const currentMinutes = Number(form.values.timeSpent) || 0;
+
+      if (estimatedMinutes && estimatedMinutes !== currentMinutes) {
+        modals.openConfirmModal({
+          title: "Update time spent?",
+          children: (
+            <Text size="sm">
+              Based on the catalog runtime and your progress, this looks like
+              about {formatDuration(estimatedMinutes)}. Set Time Spent to this
+              estimate?
+            </Text>
+          ),
+          labels: {
+            confirm: `Use ${formatDuration(estimatedMinutes)}`,
+            cancel: "Review manually",
+          },
+          cancelProps: {
+            color: "accent",
+            variant: "light",
+          },
+          onConfirm: () => form.setFieldValue("timeSpent", estimatedMinutes),
+        });
+      } else if (!currentMinutes) {
+        showNotification({
+          title: "Remember time spent",
+          message: "Open Time Spent to add an estimate before saving.",
+          color: "blue",
+          position: "top-center",
+        });
+      }
     } else if (previousValue === "completed") {
       form.setFieldValue("completedAt", undefined);
     }
@@ -160,77 +204,54 @@ export function MediaForm(props: MediaFormProps) {
     form.setFieldValue("type", type);
     form.setFieldValue("title", "");
     form.setFieldValue("description", undefined);
+    form.setFieldValue("metadata", undefined);
+    form.setFieldValue("seasonsProgress", []);
+
+    setCatalogMetadataState(undefined);
     setSearch("");
     setMediaRecord(null);
+    setIsLoadingSeasonInfo(false);
   };
 
   const handleTypeClick: MouseEventHandler<HTMLInputElement> = (event) => {
     if (!isAddMode) event.stopPropagation();
   };
 
+  const applyCatalogMetadata = (metadata: Record<string, string>) => {
+    if (!Object.keys(metadata).length) return;
+
+    setCatalogMetadataState(metadata);
+    form.setFieldValue("metadata", metadata);
+  };
+
   const handleTitleChange = async (record: SourceMediaRecord | null) => {
+    setIsLoadingSeasonInfo(false);
     setMediaRecord(record);
     form.setFieldValue("description", undefined);
     form.setFieldValue("metadata", undefined);
+    setCatalogMetadataState(undefined);
+
     if (isAddMode) form.setFieldValue("seasonsProgress", []);
 
     if (record) {
       form.setFieldValue("title", record.title);
       form.setFieldValue("type", record.type);
 
-      if (record.source === "omdb" && record.externalId) {
-        const details = await api<OmdbMovie | OmdbShow>(
-          `/media/omdb/${record.externalId}`,
-        );
-        if (details.Plot) {
-          form.setFieldValue("description", details.Plot);
+      const loadingSeasonInfo = record.type === "show" && !!record.externalId;
+      setIsLoadingSeasonInfo(loadingSeasonInfo);
+
+      try {
+        const hydrated = await hydrateMediaRecord(record);
+        if (hydrated.description) {
+          form.setFieldValue("description", hydrated.description);
         }
+        applyCatalogMetadata(hydrated.metadata ?? {});
 
-        setCatalogMetadata(form, {
-          ...(details.Genre ? { genre: details.Genre } : {}),
-          ...(details.Runtime ? { runtime: details.Runtime } : {}),
-          ...(details.imdbRating && details.imdbRating !== "N/A"
-            ? { catalogRating: `${details.imdbRating}/10` }
-            : {}),
-        });
-
-        if (isAddMode && record.type === "show" && "totalSeasons" in details) {
-          const totalSeasons = Number(details.totalSeasons);
-          if (Number.isInteger(totalSeasons) && totalSeasons > 0) {
-            form.setFieldValue(
-              "seasonsProgress",
-              Array.from({ length: totalSeasons }, (_, index) => ({
-                season: index + 1,
-                status: "planned" as const,
-                updatedAt: new Date().toISOString(),
-              })),
-            );
-          }
+        if (isAddMode && hydrated.seasonsProgress?.length) {
+          form.setFieldValue("seasonsProgress", hydrated.seasonsProgress);
         }
-      }
-
-      if (record.source === "igdb" && record.externalId) {
-        const details = await api<IgdbGame | null>(
-          `/media/igdb/${record.externalId}`,
-        );
-        if (details?.summary) {
-          form.setFieldValue("description", details.summary);
-        }
-
-        setCatalogMetadata(form, {
-          ...(details?.genres?.length
-            ? { genre: details.genres.map((g) => g.name).join(", ") }
-            : {}),
-          ...(details?.rating
-            ? { catalogRating: `${(details.rating / 10).toFixed(1)}/10` }
-            : {}),
-        });
-      }
-
-      if (record.source === "open_library" && record.genres?.length) {
-        setCatalogMetadata(form, {
-          genre: record.genres.slice(0, 5).join(", "),
-        });
+      } finally {
+        setIsLoadingSeasonInfo(false);
       }
     }
   };
@@ -358,7 +379,11 @@ export function MediaForm(props: MediaFormProps) {
                 onSearchChange={handleSearchChange}
               />
               <StatusDetailsSection />
-              <ProgressTrackingSection dropdowns={props.dropdowns} />
+              <ProgressTrackingSection
+                dropdowns={props.dropdowns}
+                catalogMetadata={catalogMetadataForTimeSpent}
+                isLoadingSeasonInfo={isLoadingSeasonInfo}
+              />
               <PersonalNotesSection />
               <FormActions
                 mode={mode}

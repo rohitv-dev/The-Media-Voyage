@@ -5,6 +5,7 @@ import {
 import type { FastifyInstance } from "fastify";
 import { getGameDetails } from "../../../services/igdb";
 import { getOmdbDetails } from "../../../services/omdb";
+import { getTvMazeDetails } from "../../../services/tvMaze";
 import { requireAuth } from "../../../require-auth";
 import { searchMedia } from "./service";
 
@@ -58,7 +59,22 @@ async function mediaRoutes(fastify: FastifyInstance) {
       return reply.send(await getGameDetails(id));
     },
   );
+
+  fastify.get(
+    "/tvmaze/:id",
+    {
+      config: {
+        rateLimit: {
+          max: 20,
+          timeWindow: "1 minute",
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = mediaDetailsParamsSchema.parse(request.params);
+      return reply.send(await getTvMazeDetails(id));
+    },
+  );
 }
 
 export default mediaRoutes;
-

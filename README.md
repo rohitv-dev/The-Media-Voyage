@@ -14,7 +14,7 @@ Media Voyage is a personal media-tracking app for keeping tabs on the movies, sh
 - Per-entry visibility with a configurable default, plus direct library sharing
 - Trash with restore for soft-deleted entries
 - Tag and source management
-- Media lookup via IGDB (games), OMDB (movies/shows), and Open Library (books)
+- Media lookup via OMDb (movies), TVMaze (shows), IGDB (games), and Open Library (books)
 - CSV export of your whole library
 - Appearance settings: light/dark theme, cover art toggle and size, reduced motion
 
@@ -33,7 +33,7 @@ Media Voyage is a personal media-tracking app for keeping tabs on the movies, sh
    pnpm install
    ```
 
-2. Copy `.env.example` to `.env` and fill in the required values: `DATABASE_URL`, `BETTER_AUTH_SECRET` (32+ random characters), `BETTER_AUTH_URL`, `FRONTEND_URL`, and the IGDB/OMDB credentials. Open Library needs no API key.
+2. Copy `.env.example` to `.env` and fill in the required values: `DATABASE_URL`, `BETTER_AUTH_SECRET` (32+ random characters), `BETTER_AUTH_URL`, `FRONTEND_URL`, and the IGDB/OMDB credentials. TVMaze and Open Library need no API key.
 
    Registration is gated by `SIGNUP_INVITE_CODE` — signups must supply that code, and it is required when `NODE_ENV=production`.
 

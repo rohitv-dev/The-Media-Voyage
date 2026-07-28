@@ -5,3 +5,4 @@ export * from "./mediaCollection";
 export * from "./tags";
 export * from "./sources";
 export * from "./friends";
+export * from "./tvMaze";

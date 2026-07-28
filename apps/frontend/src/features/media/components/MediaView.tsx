@@ -30,7 +30,10 @@ import {
   IconPlayerPlay,
   IconQuote,
 } from "@tabler/icons-react";
-import type { MediaDetailedRecord } from "@media-voyage/shared/api";
+import type {
+  MediaDetailedRecord,
+  SeasonProgressEntry,
+} from "@media-voyage/shared/api";
 import { useNavigate } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { useLayoutEffect, useRef, useState } from "react";
@@ -53,6 +56,9 @@ const formatDate = (value?: Date | string | null) =>
 
 const formatValue = (value?: string | number | null) =>
   value === undefined || value === null || value === "" ? "—" : value;
+
+const getSeasonEpisodeTotal = (entry: SeasonProgressEntry) =>
+  entry.expectedEpisodeCount;
 
 const defaultBorder = "var(--mantine-color-default-border)";
 const accentText = "var(--mantine-primary-color-filled)";
@@ -528,9 +534,16 @@ export function MediaView({
                           >
                             {capitalizeWords(entry.status)}
                           </Badge>
-                          {entry.episodesWatched !== undefined && (
+                          {(entry.episodesWatched !== undefined ||
+                            getSeasonEpisodeTotal(entry) !== undefined) && (
                             <Text size="xs" c="dimmed">
-                              {entry.episodesWatched} episodes watched
+                              {entry.episodesWatched !== undefined
+                                ? `${entry.episodesWatched}${
+                                    getSeasonEpisodeTotal(entry) !== undefined
+                                      ? `/${getSeasonEpisodeTotal(entry)}`
+                                      : ""
+                                  } episodes watched`
+                                : `${getSeasonEpisodeTotal(entry)} episodes`}
                             </Text>
                           )}
                           {entry.rating !== undefined && (
