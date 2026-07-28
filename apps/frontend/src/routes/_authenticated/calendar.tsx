@@ -102,6 +102,16 @@ function StatusLegend() {
   );
 }
 
+const desktopCalendarStyles = {
+  headerControl: { color: "var(--mantine-color-text)" },
+  monthYearSelectTarget: { color: "var(--mantine-color-text)" },
+  monthYearSelectControl: { color: "var(--mantine-color-text)" },
+  monthYearSelectLabel: { color: "var(--mantine-color-text)" },
+  viewSelect: { display: "none" },
+  monthViewWeekday: { color: "var(--mantine-color-text)" },
+  monthViewDayLabel: { color: "var(--mantine-color-text)" },
+};
+
 function RouteComponent() {
   const search = Route.useSearch();
   const navigate = useNavigate();
@@ -207,9 +217,19 @@ function RouteComponent() {
               if (eventsByDate.get(date)?.length) setSelectedDate(date);
             }}
             styles={{
-              mobileMonthViewEventsList: {
-                display: "none"
+              mobileMonthViewHeaderBackButton: {
+                color: "var(--mantine-color-text)",
               },
+              mobileMonthViewHeaderLabel: {
+                color: "var(--mantine-color-text)",
+              },
+              mobileMonthViewWeekday: {
+                color: "var(--mantine-color-text)",
+              },
+              mobileMonthViewDay: {
+                color: "var(--mantine-color-text)",
+              },
+              mobileMonthViewEventsList: { display: "none" },
             }}
           />
 
@@ -234,7 +254,10 @@ function RouteComponent() {
             }}
             maxEventsPerDay={2}
             viewSelectProps={{ views: ["month"] }}
-            styles={{ monthView: { minHeight: "calc(100dvh - 220px)" } }}
+            styles={{
+              ...desktopCalendarStyles,
+              monthView: { minHeight: "calc(100dvh - 220px)" },
+            }}
           />
         </Card>
 

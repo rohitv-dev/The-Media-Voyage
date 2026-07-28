@@ -11,12 +11,14 @@ import {
   Image,
   InputBase,
   Loader,
+  Popover,
   Stack,
   Text,
   ThemeIcon,
+  UnstyledButton,
   useCombobox,
 } from "@mantine/core";
-import { useDebouncedValue } from "@mantine/hooks";
+import { useDebouncedValue, useMediaQuery } from "@mantine/hooks";
 import type { SourceMediaRecord } from "@media-voyage/shared/api";
 import type { MediaType } from "@media-voyage/shared/userMediaSchema";
 import {
@@ -58,15 +60,11 @@ function getMediaOptionValue(media: SourceMediaRecord) {
 }
 
 function MediaOption({ media }: { media: SourceMediaRecord }) {
+  const isTouchDevice = useMediaQuery("(hover: none)");
   const imageUrl = media.imageUrl === "N/A" ? null : media.imageUrl;
-  const optionContent = (
-    <Group gap="sm" wrap="nowrap">
-      <Avatar
-        src={imageUrl}
-        radius="sm"
-        size={40}
-      />
-
+  const avatar = <Avatar src={imageUrl} radius="sm" size={40} />;
+  const optionDetails = (
+    <>
       <Stack gap={0} style={{ flex: 1 }}>
         <Text size="sm" fw={500}>
           {media.title} {media.creators ? `(${media.creators.join(", ")})` : ""}
@@ -84,10 +82,61 @@ function MediaOption({ media }: { media: SourceMediaRecord }) {
       >
         {capitalizeWords(sourceLabels[media.source] ?? media.source)}
       </Badge>
+    </>
+  );
+
+  const optionContent = (
+    <Group gap="sm" wrap="nowrap">
+      {avatar}
+      {optionDetails}
     </Group>
   );
 
   if (!imageUrl) return optionContent;
+
+  const previewImage = (
+    <Image
+      src={imageUrl}
+      alt={`${media.title} poster`}
+      w={140}
+      h={190}
+      fit="contain"
+      radius="sm"
+      style={{
+        display: "block",
+        backgroundColor: "var(--mantine-color-body)",
+      }}
+    />
+  );
+
+  if (isTouchDevice) {
+    return (
+      <Group gap="sm" wrap="nowrap">
+        <Popover
+          width={156}
+          position="right-start"
+          offset={10}
+          withArrow
+          shadow="xl"
+          zIndex={400}
+        >
+          <Popover.Target>
+            <UnstyledButton
+              type="button"
+              aria-label={`Preview ${media.title} poster`}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
+              style={{ lineHeight: 0, cursor: "zoom-in" }}
+            >
+              {avatar}
+            </UnstyledButton>
+          </Popover.Target>
+          <Popover.Dropdown p={6}>{previewImage}</Popover.Dropdown>
+        </Popover>
+        {optionDetails}
+      </Group>
+    );
+  }
 
   return (
     <HoverCard
@@ -102,18 +151,7 @@ function MediaOption({ media }: { media: SourceMediaRecord }) {
     >
       <HoverCard.Target>{optionContent}</HoverCard.Target>
       <HoverCard.Dropdown p={6}>
-        <Image
-          src={imageUrl}
-          alt={`${media.title} poster`}
-          w={140}
-          h={190}
-          fit="contain"
-          radius="sm"
-          style={{
-            display: "block",
-            backgroundColor: "var(--mantine-color-body)",
-          }}
-        />
+        {previewImage}
       </HoverCard.Dropdown>
     </HoverCard>
   );
