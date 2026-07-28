@@ -129,6 +129,9 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.collection.items(collectionId),
       });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.collection.itemsDetailed(collectionId),
+      });
       setSelectedMediaId(null);
       showSuccessNotification({ message: "Added to collection" });
     },
@@ -145,6 +148,9 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.collection.items(collectionId),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.collection.itemsDetailed(collectionId),
       });
       showSuccessNotification({ message: "Removed from collection" });
     },
@@ -170,6 +176,9 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.collection.items(collectionId),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.collection.itemsDetailed(collectionId),
       });
       setCanSaveOrder(false);
       showSuccessNotification({ message: "Order saved" });

@@ -7,6 +7,8 @@ import {
   Combobox,
   ComboboxOption,
   Group,
+  HoverCard,
+  Image,
   InputBase,
   Loader,
   Stack,
@@ -56,10 +58,11 @@ function getMediaOptionValue(media: SourceMediaRecord) {
 }
 
 function MediaOption({ media }: { media: SourceMediaRecord }) {
-  return (
+  const imageUrl = media.imageUrl === "N/A" ? null : media.imageUrl;
+  const optionContent = (
     <Group gap="sm" wrap="nowrap">
       <Avatar
-        src={media.imageUrl === "N/A" ? null : media.imageUrl}
+        src={imageUrl}
         radius="sm"
         size={40}
       />
@@ -82,6 +85,37 @@ function MediaOption({ media }: { media: SourceMediaRecord }) {
         {capitalizeWords(sourceLabels[media.source] ?? media.source)}
       </Badge>
     </Group>
+  );
+
+  if (!imageUrl) return optionContent;
+
+  return (
+    <HoverCard
+      width={156}
+      position="right-start"
+      offset={10}
+      openDelay={100}
+      closeDelay={220}
+      withArrow
+      shadow="xl"
+      zIndex={400}
+    >
+      <HoverCard.Target>{optionContent}</HoverCard.Target>
+      <HoverCard.Dropdown p={6}>
+        <Image
+          src={imageUrl}
+          alt={`${media.title} poster`}
+          w={140}
+          h={190}
+          fit="contain"
+          radius="sm"
+          style={{
+            display: "block",
+            backgroundColor: "var(--mantine-color-body)",
+          }}
+        />
+      </HoverCard.Dropdown>
+    </HoverCard>
   );
 }
 
