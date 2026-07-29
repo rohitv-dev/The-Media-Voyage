@@ -45,4 +45,9 @@ export const queryKeys = {
     comments: (id: string) =>
       ["friends", "entry", { id }, "comments"] as const,
   },
+  notifications: {
+    all: ["notifications"] as const,
+    list: (page: number, limit: number) =>
+      ["notifications", { page, limit }] as const,
+  },
 } as const;

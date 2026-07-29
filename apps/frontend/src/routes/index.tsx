@@ -110,7 +110,6 @@ function Home() {
               component={Link}
               to={appRoute}
               radius="xl"
-              px={{ base: "md", sm: "xl" }}
               rightSection={<IconArrowUpRight size={19} />}
               style={{ minHeight: 48 }}
             >
@@ -159,7 +158,6 @@ function Home() {
                 rightSection={<IconArrowUpRight size={21} />}
                 style={{
                   alignSelf: "flex-start",
-                  minHeight: 50,
                 }}
               >
                 Open App

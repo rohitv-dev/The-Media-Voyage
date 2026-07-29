@@ -24,6 +24,7 @@ import {
 } from "@mantine/hooks";
 import {
   IconBooks,
+  IconBell,
   IconCalendar,
   IconChevronRight,
   IconDeviceTv,
@@ -38,6 +39,9 @@ import {
   IconUser,
   IconUsers,
 } from "@tabler/icons-react";
+import { latestNotificationsQueryOptions } from "#/features/notifications/queries";
+import { NotificationPopover } from "#/features/notifications/components/NotificationPopover";
+import { useMarkNotificationsSeen } from "#/features/notifications/hooks/useMarkNotificationsSeen";
 import {
   useQuery,
   useQueryClient,
@@ -150,26 +154,77 @@ export const Route = createFileRoute("/_authenticated")({
 function RouteComponent() {
   const navigate = Route.useNavigate();
   const queryClient = useQueryClient();
-  const [opened, { toggle, close }] = useDisclosure();
+  const { pathname } = useLocation();
+
+  const [
+    navbarOpened,
+    { toggle: toggleNavbar, close: closeNavbar },
+  ] = useDisclosure();
   const [sidebarOpened, setSidebarOpened] = useLocalStorage<boolean>({
     key: "media-voyage-sidebar-opened",
     defaultValue: true,
   });
   const isDesktop = useMediaQuery("(min-width: 62em)");
   const railCollapsed = isDesktop && !sidebarOpened;
+
   const [shortcutsOpened, { open: openShortcuts, close: closeShortcuts }] =
     useDisclosure();
+  const [
+    notificationsOpened,
+    { open: openNotifications, close: closeNotifications },
+  ] = useDisclosure();
+
   const { data: collections } = useSuspenseQuery(collectionQueryOptions);
   const { data: friendRequests } = useQuery(friendRequestsQueryOptions);
-  const { pathname } = useLocation();
+  const {
+    data: notificationData,
+    isLoading: notificationsLoading,
+    isError: notificationsError,
+  } = useQuery(latestNotificationsQueryOptions);
+
   const pendingRequests = friendRequests?.incoming.length ?? 0;
+  const unseenNotifications = notificationData?.unseenCount ?? 0;
+
+  const markNotificationsSeenMutation = useMarkNotificationsSeen();
 
   const isActive = (path: string, exact = false) =>
     exact ? pathname === path : pathname.startsWith(path);
 
   const goTo = (to: Parameters<typeof navigate>[0]["to"]) => () => {
     navigate({ to });
-    close();
+    closeNavbar();
+  };
+
+  const markNotificationsSeen = () => {
+    if (unseenNotifications > 0 && !markNotificationsSeenMutation.isPending) {
+      markNotificationsSeenMutation.mutate();
+    }
+  };
+
+  const handleNotificationsChange = (nextOpened: boolean) => {
+    if (nextOpened) {
+      openNotifications();
+      markNotificationsSeen();
+    } else {
+      closeNotifications();
+    }
+  };
+
+  const openNotificationsPage = () => {
+    closeNotifications();
+    navigate({ to: "/notifications" });
+    closeNavbar();
+  };
+
+  const openNotification = (userMediaId: string | null) => {
+    closeNotifications();
+
+    if (userMediaId) {
+      navigate({ to: "/media/view/$id", params: { id: userMediaId } });
+      return;
+    }
+
+    navigate({ to: "/friends" });
   };
 
   useHotkeys([
@@ -211,7 +266,7 @@ function RouteComponent() {
       navbar={{
         width: railCollapsed ? 76 : 260,
         breakpoint: "md",
-        collapsed: { mobile: !opened },
+        collapsed: { mobile: !navbarOpened },
       }}
     >
       <AppShell.Header
@@ -223,11 +278,13 @@ function RouteComponent() {
         <Group justify="space-between" h="100%" px={{ base: "md", sm: "lg" }}>
           <Group gap="sm" wrap="nowrap">
             <Burger
-              opened={opened}
-              onClick={toggle}
+              opened={navbarOpened}
+              onClick={toggleNavbar}
               hiddenFrom="md"
               size="sm"
-              aria-label={opened ? "Close navigation" : "Open navigation"}
+              aria-label={
+                navbarOpened ? "Close navigation" : "Open navigation"
+              }
             />
 
             <Tooltip
@@ -273,7 +330,17 @@ function RouteComponent() {
             </Box>
           </Group>
 
-          <Group gap="md" wrap="nowrap">
+          <Group gap="sm" wrap="nowrap">
+            <NotificationPopover
+              opened={notificationsOpened}
+              data={notificationData}
+              isLoading={notificationsLoading}
+              isError={notificationsError}
+              onChange={handleNotificationsChange}
+              onOpenNotification={openNotification}
+              onViewAll={openNotificationsPage}
+            />
+
             <Box visibleFrom="sm">
               <Tooltip label="Keyboard shortcuts" withArrow>
                 <ActionIcon
@@ -378,6 +445,21 @@ function RouteComponent() {
             />
 
             <SidebarNavLink
+              label="Notifications"
+              leftSection={<IconBell size={19} />}
+              rightSection={
+                unseenNotifications > 0 ? (
+                  <Badge size="sm" variant="filled" radius="xl">
+                    {unseenNotifications > 99 ? "99+" : unseenNotifications}
+                  </Badge>
+                ) : undefined
+              }
+              active={isActive("/notifications")}
+              onClick={openNotificationsPage}
+              collapsed={railCollapsed}
+            />
+
+            <SidebarNavLink
               label="Tag Management"
               leftSection={<IconTags size={19} />}
               active={isActive("/tags")}
@@ -445,7 +527,7 @@ function RouteComponent() {
                           to: "/collection/view/$id",
                           params: { id: collection.id },
                         });
-                        close();
+                        closeNavbar();
                       }}
                     />
                   ))}

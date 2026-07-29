@@ -42,6 +42,14 @@ export const friendshipStatusEnum = pgEnum("friendship_status", [
   "accepted",
 ]);
 
+export const notificationTypeEnum = pgEnum("notification_type", [
+  "media_like",
+  "media_dislike",
+  "media_comment",
+  "friend_request",
+  "friend_request_accepted",
+]);
+
 // Main Media (Canonical)
 export const media = pgTable(
   "media",
@@ -334,6 +342,35 @@ export const userMediaComments = pgTable(
   ],
 );
 
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    recipientId: text("recipient_id")
+      .references(() => user.id, { onDelete: "cascade" })
+      .notNull(),
+    actorId: text("actor_id")
+      .references(() => user.id, { onDelete: "cascade" })
+      .notNull(),
+    type: notificationTypeEnum("type").notNull(),
+    userMediaId: uuid("user_media_id").references(() => userMedia.id, {
+      onDelete: "cascade",
+    }),
+    seenAt: timestamp("seen_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("notifications_recipient_created_idx").on(
+      table.recipientId,
+      table.createdAt,
+    ),
+    index("notifications_recipient_seen_idx").on(
+      table.recipientId,
+      table.seenAt,
+    ),
+  ],
+);
+
 export const mediaRelations = relations(media, ({ many }) => ({
   userEntries: many(userMedia),
 }));
@@ -379,6 +416,26 @@ export const userMediaCommentsRelations = relations(
   }),
 );
 
+export const notificationsRelations = relations(
+  notifications,
+  ({ one }) => ({
+    recipient: one(user, {
+      fields: [notifications.recipientId],
+      references: [user.id],
+      relationName: "notificationRecipient",
+    }),
+    actor: one(user, {
+      fields: [notifications.actorId],
+      references: [user.id],
+      relationName: "notificationActor",
+    }),
+    userMedia: one(userMedia, {
+      fields: [notifications.userMediaId],
+      references: [userMedia.id],
+    }),
+  }),
+);
+
 export const userMediaRelations = relations(userMedia, ({ one, many }) => ({
   user: one(user, {
     fields: [userMedia.userId],
@@ -397,6 +454,7 @@ export const userMediaRelations = relations(userMedia, ({ one, many }) => ({
   tagLinks: many(userMediaTags),
   reactions: many(userMediaReactions),
   comments: many(userMediaComments),
+  notifications: many(notifications),
 }));
 
 export const sourcesRelations = relations(sources, ({ one, many }) => ({
@@ -551,6 +609,12 @@ export const userRelations = relations(user, ({ many }) => ({
   }),
   reactions: many(userMediaReactions),
   comments: many(userMediaComments),
+  receivedNotifications: many(notifications, {
+    relationName: "notificationRecipient",
+  }),
+  sentNotifications: many(notifications, {
+    relationName: "notificationActor",
+  }),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
