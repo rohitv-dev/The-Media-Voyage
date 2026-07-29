@@ -407,7 +407,7 @@ export function MediaForm(props: MediaFormProps) {
       <Container pt="sm" px={{ base: "xs", md: "sm" }}>
         <Stack gap="lg" pb="lg">
           <form onSubmit={form.onSubmit(handleSubmit)}>
-            <Grid gap="xs">
+            <Grid gap="sm">
               <FormHeader mode={mode} />
               <MediaDetailsSection
                 mode={mode}

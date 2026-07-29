@@ -236,7 +236,7 @@ function RouteComponent() {
           <Box flex="1">
             {isFetching && !data ? (
               <SimpleGrid
-                spacing={{ base: "xs", md: "md" }}
+                spacing={{ base: "sm", md: "md" }}
                 cols={{
                   base: 1,
                   sm: 2,
@@ -285,7 +285,7 @@ function RouteComponent() {
               <MediaTable data={data?.data ?? []} />
             ) : (
               <SimpleGrid
-                spacing={{ base: "xs", md: "md" }}
+                spacing={{ base: "sm", md: "md" }}
                 cols={{
                   base: 1,
                   sm: 2,

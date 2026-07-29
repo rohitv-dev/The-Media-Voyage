@@ -290,6 +290,19 @@ function RouteComponent() {
             <Box visibleFrom="sm">
               <ThemeSwitcher />
             </Box>
+            <Box hiddenFrom="md">
+              <Tooltip label="Add media" withArrow>
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  size="lg"
+                  aria-label="Add media"
+                  onClick={() => navigate({ to: "/media/add" })}
+                >
+                  <IconPlus size={20} />
+                </ActionIcon>
+              </Tooltip>
+            </Box>
             <Button
               visibleFrom="md"
               size="sm"
