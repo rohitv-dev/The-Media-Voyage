@@ -252,14 +252,24 @@ function RouteComponent() {
               style={{ cursor: "pointer" }}
               onClick={() => navigate({ to: "/media" })}
             >
-              <Stack gap={0}>
-                <Title order={4} lh={1.1}>
-                  Media Voyage
-                </Title>
-                <Text size="xs" c="dimmed" lh={1.2} visibleFrom="sm">
-                  Your personal media log
-                </Text>
-              </Stack>
+              <Group gap="sm" wrap="nowrap">
+                <img
+                  src="/media-voyage-mark.svg"
+                  alt=""
+                  aria-hidden="true"
+                  width="32"
+                  height="32"
+                  style={{ display: "block" }}
+                />
+                <Stack gap={0}>
+                  <Title order={4} lh={1.1}>
+                    Media Voyage
+                  </Title>
+                  <Text size="xs" c="dimmed" lh={1.2} visibleFrom="sm">
+                    Your personal media log
+                  </Text>
+                </Stack>
+              </Group>
             </Box>
           </Group>
 
