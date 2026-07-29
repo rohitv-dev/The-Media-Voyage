@@ -65,6 +65,14 @@
     box-shadow: var(--neu-out);
   }
 
+  // Media cards sit in a tight grid, so keep their diffuse cast inside the
+  // existing gap instead of letting neighboring cards cover it.
+  .media-card {
+    box-shadow:
+      1px 2px 4px var(--neu-cast),
+      2px 5px 12px var(--neu-cast-soft);
+  }
+
   // Rule 3. A panel inside a panel is already distinguished by having the
   // surface colour against its parent's — a second shadow just smears both.
   .mantine-Paper-root .mantine-Paper-root,

@@ -49,23 +49,23 @@ export function fadeUpEntranceProps(reduceMotion: boolean, distance = 8) {
   };
 }
 
-/** Props for a grid item that fades/scales in and out as list contents change. */
+/** Props for a grid item that fades in and out while retaining normal stacking. */
 export function gridItemMotionProps(reduceMotion: boolean) {
   if (reduceMotion) {
     return {
       layout: false as const,
       initial: false as const,
-      animate: { opacity: 1, scale: 1 },
-      exit: { opacity: 1, scale: 1 },
+      animate: { opacity: 1 },
+      exit: { opacity: 1 },
       transition: { duration: 0 },
     };
   }
 
   return {
     layout: true as const,
-    initial: { opacity: 0, scale: 0.96 },
-    animate: { opacity: 1, scale: 1 },
-    exit: { opacity: 0, scale: 0.96 },
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
     transition: { duration: 0.2, layout: { duration: 0.25 } },
   };
 }

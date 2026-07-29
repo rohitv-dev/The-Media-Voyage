@@ -54,8 +54,11 @@ export function MediaCard({
   return (
     <Card
       component={motion.div}
+      className="media-card"
       withBorder
       h="100%"
+      initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }}
+      animate={reduceMotion ? undefined : { opacity: 1, scale: 1 }}
       role={onView ? "link" : undefined}
       tabIndex={onView ? 0 : undefined}
       whileHover={
@@ -63,6 +66,7 @@ export function MediaCard({
           ? undefined
           : {
               y: -4,
+              zIndex: 1,
               boxShadow: "0 12px 30px rgba(0,0,0,0.15)",
             }
       }
@@ -70,7 +74,10 @@ export function MediaCard({
       onClick={openMedia}
       onKeyDown={handleCardKeyDown}
       p={{ base: "sm", sm: "md" }}
-      style={{ cursor: onView ? "pointer" : undefined }}
+      style={{
+        cursor: onView ? "pointer" : undefined,
+        position: "relative",
+      }}
     >
       {showCoverArt && (
         <Card.Section>
