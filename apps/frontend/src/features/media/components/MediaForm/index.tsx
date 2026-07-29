@@ -1,5 +1,6 @@
 import type {
   MediaDetailedRecord,
+  SeasonProgressEntry,
   SourceMediaRecord,
   UserMediaDropdowns,
   UserMediaFormSchema,
@@ -72,6 +73,30 @@ function normalizeTags(tags: string[]) {
   }
 
   return result;
+}
+
+function calculateShowProgress(seasonsProgress?: SeasonProgressEntry[]) {
+  let totalEpisodeCount = 0;
+  let watchedEpisodeCount = 0;
+
+  for (const season of seasonsProgress ?? []) {
+    if (
+      season.expectedEpisodeCount === undefined ||
+      season.expectedEpisodeCount === null
+    ) {
+      continue;
+    }
+
+    totalEpisodeCount += season.expectedEpisodeCount;
+    watchedEpisodeCount += Math.max(0, season.episodesWatched ?? 0);
+  }
+
+  if (totalEpisodeCount === 0) return undefined;
+
+  return Math.min(
+    100,
+    Math.round((watchedEpisodeCount / totalEpisodeCount) * 100),
+  );
 }
 
 type MediaFormProps =
@@ -198,6 +223,18 @@ export function MediaForm(props: MediaFormProps) {
     }
   });
 
+  form.watch("seasonsProgress", ({ value }) => {
+    if (form.values.type !== "show") return;
+
+    const calculatedProgress = calculateShowProgress(value);
+    if (
+      calculatedProgress !== undefined &&
+      calculatedProgress !== form.values.progress
+    ) {
+      form.setFieldValue("progress", calculatedProgress);
+    }
+  });
+
   const handleTypeChange = (type: MediaType | null) => {
     if (!type) return;
 
@@ -307,6 +344,9 @@ export function MediaForm(props: MediaFormProps) {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all }),
         queryClient.invalidateQueries(userMediaDropdownOptions),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.userMedia.statusHistory(data.id),
+        }),
         ...(!isAddMode
           ? [queryClient.invalidateQueries(userMediaDetailedOptions(data.id))]
           : []),

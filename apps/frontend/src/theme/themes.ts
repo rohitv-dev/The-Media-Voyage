@@ -1,5 +1,5 @@
-import { createTheme  } from "@mantine/core";
-import type {MantineColorsTuple, MantineThemeOverride } from "@mantine/core";
+import { createTheme } from "@mantine/core";
+import type { MantineColorsTuple, MantineThemeOverride } from "@mantine/core";
 
 /**
  * Theme system — VSCode-style.
@@ -78,7 +78,7 @@ export const THEMES: Record<ThemeId, ThemeDef> = {
     label: "Classic",
     blurb: "The original — clean indigo on white",
     scheme: "light",
-    accent: "#4c6ef5",
+    accent: "#4263eb",
     bg: "#f8f9fa",
     surface: "#ffffff",
     text: "#1a1b1e",
@@ -242,11 +242,7 @@ function rgbToHex(r: number, g: number, b: number): string {
 function mix(a: string, b: string, t: number): string {
   const [r1, g1, b1] = hexToRgb(a);
   const [r2, g2, b2] = hexToRgb(b);
-  return rgbToHex(
-    r1 + (r2 - r1) * t,
-    g1 + (g2 - g1) * t,
-    b1 + (b2 - b1) * t,
-  );
+  return rgbToHex(r1 + (r2 - r1) * t, g1 + (g2 - g1) * t, b1 + (b2 - b1) * t);
 }
 
 /** A hex colour as a translucent `rgb()`, for shadows that need to blend. */
@@ -386,9 +382,13 @@ export function buildMantineTheme(def: ThemeDef): MantineThemeOverride {
     primaryColor: "accent",
     // Use a mid shade so the accent reads the same on light and dark grounds.
     primaryShade: { light: 6, dark: 6 },
+    autoContrast: true,
 
-    white: def.surface,
-    black: def.text,
+    // Mantine uses white/black as semantic contrast colours in several
+    // components. In dark themes they must be the foreground/background pair,
+    // not the surface/text pair, or tooltips and notification titles disappear.
+    white: isDark ? def.text : def.surface,
+    black: isDark ? def.bg : def.text,
     colors,
 
     fontFamily: def.fontBody,

@@ -11,6 +11,7 @@ export const queryKeys = {
   userMedia: {
     all: ["user-media"] as const,
     detail: (id: string) => ["user-media", { id }] as const,
+    statusHistory: (id: string) => ["user-media-status-history", id] as const,
     filtered: (filters: UserMediaQuerySchema) =>
       ["user-media", filters] as const,
     trash: ["user-media", "trash"] as const,

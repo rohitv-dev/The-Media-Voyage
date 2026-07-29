@@ -11,6 +11,7 @@ import {
   showSuccessNotification,
 } from "#/utils/notifications";
 import {
+  Anchor,
   Button,
   Container,
   SegmentedControl,
@@ -20,7 +21,11 @@ import {
   Title,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
-import { IconDownload, IconUsers } from "@tabler/icons-react";
+import {
+  IconDownload,
+  IconExternalLink,
+  IconUsers,
+} from "@tabler/icons-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
@@ -245,6 +250,55 @@ function RouteComponent() {
             >
               Export library
             </Button>
+          </SettingRow>
+        </SettingsSection>
+
+        <SettingsSection
+          title="Data providers"
+          description="Media data is provided by these services."
+        >
+          <SettingRow title="Games" description="IGDB">
+            <Anchor
+              href="https://www.igdb.com/"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Open IGDB"
+            >
+              <IconExternalLink size={18} />
+            </Anchor>
+          </SettingRow>
+
+          <SettingRow title="Movies" description="OMDb">
+            <Anchor
+              href="https://omdbapi.com/"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Open OMDb"
+            >
+              <IconExternalLink size={18} />
+            </Anchor>
+          </SettingRow>
+
+          <SettingRow title="Shows" description="TVMaze">
+            <Anchor
+              href="https://www.tvmaze.com/"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Open TVMaze"
+            >
+              <IconExternalLink size={18} />
+            </Anchor>
+          </SettingRow>
+
+          <SettingRow title="Books" description="Open Library">
+            <Anchor
+              href="https://openlibrary.org/"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Open Open Library"
+            >
+              <IconExternalLink size={18} />
+            </Anchor>
           </SettingRow>
         </SettingsSection>
       </Stack>

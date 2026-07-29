@@ -58,7 +58,8 @@ function RouteComponent() {
           <Stack gap={0}>
             <Title order={2}>{friend.name}</Title>
             <Text c="dimmed" size="sm">
-              {records.length} shared {records.length === 1 ? "entry" : "entries"}
+              {records.length} {records.length === 1 ? "entry" : "entries"} from
+              them
             </Text>
           </Stack>
         </Group>

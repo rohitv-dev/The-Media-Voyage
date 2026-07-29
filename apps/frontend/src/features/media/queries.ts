@@ -10,6 +10,7 @@ import type {
   GetUserMediaResponse,
   MediaDetailedRecord,
   ReactionRecord,
+  StatusHistoryRecord,
   UserMediaQuerySchema,
   UserMediaDropdowns,
   MediaPickerQuery,
@@ -58,6 +59,17 @@ export function userMediaDetailedOptions(id: string) {
   return queryOptions({
     queryKey: queryKeys.userMedia.detail(id),
     queryFn: () => getUserMediaDetailedRecord(id),
+  });
+}
+
+async function getUserMediaStatusHistory(id: string) {
+  return api<StatusHistoryRecord[]>(`/user-media/${id}/status-history`);
+}
+
+export function statusHistoryQueryOptions(id: string) {
+  return queryOptions({
+    queryKey: queryKeys.userMedia.statusHistory(id),
+    queryFn: () => getUserMediaStatusHistory(id),
   });
 }
 

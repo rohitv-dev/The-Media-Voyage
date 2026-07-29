@@ -115,6 +115,25 @@ export const mediaDetailedRecordSchema = z.object({
 
 export type MediaDetailedRecord = z.infer<typeof mediaDetailedRecordSchema>;
 
+export const statusHistoryRecordSchema = z.object({
+  id: z.uuid(),
+  fromStatus: z.enum(statusEnum.enumValues).nullable(),
+  toStatus: z.enum(statusEnum.enumValues),
+  progressSnapshot: z.number().int().nullable(),
+  source: z.string(),
+  changedAt: z.coerce.date(),
+});
+
+export type StatusHistoryRecord = z.infer<typeof statusHistoryRecordSchema>;
+
+export const getStatusHistoryResponseSchema = z.array(
+  statusHistoryRecordSchema,
+);
+
+export type GetStatusHistoryResponse = z.infer<
+  typeof getStatusHistoryResponseSchema
+>;
+
 export const mediaImageFocusSchema = z
   .object({
     imageFocusX: z.number().min(0).max(1).nullable(),

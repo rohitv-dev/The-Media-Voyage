@@ -295,8 +295,7 @@ function RouteComponent() {
                           {friend.name}
                         </Text>
                         <Text size="xs" c="dimmed">
-                          {friend.sharedCount} shared{" "}
-                          {friend.sharedCount === 1 ? "entry" : "entries"}
+                          {friend.sharedCount} {friend.sharedCount === 1 ? "entry" : "entries"} from them
                         </Text>
                       </Stack>
                     </Group>
