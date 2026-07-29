@@ -1,12 +1,29 @@
 import { media, mediaCollectionItems, userMedia } from "@media-voyage/shared";
 import { and, asc, eq, isNull, max } from "drizzle-orm";
 import { db } from "../../../db/db";
-import {
-  collectionItemDetailedSelect,
-  collectionItemIdSelect,
-  collectionItemSelect,
-  userMediaIdSelect,
-} from "./selects";
+import { userMediaSummarySelect } from "../user-media/selects";
+
+const userMediaIdSelect = {
+  id: userMedia.id,
+};
+
+const collectionItemIdSelect = {
+  id: mediaCollectionItems.id,
+};
+
+const collectionItemSelect = {
+  id: mediaCollectionItems.id,
+  userMediaId: mediaCollectionItems.userMediaId,
+  title: media.title,
+  type: media.type,
+  position: mediaCollectionItems.position,
+  createdAt: mediaCollectionItems.createdAt,
+};
+
+const collectionItemDetailedSelect = {
+  ...userMediaSummarySelect,
+  position: mediaCollectionItems.position,
+};
 
 export function listCollectionItems(collectionId: string) {
   return db

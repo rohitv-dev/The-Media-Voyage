@@ -1,12 +1,30 @@
+import { media } from "@media-voyage/shared";
 import type {
   MediaSearchQuery,
   SourceMediaRecord,
 } from "@media-voyage/shared/api";
+import { and, eq, ilike } from "drizzle-orm";
+import { db } from "../../../db/db";
 import { searchGames } from "../../../services/igdb";
 import { searchOmdb } from "../../../services/omdb";
 import { searchOpenLibrary } from "../../../services/openLibrary";
 import { searchTvMaze } from "../../../services/tvMaze";
-import { searchLocalMedia } from "./queries";
+
+const mediaSearchSelect = {
+  id: media.id,
+  title: media.title,
+  imageUrl: media.imageUrl,
+  type: media.type,
+  externalId: media.externalId,
+};
+
+function searchLocalMedia({ q, type }: MediaSearchQuery) {
+  return db
+    .select(mediaSearchSelect)
+    .from(media)
+    .where(and(ilike(media.title, `%${q}%`), eq(media.type, type)))
+    .limit(10);
+}
 
 export async function searchMedia(
   query: MediaSearchQuery,

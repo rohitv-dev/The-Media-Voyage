@@ -13,8 +13,8 @@ import {
   sendNamedEntityDelete,
   sendNamedEntityUpdate,
   updateNamedEntity,
-} from "../namedEntity";
-import { requireAuth } from "../../../require-auth";
+} from "./namedEntity";
+import { requireAuth } from "../../require-auth";
 
 async function tagsRoutes(fastify: FastifyInstance) {
   fastify.addHook("preHandler", requireAuth);

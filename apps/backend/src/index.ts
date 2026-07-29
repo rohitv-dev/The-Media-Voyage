@@ -26,19 +26,19 @@ registerErrorHandler(fastify);
 
 fastify.register(import("./routes/auth"));
 
-fastify.register(import("./routes/v1/media"), {
+fastify.register(import("./routes/v1/media/routes"), {
   prefix: "/api/v1/media",
 });
 
-fastify.register(import("./routes/v1/user-media"), {
+fastify.register(import("./routes/v1/user-media/routes"), {
   prefix: "/api/v1/user-media",
 });
 
-fastify.register(import("./routes/v1/collection"), {
+fastify.register(import("./routes/v1/collection/routes"), {
   prefix: "/api/v1/collection",
 });
 
-fastify.register(import("./routes/v1/collection-item"), {
+fastify.register(import("./routes/v1/collection-item/routes"), {
   prefix: "/api/v1/collectionItem",
 });
 
@@ -50,11 +50,11 @@ fastify.register(import("./routes/v1/sources"), {
   prefix: "/api/v1/sources",
 });
 
-fastify.register(import("./routes/v1/friends"), {
+fastify.register(import("./routes/v1/friends/routes"), {
   prefix: "/api/v1/friends",
 });
 
-fastify.register(import("./routes/v1/notifications"), {
+fastify.register(import("./routes/v1/notifications/routes"), {
   prefix: "/api/v1/notifications",
 });
 

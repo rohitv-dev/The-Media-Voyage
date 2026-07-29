@@ -5,10 +5,17 @@ import {
   userMedia,
 } from "@media-voyage/shared";
 import { and, eq, inArray, isNull } from "drizzle-orm";
-import { mediaCollectionSelect } from "./selects";
 import { db } from "../../../db/db";
 import { notFound } from "../../../errors";
 import { isStricterThan } from "../friends/policy";
+
+const mediaCollectionSelect = {
+  id: mediaCollection.id,
+  name: mediaCollection.name,
+  description: mediaCollection.description,
+  visibility: mediaCollection.visibility,
+  createdAt: mediaCollection.createdAt,
+};
 
 export function listMediaCollections(userId: string) {
   return db

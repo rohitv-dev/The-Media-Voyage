@@ -1,8 +1,7 @@
 import { notificationListQuerySchema } from "@media-voyage/shared/api";
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../../../require-auth";
-import { listNotifications } from "./queries";
-import { markAllNotificationsSeen } from "./service";
+import { listNotifications, markAllNotificationsSeen } from "./service";
 
 async function notificationRoutes(fastify: FastifyInstance) {
   fastify.addHook("preHandler", requireAuth);
