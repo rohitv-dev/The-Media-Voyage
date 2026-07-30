@@ -1,3 +1,4 @@
+import { db } from "@/db/db";
 import { media, notifications, user, userMedia } from "@media-voyage/shared";
 import type {
   MarkNotificationsSeenResponse,
@@ -5,21 +6,14 @@ import type {
   NotificationListResponse,
 } from "@media-voyage/shared/api";
 import { and, count, desc, eq, isNull } from "drizzle-orm";
-import { db } from "../../../db/db";
 
 type NotificationWriter = Pick<typeof db, "insert">;
 type NotificationInsert = typeof notifications.$inferInsert;
-type CreateNotificationInput = Pick<
-  NotificationInsert,
-  "recipientId" | "actorId" | "type"
-> & {
+type CreateNotificationInput = Pick<NotificationInsert, "recipientId" | "actorId" | "type"> & {
   userMediaId?: NotificationInsert["userMediaId"];
 };
 
-export async function createNotification(
-  database: NotificationWriter,
-  input: CreateNotificationInput,
-) {
+export async function createNotification(database: NotificationWriter, input: CreateNotificationInput) {
   await database.insert(notifications).values(input);
 }
 
@@ -47,19 +41,11 @@ export async function listNotifications(
       .orderBy(desc(notifications.createdAt))
       .limit(limit)
       .offset((page - 1) * limit),
+    db.select({ count: count() }).from(notifications).where(eq(notifications.recipientId, userId)),
     db
       .select({ count: count() })
       .from(notifications)
-      .where(eq(notifications.recipientId, userId)),
-    db
-      .select({ count: count() })
-      .from(notifications)
-      .where(
-        and(
-          eq(notifications.recipientId, userId),
-          isNull(notifications.seenAt),
-        ),
-      ),
+      .where(and(eq(notifications.recipientId, userId), isNull(notifications.seenAt))),
   ]);
 
   return {
@@ -71,15 +57,11 @@ export async function listNotifications(
   };
 }
 
-export async function markAllNotificationsSeen(
-  userId: string,
-): Promise<MarkNotificationsSeenResponse> {
+export async function markAllNotificationsSeen(userId: string): Promise<MarkNotificationsSeenResponse> {
   const updated = await db
     .update(notifications)
     .set({ seenAt: new Date() })
-    .where(
-      and(eq(notifications.recipientId, userId), isNull(notifications.seenAt)),
-    )
+    .where(and(eq(notifications.recipientId, userId), isNull(notifications.seenAt)))
     .returning({ id: notifications.id });
 
   return { updated: updated.length };

@@ -11,7 +11,7 @@ import {
   userMediaIdParamsSchema,
 } from "@media-voyage/shared/api";
 import type { FastifyInstance } from "fastify";
-import { requireAuth } from "../../../require-auth";
+import { requireAuth } from "@/require-auth";
 import {
   getFriendCollection,
   getFriendsFeed,
@@ -56,9 +56,7 @@ async function friendsRoutes(fastify: FastifyInstance) {
     const { friendshipId } = friendshipIdParamsSchema.parse(request.params);
     const input = friendRespondSchema.parse(request.body);
 
-    return reply.send(
-      await respondToFriendRequest(request.userId, friendshipId, input),
-    );
+    return reply.send(await respondToFriendRequest(request.userId, friendshipId, input));
   });
 
   fastify.delete("/:userId", async (request, reply) => {
@@ -98,13 +96,9 @@ async function friendsRoutes(fastify: FastifyInstance) {
   });
 
   fastify.get("/collections/:collectionId", async (request, reply) => {
-    const { collectionId } = mediaCollectionIdParamsSchema.parse(
-      request.params,
-    );
+    const { collectionId } = mediaCollectionIdParamsSchema.parse(request.params);
 
-    return reply.send(
-      await getFriendCollection(request.userId, collectionId),
-    );
+    return reply.send(await getFriendCollection(request.userId, collectionId));
   });
 
   /* Social ---------------------------------------------------------------- */

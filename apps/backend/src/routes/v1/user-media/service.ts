@@ -1,25 +1,13 @@
-import {
-  media,
-  sources,
-  tags,
-  user,
-  userMedia,
-  userMediaStatusHistory,
-  userMediaTags,
-} from "@media-voyage/shared";
-import type {
-  MediaImageFocus,
-  UserMediaFormSchema,
-  UserMediaQuickAction,
-} from "@media-voyage/shared/api";
+import { media, sources, tags, user, userMedia, userMediaStatusHistory, userMediaTags } from "@media-voyage/shared";
+import type { MediaImageFocus, UserMediaFormSchema, UserMediaQuickAction } from "@media-voyage/shared/api";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
-import { db } from "../../../db/db";
 import {
   ownedDeletedUserMediaCondition,
   ownedUserMediaCondition,
   ownedUserMediaIncludingDeletedCondition,
 } from "./queries";
 import { userMediaCreatedSelect, userMediaDetailedSelect } from "./selects";
+import { db } from "@/db/db";
 
 type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -36,20 +24,14 @@ async function syncUserMediaTags(
   if (tagNames === undefined) return;
 
   if (tagNames === null) {
-    await tx
-      .delete(userMediaTags)
-      .where(eq(userMediaTags.userMediaId, userMediaId));
+    await tx.delete(userMediaTags).where(eq(userMediaTags.userMediaId, userMediaId));
     return;
   }
 
-  const cleanedNames = [
-    ...new Set(tagNames.map((name) => name.trim()).filter(Boolean)),
-  ];
+  const cleanedNames = [...new Set(tagNames.map((name) => name.trim()).filter(Boolean))];
 
   if (!cleanedNames.length) {
-    await tx
-      .delete(userMediaTags)
-      .where(eq(userMediaTags.userMediaId, userMediaId));
+    await tx.delete(userMediaTags).where(eq(userMediaTags.userMediaId, userMediaId));
     return;
   }
 
@@ -58,20 +40,11 @@ async function syncUserMediaTags(
   const existingTags = await tx
     .select()
     .from(tags)
-    .where(
-      and(
-        eq(tags.userId, userId),
-        inArray(tags.normalizedName, normalizedNames),
-      ),
-    );
+    .where(and(eq(tags.userId, userId), inArray(tags.normalizedName, normalizedNames)));
 
-  const existingByNormalized = new Map(
-    existingTags.map((tag) => [tag.normalizedName, tag]),
-  );
+  const existingByNormalized = new Map(existingTags.map((tag) => [tag.normalizedName, tag]));
 
-  const missingNames = cleanedNames.filter(
-    (name) => !existingByNormalized.has(name.toLowerCase()),
-  );
+  const missingNames = cleanedNames.filter((name) => !existingByNormalized.has(name.toLowerCase()));
 
   const createdTags = missingNames.length
     ? await tx
@@ -86,16 +59,9 @@ async function syncUserMediaTags(
         .returning()
     : [];
 
-  const tagIdByNormalized = new Map(
-    [...existingTags, ...createdTags].map((tag) => [
-      tag.normalizedName,
-      tag.id,
-    ]),
-  );
+  const tagIdByNormalized = new Map([...existingTags, ...createdTags].map((tag) => [tag.normalizedName, tag.id]));
 
-  await tx
-    .delete(userMediaTags)
-    .where(eq(userMediaTags.userMediaId, userMediaId));
+  await tx.delete(userMediaTags).where(eq(userMediaTags.userMediaId, userMediaId));
 
   await tx.insert(userMediaTags).values(
     normalizedNames.map((normalizedName) => ({
@@ -121,20 +87,12 @@ async function resolveSourceId(
   const [existing] = await tx
     .select()
     .from(sources)
-    .where(
-      and(
-        eq(sources.userId, userId),
-        eq(sources.normalizedName, normalizedName),
-      ),
-    )
+    .where(and(eq(sources.userId, userId), eq(sources.normalizedName, normalizedName)))
     .limit(1);
 
   if (existing) return existing.id;
 
-  const [created] = await tx
-    .insert(sources)
-    .values({ userId, name: trimmed, normalizedName })
-    .returning();
+  const [created] = await tx.insert(sources).values({ userId, name: trimmed, normalizedName }).returning();
 
   return created.id;
 }
@@ -153,10 +111,7 @@ async function resolveDefaultVisibility(tx: DbTransaction, userId: string) {
   return row?.defaultVisibility ?? "private";
 }
 
-export async function createUserMedia(
-  userId: string,
-  input: UserMediaFormSchema,
-) {
+export async function createUserMedia(userId: string, input: UserMediaFormSchema) {
   const {
     title,
     type,
@@ -176,13 +131,7 @@ export async function createUserMedia(
       const [existing] = await tx
         .select({ id: userMedia.id })
         .from(userMedia)
-        .where(
-          and(
-            eq(userMedia.userId, userId),
-            eq(userMedia.mediaId, mediaId),
-            isNull(userMedia.deletedAt),
-          ),
-        )
+        .where(and(eq(userMedia.userId, userId), eq(userMedia.mediaId, mediaId), isNull(userMedia.deletedAt)))
         .limit(1);
 
       if (existing) {
@@ -205,26 +154,19 @@ export async function createUserMedia(
           metadata: media.metadata,
         })
         .from(media)
-        .where(
-          and(eq(media.source, mediaSource), eq(media.externalId, externalId)),
-        )
+        .where(and(eq(media.source, mediaSource), eq(media.externalId, externalId)))
         .limit(1);
 
       if (existingMedia) {
         mediaId = existingMedia.id;
 
-        const metadataUpdate =
-          metadata && !hasMetadataValues(existingMedia.metadata)
-            ? metadata
-            : undefined;
+        const metadataUpdate = metadata && !hasMetadataValues(existingMedia.metadata) ? metadata : undefined;
 
         if ((description && !existingMedia.description) || metadataUpdate) {
           await tx
             .update(media)
             .set({
-              ...(description && !existingMedia.description
-                ? { description }
-                : {}),
+              ...(description && !existingMedia.description ? { description } : {}),
               ...(metadataUpdate ? { metadata: metadataUpdate } : {}),
             })
             .where(eq(media.id, existingMedia.id));
@@ -269,8 +211,7 @@ export async function createUserMedia(
         rewatches: input.rewatches,
         timeSpent: input.timeSpent,
         sourceId: sourceId ?? null,
-        visibility:
-          input.visibility ?? (await resolveDefaultVisibility(tx, userId)),
+        visibility: input.visibility ?? (await resolveDefaultVisibility(tx, userId)),
         customFields: input.customFields,
         seasonsProgress: input.seasonsProgress,
       })
@@ -302,19 +243,8 @@ export async function createUserMedia(
   });
 }
 
-export async function updateUserMedia(
-  userId: string,
-  id: string,
-  input: UserMediaFormSchema,
-) {
-  const {
-    title: _title,
-    type: _type,
-    mediaId: _mediaId,
-    tags: tagNames,
-    source: sourceName,
-    ...updates
-  } = input;
+export async function updateUserMedia(userId: string, id: string, input: UserMediaFormSchema) {
+  const { title: _title, type: _type, mediaId: _mediaId, tags: tagNames, source: sourceName, ...updates } = input;
 
   return db.transaction(async (tx) => {
     const sourceId = await resolveSourceId(tx, userId, sourceName);
@@ -332,12 +262,9 @@ export async function updateUserMedia(
 
     if (!existing) return null;
 
-    const progressChanged =
-      updates.progress !== undefined && updates.progress !== existing.progress;
-    const startedProgress =
-      updates.status === "in_progress" && existing.status !== "in_progress";
-    const statusChanged =
-      updates.status !== undefined && updates.status !== existing.status;
+    const progressChanged = updates.progress !== undefined && updates.progress !== existing.progress;
+    const startedProgress = updates.status === "in_progress" && existing.status !== "in_progress";
+    const statusChanged = updates.status !== undefined && updates.status !== existing.status;
     const now = new Date();
 
     const [updated] = await tx
@@ -347,10 +274,7 @@ export async function updateUserMedia(
         ...(sourceId !== undefined ? { sourceId } : {}),
         updatedAt: now,
         statusChangedAt: statusChanged ? now : existing.statusChangedAt,
-        lastProgressUpdate:
-          progressChanged || startedProgress
-            ? now
-            : existing.lastProgressUpdate,
+        lastProgressUpdate: progressChanged || startedProgress ? now : existing.lastProgressUpdate,
       })
       .where(ownedUserMediaIncludingDeletedCondition(userId, id))
       .returning({
@@ -385,11 +309,7 @@ export async function updateUserMedia(
   });
 }
 
-export async function updateUserMediaQuickActions(
-  userId: string,
-  id: string,
-  quickAction: UserMediaQuickAction,
-) {
+export async function updateUserMediaQuickActions(userId: string, id: string, quickAction: UserMediaQuickAction) {
   return db.transaction(async (tx) => {
     const [existing] = await tx
       .select({
@@ -404,19 +324,14 @@ export async function updateUserMediaQuickActions(
     if (!existing) return null;
 
     const now = new Date();
-    const statusChanged =
-      quickAction.status !== undefined &&
-      quickAction.status !== existing.status;
+    const statusChanged = quickAction.status !== undefined && quickAction.status !== existing.status;
 
     const updates: Partial<typeof userMedia.$inferInsert> = {
       ...quickAction,
       updatedAt: now,
     };
 
-    if (
-      quickAction.progress !== undefined ||
-      (statusChanged && quickAction.status === "in_progress")
-    ) {
+    if (quickAction.progress !== undefined || (statusChanged && quickAction.status === "in_progress")) {
       updates.lastProgressUpdate = now;
     }
 
@@ -476,11 +391,7 @@ export async function updateUserMediaQuickActions(
   });
 }
 
-export async function updateUserMediaImageFocus(
-  userId: string,
-  id: string,
-  input: MediaImageFocus,
-) {
+export async function updateUserMediaImageFocus(userId: string, id: string, input: MediaImageFocus) {
   return db.transaction(async (tx) => {
     const [entry] = await tx
       .select({ mediaId: userMedia.mediaId })

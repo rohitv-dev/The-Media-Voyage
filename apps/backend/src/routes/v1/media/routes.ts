@@ -1,12 +1,9 @@
-import {
-  mediaDetailsParamsSchema,
-  mediaSearchQuerySchema,
-} from "@media-voyage/shared/api";
+import { mediaDetailsParamsSchema, mediaSearchQuerySchema } from "@media-voyage/shared/api";
 import type { FastifyInstance } from "fastify";
-import { getGameDetails } from "../../../services/igdb";
-import { getOmdbDetails } from "../../../services/omdb";
-import { getTvMazeDetails } from "../../../services/tvMaze";
-import { requireAuth } from "../../../require-auth";
+import { getGameDetails } from "@/services/igdb";
+import { getOmdbDetails } from "@/services/omdb";
+import { getTvMazeDetails } from "@/services/tvMaze";
+import { requireAuth } from "@/require-auth";
 import { searchMedia } from "./service";
 
 async function mediaRoutes(fastify: FastifyInstance) {

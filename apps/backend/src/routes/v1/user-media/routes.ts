@@ -9,8 +9,8 @@ import {
   userMediaQuerySchema,
   userMediaQuickActionSchema,
 } from "@media-voyage/shared/api";
-import { internalServerError } from "../../../errors";
-import { requireAuth } from "../../../require-auth";
+import { internalServerError } from "@/errors";
+import { requireAuth } from "@/require-auth";
 import {
   filterUserMedia,
   findUserMediaById,
@@ -61,9 +61,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     const record = await updateUserMedia(request.userId, id, input);
 
     if (!record) {
-      return reply
-        .status(404)
-        .send({ error: "User media not found or not updated" });
+      return reply.status(404).send({ error: "User media not found or not updated" });
     }
 
     return reply.send(record);
@@ -204,10 +202,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     const csv = Papa.unparse(toCsvRows(records), { header: true });
 
     reply.header("Content-Type", "text/csv");
-    reply.header(
-      "Content-Disposition",
-      `attachment; filename="user-media-${request.userId}-${Date.now()}.csv"`,
-    );
+    reply.header("Content-Disposition", `attachment; filename="user-media-${request.userId}-${Date.now()}.csv"`);
 
     return reply.send(csv);
   });
@@ -238,21 +233,11 @@ function toCsvRows(records: Awaited<ReturnType<typeof getUserMediaForExport>>) {
     visibility: record.visibility ?? "private",
     customFields: JSON.stringify(record.customFields ?? {}),
     seasonsProgress: JSON.stringify(record.seasonsProgress ?? []),
-    startedAt: record.startedAt
-      ? record.startedAt.toISOString().slice(0, 16)
-      : "-",
-    completedAt: record.completedAt
-      ? record.completedAt.toISOString().slice(0, 16)
-      : "-",
-    lastProgressUpdate: record.lastProgressUpdate
-      ? record.lastProgressUpdate.toISOString().slice(0, 16)
-      : "-",
-    createdAt: record.createdAt
-      ? record.createdAt.toISOString().slice(0, 16)
-      : "-",
-    updatedAt: record.updatedAt
-      ? record.updatedAt.toISOString().slice(0, 16)
-      : "-",
+    startedAt: record.startedAt ? record.startedAt.toISOString().slice(0, 16) : "-",
+    completedAt: record.completedAt ? record.completedAt.toISOString().slice(0, 16) : "-",
+    lastProgressUpdate: record.lastProgressUpdate ? record.lastProgressUpdate.toISOString().slice(0, 16) : "-",
+    createdAt: record.createdAt ? record.createdAt.toISOString().slice(0, 16) : "-",
+    updatedAt: record.updatedAt ? record.updatedAt.toISOString().slice(0, 16) : "-",
   }));
 }
 

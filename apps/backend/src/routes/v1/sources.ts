@@ -1,9 +1,5 @@
 import { sources, userMedia } from "@media-voyage/shared";
-import {
-  sourceFormSchema,
-  sourceIdParamsSchema,
-  updateSourceSchema,
-} from "@media-voyage/shared/api";
+import { sourceFormSchema, sourceIdParamsSchema, updateSourceSchema } from "@media-voyage/shared/api";
 import type { FastifyInstance } from "fastify";
 import {
   createNamedEntity,
@@ -14,17 +10,13 @@ import {
   sendNamedEntityUpdate,
   updateNamedEntity,
 } from "./namedEntity";
-import { requireAuth } from "../../require-auth";
+import { requireAuth } from "@/require-auth";
 
 async function sourcesRoutes(fastify: FastifyInstance) {
   fastify.addHook("preHandler", requireAuth);
 
   fastify.get("/", async (request, reply) => {
-    const records = await listNamedEntitiesWithUsage(
-      sources,
-      userMedia.sourceId,
-      request.userId,
-    );
+    const records = await listNamedEntitiesWithUsage(sources, userMedia.sourceId, request.userId);
     return reply.send(records);
   });
 
@@ -38,12 +30,7 @@ async function sourcesRoutes(fastify: FastifyInstance) {
   fastify.patch("/:sourceId", async (request, reply) => {
     const { sourceId } = sourceIdParamsSchema.parse(request.params);
     const input = updateSourceSchema.parse(request.body);
-    const result = await updateNamedEntity(
-      sources,
-      request.userId,
-      sourceId,
-      input,
-    );
+    const result = await updateNamedEntity(sources, request.userId, sourceId, input);
 
     return sendNamedEntityUpdate(reply, result, "source");
   });

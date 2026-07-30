@@ -1,9 +1,5 @@
 import { tags, userMediaTags } from "@media-voyage/shared";
-import {
-  tagFormSchema,
-  tagIdParamsSchema,
-  updateTagSchema,
-} from "@media-voyage/shared/api";
+import { tagFormSchema, tagIdParamsSchema, updateTagSchema } from "@media-voyage/shared/api";
 import type { FastifyInstance } from "fastify";
 import {
   createNamedEntity,
@@ -14,17 +10,13 @@ import {
   sendNamedEntityUpdate,
   updateNamedEntity,
 } from "./namedEntity";
-import { requireAuth } from "../../require-auth";
+import { requireAuth } from "@/require-auth";
 
 async function tagsRoutes(fastify: FastifyInstance) {
   fastify.addHook("preHandler", requireAuth);
 
   fastify.get("/", async (request, reply) => {
-    const records = await listNamedEntitiesWithUsage(
-      tags,
-      userMediaTags.tagId,
-      request.userId,
-    );
+    const records = await listNamedEntitiesWithUsage(tags, userMediaTags.tagId, request.userId);
     return reply.send(records);
   });
 

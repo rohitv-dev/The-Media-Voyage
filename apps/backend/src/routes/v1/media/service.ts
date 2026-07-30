@@ -1,14 +1,11 @@
+import { db } from "@/db/db";
+import { searchGames } from "@/services/igdb";
+import { searchOmdb } from "@/services/omdb";
+import { searchOpenLibrary } from "@/services/openLibrary";
+import { searchTvMaze } from "@/services/tvMaze";
 import { media } from "@media-voyage/shared";
-import type {
-  MediaSearchQuery,
-  SourceMediaRecord,
-} from "@media-voyage/shared/api";
+import type { MediaSearchQuery, SourceMediaRecord } from "@media-voyage/shared/api";
 import { and, eq, ilike } from "drizzle-orm";
-import { db } from "../../../db/db";
-import { searchGames } from "../../../services/igdb";
-import { searchOmdb } from "../../../services/omdb";
-import { searchOpenLibrary } from "../../../services/openLibrary";
-import { searchTvMaze } from "../../../services/tvMaze";
 
 const mediaSearchSelect = {
   id: media.id,
@@ -26,9 +23,7 @@ function searchLocalMedia({ q, type }: MediaSearchQuery) {
     .limit(10);
 }
 
-export async function searchMedia(
-  query: MediaSearchQuery,
-): Promise<SourceMediaRecord[]> {
+export async function searchMedia(query: MediaSearchQuery): Promise<SourceMediaRecord[]> {
   const localResults = await searchLocalMedia(query);
   const localRecords: SourceMediaRecord[] = localResults.map((record) => ({
     id: record.id,
@@ -60,12 +55,8 @@ export async function searchMedia(
       break;
   }
 
-  const localExternalIds = new Set(
-    localRecords.map((record) => record.externalId).filter(Boolean),
-  );
-  const dedupedExternalRecords = externalRecords.filter(
-    (record) => !localExternalIds.has(record.externalId),
-  );
+  const localExternalIds = new Set(localRecords.map((record) => record.externalId).filter(Boolean));
+  const dedupedExternalRecords = externalRecords.filter((record) => !localExternalIds.has(record.externalId));
 
   return [...localRecords, ...dedupedExternalRecords];
 }
