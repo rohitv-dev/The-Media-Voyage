@@ -1,6 +1,6 @@
 import type { Variants } from "motion/react";
 
-/** Stagger wrapper for a page's top-level entrance animation. */
+/** Stagger wrapper for a page's top level entrance animation. */
 export function pageStaggerVariants(reduceMotion: boolean): Variants {
   if (reduceMotion) {
     return { hidden: {}, visible: {} };

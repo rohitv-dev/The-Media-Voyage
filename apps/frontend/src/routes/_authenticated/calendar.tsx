@@ -23,10 +23,10 @@ import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { IconChevronRight } from "@tabler/icons-react";
 import { z } from "zod";
 import { calendarActivityOptions } from "#/features/media/queries";
-import { getStatusColor } from "#/features/media/functions";
+import { getStatusColor } from "#/features/media/display";
 import { getApiErrorMessage } from "#/lib/api";
-import { capitalizeWords } from "#/utils/stringFunctions";
-import { showErrorNotification } from "#/utils/notifications";
+import { showErrorNotification } from "#/lib/notifications";
+import { capitalizeWords } from "#/utils/strings";
 import { statusEnumValues } from "@media-voyage/shared/userMediaSchema";
 import type { CalendarActivityEvent } from "@media-voyage/shared/api";
 
@@ -201,7 +201,8 @@ function RouteComponent() {
         <StatusLegend />
 
         <Card withBorder radius="md" p="md">
-          <MobileMonthView hiddenFrom="md"
+          <MobileMonthView
+            hiddenFrom="md"
             date={`${month}-01`}
             onDateChange={(newDate) =>
               goToMonth(dayjs(newDate).format("YYYY-MM"))
@@ -320,7 +321,10 @@ function RouteComponent() {
                     <Badge color={getStatusColor(event.status)}>
                       {capitalizeWords(event.status)}
                     </Badge>
-                    <IconChevronRight size={16} color="var(--mantine-color-dimmed)" />
+                    <IconChevronRight
+                      size={16}
+                      color="var(--mantine-color-dimmed)"
+                    />
                   </Group>
                 </Group>
               </Card>

@@ -6,7 +6,7 @@ import "@mantine/schedule/styles.css";
 import "@mantine/notifications/styles.css";
 import "@mantine/tiptap/styles.css";
 import "mantine-datatable/styles.css";
-import "./styles.scss";
+import "./theme/styles.scss";
 
 import ReactDOM from "react-dom/client";
 import { RouterProvider, createRouter } from "@tanstack/react-router";

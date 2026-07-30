@@ -1,6 +1,6 @@
 import { api } from "#/lib/api";
 import { queryKeys } from "#/lib/queryKeys";
-import { capitalizeWords } from "#/utils/stringFunctions";
+import { capitalizeWords } from "#/utils/strings";
 import {
   Avatar,
   Badge,

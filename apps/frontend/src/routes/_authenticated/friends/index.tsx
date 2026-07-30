@@ -9,12 +9,12 @@ import {
   sendFriendRequest,
 } from "#/features/friends/queries";
 import { getApiErrorMessage } from "#/lib/api";
-import { confirmDelete } from "#/utils/confirmModal";
+import { confirmDelete } from "#/lib/confirmModal";
 import { queryKeys } from "#/lib/queryKeys";
 import {
   showErrorNotification,
   showSuccessNotification,
-} from "#/utils/notifications";
+} from "#/lib/notifications";
 import {
   ActionIcon,
   Avatar,
@@ -295,7 +295,9 @@ function RouteComponent() {
                           {friend.name}
                         </Text>
                         <Text size="xs" c="dimmed">
-                          {friend.sharedCount} {friend.sharedCount === 1 ? "entry" : "entries"} from them
+                          {friend.sharedCount}{" "}
+                          {friend.sharedCount === 1 ? "entry" : "entries"} from
+                          them
                         </Text>
                       </Stack>
                     </Group>

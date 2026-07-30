@@ -2,8 +2,15 @@ import { api, getApiErrorMessage } from "#/lib/api";
 import {
   showErrorNotification,
   showSuccessNotification,
-} from "#/utils/notifications";
-import { Button, ColorInput, Group, Modal, Stack, TextInput } from "@mantine/core";
+} from "#/lib/notifications";
+import {
+  Button,
+  ColorInput,
+  Group,
+  Modal,
+  Stack,
+  TextInput,
+} from "@mantine/core";
 import type { TagFormSchema } from "@media-voyage/shared/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -54,7 +61,9 @@ export function AddNamedEntityModal({
           queryClient.invalidateQueries({ queryKey }),
         ),
       );
-      showSuccessNotification({ message: `Added ${entityLabel} "${name.trim()}"` });
+      showSuccessNotification({
+        message: `Added ${entityLabel} "${name.trim()}"`,
+      });
       handleClose();
     },
     onError: (error: Error) => {

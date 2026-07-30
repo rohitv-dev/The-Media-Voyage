@@ -6,8 +6,8 @@ import {
 import { MediaView } from "#/features/media/components/MediaView";
 import { api, getApiErrorMessage } from "#/lib/api";
 import { queryKeys } from "#/lib/queryKeys";
-import { showErrorNotification } from "#/utils/notifications";
-import { capitalizeWords } from "#/utils/stringFunctions";
+import { showErrorNotification } from "#/lib/notifications";
+import { capitalizeWords } from "#/utils/strings";
 import type { MediaDetailedRecord } from "@media-voyage/shared/api";
 import {
   useMutation,
@@ -21,7 +21,7 @@ import {
 } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
-import { fadeUpEntranceProps } from "#/utils/motionVariants";
+import { fadeUpEntranceProps } from "#/theme/motion";
 
 export const Route = createFileRoute("/_authenticated/friends/media/$id")({
   loader: ({ context: { queryClient }, params: { id } }) => {

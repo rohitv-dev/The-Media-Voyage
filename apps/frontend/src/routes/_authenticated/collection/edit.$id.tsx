@@ -1,5 +1,5 @@
 import { userMediaQueryOptions } from "#/features/media/queries";
-import { CollectionItemsEditor } from "#/features/mediaCollection/components/CollectionItemsEditor";
+import { CollectionItemsEditor } from "#/features/media-collection/components/CollectionItemsEditor";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 

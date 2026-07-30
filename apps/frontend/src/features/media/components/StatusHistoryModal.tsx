@@ -1,6 +1,6 @@
 import { getApiErrorMessage } from "#/lib/api";
 import { statusHistoryQueryOptions } from "#/features/media/queries";
-import { capitalizeWords } from "#/utils/stringFunctions";
+import { capitalizeWords } from "#/utils/strings";
 import {
   Alert,
   Badge,
@@ -18,7 +18,7 @@ import { IconHistory, IconPlus, IconSwitch3 } from "@tabler/icons-react";
 import type { StatusHistoryRecord } from "@media-voyage/shared/api";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { getStatusColor } from "../functions";
+import { getStatusColor } from "../display";
 
 type StatusHistoryModalProps = {
   opened: boolean;
@@ -70,7 +70,12 @@ export function StatusHistoryModal({
   onClose,
   mediaId,
 }: StatusHistoryModalProps) {
-  const { data: history = [], isPending, isError, error } = useQuery({
+  const {
+    data: history = [],
+    isPending,
+    isError,
+    error,
+  } = useQuery({
     ...statusHistoryQueryOptions(mediaId),
     enabled: opened,
   });

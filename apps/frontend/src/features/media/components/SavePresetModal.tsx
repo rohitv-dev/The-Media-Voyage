@@ -1,7 +1,14 @@
-import { Button, Group, Modal, Text, TextInput, ThemeIcon } from "@mantine/core";
+import {
+  Button,
+  Group,
+  Modal,
+  Text,
+  TextInput,
+  ThemeIcon,
+} from "@mantine/core";
 import { IconDeviceFloppy } from "@tabler/icons-react";
 import { useState } from "react";
-import { showSuccessNotification } from "#/utils/notifications";
+import { showSuccessNotification } from "#/lib/notifications";
 
 type SavePresetModalProps = {
   opened: boolean;

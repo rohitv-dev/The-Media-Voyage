@@ -1,10 +1,10 @@
 import { MediaCard } from "#/features/media/components/MediaCard";
-import { CollectionVisibilityControl } from "#/features/mediaCollection/components/CollectionVisibilityControl";
+import { CollectionVisibilityControl } from "#/features/media-collection/components/CollectionVisibilityControl";
 import { EmptyState } from "#/components/EmptyState";
 import {
   collectionItemsDetailedQueryOptions,
   collectionQueryOptions,
-} from "#/features/mediaCollection/queries";
+} from "#/features/media-collection/queries";
 import {
   Badge,
   Button,
@@ -20,7 +20,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
-import { gridItemMotionProps } from "#/utils/motionVariants";
+import { gridItemMotionProps } from "#/theme/motion";
 
 export const Route = createFileRoute("/_authenticated/collection/view/$id")({
   loader: ({ context: { queryClient }, params: { id } }) => {

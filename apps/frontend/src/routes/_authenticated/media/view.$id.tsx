@@ -7,7 +7,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
-import { fadeUpEntranceProps } from "#/utils/motionVariants";
+import { fadeUpEntranceProps } from "#/theme/motion";
 
 export const Route = createFileRoute("/_authenticated/media/view/$id")({
   loader: ({ context: { queryClient }, params: { id } }) => {

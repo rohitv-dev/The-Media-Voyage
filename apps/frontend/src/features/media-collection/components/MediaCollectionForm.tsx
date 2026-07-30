@@ -19,7 +19,7 @@ import { useUnsavedChangesBlocker } from "#/hooks/useUnsavedChangesBlocker";
 import {
   showErrorNotification,
   showSuccessNotification,
-} from "#/utils/notifications";
+} from "#/lib/notifications";
 
 export function MediaCollectionForm() {
   const navigate = useNavigate();

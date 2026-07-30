@@ -1,15 +1,11 @@
 import { ActionIcon, Button, Menu } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import {
-  IconBookmark,
-  IconDeviceFloppy,
-  IconTrash,
-} from "@tabler/icons-react";
+import { IconBookmark, IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import type { UserMediaQuerySchema } from "@media-voyage/shared/api";
 import type { FilterPreset } from "#/features/media/hooks/useFilterPresets";
 import { SavePresetModal } from "#/features/media/components/SavePresetModal";
-import { showSuccessNotification } from "#/utils/notifications";
-import { confirmDelete } from "#/utils/confirmModal";
+import { confirmDelete } from "#/lib/confirmModal";
+import { showSuccessNotification } from "#/lib/notifications";
 
 type FilterPresetsMenuProps = {
   presets: FilterPreset[];

@@ -19,15 +19,15 @@ import {
   fadeUpVariants,
   gridItemMotionProps,
   pageStaggerVariants,
-} from "#/utils/motionVariants";
+} from "#/theme/motion";
 import {
   continueMediaFilters,
   continueMediaQueryOptions,
   dashboardStatOptions,
 } from "#/features/media/queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { capitalizeWords, formatMonthLabel } from "#/utils/stringFunctions";
-import { getStatusColor } from "#/features/media/functions";
+import { capitalizeWords, formatMonthLabel } from "#/utils/strings";
+import { getStatusColor } from "#/features/media/display";
 import { ContinueMediaCard } from "#/features/media/components/ContinueMediaCard";
 import { EmptyState } from "#/components/EmptyState";
 import { IconArrowRight, IconPlayerPlay } from "@tabler/icons-react";
@@ -160,7 +160,11 @@ function RouteComponent() {
   };
 
   return (
-    <Container size="xl" py={{ base: "md", sm: "xl" }} px={{ base: "xs", sm: "md" }}>
+    <Container
+      size="xl"
+      py={{ base: "md", sm: "xl" }}
+      px={{ base: "xs", sm: "md" }}
+    >
       <motion.div
         variants={pageStaggerVariants(reduceMotion)}
         initial="hidden"

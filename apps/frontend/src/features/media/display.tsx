@@ -1,6 +1,11 @@
 import type { MediaRecord } from "@media-voyage/shared/api";
 import type { Status } from "@media-voyage/shared/userMediaSchema";
-import { IconMovie, IconDeviceTv, IconDeviceGamepad2, IconBook } from "@tabler/icons-react";
+import {
+  IconBook,
+  IconDeviceGamepad2,
+  IconDeviceTv,
+  IconMovie,
+} from "@tabler/icons-react";
 
 export function getStatusColor(status: Status) {
   switch (status) {

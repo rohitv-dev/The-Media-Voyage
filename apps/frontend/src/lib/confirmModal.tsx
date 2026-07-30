@@ -13,7 +13,7 @@ export function confirmDelete({
   message,
   confirmLabel = "Delete",
   onConfirm,
-}: ConfirmDeleteOptions) {
+}: ConfirmDeleteOptions): void {
   modals.openConfirmModal({
     title,
     children: <Text size="sm">{message}</Text>,

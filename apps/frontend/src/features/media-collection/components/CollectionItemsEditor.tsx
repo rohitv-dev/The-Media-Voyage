@@ -23,16 +23,16 @@ import { useParams } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import type { DropResult } from "@hello-pangea/dnd";
-import { confirmDelete } from "#/utils/confirmModal";
+import { confirmDelete } from "#/lib/confirmModal";
 import { motion } from "motion/react";
 import type { Variants } from "motion/react";
-import { capitalizeWords } from "#/utils/stringFunctions";
+import { capitalizeWords } from "#/utils/strings";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
-import { fadeUpEntranceProps } from "#/utils/motionVariants";
+import { fadeUpEntranceProps } from "#/theme/motion";
 import {
   showErrorNotification,
   showSuccessNotification,
-} from "#/utils/notifications";
+} from "#/lib/notifications";
 
 type CollectionItemsEditorProps = {
   data: MediaRecord[];

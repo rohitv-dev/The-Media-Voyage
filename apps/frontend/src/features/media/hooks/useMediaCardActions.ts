@@ -3,7 +3,7 @@ import { queryKeys } from "#/lib/queryKeys";
 import {
   showErrorNotification,
   showSuccessNotification,
-} from "#/utils/notifications";
+} from "#/lib/notifications";
 import type {
   MediaRecord,
   UserMediaQuickAction,

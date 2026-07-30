@@ -17,7 +17,7 @@ import { showNotification } from "@mantine/notifications";
 import {
   showErrorNotification,
   showSuccessNotification,
-} from "#/utils/notifications";
+} from "#/lib/notifications";
 import {
   userMediaDropdownOptions,
   userMediaDetailedOptions,

@@ -1,8 +1,8 @@
 import { authClient } from "#/auth/authClient";
-import { confirmDelete } from "#/utils/confirmModal";
+import { confirmDelete } from "#/lib/confirmModal";
 import { getApiErrorMessage } from "#/lib/api";
 import { queryKeys } from "#/lib/queryKeys";
-import { showErrorNotification } from "#/utils/notifications";
+import { showErrorNotification } from "#/lib/notifications";
 import {
   ActionIcon,
   Avatar,
@@ -130,7 +130,11 @@ export function SocialPanel({
     authorId === viewerId || ownerId === viewerId;
 
   return (
-    <Paper withBorder p={{ base: "md", sm: "lg" }} style={{ borderColor: defaultBorder }}>
+    <Paper
+      withBorder
+      p={{ base: "md", sm: "lg" }}
+      style={{ borderColor: defaultBorder }}
+    >
       <Stack gap="lg">
         <Stack gap="sm">
           <Group gap="xs">
@@ -200,7 +204,12 @@ export function SocialPanel({
           <Stack gap="md">
             {comments?.map((comment) => (
               <Group key={comment.id} align="flex-start" wrap="nowrap" gap="sm">
-                <Avatar size="sm" radius="xl" name={comment.name} color="accent" />
+                <Avatar
+                  size="sm"
+                  radius="xl"
+                  name={comment.name}
+                  color="accent"
+                />
 
                 <Stack gap={2} flex={1} style={{ minWidth: 0 }}>
                   <Group gap="xs" wrap="wrap">
@@ -211,7 +220,11 @@ export function SocialPanel({
                       {dayjs(comment.createdAt).format("MMM DD, YYYY · HH:mm")}
                     </Text>
                   </Group>
-                  <Text size="sm" lh={1.6} style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+                  <Text
+                    size="sm"
+                    lh={1.6}
+                    style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
+                  >
                     {comment.body}
                   </Text>
                 </Stack>

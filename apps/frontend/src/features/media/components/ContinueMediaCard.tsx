@@ -15,7 +15,7 @@ import { motion } from "motion/react";
 import type { KeyboardEvent } from "react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { useCoverArtPreference } from "#/features/media/hooks/useCoverArtPreference";
-import { getStatusColor, getTypeIcon } from "../functions";
+import { getStatusColor, getTypeIcon } from "../display";
 import { getImageObjectPosition } from "../imageFocus";
 
 interface ContinueMediaCardProps {

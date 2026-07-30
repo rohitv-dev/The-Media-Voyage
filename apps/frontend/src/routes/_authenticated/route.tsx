@@ -55,7 +55,7 @@ import {
 } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
-import { collectionQueryOptions } from "#/features/mediaCollection/queries";
+import { collectionQueryOptions } from "#/features/media-collection/queries";
 import { friendRequestsQueryOptions } from "#/features/friends/queries";
 import { sessionQueryKey, sessionQueryOptions } from "#/auth/session";
 import { authClient } from "#/auth/authClient";
@@ -156,10 +156,8 @@ function RouteComponent() {
   const queryClient = useQueryClient();
   const { pathname } = useLocation();
 
-  const [
-    navbarOpened,
-    { toggle: toggleNavbar, close: closeNavbar },
-  ] = useDisclosure();
+  const [navbarOpened, { toggle: toggleNavbar, close: closeNavbar }] =
+    useDisclosure();
   const [sidebarOpened, setSidebarOpened] = useLocalStorage<boolean>({
     key: "media-voyage-sidebar-opened",
     defaultValue: true,
@@ -282,9 +280,7 @@ function RouteComponent() {
               onClick={toggleNavbar}
               hiddenFrom="md"
               size="sm"
-              aria-label={
-                navbarOpened ? "Close navigation" : "Open navigation"
-              }
+              aria-label={navbarOpened ? "Close navigation" : "Open navigation"}
             />
 
             <Tooltip

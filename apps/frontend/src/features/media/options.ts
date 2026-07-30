@@ -1,4 +1,4 @@
-import { capitalizeWords } from "#/utils/stringFunctions";
+import { capitalizeWords } from "#/utils/strings";
 import {
   mediaTypeEnumValues,
   statusEnumValues,

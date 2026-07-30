@@ -37,7 +37,7 @@ export function updateCollection(
   });
 }
 
-/** Entries in the collection that its visibility does not reach on its own. */
+/** Collection entries that its visibility does not reach on its own. */
 export function getVisibilityMismatch(collectionId: string) {
   return api<CollectionVisibilityMismatch>(
     `/collection/${collectionId}/visibility-mismatch`,

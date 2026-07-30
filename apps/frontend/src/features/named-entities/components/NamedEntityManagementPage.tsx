@@ -1,6 +1,6 @@
 import { EmptyState } from "#/components/EmptyState";
-import { NamedEntityRow } from "#/components/NamedEntityRow";
-import { AddNamedEntityModal } from "#/components/AddNamedEntityModal";
+import { AddNamedEntityModal } from "./AddNamedEntityModal";
+import { NamedEntityRow } from "./NamedEntityRow";
 import { Button, Container, Group, Stack, Text, Title } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconPlus } from "@tabler/icons-react";

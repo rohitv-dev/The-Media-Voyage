@@ -1,8 +1,10 @@
 import { Group, Pill } from "@mantine/core";
 import type { UserMediaQuerySchema } from "@media-voyage/shared/api";
-import { capitalizeWords } from "#/utils/stringFunctions";
-import { useSourceColorMap } from "#/features/sources/queries";
-import { useTagColorMap } from "#/features/tags/queries";
+import {
+  useSourceColorMap,
+  useTagColorMap,
+} from "#/features/named-entities/queries";
+import { capitalizeWords } from "#/utils/strings";
 import dayjs from "dayjs";
 import type { ReactNode } from "react";
 

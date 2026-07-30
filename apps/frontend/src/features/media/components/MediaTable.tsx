@@ -1,5 +1,5 @@
-import { capitalizeWords } from "#/utils/stringFunctions";
-import { useSourceColorMap } from "#/features/sources/queries";
+import { useSourceColorMap } from "#/features/named-entities/queries";
+import { capitalizeWords } from "#/utils/strings";
 import autoAnimate from "@formkit/auto-animate";
 import {
   ActionIcon,
@@ -26,7 +26,7 @@ import dayjs from "dayjs";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { useCallback, useRef } from "react";
 import { DataTable } from "mantine-datatable";
-import { getStatusColor, getTypeIcon } from "../functions";
+import { getStatusColor, getTypeIcon } from "../display";
 import { useDeleteMedia } from "../hooks/useDeleteMedia";
 
 type MediaTableProps = {
@@ -52,11 +52,7 @@ function MediaIdentity({ record }: { record: MediaRecord }) {
             {record.title}
           </Text>
           {record.favorite && (
-            <IconHeartFilled
-              size={15}
-              color="red"
-              aria-label="Favorite"
-            />
+            <IconHeartFilled size={15} color="red" aria-label="Favorite" />
           )}
         </Group>
 

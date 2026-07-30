@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 
-export function capitalizeWords(str: string): string {
-  return str
+export function capitalizeWords(value: string): string {
+  return value
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");

@@ -1,13 +1,13 @@
 import { EmptyState } from "#/components/EmptyState";
-import { getTypeIcon } from "#/features/media/functions";
+import { getTypeIcon } from "#/features/media/display";
 import { trashedUserMediaQueryOptions } from "#/features/media/queries";
 import { api, getApiErrorMessage } from "#/lib/api";
 import { queryKeys } from "#/lib/queryKeys";
-import { confirmDelete } from "#/utils/confirmModal";
+import { confirmDelete } from "#/lib/confirmModal";
 import {
   showErrorNotification,
   showSuccessNotification,
-} from "#/utils/notifications";
+} from "#/lib/notifications";
 import {
   ActionIcon,
   Avatar,
@@ -20,7 +20,11 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { IconRestore, IconTrash, IconTrashOff } from "@tabler/icons-react";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import dayjs from "dayjs";
 
@@ -70,7 +74,9 @@ function RouteComponent() {
       await invalidate();
       const title = data.data.find((entry) => entry.id === id)?.title;
       showSuccessNotification({
-        message: title ? `Permanently deleted "${title}"` : "Permanently deleted",
+        message: title
+          ? `Permanently deleted "${title}"`
+          : "Permanently deleted",
         autoClose: 1500,
       });
     },
@@ -113,11 +119,7 @@ function RouteComponent() {
               <Card key={entry.id} withBorder radius="md" p="sm">
                 <Group justify="space-between" wrap="nowrap">
                   <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
-                    <Avatar
-                      src={entry.imageUrl}
-                      radius="sm"
-                      size={40}
-                    >
+                    <Avatar src={entry.imageUrl} radius="sm" size={40}>
                       {getTypeIcon(entry.type)}
                     </Avatar>
                     <Stack gap={0} style={{ minWidth: 0 }}>

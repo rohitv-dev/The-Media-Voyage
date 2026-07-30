@@ -3,7 +3,7 @@ import { getApiErrorMessage } from "#/lib/api";
 import {
   showErrorNotification,
   showSuccessNotification,
-} from "#/utils/notifications";
+} from "#/lib/notifications";
 import {
   ActionIcon,
   Avatar,
@@ -15,12 +15,7 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
-import {
-  IconCheck,
-  IconEdit,
-  IconSettings,
-  IconX,
-} from "@tabler/icons-react";
+import { IconCheck, IconEdit, IconSettings, IconX } from "@tabler/icons-react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";

@@ -1,5 +1,5 @@
-import { NamedEntityManagementPage } from "#/components/NamedEntityManagementPage";
-import { tagsQueryOptions } from "#/features/tags/queries";
+import { NamedEntityManagementPage } from "#/features/named-entities/components/NamedEntityManagementPage";
+import { tagsQueryOptions } from "#/features/named-entities/queries";
 import { IconTags } from "@tabler/icons-react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";

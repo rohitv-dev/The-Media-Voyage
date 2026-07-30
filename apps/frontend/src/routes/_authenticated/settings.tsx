@@ -9,7 +9,7 @@ import { ThemeOptionsList } from "#/theme/ThemeSwitcher";
 import {
   showErrorNotification,
   showSuccessNotification,
-} from "#/utils/notifications";
+} from "#/lib/notifications";
 import {
   Anchor,
   Button,
@@ -21,11 +21,7 @@ import {
   Title,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
-import {
-  IconDownload,
-  IconExternalLink,
-  IconUsers,
-} from "@tabler/icons-react";
+import { IconDownload, IconExternalLink, IconUsers } from "@tabler/icons-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
@@ -56,7 +52,10 @@ function RouteComponent() {
       });
     } catch (error) {
       showErrorNotification({
-        message: getApiErrorMessage(error, "Could not update default visibility"),
+        message: getApiErrorMessage(
+          error,
+          "Could not update default visibility",
+        ),
       });
     }
   };
@@ -156,9 +155,7 @@ function RouteComponent() {
           >
             <Switch
               checked={reduceMotion}
-              onChange={(event) =>
-                setReduceMotion(event.currentTarget.checked)
-              }
+              onChange={(event) => setReduceMotion(event.currentTarget.checked)}
               aria-label="Reduce motion"
             />
           </SettingRow>

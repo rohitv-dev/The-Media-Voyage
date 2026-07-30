@@ -12,7 +12,7 @@ import {
   IconHeartFilled,
   IconTrash,
 } from "@tabler/icons-react";
-import { getStatusColor } from "../../functions";
+import { getStatusColor } from "../../display";
 
 interface MediaCardQuickActionsProps {
   media: MediaRecord;

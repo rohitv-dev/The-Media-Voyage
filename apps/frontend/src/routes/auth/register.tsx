@@ -1,6 +1,6 @@
 import { authClient } from "#/auth/authClient";
 import { getApiErrorMessage } from "#/lib/api";
-import { showErrorNotification } from "#/utils/notifications";
+import { showErrorNotification } from "#/lib/notifications";
 import {
   Center,
   Paper,
@@ -74,7 +74,13 @@ function RouteComponent() {
 
   return (
     <Center w="100%" mih="100vh" p={{ base: "md", sm: "xl" }}>
-      <Paper w="100%" maw={400} p={{ base: "lg", sm: "xl" }} withBorder shadow="md">
+      <Paper
+        w="100%"
+        maw={400}
+        p={{ base: "lg", sm: "xl" }}
+        withBorder
+        shadow="md"
+      >
         <Title order={2} ta="center" mb="xl">
           Create an account
         </Title>

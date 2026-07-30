@@ -1,4 +1,4 @@
-import { capitalizeWords } from "#/utils/stringFunctions";
+import { capitalizeWords } from "#/utils/strings";
 import {
   Badge,
   Box,
@@ -39,10 +39,12 @@ import { useNavigate } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
-import { getStatusColor } from "#/features/media/functions";
+import { getStatusColor } from "#/features/media/display";
 import { useCoverArtSizePreference } from "#/features/media/hooks/useCoverArtSizePreference";
-import { useSourceColorMap } from "#/features/sources/queries";
-import { useTagColorMap } from "#/features/tags/queries";
+import {
+  useSourceColorMap,
+  useTagColorMap,
+} from "#/features/named-entities/queries";
 import { MediaCoverArtFocusModal } from "./MediaCoverArtFocusModal";
 import { StatusHistoryModal } from "./StatusHistoryModal";
 import { getImageObjectPosition } from "../imageFocus";
@@ -492,11 +494,7 @@ export function MediaView({
         </Paper>
 
         {!readOnly && (
-          <Paper
-            withBorder
-            p="sm"
-            style={{ borderColor: defaultBorder }}
-          >
+          <Paper withBorder p="sm" style={{ borderColor: defaultBorder }}>
             <Group justify="space-between" gap="md" wrap="wrap">
               <Group gap="xs">
                 <ThemeIcon variant="light" c="primary" size={30} radius="sm">

@@ -5,8 +5,8 @@ import { EmptyState } from "#/components/EmptyState";
 import {
   showErrorNotification,
   showSuccessNotification,
-} from "#/utils/notifications";
-import { capitalizeWords } from "#/utils/stringFunctions";
+} from "#/lib/notifications";
+import { capitalizeWords } from "#/utils/strings";
 import {
   Badge,
   Button,
@@ -32,7 +32,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
-import { fadeUpEntranceProps } from "#/utils/motionVariants";
+import { fadeUpEntranceProps } from "#/theme/motion";
 
 type MediaPickerModalProps = {
   opened: boolean;
@@ -75,7 +75,9 @@ export function MediaPickerModal({
       }),
     onSuccess: (record) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.dashboardStats,
+      });
       showSuccessNotification({
         title: "Journey started",
         message: `${record.title} is now in progress.`,

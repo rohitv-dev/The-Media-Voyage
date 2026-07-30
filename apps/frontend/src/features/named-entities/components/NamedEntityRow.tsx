@@ -2,7 +2,7 @@ import { api, getApiErrorMessage } from "#/lib/api";
 import {
   showErrorNotification,
   showSuccessNotification,
-} from "#/utils/notifications";
+} from "#/lib/notifications";
 import {
   ActionIcon,
   Badge,
@@ -17,7 +17,7 @@ import { IconCheck, IconEdit, IconTrash, IconX } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { confirmDelete } from "#/utils/confirmModal";
+import { confirmDelete } from "#/lib/confirmModal";
 
 type NamedEntity = {
   id: string;

@@ -1,4 +1,5 @@
 import { api } from "#/lib/api";
+import type { SourceRecord, TagRecord } from "@media-voyage/shared/api";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
@@ -27,3 +28,11 @@ export function createNamedEntityQueries<
 
   return { queryOptions: options, useColorMap };
 }
+
+export const { queryOptions: tagsQueryOptions, useColorMap: useTagColorMap } =
+  createNamedEntityQueries<TagRecord>("tags");
+
+export const {
+  queryOptions: sourcesQueryOptions,
+  useColorMap: useSourceColorMap,
+} = createNamedEntityQueries<SourceRecord>("sources");

@@ -25,14 +25,14 @@ import { EmptyState } from "#/components/EmptyState";
 import type { UserMediaQuerySchema } from "@media-voyage/shared/api";
 import { userMediaQuerySchema } from "@media-voyage/shared/api";
 import { getApiErrorMessage } from "#/lib/api";
-import { showErrorNotification } from "#/utils/notifications";
+import { showErrorNotification } from "#/lib/notifications";
 import { useDisclosure, useLocalStorage, useMediaQuery } from "@mantine/hooks";
 import { AnimatePresence, motion } from "motion/react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
-import { gridItemMotionProps } from "#/utils/motionVariants";
+import { gridItemMotionProps } from "#/theme/motion";
 import { MediaFilterCard } from "#/features/media/components/MediaFilterCard";
 import { MediaPickerModal } from "#/features/media/components/MediaPickerModal";
-import { collectionQueryOptions } from "#/features/mediaCollection/queries";
+import { collectionQueryOptions } from "#/features/media-collection/queries";
 import {
   IconDice5,
   IconFilter,

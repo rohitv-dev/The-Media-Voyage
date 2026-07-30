@@ -3,7 +3,7 @@ import { getApiErrorMessage } from "#/lib/api";
 import {
   showErrorNotification,
   showSuccessNotification,
-} from "#/utils/notifications";
+} from "#/lib/notifications";
 import { Group, List, SegmentedControl, Stack, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import type { MediaCollectionRecord } from "@media-voyage/shared/api";

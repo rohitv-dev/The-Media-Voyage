@@ -1,5 +1,5 @@
 import { EmptyState } from "#/components/EmptyState";
-import { collectionQueryOptions } from "#/features/mediaCollection/queries";
+import { collectionQueryOptions } from "#/features/media-collection/queries";
 import {
   Button,
   Card,

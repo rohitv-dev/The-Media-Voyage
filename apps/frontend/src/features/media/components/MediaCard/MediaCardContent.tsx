@@ -10,9 +10,9 @@ import {
 import type { MediaRecord } from "@media-voyage/shared/api";
 import { IconClockPause, IconHeartFilled } from "@tabler/icons-react";
 import type { ReactNode } from "react";
-import { getStatusColor, getTypeIcon } from "../../functions";
+import { getStatusColor, getTypeIcon } from "../../display";
 import { getStaleProgressDays } from "../../staleProgress";
-import { useSourceColorMap } from "#/features/sources/queries";
+import { useSourceColorMap } from "#/features/named-entities/queries";
 
 interface MediaCardContentProps {
   media: MediaRecord;

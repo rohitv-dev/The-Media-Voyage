@@ -1,10 +1,10 @@
 import { api, getApiErrorMessage } from "#/lib/api";
-import { confirmDelete } from "#/utils/confirmModal";
+import { confirmDelete } from "#/lib/confirmModal";
 import { queryKeys } from "#/lib/queryKeys";
 import {
   showErrorNotification,
   showSuccessNotification,
-} from "#/utils/notifications";
+} from "#/lib/notifications";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 /**
@@ -40,11 +40,7 @@ export function useDeleteMedia() {
       }),
   });
 
-  const requestDelete = (
-    id: string,
-    title: string,
-    onDeleted?: () => void,
-  ) => {
+  const requestDelete = (id: string, title: string, onDeleted?: () => void) => {
     if (mutation.isPending) return;
 
     confirmDelete({

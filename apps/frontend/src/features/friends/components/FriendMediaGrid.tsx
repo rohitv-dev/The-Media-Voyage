@@ -9,7 +9,7 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
-import { gridItemMotionProps } from "#/utils/motionVariants";
+import { gridItemMotionProps } from "#/theme/motion";
 
 function SocialCounts({ record }: { record: FriendMediaRecord }) {
   return (

@@ -50,7 +50,7 @@ $mantine-breakpoint-xl: "88em";
   }
 }
 
-// Add direction mixins if you need rtl support
+// Direction helpers.
 @mixin rtl {
   [dir="rtl"] & {
     @content;
