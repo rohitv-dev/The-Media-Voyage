@@ -28,6 +28,7 @@ import {
   IconPlus,
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
+import { useFormContext } from "./context";
 
 const sourceLabels: Record<string, string> = {
   db: "catalog",
@@ -44,13 +45,9 @@ const searchPlaceholders: Record<MediaType, string> = {
 };
 
 interface MediaTitleSelectProps {
-  search: string;
-  type: MediaType;
   value: SourceMediaRecord | null;
   onChange: (value: SourceMediaRecord | null) => void;
   onSearchChange: (value: string) => void;
-  onBlur?: () => void;
-  error?: React.ReactNode;
 }
 
 function getMediaOptionValue(media: SourceMediaRecord) {
@@ -157,22 +154,25 @@ function MediaOption({ media }: { media: SourceMediaRecord }) {
 }
 
 export function MediaTitleSelect(props: MediaTitleSelectProps) {
+  const form = useFormContext();
   const combobox = useCombobox();
+  const search = form.values.title;
+  const type = form.values.type;
 
-  const [debouncedSearch] = useDebouncedValue(props.search, 500);
-  const trimmedSearch = props.search.trim();
-  const isBookSearch = props.type === "book";
+  const [debouncedSearch] = useDebouncedValue(search, 500);
+  const trimmedSearch = search.trim();
+  const isBookSearch = type === "book";
 
   const {
     data = [],
     isFetching,
     isError,
   } = useQuery({
-    queryKey: queryKeys.mediaSearch(props.type, debouncedSearch),
+    queryKey: queryKeys.mediaSearch(type, debouncedSearch),
     enabled: debouncedSearch.trim().length >= 2,
     queryFn: () =>
       api<SourceMediaRecord[]>(
-        `/media/search?q=${encodeURIComponent(debouncedSearch)}&type=${props.type}`,
+        `/media/search?q=${encodeURIComponent(debouncedSearch)}&type=${type}`,
       ),
   });
 
@@ -200,12 +200,12 @@ export function MediaTitleSelect(props: MediaTitleSelectProps) {
             props.onChange({
               id: "",
               source: "manual",
-              title: props.search,
-              type: props.type,
+              title: search,
+              type,
               imageUrl: null,
               externalId: null,
             });
-            props.onSearchChange(props.search);
+            props.onSearchChange(search);
           } else {
             const media = data.find(
               (item) => getMediaOptionValue(item) === value,
@@ -224,8 +224,8 @@ export function MediaTitleSelect(props: MediaTitleSelectProps) {
           <InputBase
             label="Title"
             variant="filled"
-            value={props.search}
-            error={props.error}
+            value={search}
+            error={form.errors.title}
             description={
               isBookSearch
                 ? "Book search isn't available yet — matches only come from titles you've already added"
@@ -233,6 +233,7 @@ export function MediaTitleSelect(props: MediaTitleSelectProps) {
             }
             onChange={(event) => {
               const value = event.currentTarget.value;
+              form.setFieldValue("title", value);
               props.onSearchChange(value);
 
               if (value.length >= 2) {
@@ -242,7 +243,7 @@ export function MediaTitleSelect(props: MediaTitleSelectProps) {
               }
             }}
             onFocus={() => combobox.openDropdown()}
-            placeholder={searchPlaceholders[props.type]}
+            placeholder={searchPlaceholders[type]}
             rightSection={
               isFetching ? <Loader size={16} /> : <Combobox.Chevron />
             }

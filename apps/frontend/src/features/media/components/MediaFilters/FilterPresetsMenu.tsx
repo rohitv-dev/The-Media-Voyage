@@ -3,7 +3,8 @@ import { useDisclosure } from "@mantine/hooks";
 import { IconBookmark, IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import type { UserMediaQuerySchema } from "@media-voyage/shared/api";
 import type { FilterPreset } from "#/features/media/hooks/useFilterPresets";
-import { SavePresetModal } from "#/features/media/components/SavePresetModal";
+import { SavePresetModal } from
+  "#/features/media/components/MediaFilters/SavePresetModal";
 import { confirmDelete } from "#/lib/confirmModal";
 import { showSuccessNotification } from "#/lib/notifications";
 

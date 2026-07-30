@@ -9,7 +9,7 @@ import {
 } from "@mantine/core";
 import type { SourceMediaRecord } from "@media-voyage/shared/api";
 import { IconMovie, IconLock } from "@tabler/icons-react";
-import { MediaTitleSelect } from "../MediaTitleSelect";
+import { MediaTitleSelect } from "./MediaTitleSelect";
 import type { MediaType } from "@media-voyage/shared/userMediaSchema";
 import { mediaTypeOptions, visibilityOptions } from "../../options";
 import { useFormContext } from "./context";
@@ -18,7 +18,6 @@ import type { MouseEventHandler } from "react";
 type MediaDetailsSectionProps = {
   mode: "add" | "update";
   mediaRecord: SourceMediaRecord | null;
-  search: string;
   onTypeChange: (type: MediaType | null) => void;
   onTypeClick: MouseEventHandler<HTMLInputElement>;
   onTitleChange: (record: SourceMediaRecord | null) => void;
@@ -28,7 +27,6 @@ type MediaDetailsSectionProps = {
 export function MediaDetailsSection({
   mode,
   mediaRecord,
-  search,
   onTypeChange,
   onTypeClick,
   onTitleChange,
@@ -76,9 +74,6 @@ export function MediaDetailsSection({
           {isAddMode ? (
             <MediaTitleSelect
               value={mediaRecord}
-              type={form.values.type}
-              search={search}
-              error={form.errors.title}
               onChange={onTitleChange}
               onSearchChange={onSearchChange}
             />

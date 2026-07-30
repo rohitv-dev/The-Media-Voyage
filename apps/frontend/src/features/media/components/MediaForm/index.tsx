@@ -142,9 +142,6 @@ export function MediaForm(props: MediaFormProps) {
       : undefined,
   );
   const [isLoadingSeasonInfo, setIsLoadingSeasonInfo] = useState(false);
-  const [search, setSearch] = useState(
-    props.mode === "add" ? "" : props.initialValues.title,
-  );
   const router = useRouter();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -278,7 +275,6 @@ export function MediaForm(props: MediaFormProps) {
     form.setFieldValue("seasonsProgress", []);
 
     setCatalogMetadataState(undefined);
-    setSearch("");
     setMediaRecord(null);
     setIsLoadingSeasonInfo(false);
   };
@@ -327,8 +323,6 @@ export function MediaForm(props: MediaFormProps) {
   };
 
   const handleSearchChange = (value: string) => {
-    setSearch(value);
-    form.setFieldValue("title", value);
     setMediaRecord((current) => {
       if (current && current.title !== value) {
         form.setFieldValue("description", undefined);
@@ -445,7 +439,6 @@ export function MediaForm(props: MediaFormProps) {
               <MediaDetailsSection
                 mode={mode}
                 mediaRecord={mediaRecord}
-                search={search}
                 onTypeChange={handleTypeChange}
                 onTypeClick={handleTypeClick}
                 onTitleChange={handleTitleChange}

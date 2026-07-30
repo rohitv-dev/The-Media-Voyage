@@ -30,7 +30,8 @@ import { useDisclosure, useLocalStorage, useMediaQuery } from "@mantine/hooks";
 import { AnimatePresence, motion } from "motion/react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { gridItemMotionProps } from "#/theme/motion";
-import { MediaFilterCard } from "#/features/media/components/MediaFilterCard";
+import { MediaFilterCard } from
+  "#/features/media/components/MediaFilters/MediaFilterCard";
 import { MediaPickerModal } from "#/features/media/components/MediaPickerModal";
 import { collectionQueryOptions } from "#/features/media-collection/queries";
 import {
@@ -41,10 +42,12 @@ import {
   IconPlus,
   IconTable,
 } from "@tabler/icons-react";
-import { MediaAppliedFilters } from "#/features/media/components/MediaAppliedFilters";
+import { MediaAppliedFilters } from
+  "#/features/media/components/MediaFilters/MediaAppliedFilters";
 import { MediaTable } from "#/features/media/components/MediaTable";
 import { useFilterPresets } from "#/features/media/hooks/useFilterPresets";
-import { FilterPresetsMenu } from "#/features/media/components/FilterPresetsMenu";
+import { FilterPresetsMenu } from
+  "#/features/media/components/MediaFilters/FilterPresetsMenu";
 
 type ViewType = "grid" | "table";
 
