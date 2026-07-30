@@ -4,6 +4,7 @@ import type {
   TvMazeDetails,
 } from "@media-voyage/shared/api";
 import { api } from "#/lib/api";
+import type { CatalogMetadata } from "../catalogMetadata";
 import type { HydratedMedia } from "./hydrateMedia";
 
 function stripHtml(value: string) {
@@ -21,7 +22,7 @@ export async function hydrateTvMaze(
   );
   if (!details) return {};
 
-  const metadata: Record<string, string> = {};
+  const metadata: CatalogMetadata = {};
   const runtime = details.averageRuntime ?? details.runtime;
 
   if (details.genres.length > 0) {

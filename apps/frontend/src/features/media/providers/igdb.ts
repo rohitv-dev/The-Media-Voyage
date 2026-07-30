@@ -1,5 +1,6 @@
 import type { IgdbGame, SourceMediaRecord } from "@media-voyage/shared/api";
 import { api } from "#/lib/api";
+import type { CatalogMetadata } from "../catalogMetadata";
 import type { HydratedMedia } from "./hydrateMedia";
 
 export async function hydrateIgdb(
@@ -10,7 +11,7 @@ export async function hydrateIgdb(
   const details = await api<IgdbGame | null>(
     `/media/igdb/${record.externalId}`,
   );
-  const metadata: Record<string, string> = {};
+  const metadata: CatalogMetadata = {};
 
   if (details?.genres?.length) {
     metadata.genre = details.genres.map((genre) => genre.name).join(", ");

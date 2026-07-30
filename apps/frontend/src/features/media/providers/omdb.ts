@@ -1,5 +1,6 @@
 import type { OmdbMovie, SourceMediaRecord } from "@media-voyage/shared/api";
 import { api } from "#/lib/api";
+import type { CatalogMetadata } from "../catalogMetadata";
 import type { HydratedMedia } from "./hydrateMedia";
 
 export async function hydrateOmdb(
@@ -11,7 +12,7 @@ export async function hydrateOmdb(
     `/media/omdb/${record.externalId}`,
   );
   if (!details) return {};
-  const metadata: Record<string, string> = {};
+  const metadata: CatalogMetadata = {};
 
   if (details.Genre) {
     metadata.genre = details.Genre;

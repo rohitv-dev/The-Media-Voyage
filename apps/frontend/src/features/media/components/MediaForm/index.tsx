@@ -26,6 +26,7 @@ import type { MediaType } from "@media-voyage/shared/userMediaSchema";
 import { useUnsavedChangesBlocker } from "#/hooks/useUnsavedChangesBlocker";
 import { useDeleteMedia } from "../../hooks/useDeleteMedia";
 import { queryKeys } from "#/lib/queryKeys";
+import type { CatalogMetadata } from "../../catalogMetadata";
 import { FormActions } from "./FormActions";
 import { FormHeader } from "./FormHeader";
 import { MediaDetailsSection } from "./MediaDetailsSection";
@@ -99,6 +100,18 @@ function calculateShowProgress(seasonsProgress?: SeasonProgressEntry[]) {
   );
 }
 
+function calculateMovieProgress(
+  timeSpent: UserMediaFormSchema["timeSpent"],
+  catalogMetadata?: CatalogMetadata,
+) {
+  const runtimeMinutes = getEstimatedTimeSpentMinutes("movie", catalogMetadata);
+  if (!runtimeMinutes) return undefined;
+
+  const timeSpentMinutes = Math.max(0, Number(timeSpent) || 0);
+
+  return Math.min(100, Math.round((timeSpentMinutes / runtimeMinutes) * 100));
+}
+
 type MediaFormProps =
   | {
       mode: "add";
@@ -121,8 +134,12 @@ export function MediaForm(props: MediaFormProps) {
   const [mediaRecord, setMediaRecord] = useState<SourceMediaRecord | null>(
     null,
   );
-  const [catalogMetadata, setCatalogMetadataState] = useState<unknown>(
-    props.mode === "update" ? props.initialValues.metadata : undefined,
+  const [catalogMetadata, setCatalogMetadataState] = useState<
+    CatalogMetadata | undefined
+  >(
+    props.mode === "update"
+      ? (props.initialValues.metadata ?? undefined)
+      : undefined,
   );
   const [isLoadingSeasonInfo, setIsLoadingSeasonInfo] = useState(false);
   const [search, setSearch] = useState(
@@ -156,7 +173,8 @@ export function MediaForm(props: MediaFormProps) {
     },
   });
 
-  const catalogMetadataForTimeSpent = catalogMetadata ?? form.values.metadata;
+  const catalogMetadataForTimeSpent =
+    catalogMetadata ?? form.values.metadata ?? undefined;
 
   useUnsavedChangesBlocker(() => form.isDirty());
 
@@ -235,6 +253,21 @@ export function MediaForm(props: MediaFormProps) {
     }
   });
 
+  form.watch("timeSpent", ({ value }) => {
+    if (form.values.type !== "movie") return;
+
+    const calculatedProgress = calculateMovieProgress(
+      value,
+      catalogMetadataForTimeSpent,
+    );
+    if (
+      calculatedProgress !== undefined &&
+      calculatedProgress !== form.values.progress
+    ) {
+      form.setFieldValue("progress", calculatedProgress);
+    }
+  });
+
   const handleTypeChange = (type: MediaType | null) => {
     if (!type) return;
 
@@ -254,8 +287,8 @@ export function MediaForm(props: MediaFormProps) {
     if (!isAddMode) event.stopPropagation();
   };
 
-  const applyCatalogMetadata = (metadata: Record<string, string>) => {
-    if (!Object.keys(metadata).length) return;
+  const applyCatalogMetadata = (metadata?: CatalogMetadata) => {
+    if (!metadata || !Object.keys(metadata).length) return;
 
     setCatalogMetadataState(metadata);
     form.setFieldValue("metadata", metadata);
@@ -282,7 +315,7 @@ export function MediaForm(props: MediaFormProps) {
         if (hydrated.description) {
           form.setFieldValue("description", hydrated.description);
         }
-        applyCatalogMetadata(hydrated.metadata ?? {});
+        applyCatalogMetadata(hydrated.metadata);
 
         if (isAddMode && hydrated.seasonsProgress?.length) {
           form.setFieldValue("seasonsProgress", hydrated.seasonsProgress);

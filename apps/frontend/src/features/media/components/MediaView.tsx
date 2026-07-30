@@ -49,12 +49,6 @@ import { MediaCoverArtFocusModal } from "./MediaCoverArtFocusModal";
 import { StatusHistoryModal } from "./StatusHistoryModal";
 import { getImageObjectPosition } from "../imageFocus";
 
-type CatalogMetadata = {
-  genre?: string;
-  runtime?: string;
-  catalogRating?: string;
-};
-
 const formatDate = (value?: Date | string | null) =>
   value ? new Date(value).toLocaleDateString() : "—";
 
@@ -225,7 +219,7 @@ export function MediaView({
   const sourceColorMap = useSourceColorMap();
   const tagColorMap = useTagColorMap();
 
-  const catalogMetadata = data.catalogMetadata as CatalogMetadata | null;
+  const catalogMetadata = data.catalogMetadata ?? undefined;
 
   const metaItems = [
     { label: "Status", value: capitalizeWords(data.status) },

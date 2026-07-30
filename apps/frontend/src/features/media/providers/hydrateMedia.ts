@@ -6,10 +6,11 @@ import { hydrateIgdb } from "./igdb";
 import { hydrateOmdb } from "./omdb";
 import { hydrateOpenLibrary } from "./openLibrary";
 import { hydrateTvMaze } from "./tvmaze";
+import type { CatalogMetadata } from "../catalogMetadata";
 
 export type HydratedMedia = {
   description?: string;
-  metadata?: Record<string, string>;
+  metadata?: CatalogMetadata;
   seasonsProgress?: SeasonProgressEntry[];
 };
 

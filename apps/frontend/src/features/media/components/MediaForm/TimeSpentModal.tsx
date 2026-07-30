@@ -16,10 +16,7 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { useState } from "react";
 import { useFormContext } from "./context";
-
-type CatalogMetadata = {
-  runtime?: unknown;
-};
+import type { CatalogMetadata } from "../../catalogMetadata";
 
 type DurationParts = {
   hours: number;
@@ -32,14 +29,12 @@ type ShowSummary = {
 };
 
 type TimeSpentModalProps = {
-  catalogMetadata?: unknown;
+  catalogMetadata?: CatalogMetadata;
 };
 
-function parseRuntimeMinutes(metadata: unknown) {
-  if (!metadata || typeof metadata !== "object") return undefined;
-
-  const runtime = (metadata as CatalogMetadata).runtime;
-  if (typeof runtime !== "string") return undefined;
+function parseRuntimeMinutes(metadata?: CatalogMetadata) {
+  const runtime = metadata?.runtime;
+  if (!runtime) return undefined;
 
   const match = runtime.match(/(\d+(?:\.\d+)?)\s*(?:min|minutes)\b/i);
   if (!match) return undefined;
@@ -66,22 +61,29 @@ function getShowSummary(seasonsProgress?: SeasonProgressEntry[]): ShowSummary {
 
 export function getEstimatedTimeSpentMinutes(
   type: UserMediaFormSchema["type"],
-  metadata: unknown,
-  seasonsProgress?: SeasonProgressEntry[],
+  metadata?: CatalogMetadata,
+  seasonsProgress: SeasonProgressEntry[] = [],
 ) {
   const runtimeMinutes = parseRuntimeMinutes(metadata);
 
-  if (type === "movie") return runtimeMinutes;
-  if (type !== "show") return undefined;
-  if (!runtimeMinutes) return undefined;
+  if (type === "movie") {
+    return runtimeMinutes;
+  }
 
-  const watchedEpisodeCount = (seasonsProgress ?? []).reduce(
+  if (type !== "show" || !runtimeMinutes) {
+    return undefined;
+  }
+
+  const totalEpisodesWatched = seasonsProgress.reduce(
     (total, season) => total + (season.episodesWatched ?? 0),
     0,
   );
-  const estimatedMinutes = watchedEpisodeCount * runtimeMinutes;
 
-  return estimatedMinutes > 0 ? Math.round(estimatedMinutes) : undefined;
+  if (totalEpisodesWatched === 0) {
+    return undefined;
+  }
+
+  return Math.round(totalEpisodesWatched * runtimeMinutes);
 }
 
 function minutesToDurationParts(totalMinutes: number): DurationParts {

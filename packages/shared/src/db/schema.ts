@@ -14,6 +14,12 @@ import {
   check,
 } from "drizzle-orm/pg-core";
 
+export type CatalogMetadata = {
+  genre?: string;
+  runtime?: string;
+  catalogRating?: string;
+};
+
 export const mediaTypeEnum = pgEnum("media_type", [
   "movie",
   "show",
@@ -66,7 +72,7 @@ export const media = pgTable(
     source: text("source"),
     externalId: text("external_id"),
 
-    metadata: jsonb("metadata").default({}), // genres, director, author, etc.
+    metadata: jsonb("metadata").$type<CatalogMetadata>().default({}),
 
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),

@@ -16,10 +16,11 @@ import { useFormContext } from "./context";
 import { useDisclosure, useMediaQuery } from "@mantine/hooks";
 import { SeasonsProgressField } from "./SeasonsProgressField";
 import { TimeSpentModal } from "./TimeSpentModal";
+import type { CatalogMetadata } from "../../catalogMetadata";
 
 type ProgressTrackingSectionProps = {
   dropdowns: UserMediaDropdowns;
-  catalogMetadata?: unknown;
+  catalogMetadata?: CatalogMetadata;
   isLoadingSeasonInfo?: boolean;
 };
 
