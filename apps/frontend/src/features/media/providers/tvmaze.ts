@@ -22,7 +22,7 @@ export async function hydrateTvMaze(
   );
   if (!details) return {};
 
-  const metadata: CatalogMetadata = {};
+  const metadata: CatalogMetadata<"show"> = {};
   const runtime = details.averageRuntime ?? details.runtime;
 
   if (details.genres.length > 0) {

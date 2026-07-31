@@ -14,18 +14,29 @@ import {
   check,
 } from "drizzle-orm/pg-core";
 
-export type CatalogMetadata = {
+type MovieOrShowOrGameMetadata = {
   genre?: string;
   runtime?: string;
   catalogRating?: string;
 };
 
-export const mediaTypeEnum = pgEnum("media_type", [
-  "movie",
-  "show",
-  "game",
-  "book",
-]);
+type BookMetadata = {
+  genre?: string;
+  numberOfPages?: number;
+  catalogRating?: string;
+};
+
+export type CatalogMetadataByType = {
+  movie: MovieOrShowOrGameMetadata;
+  show: MovieOrShowOrGameMetadata;
+  game: MovieOrShowOrGameMetadata;
+  book: BookMetadata;
+};
+
+export type CatalogMetadata<T extends keyof CatalogMetadataByType = keyof CatalogMetadataByType> =
+  CatalogMetadataByType[T];
+
+export const mediaTypeEnum = pgEnum("media_type", ["movie", "show", "game", "book"]);
 
 export const statusEnum = pgEnum("media_status", [
   "planned",
@@ -36,17 +47,9 @@ export const statusEnum = pgEnum("media_status", [
   "revisiting",
 ]);
 
-export const visibilityEnum = pgEnum("visibility", [
-  "private",
-  "friends",
-  "public",
-]);
+export const visibilityEnum = pgEnum("visibility", ["private", "friends", "public"]);
 
-export const friendshipStatusEnum = pgEnum("friendship_status", [
-  "pending",
-  "declined",
-  "accepted",
-]);
+export const friendshipStatusEnum = pgEnum("friendship_status", ["pending", "declined", "accepted"]);
 
 export const notificationTypeEnum = pgEnum("notification_type", [
   "media_like",
@@ -78,10 +81,7 @@ export const media = pgTable(
     updatedAt: timestamp("updated_at").defaultNow(),
   },
   (table) => [
-    unique("media_source_external_id_unique").on(
-      table.source,
-      table.externalId,
-    ),
+    unique("media_source_external_id_unique").on(table.source, table.externalId),
     check(
       "media_image_focus_x_range",
       sql`${table.imageFocusX} is null or (${table.imageFocusX} >= 0 and ${table.imageFocusX} <= 1)`,
@@ -90,10 +90,7 @@ export const media = pgTable(
       "media_image_focus_y_range",
       sql`${table.imageFocusY} is null or (${table.imageFocusY} >= 0 and ${table.imageFocusY} <= 1)`,
     ),
-    check(
-      "media_image_focus_pair",
-      sql`(${table.imageFocusX} is null) = (${table.imageFocusY} is null)`,
-    ),
+    check("media_image_focus_pair", sql`(${table.imageFocusX} is null) = (${table.imageFocusY} is null)`),
   ],
 );
 
@@ -110,12 +107,7 @@ export const sources = pgTable(
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
   },
-  (table) => [
-    unique("sources_user_normalized_name_unique").on(
-      table.userId,
-      table.normalizedName,
-    ),
-  ],
+  (table) => [unique("sources_user_normalized_name_unique").on(table.userId, table.normalizedName)],
 );
 
 // User-specific tracking (the heart)
@@ -148,6 +140,8 @@ export const userMedia = pgTable(
 
     timeSpent: integer("time_spent"),
 
+    pagesRead: integer("pages_read"),
+
     sourceId: uuid("source_id").references(() => sources.id, {
       onDelete: "set null",
     }),
@@ -165,11 +159,7 @@ export const userMedia = pgTable(
   },
   (table) => [
     unique("user_media_unique").on(table.userId, table.mediaId),
-    index("user_media_status_changed_idx").on(
-      table.userId,
-      table.status,
-      table.statusChangedAt,
-    ),
+    index("user_media_status_changed_idx").on(table.userId, table.status, table.statusChangedAt),
   ],
 );
 
@@ -186,12 +176,7 @@ export const tags = pgTable(
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
   },
-  (table) => [
-    unique("tags_user_normalized_name_unique").on(
-      table.userId,
-      table.normalizedName,
-    ),
-  ],
+  (table) => [unique("tags_user_normalized_name_unique").on(table.userId, table.normalizedName)],
 );
 
 export const userMediaTags = pgTable(
@@ -225,12 +210,7 @@ export const userMediaStatusHistory = pgTable(
     source: text("source").notNull(),
     changedAt: timestamp("changed_at").defaultNow().notNull(),
   },
-  (table) => [
-    index("user_media_status_history_entry_changed_idx").on(
-      table.userMediaId,
-      table.changedAt,
-    ),
-  ],
+  (table) => [index("user_media_status_history_entry_changed_idx").on(table.userMediaId, table.changedAt)],
 );
 
 export const mediaCollection = pgTable("media_collection", {
@@ -260,14 +240,8 @@ export const mediaCollectionItems = pgTable(
     createdAt: timestamp("created_at").defaultNow(),
   },
   (table) => [
-    unique("media_collection_item_unique").on(
-      table.collectionId,
-      table.userMediaId,
-    ),
-    index("media_collection_items_collection_position_idx").on(
-      table.collectionId,
-      table.position,
-    ),
+    unique("media_collection_item_unique").on(table.collectionId, table.userMediaId),
+    index("media_collection_items_collection_position_idx").on(table.collectionId, table.position),
   ],
 );
 
@@ -293,14 +267,8 @@ export const friendships = pgTable(
   },
   (table) => [
     unique("friendships_pair_unique").on(table.requesterId, table.addresseeId),
-    index("friendships_addressee_status_idx").on(
-      table.addresseeId,
-      table.status,
-    ),
-    index("friendships_requester_status_idx").on(
-      table.requesterId,
-      table.status,
-    ),
+    index("friendships_addressee_status_idx").on(table.addresseeId, table.status),
+    index("friendships_requester_status_idx").on(table.requesterId, table.status),
   ],
 );
 
@@ -340,12 +308,7 @@ export const userMediaComments = pgTable(
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
   },
-  (table) => [
-    index("user_media_comments_entry_created_idx").on(
-      table.userMediaId,
-      table.createdAt,
-    ),
-  ],
+  (table) => [index("user_media_comments_entry_created_idx").on(table.userMediaId, table.createdAt)],
 );
 
 export const notifications = pgTable(
@@ -366,14 +329,8 @@ export const notifications = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
-    index("notifications_recipient_created_idx").on(
-      table.recipientId,
-      table.createdAt,
-    ),
-    index("notifications_recipient_seen_idx").on(
-      table.recipientId,
-      table.seenAt,
-    ),
+    index("notifications_recipient_created_idx").on(table.recipientId, table.createdAt),
+    index("notifications_recipient_seen_idx").on(table.recipientId, table.seenAt),
   ],
 );
 
@@ -394,53 +351,44 @@ export const friendshipsRelations = relations(friendships, ({ one }) => ({
   }),
 }));
 
-export const userMediaReactionsRelations = relations(
-  userMediaReactions,
-  ({ one }) => ({
-    userMedia: one(userMedia, {
-      fields: [userMediaReactions.userMediaId],
-      references: [userMedia.id],
-    }),
-    user: one(user, {
-      fields: [userMediaReactions.userId],
-      references: [user.id],
-    }),
+export const userMediaReactionsRelations = relations(userMediaReactions, ({ one }) => ({
+  userMedia: one(userMedia, {
+    fields: [userMediaReactions.userMediaId],
+    references: [userMedia.id],
   }),
-);
+  user: one(user, {
+    fields: [userMediaReactions.userId],
+    references: [user.id],
+  }),
+}));
 
-export const userMediaCommentsRelations = relations(
-  userMediaComments,
-  ({ one }) => ({
-    userMedia: one(userMedia, {
-      fields: [userMediaComments.userMediaId],
-      references: [userMedia.id],
-    }),
-    user: one(user, {
-      fields: [userMediaComments.userId],
-      references: [user.id],
-    }),
+export const userMediaCommentsRelations = relations(userMediaComments, ({ one }) => ({
+  userMedia: one(userMedia, {
+    fields: [userMediaComments.userMediaId],
+    references: [userMedia.id],
   }),
-);
+  user: one(user, {
+    fields: [userMediaComments.userId],
+    references: [user.id],
+  }),
+}));
 
-export const notificationsRelations = relations(
-  notifications,
-  ({ one }) => ({
-    recipient: one(user, {
-      fields: [notifications.recipientId],
-      references: [user.id],
-      relationName: "notificationRecipient",
-    }),
-    actor: one(user, {
-      fields: [notifications.actorId],
-      references: [user.id],
-      relationName: "notificationActor",
-    }),
-    userMedia: one(userMedia, {
-      fields: [notifications.userMediaId],
-      references: [userMedia.id],
-    }),
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  recipient: one(user, {
+    fields: [notifications.recipientId],
+    references: [user.id],
+    relationName: "notificationRecipient",
   }),
-);
+  actor: one(user, {
+    fields: [notifications.actorId],
+    references: [user.id],
+    relationName: "notificationActor",
+  }),
+  userMedia: one(userMedia, {
+    fields: [notifications.userMediaId],
+    references: [userMedia.id],
+  }),
+}));
 
 export const userMediaRelations = relations(userMedia, ({ one, many }) => ({
   user: one(user, {
@@ -490,40 +438,31 @@ export const userMediaTagsRelations = relations(userMediaTags, ({ one }) => ({
   }),
 }));
 
-export const userMediaStatusHistoryRelations = relations(
-  userMediaStatusHistory,
-  ({ one }) => ({
-    userMedia: one(userMedia, {
-      fields: [userMediaStatusHistory.userMediaId],
-      references: [userMedia.id],
-    }),
+export const userMediaStatusHistoryRelations = relations(userMediaStatusHistory, ({ one }) => ({
+  userMedia: one(userMedia, {
+    fields: [userMediaStatusHistory.userMediaId],
+    references: [userMedia.id],
   }),
-);
+}));
 
-export const mediaCollectionRelations = relations(
-  mediaCollection,
-  ({ many, one }) => ({
-    user: one(user, {
-      fields: [mediaCollection.userId],
-      references: [user.id],
-    }),
-    items: many(mediaCollectionItems),
+export const mediaCollectionRelations = relations(mediaCollection, ({ many, one }) => ({
+  user: one(user, {
+    fields: [mediaCollection.userId],
+    references: [user.id],
   }),
-);
+  items: many(mediaCollectionItems),
+}));
 
-export const mediaCollectionItemsRelations = relations(
-  mediaCollectionItems,
-  ({ one }) => ({
-    list: one(mediaCollection, {
-      fields: [mediaCollectionItems.collectionId],
-      references: [mediaCollection.id],
-    }),
-    userMedia: one(userMedia, {
-      fields: [mediaCollectionItems.userMediaId],
-      references: [userMedia.id],
-    }),
+export const mediaCollectionItemsRelations = relations(mediaCollectionItems, ({ one }) => ({
+  list: one(mediaCollection, {
+    fields: [mediaCollectionItems.collectionId],
+    references: [mediaCollection.id],
   }),
-);
+  userMedia: one(userMedia, {
+    fields: [mediaCollectionItems.userMediaId],
+    references: [userMedia.id],
+  }),
+}));
 
 // Better Auth Generated Tables
 
@@ -535,9 +474,7 @@ export const user = pgTable("user", {
   image: text("image"),
   // Applied to newly created user_media entries. Exposed through better-auth's
   // `user.additionalFields`, so it rides along in the session.
-  defaultVisibility: visibilityEnum("default_visibility")
-    .default("private")
-    .notNull(),
+  defaultVisibility: visibilityEnum("default_visibility").default("private").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

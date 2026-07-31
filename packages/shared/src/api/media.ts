@@ -112,6 +112,8 @@ export const mediaResponseSchema = z.object({
 
   creators: z.array(z.string()).optional(),
   genres: z.array(z.string()).optional(),
+
+  numberOfPages: z.number().optional(),
 });
 
 export type SourceMediaRecord = z.infer<typeof mediaResponseSchema>;

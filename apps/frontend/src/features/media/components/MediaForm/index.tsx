@@ -53,6 +53,7 @@ const addInitialValues: UserMediaFormSchema = {
   progress: undefined,
   rewatches: 0,
   timeSpent: undefined,
+  pagesRead: undefined,
   tags: [],
   visibility: "private",
   customFields: undefined,
@@ -102,7 +103,7 @@ function calculateShowProgress(seasonsProgress?: SeasonProgressEntry[]) {
 
 function calculateMovieProgress(
   timeSpent: UserMediaFormSchema["timeSpent"],
-  catalogMetadata?: CatalogMetadata,
+  catalogMetadata?: CatalogMetadata<"movie">,
 ) {
   const runtimeMinutes = getEstimatedTimeSpentMinutes("movie", catalogMetadata);
   if (!runtimeMinutes) return undefined;
@@ -112,11 +113,30 @@ function calculateMovieProgress(
   return Math.min(100, Math.round((timeSpentMinutes / runtimeMinutes) * 100));
 }
 
+function getBookPageCount(catalogMetadata?: CatalogMetadata<"book">) {
+  if (!catalogMetadata) return undefined;
+
+  const { numberOfPages } = catalogMetadata;
+  return typeof numberOfPages === "number" && numberOfPages > 0
+    ? numberOfPages
+    : undefined;
+}
+
+function calculateBookProgress(
+  pagesRead: UserMediaFormSchema["pagesRead"],
+  catalogMetadata?: CatalogMetadata,
+) {
+  const numberOfPages = getBookPageCount(catalogMetadata);
+  if (!numberOfPages) return undefined;
+
+  const readPages = Math.max(0, Number(pagesRead) || 0);
+  return Math.min(100, Math.round((readPages / numberOfPages) * 100));
+}
+
 type MediaFormProps =
   | {
       mode: "add";
       dropdowns: UserMediaDropdowns;
-      /** Account default that preselects the visibility field on new entries. */
       defaultVisibility?: UserMediaFormSchema["visibility"];
     }
   | {
@@ -133,13 +153,6 @@ export function MediaForm(props: MediaFormProps) {
 
   const [mediaRecord, setMediaRecord] = useState<SourceMediaRecord | null>(
     null,
-  );
-  const [catalogMetadata, setCatalogMetadataState] = useState<
-    CatalogMetadata | undefined
-  >(
-    props.mode === "update"
-      ? (props.initialValues.metadata ?? undefined)
-      : undefined,
   );
   const [isLoadingSeasonInfo, setIsLoadingSeasonInfo] = useState(false);
   const router = useRouter();
@@ -170,68 +183,74 @@ export function MediaForm(props: MediaFormProps) {
     },
   });
 
-  const catalogMetadataForTimeSpent =
-    catalogMetadata ?? form.values.metadata ?? undefined;
+  const catalogMetadataForTimeSpent = form.values.metadata ?? undefined;
 
   useUnsavedChangesBlocker(() => form.isDirty());
 
   form.watch("status", ({ value, previousValue }) => {
     if (value === "completed") {
       form.setFieldValue("progress", 100);
-      form.setFieldValue("seasonsProgress", (prev = []) =>
-        prev.map((entry) => {
-          const episodeCount = entry.expectedEpisodeCount;
-          const hasKnownEpisodeCount =
-            episodeCount !== undefined && episodeCount !== null;
-          const alreadyComplete =
-            entry.status === "completed" &&
-            (!hasKnownEpisodeCount || entry.episodesWatched === episodeCount);
+      if (form.values.type === "book") {
+        const numberOfPages = getBookPageCount(catalogMetadataForTimeSpent);
+        if (numberOfPages) form.setFieldValue("pagesRead", numberOfPages);
+      }
+      const completedSeasons = (
+        form.values.seasonsProgress ?? []
+      ).map<SeasonProgressEntry>((entry) => {
+        const episodeCount = entry.expectedEpisodeCount;
+        const hasKnownEpisodeCount =
+          episodeCount !== undefined && episodeCount !== null;
+        const alreadyComplete =
+          entry.status === "completed" &&
+          (!hasKnownEpisodeCount || entry.episodesWatched === episodeCount);
 
-          if (alreadyComplete) return entry;
+        if (alreadyComplete) return entry;
 
-          return {
-            ...entry,
-            status: "completed",
-            ...(hasKnownEpisodeCount ? { episodesWatched: episodeCount } : {}),
-            updatedAt: new Date().toISOString(),
-          };
-        }),
-      );
+        return {
+          ...entry,
+          status: "completed",
+          ...(hasKnownEpisodeCount ? { episodesWatched: episodeCount } : {}),
+          updatedAt: new Date().toISOString(),
+        };
+      });
+      form.setFieldValue("seasonsProgress", completedSeasons);
 
-      const estimatedMinutes = getEstimatedTimeSpentMinutes(
-        form.values.type,
-        catalogMetadataForTimeSpent,
-        form.values.seasonsProgress,
-      );
-      const currentMinutes = Number(form.values.timeSpent) || 0;
+      if (form.values.type === "movie" || form.values.type === "show") {
+        const estimatedMinutes = getEstimatedTimeSpentMinutes(
+          form.values.type,
+          catalogMetadataForTimeSpent,
+          completedSeasons,
+        );
+        const currentMinutes = Number(form.values.timeSpent) || 0;
 
-      if (estimatedMinutes && estimatedMinutes !== currentMinutes) {
-        modals.openConfirmModal({
-          title: "Update time spent?",
-          children: (
-            <Text size="sm">
-              Based on the catalog runtime and your progress, this looks like
-              about {formatDuration(estimatedMinutes)}. Set Time Spent to this
-              estimate?
-            </Text>
-          ),
-          labels: {
-            confirm: `Use ${formatDuration(estimatedMinutes)}`,
-            cancel: "Review manually",
-          },
-          cancelProps: {
-            color: "accent",
-            variant: "light",
-          },
-          onConfirm: () => form.setFieldValue("timeSpent", estimatedMinutes),
-        });
-      } else if (!currentMinutes) {
-        showNotification({
-          title: "Remember time spent",
-          message: "Open Time Spent to add an estimate before saving.",
-          color: "blue",
-          position: "top-center",
-        });
+        if (estimatedMinutes && estimatedMinutes !== currentMinutes) {
+          modals.openConfirmModal({
+            title: "Update time spent?",
+            children: (
+              <Text size="sm">
+                Based on the catalog runtime and your progress, this looks like
+                about {formatDuration(estimatedMinutes)}. Set Time Spent to this
+                estimate?
+              </Text>
+            ),
+            labels: {
+              confirm: `Use ${formatDuration(estimatedMinutes)}`,
+              cancel: "Review manually",
+            },
+            cancelProps: {
+              color: "accent",
+              variant: "light",
+            },
+            onConfirm: () => form.setFieldValue("timeSpent", estimatedMinutes),
+          });
+        } else if (!currentMinutes) {
+          showNotification({
+            title: "Remember time spent",
+            message: "Open Time Spent to add an estimate before saving.",
+            color: "blue",
+            position: "top-center",
+          });
+        }
       }
     } else if (previousValue === "completed") {
       form.setFieldValue("completedAt", undefined);
@@ -265,6 +284,21 @@ export function MediaForm(props: MediaFormProps) {
     }
   });
 
+  form.watch("pagesRead", ({ value }) => {
+    if (form.values.type !== "book") return;
+
+    const calculatedProgress = calculateBookProgress(
+      value,
+      catalogMetadataForTimeSpent,
+    );
+    if (
+      calculatedProgress !== undefined &&
+      calculatedProgress !== form.values.progress
+    ) {
+      form.setFieldValue("progress", calculatedProgress);
+    }
+  });
+
   const handleTypeChange = (type: MediaType | null) => {
     if (!type) return;
 
@@ -273,8 +307,8 @@ export function MediaForm(props: MediaFormProps) {
     form.setFieldValue("description", undefined);
     form.setFieldValue("metadata", undefined);
     form.setFieldValue("seasonsProgress", []);
+    form.setFieldValue("pagesRead", undefined);
 
-    setCatalogMetadataState(undefined);
     setMediaRecord(null);
     setIsLoadingSeasonInfo(false);
   };
@@ -283,11 +317,30 @@ export function MediaForm(props: MediaFormProps) {
     if (!isAddMode) event.stopPropagation();
   };
 
+  const clearCatalogSelection = () => {
+    form.setFieldValue("description", undefined);
+    form.setFieldValue("metadata", undefined);
+    if (isAddMode) form.setFieldValue("seasonsProgress", []);
+    form.setFieldValue("pagesRead", undefined);
+    setMediaRecord(null);
+  };
+
   const applyCatalogMetadata = (metadata?: CatalogMetadata) => {
     if (!metadata || !Object.keys(metadata).length) return;
 
-    setCatalogMetadataState(metadata);
     form.setFieldValue("metadata", metadata);
+
+    const calculatedProgress = calculateBookProgress(
+      form.values.pagesRead,
+      metadata,
+    );
+    if (
+      form.values.type === "book" &&
+      calculatedProgress !== undefined &&
+      calculatedProgress !== form.values.progress
+    ) {
+      form.setFieldValue("progress", calculatedProgress);
+    }
   };
 
   const handleTitleChange = async (record: SourceMediaRecord | null) => {
@@ -295,7 +348,7 @@ export function MediaForm(props: MediaFormProps) {
     setMediaRecord(record);
     form.setFieldValue("description", undefined);
     form.setFieldValue("metadata", undefined);
-    setCatalogMetadataState(undefined);
+    form.setFieldValue("pagesRead", undefined);
 
     if (isAddMode) form.setFieldValue("seasonsProgress", []);
 
@@ -323,13 +376,9 @@ export function MediaForm(props: MediaFormProps) {
   };
 
   const handleSearchChange = (value: string) => {
-    setMediaRecord((current) => {
-      if (current && current.title !== value) {
-        form.setFieldValue("description", undefined);
-        return null;
-      }
-      return current;
-    });
+    if (mediaRecord && mediaRecord.title !== value) {
+      clearCatalogSelection();
+    }
   };
 
   const saveMutation = useMutation({
@@ -448,6 +497,7 @@ export function MediaForm(props: MediaFormProps) {
               <ProgressTrackingSection
                 dropdowns={props.dropdowns}
                 catalogMetadata={catalogMetadataForTimeSpent}
+                numberOfPages={getBookPageCount(catalogMetadataForTimeSpent)}
                 isLoadingSeasonInfo={isLoadingSeasonInfo}
               />
               <PersonalNotesSection />

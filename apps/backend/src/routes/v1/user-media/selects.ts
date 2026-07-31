@@ -15,7 +15,7 @@ const userMediaTagNames = sql<string[]>`(
   where ${userMediaTags.userMediaId} = ${userMedia.id}
 )`;
 
-const userMediaSourceName = sql<string | null>`(
+export const userMediaSourceName = sql<string | null>`(
   select ${sources.name}
   from ${sources}
   where ${sources.id} = ${userMedia.sourceId}
@@ -57,6 +57,7 @@ export const userMediaDetailedSelect = {
   favorite: userMedia.favorite,
   rewatches: userMedia.rewatches,
   timeSpent: userMedia.timeSpent,
+  pagesRead: userMedia.pagesRead,
   source: userMediaSourceName,
   tags: userMediaTagNames,
   visibility: userMedia.visibility,
@@ -64,33 +65,6 @@ export const userMediaDetailedSelect = {
   seasonsProgress: userMedia.seasonsProgress,
   startedAt: userMedia.startedAt,
   completedAt: userMedia.completedAt,
-  lastProgressUpdate: userMedia.lastProgressUpdate,
-  createdAt: userMedia.createdAt,
-  updatedAt: userMedia.updatedAt,
-};
-
-export const userMediaCreatedSelect = {
-  id: userMedia.id,
-  mediaId: userMedia.mediaId,
-  title: media.title,
-  type: media.type,
-  description: media.description,
-  imageUrl: media.imageUrl,
-  imageFocusX: media.imageFocusX,
-  imageFocusY: media.imageFocusY,
-  status: userMedia.status,
-  rating: userMedia.rating,
-  review: userMedia.review,
-  notes: userMedia.notes,
-  progress: userMedia.progress,
-  favorite: userMedia.favorite,
-  rewatches: userMedia.rewatches,
-  timeSpent: userMedia.timeSpent,
-  source: userMediaSourceName,
-  tags: userMediaTagNames,
-  visibility: userMedia.visibility,
-  customFields: userMedia.customFields,
-  seasonsProgress: userMedia.seasonsProgress,
   lastProgressUpdate: userMedia.lastProgressUpdate,
   createdAt: userMedia.createdAt,
   updatedAt: userMedia.updatedAt,
@@ -165,6 +139,7 @@ export const userMediaExportSelect = {
   favorite: userMedia.favorite,
   rewatches: userMedia.rewatches,
   timeSpent: userMedia.timeSpent,
+  pagesRead: userMedia.pagesRead,
   trackingSource: userMediaSourceName,
   tags: userMediaTagNames,
   visibility: userMedia.visibility,

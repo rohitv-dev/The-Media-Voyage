@@ -21,12 +21,14 @@ import type { CatalogMetadata } from "../../catalogMetadata";
 type ProgressTrackingSectionProps = {
   dropdowns: UserMediaDropdowns;
   catalogMetadata?: CatalogMetadata;
+  numberOfPages?: number;
   isLoadingSeasonInfo?: boolean;
 };
 
 export function ProgressTrackingSection({
   dropdowns,
   catalogMetadata,
+  numberOfPages,
   isLoadingSeasonInfo = false,
 }: ProgressTrackingSectionProps) {
   const form = useFormContext();
@@ -71,18 +73,29 @@ export function ProgressTrackingSection({
               )}
             </SimpleGrid>
 
-            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+            <SimpleGrid
+              cols={{ base: 1, sm: form.values.type === "book" ? 2 : 1 }}
+              spacing="md"
+            >
               <TimeSpentModal catalogMetadata={catalogMetadata} />
 
-              <NumberInput
-                label="Rewatches"
-                placeholder="0"
-                variant="filled"
-                inputMode="numeric"
-                min={0}
-                description="Number of revisits"
-                {...form.getInputProps("rewatches")}
-              />
+              {form.values.type === "book" && (
+                <NumberInput
+                  label="Pages read"
+                  placeholder="0"
+                  variant="filled"
+                  inputMode="numeric"
+                  min={0}
+                  max={numberOfPages}
+                  allowDecimal={false}
+                  description={
+                    numberOfPages
+                      ? `Out of ${numberOfPages.toLocaleString()} pages`
+                      : "Total page count unavailable"
+                  }
+                  {...form.getInputProps("pagesRead")}
+                />
+              )}
             </SimpleGrid>
 
             <Autocomplete

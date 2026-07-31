@@ -1,12 +1,12 @@
 import { media, sources, tags, user, userMedia, userMediaStatusHistory, userMediaTags } from "@media-voyage/shared";
 import type { MediaImageFocus, UserMediaFormSchema, UserMediaQuickAction } from "@media-voyage/shared/api";
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
+import { conflict } from "@/errors";
 import {
   ownedDeletedUserMediaCondition,
   ownedUserMediaCondition,
-  ownedUserMediaIncludingDeletedCondition,
 } from "./queries";
-import { userMediaCreatedSelect, userMediaDetailedSelect } from "./selects";
+import { userMediaDetailedSelect, userMediaSourceName } from "./selects";
 import { db } from "@/db/db";
 
 type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -127,25 +127,6 @@ export async function createUserMedia(userId: string, input: UserMediaFormSchema
   return db.transaction(async (tx) => {
     let mediaId = input.mediaId;
 
-    if (mediaId) {
-      const [existing] = await tx
-        .select({ id: userMedia.id })
-        .from(userMedia)
-        .where(and(eq(userMedia.userId, userId), eq(userMedia.mediaId, mediaId), isNull(userMedia.deletedAt)))
-        .limit(1);
-
-      if (existing) {
-        const [record] = await tx
-          .select(userMediaCreatedSelect)
-          .from(userMedia)
-          .innerJoin(media, eq(userMedia.mediaId, media.id))
-          .where(eq(userMedia.id, existing.id))
-          .limit(1);
-
-        return record;
-      }
-    }
-
     if (!mediaId && externalId && mediaSource) {
       const [existingMedia] = await tx
         .select({
@@ -191,6 +172,28 @@ export async function createUserMedia(userId: string, input: UserMediaFormSchema
       mediaId = createdMedia.id;
     }
 
+    const [existingUserMedia] = await tx
+      .select({ id: userMedia.id, deletedAt: userMedia.deletedAt })
+      .from(userMedia)
+      .where(and(eq(userMedia.userId, userId), eq(userMedia.mediaId, mediaId)))
+      .for("update")
+      .limit(1);
+
+    if (existingUserMedia) {
+      if (existingUserMedia.deletedAt) {
+        throw conflict("This media is in your trash. Restore it before adding it again.");
+      }
+
+      const [record] = await tx
+        .select(userMediaDetailedSelect)
+        .from(userMedia)
+        .innerJoin(media, eq(userMedia.mediaId, media.id))
+        .where(eq(userMedia.id, existingUserMedia.id))
+        .limit(1);
+
+      return record;
+    }
+
     const sourceId = await resolveSourceId(tx, userId, sourceName);
 
     const statusChangedAt = new Date();
@@ -210,6 +213,7 @@ export async function createUserMedia(userId: string, input: UserMediaFormSchema
         favorite: input.favorite,
         rewatches: input.rewatches,
         timeSpent: input.timeSpent,
+        pagesRead: input.pagesRead,
         sourceId: sourceId ?? null,
         visibility: input.visibility ?? (await resolveDefaultVisibility(tx, userId)),
         customFields: input.customFields,
@@ -233,7 +237,7 @@ export async function createUserMedia(userId: string, input: UserMediaFormSchema
     await syncUserMediaTags(tx, userId, createdUserMedia.id, tagNames);
 
     const [record] = await tx
-      .select(userMediaCreatedSelect)
+      .select(userMediaDetailedSelect)
       .from(userMedia)
       .innerJoin(media, eq(userMedia.mediaId, media.id))
       .where(eq(userMedia.id, createdUserMedia.id))
@@ -247,7 +251,6 @@ export async function updateUserMedia(userId: string, id: string, input: UserMed
   const { title: _title, type: _type, mediaId: _mediaId, tags: tagNames, source: sourceName, ...updates } = input;
 
   return db.transaction(async (tx) => {
-    const sourceId = await resolveSourceId(tx, userId, sourceName);
     const [existing] = await tx
       .select({
         progress: userMedia.progress,
@@ -256,11 +259,13 @@ export async function updateUserMedia(userId: string, id: string, input: UserMed
         lastProgressUpdate: userMedia.lastProgressUpdate,
       })
       .from(userMedia)
-      .where(ownedUserMediaIncludingDeletedCondition(userId, id))
+      .where(ownedUserMediaCondition(userId, id))
       .for("update")
       .limit(1);
 
     if (!existing) return null;
+
+    const sourceId = await resolveSourceId(tx, userId, sourceName);
 
     const progressChanged = updates.progress !== undefined && updates.progress !== existing.progress;
     const startedProgress = updates.status === "in_progress" && existing.status !== "in_progress";
@@ -276,7 +281,7 @@ export async function updateUserMedia(userId: string, id: string, input: UserMed
         statusChangedAt: statusChanged ? now : existing.statusChangedAt,
         lastProgressUpdate: progressChanged || startedProgress ? now : existing.lastProgressUpdate,
       })
-      .where(ownedUserMediaIncludingDeletedCondition(userId, id))
+      .where(ownedUserMediaCondition(userId, id))
       .returning({
         id: userMedia.id,
         status: userMedia.status,
@@ -302,7 +307,7 @@ export async function updateUserMedia(userId: string, id: string, input: UserMed
       .select(userMediaDetailedSelect)
       .from(userMedia)
       .innerJoin(media, eq(userMedia.mediaId, media.id))
-      .where(ownedUserMediaIncludingDeletedCondition(userId, updated.id))
+      .where(ownedUserMediaCondition(userId, updated.id))
       .limit(1);
 
     return record ?? null;
@@ -357,11 +362,7 @@ export async function updateUserMediaQuickActions(userId: string, id: string, qu
         progress: userMedia.progress,
         rating: userMedia.rating,
         favorite: userMedia.favorite,
-        source: sql<string | null>`(
-          select ${sources.name}
-          from ${sources}
-          where ${sources.id} = ${userMedia.sourceId}
-        )`,
+        source: userMediaSourceName,
         lastProgressUpdate: userMedia.lastProgressUpdate,
         createdAt: userMedia.createdAt,
         updatedAt: userMedia.updatedAt,

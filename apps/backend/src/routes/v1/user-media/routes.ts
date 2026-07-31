@@ -228,6 +228,7 @@ function toCsvRows(records: Awaited<ReturnType<typeof getUserMediaForExport>>) {
     favorite: record.favorite ? "true" : "false",
     rewatches: record.rewatches ?? "-",
     timeSpent: record.timeSpent ? `${record.timeSpent} hours` : "-",
+    pagesRead: record.pagesRead ?? "-",
     trackingSource: record.trackingSource ?? "",
     tags: (record.tags ?? []).join(", "),
     visibility: record.visibility ?? "private",

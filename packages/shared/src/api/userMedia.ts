@@ -100,6 +100,7 @@ export const mediaDetailedRecordSchema = z.object({
   favorite: userMediaSelectSchema.shape.favorite,
   rewatches: userMediaSelectSchema.shape.rewatches,
   timeSpent: userMediaSelectSchema.shape.timeSpent,
+  pagesRead: userMediaSelectSchema.shape.pagesRead,
   source: z.string().nullable(),
   tags: z.array(z.string()),
   visibility: userMediaSelectSchema.shape.visibility,
@@ -203,6 +204,7 @@ export const userMediaFormSchema = userMediaInsertSchema
     progress: true,
     rewatches: true,
     timeSpent: true,
+    pagesRead: true,
     visibility: true,
     customFields: true,
     seasonsProgress: true,
@@ -225,6 +227,7 @@ export const userMediaFormSchema = userMediaInsertSchema
       mediaSource: z.string().optional(),
       source: z.string().nullable().optional(),
       tags: z.array(z.string()).nullable().optional(),
+      pagesRead: z.number().int().min(0).nullable().optional(),
     }).shape,
   )
   .extend({

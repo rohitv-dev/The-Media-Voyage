@@ -11,7 +11,7 @@ export async function hydrateIgdb(
   const details = await api<IgdbGame | null>(
     `/media/igdb/${record.externalId}`,
   );
-  const metadata: CatalogMetadata = {};
+  const metadata: CatalogMetadata<"game"> = {};
 
   if (details?.genres?.length) {
     metadata.genre = details.genres.map((genre) => genre.name).join(", ");

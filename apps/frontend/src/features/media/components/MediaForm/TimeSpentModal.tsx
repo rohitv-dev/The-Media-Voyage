@@ -32,7 +32,7 @@ type TimeSpentModalProps = {
   catalogMetadata?: CatalogMetadata;
 };
 
-function parseRuntimeMinutes(metadata?: CatalogMetadata) {
+function parseRuntimeMinutes(metadata?: CatalogMetadata<"movie" | "show">) {
   const runtime = metadata?.runtime;
   if (!runtime) return undefined;
 

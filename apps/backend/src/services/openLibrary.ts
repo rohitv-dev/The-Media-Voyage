@@ -65,5 +65,6 @@ export async function searchOpenLibrary(query: string): Promise<SourceMediaRecor
     imageUrl: getOpenLibraryCoverUrl(book.cover_i),
     creators: book.author_name ?? [],
     genres: book.subject ?? [],
+    numberOfPages: book.number_of_pages_median,
   }));
 }

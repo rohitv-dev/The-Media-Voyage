@@ -12,7 +12,7 @@ export async function hydrateOmdb(
     `/media/omdb/${record.externalId}`,
   );
   if (!details) return {};
-  const metadata: CatalogMetadata = {};
+  const metadata: CatalogMetadata<"movie"> = {};
 
   if (details.Genre) {
     metadata.genre = details.Genre;
