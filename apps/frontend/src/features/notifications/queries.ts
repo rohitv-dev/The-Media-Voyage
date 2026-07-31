@@ -39,5 +39,7 @@ export const latestNotificationsQueryOptions = queryOptions({
 export function markAllNotificationsSeen() {
   return api<MarkNotificationsSeenResponse>("/notifications/seen", {
     method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: "{}",
   });
 }
