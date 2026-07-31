@@ -54,6 +54,7 @@
   },
   "devDependencies": {
     "@capacitor/android": "^8.4.2",
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.4.2",
     "@tanstack/devtools-vite": "latest",
     "@tanstack/eslint-config": "latest",
