@@ -67,7 +67,7 @@ const start = async () => {
         port: env.PORT,
         authUrl: env.BETTER_AUTH_URL,
       },
-      "Server started",
+      "Server started (deploy smoke test)",
     );
   } catch (err) {
     fastify.log.error(err);

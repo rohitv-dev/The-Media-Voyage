@@ -227,7 +227,7 @@ function Home() {
           </Text>
 
           <Text size="sm" c="dimmed">
-            © {new Date().getFullYear()} Media Voyage
+            © {new Date().getFullYear()} Media Voyage, Mine
           </Text>
         </Stack>
       </Container>
