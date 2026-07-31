@@ -8,7 +8,10 @@ import viteReact from "@vitejs/plugin-react";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
-  if (mode === "production" && !env.VITE_API_URL.trim()) {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  const apiUrl = env.VITE_API_URL?.trim();
+
+  if (mode === "production" && !apiUrl) {
     throw new Error("VITE_API_URL must be configured for production builds");
   }
 

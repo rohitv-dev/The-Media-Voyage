@@ -16,6 +16,7 @@
     "check": "prettier --check ."
   },
   "dependencies": {
+    "@capacitor/core": "^8.4.2",
     "@fontsource-variable/lora": "^5.3.0",
     "@formkit/auto-animate": "^0.9.0",
     "@hello-pangea/dnd": "^18.0.1",
@@ -52,6 +53,8 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.4.2",
+    "@capacitor/cli": "^8.4.2",
     "@tanstack/devtools-vite": "latest",
     "@tanstack/eslint-config": "latest",
     "@tanstack/eslint-plugin-query": "^5.101.0",

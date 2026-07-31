@@ -56,5 +56,5 @@ export const auth = betterAuth({
       ...(env.AUTH_COOKIE_DOMAIN ? { domain: env.AUTH_COOKIE_DOMAIN } : {}),
     },
   },
-  trustedOrigins: [env.FRONTEND_ORIGIN],
+  trustedOrigins: env.TRUSTED_ORIGINS,
 });

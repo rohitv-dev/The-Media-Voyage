@@ -18,6 +18,9 @@ const environmentSchema = z.object({
     .min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
   BETTER_AUTH_URL: z.url("BETTER_AUTH_URL must be a valid URL"),
   FRONTEND_URL: z.url("FRONTEND_URL must be a valid URL"),
+  MOBILE_FRONTEND_URL: z
+    .url("MOBILE_FRONTEND_URL must be a valid URL")
+    .optional(),
   AUTH_COOKIE_SAME_SITE: z.enum(["lax", "strict", "none"]).default("lax"),
   AUTH_COOKIE_DOMAIN: z.string().min(1).optional(),
   IGDB_CLIENT_ID: z.string().min(1, "IGDB_CLIENT_ID is required"),
@@ -57,6 +60,12 @@ if (!parsedEnvironment.success) {
 const environment = parsedEnvironment.data;
 const betterAuthUrl = new URL(environment.BETTER_AUTH_URL);
 const frontendOrigin = new URL(environment.FRONTEND_URL).origin;
+const mobileFrontendOrigin = environment.MOBILE_FRONTEND_URL
+  ? new URL(environment.MOBILE_FRONTEND_URL).origin
+  : undefined;
+const trustedOrigins = [frontendOrigin, mobileFrontendOrigin].filter(
+  (origin): origin is string => Boolean(origin),
+);
 
 if (environment.NODE_ENV === "production") {
   if (betterAuthUrl.protocol !== "https:") {
@@ -65,6 +74,10 @@ if (environment.NODE_ENV === "production") {
 
   if (!frontendOrigin.startsWith("https://")) {
     throw new Error("FRONTEND_URL must use HTTPS in production");
+  }
+
+  if (mobileFrontendOrigin && !mobileFrontendOrigin.startsWith("https://")) {
+    throw new Error("MOBILE_FRONTEND_URL must use HTTPS in production");
   }
 
   if (!environment.SIGNUP_INVITE_CODE) {
@@ -78,5 +91,6 @@ export const env = {
   ...environment,
   BETTER_AUTH_URL: betterAuthUrl.origin,
   FRONTEND_ORIGIN: frontendOrigin,
+  TRUSTED_ORIGINS: trustedOrigins,
   isProduction: environment.NODE_ENV === "production",
 };

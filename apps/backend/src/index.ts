@@ -12,7 +12,7 @@ const fastify = Fastify({
 fastify.register(compress, { global: true });
 
 fastify.register(cors, {
-  origin: env.FRONTEND_ORIGIN,
+  origin: env.TRUSTED_ORIGINS,
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
 });
