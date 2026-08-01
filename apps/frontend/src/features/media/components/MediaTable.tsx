@@ -145,7 +145,6 @@ export function MediaTable({ data }: MediaTableProps) {
         records={data}
         idAccessor="id"
         minHeight={data.length === 0 ? 180 : undefined}
-        mah={650}
         verticalAlign="center"
         horizontalSpacing="md"
         withTableBorder
@@ -276,7 +275,7 @@ export function MediaTable({ data }: MediaTableProps) {
           }}
         >
           <Text size="xs" c="dimmed">
-            {data.length} {data.length === 1 ? "entry" : "entries"} · Select a
+            {data.length} loaded {data.length === 1 ? "entry" : "entries"} · Select a
             row to view details
           </Text>
         </Box>

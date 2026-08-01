@@ -263,6 +263,51 @@ export const userMediaQuerySchema = z.object({
 
 export type UserMediaQuerySchema = z.infer<typeof userMediaQuerySchema>;
 
+export const userMediaSearchQuerySchema = z.object({
+  search: z.string().trim().min(2),
+});
+
+export type UserMediaSearchQuery = z.infer<
+  typeof userMediaSearchQuerySchema
+>;
+
+export const userMediaSearchRecordSchema = z.object({
+  id: userMediaSelectSchema.shape.id,
+  title: mediaSelectSchema.shape.title,
+  type: mediaSelectSchema.shape.type,
+});
+
+export type UserMediaSearchRecord = z.infer<
+  typeof userMediaSearchRecordSchema
+>;
+
+export const getUserMediaSearchResponseSchema = z.array(
+  userMediaSearchRecordSchema,
+);
+
+export type GetUserMediaSearchResponse = z.infer<
+  typeof getUserMediaSearchResponseSchema
+>;
+
+export const userMediaPageQuerySchema = userMediaQuerySchema.extend({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(24),
+});
+
+export type UserMediaPageQuerySchema = z.infer<
+  typeof userMediaPageQuerySchema
+>;
+
+export const getUserMediaPageResponseSchema = z.object({
+  success: z.literal(true),
+  data: z.array(mediaRecordSchema),
+  nextPage: z.number().int().min(1).nullable(),
+});
+
+export type GetUserMediaPageResponse = z.infer<
+  typeof getUserMediaPageResponseSchema
+>;
+
 export type UserMediaCounts = {
   status: Status;
   count: number;

@@ -14,6 +14,9 @@ export const queryKeys = {
     statusHistory: (id: string) => ["user-media-status-history", id] as const,
     filtered: (filters: UserMediaQuerySchema) =>
       ["user-media", filters] as const,
+    filteredInfinite: (filters: UserMediaQuerySchema) =>
+      ["user-media", "filtered-infinite", filters] as const,
+    search: (search: string) => ["user-media", "search", search] as const,
     trash: ["user-media", "trash"] as const,
     count: ["user-media", "count"] as const,
     dropdowns: ["user-media", "dropdowns"] as const,

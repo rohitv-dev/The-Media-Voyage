@@ -12,6 +12,7 @@ import type {
   CalendarActivityEvent,
   CalendarActivityQuery,
   MediaPickerQuery,
+  UserMediaPageQuerySchema,
   UserMediaQuerySchema,
 } from "@media-voyage/shared/api";
 import type { Status } from "@media-voyage/shared/userMediaSchema";
@@ -162,7 +163,23 @@ export async function pickUserMedia(userId: string, filters: MediaPickerQuery) {
   return record ?? null;
 }
 
-export async function filterUserMedia(userId: string, filters: UserMediaQuerySchema) {
+export function searchUserMedia(userId: string, search: string) {
+  return db
+    .select({
+      id: userMedia.id,
+      title: media.title,
+      type: media.type,
+    })
+    .from(userMedia)
+    .innerJoin(media, eq(userMedia.mediaId, media.id))
+    .where(
+      and(activeUserMediaCondition(userId), ilike(media.title, `%${search}%`)),
+    )
+    .orderBy(asc(media.title), asc(userMedia.id))
+    .limit(20);
+}
+
+function getUserMediaFilterConditions(userId: string, filters: UserMediaQuerySchema) {
   const conditions: SQL[] = [eq(userMedia.userId, userId), isNull(userMedia.deletedAt)];
 
   if (filters.status?.length) {
@@ -196,6 +213,10 @@ export async function filterUserMedia(userId: string, filters: UserMediaQuerySch
     conditions.push(inArray(userMedia.id, userMediaIdsWithTags(userId, filters.tags)));
   }
 
+  return conditions;
+}
+
+function getUserMediaFilterOrder(filters: UserMediaQuerySchema) {
   const sortColumns = {
     createdAt: userMedia.createdAt,
     updatedAt: userMedia.updatedAt,
@@ -204,12 +225,34 @@ export async function filterUserMedia(userId: string, filters: UserMediaQuerySch
   };
   const sortDirection = filters.order === "asc" ? asc : desc;
 
+  return [sortDirection(sortColumns[filters.sort]), sortDirection(userMedia.id)] as const;
+}
+
+export async function filterUserMedia(userId: string, filters: UserMediaQuerySchema) {
   return db
     .select(userMediaSummarySelect)
     .from(userMedia)
     .innerJoin(media, eq(userMedia.mediaId, media.id))
-    .where(and(...conditions))
-    .orderBy(sortDirection(sortColumns[filters.sort]));
+    .where(and(...getUserMediaFilterConditions(userId, filters)))
+    .orderBy(...getUserMediaFilterOrder(filters));
+}
+
+export async function filterUserMediaPage(userId: string, filters: UserMediaPageQuerySchema) {
+  const records = await db
+    .select(userMediaSummarySelect)
+    .from(userMedia)
+    .innerJoin(media, eq(userMedia.mediaId, media.id))
+    .where(and(...getUserMediaFilterConditions(userId, filters)))
+    .orderBy(...getUserMediaFilterOrder(filters))
+    .limit(filters.limit + 1)
+    .offset((filters.page - 1) * filters.limit);
+
+  const hasNextPage = records.length > filters.limit;
+
+  return {
+    data: hasNextPage ? records.slice(0, filters.limit) : records,
+    nextPage: hasNextPage ? filters.page + 1 : null,
+  };
 }
 
 export function listUserMedia(userId: string) {

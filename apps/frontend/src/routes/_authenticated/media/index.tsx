@@ -1,6 +1,6 @@
 import {
   userMediaDropdownOptions,
-  userMediaFilterQueryOptions,
+  userMediaFilterInfiniteQueryOptions,
 } from "#/features/media/queries";
 import {
   Box,
@@ -16,7 +16,7 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { MediaCard } from "#/features/media/components/MediaCard";
@@ -53,11 +53,9 @@ type ViewType = "grid" | "table";
 
 export const Route = createFileRoute("/_authenticated/media/")({
   validateSearch: userMediaQuerySchema,
-  loaderDeps: ({ search }) => search,
-  loader: ({ context: { queryClient }, deps }) => {
+  loader: ({ context: { queryClient } }) => {
     queryClient.ensureQueryData(userMediaDropdownOptions);
     queryClient.ensureQueryData(collectionQueryOptions);
-    queryClient.ensureQueryData(userMediaFilterQueryOptions(deps));
   },
   component: RouteComponent,
 });
@@ -66,10 +64,17 @@ function RouteComponent() {
   const search = Route.useSearch();
   const { data: dropdowns } = useQuery(userMediaDropdownOptions);
   const { data: collections } = useQuery(collectionQueryOptions);
-  const { data, isFetching, isError, error } = useQuery({
-    ...userMediaFilterQueryOptions(search),
-    placeholderData: keepPreviousData,
-  });
+  const {
+    data,
+    isFetching,
+    isPending,
+    isError,
+    error,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+    isFetchNextPageError,
+  } = useInfiniteQuery(userMediaFilterInfiniteQueryOptions(search));
   const navigate = useNavigate();
   const reduceMotion = useAppReducedMotion();
   const isMdDown = useMediaQuery("(max-width: 47.99em)");
@@ -85,6 +90,9 @@ function RouteComponent() {
   const [filters, setFilters] = useState<UserMediaQuerySchema>(search);
   const { presets, savePreset, deletePreset } = useFilterPresets();
   const skipNextSearchSyncRef = useRef(false);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const records = data?.pages.flatMap((page) => page.data) ?? [];
+  const isInitialLoading = isPending && !data;
 
   const hasAppliedFilters = Boolean(
     search.search ||
@@ -152,6 +160,32 @@ function RouteComponent() {
   }, [isMdDown, view, setView]);
 
   useEffect(() => {
+    const sentinel = loadMoreRef.current;
+
+    if (
+      !sentinel ||
+      !hasNextPage ||
+      isFetchingNextPage ||
+      isFetchNextPageError
+    ) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          void fetchNextPage();
+        }
+      },
+      { rootMargin: "160px 0px" },
+    );
+
+    observer.observe(sentinel);
+
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isFetchNextPageError, isFetchingNextPage]);
+
+  useEffect(() => {
     if (skipNextSearchSyncRef.current) {
       skipNextSearchSyncRef.current = false;
       return;
@@ -166,7 +200,7 @@ function RouteComponent() {
           <Stack gap={2}>
             <Group gap="xs">
               <Title order={2}>Library</Title>
-              {isFetching && <Loader size="xs" />}
+              {isFetching && !isFetchingNextPage && <Loader size="xs" />}
             </Group>
             <Text c="dimmed" size="sm">
               Select an entry to view the full details, or use the action button
@@ -237,7 +271,7 @@ function RouteComponent() {
 
         <Flex gap="sm">
           <Box flex="1">
-            {isFetching && !data ? (
+            {isInitialLoading ? (
               <SimpleGrid
                 spacing={{ base: "sm", md: "md" }}
                 cols={{
@@ -251,7 +285,7 @@ function RouteComponent() {
                   <MediaCardSkeleton key={index} />
                 ))}
               </SimpleGrid>
-            ) : !isFetching && data?.data.length === 0 ? (
+            ) : !isFetching && data && records.length === 0 ? (
               <EmptyState
                 icon={<IconMovie size={36} />}
                 title={
@@ -285,7 +319,7 @@ function RouteComponent() {
                 </Button>
               </EmptyState>
             ) : view === "table" ? (
-              <MediaTable data={data?.data ?? []} />
+              <MediaTable data={records} />
             ) : (
               <SimpleGrid
                 spacing={{ base: "sm", md: "md" }}
@@ -297,7 +331,7 @@ function RouteComponent() {
                 }}
               >
                 <AnimatePresence mode="popLayout">
-                  {data?.data.map((record) => (
+                  {records.map((record) => (
                     <motion.div
                       key={record.id}
                       {...gridItemMotionProps(reduceMotion)}
@@ -322,6 +356,35 @@ function RouteComponent() {
                   ))}
                 </AnimatePresence>
               </SimpleGrid>
+            )}
+
+            <Box ref={loadMoreRef} h={1} aria-hidden="true" />
+
+            {(isFetchingNextPage || isFetchNextPageError) && (
+              <Stack align="center" gap="xs" mt="md">
+                {isFetchingNextPage && (
+                  <Group gap="xs">
+                    <Loader size="xs" />
+                    <Text size="sm" c="dimmed">
+                      Loading more entries...
+                    </Text>
+                  </Group>
+                )}
+                {isFetchNextPageError && (
+                  <Group gap="xs">
+                    <Text size="sm" c="dimmed">
+                      Could not load more entries.
+                    </Text>
+                    <Button
+                      size="xs"
+                      variant="subtle"
+                      onClick={() => void fetchNextPage()}
+                    >
+                      Retry
+                    </Button>
+                  </Group>
+                )}
+              </Stack>
             )}
           </Box>
 

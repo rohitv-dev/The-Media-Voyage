@@ -5,6 +5,7 @@ import * as schema from "@media-voyage/shared/schema";
 import { db } from "./db/db";
 import { env } from "./config";
 
+const oneHour = 60 * 60;
 const oneDay = 60 * 60 * 24;
 
 export const auth = betterAuth({
@@ -29,6 +30,10 @@ export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
   secret: env.BETTER_AUTH_SECRET,
   session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: oneHour,
+    },
     expiresIn: oneDay * 30,
     updateAge: oneDay,
   },

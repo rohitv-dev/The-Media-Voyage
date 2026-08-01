@@ -6,13 +6,16 @@ import {
   mediaImageFocusSchema,
   userMediaFormSchema,
   userMediaIdParamsSchema,
+  userMediaPageQuerySchema,
   userMediaQuerySchema,
   userMediaQuickActionSchema,
+  userMediaSearchQuerySchema,
 } from "@media-voyage/shared/api";
 import { internalServerError } from "@/errors";
 import { requireAuth } from "@/require-auth";
 import {
   filterUserMedia,
+  filterUserMediaPage,
   findUserMediaById,
   getCalendarActivity,
   getDashboardStats,
@@ -23,6 +26,7 @@ import {
   listDeletedUserMedia,
   listUserMedia,
   pickUserMedia,
+  searchUserMedia,
 } from "./queries";
 import {
   createUserMedia,
@@ -42,6 +46,13 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     const record = await createUserMedia(request.userId, input);
 
     return reply.status(201).send(record);
+  });
+
+  fastify.get("/search", async (request, reply) => {
+    const { search } = userMediaSearchQuerySchema.parse(request.query);
+    const records = await searchUserMedia(request.userId, search);
+
+    return reply.send(records);
   });
 
   fastify.get("/:id", async (request, reply) => {
@@ -160,6 +171,16 @@ async function userMediaRoutes(fastify: FastifyInstance) {
       success: true,
       count: records.length,
       data: records,
+    });
+  });
+
+  fastify.get("/filter/page", async (request, reply) => {
+    const filters = userMediaPageQuerySchema.parse(request.query);
+    const result = await filterUserMediaPage(request.userId, filters);
+
+    return reply.send({
+      success: true,
+      ...result,
     });
   });
 

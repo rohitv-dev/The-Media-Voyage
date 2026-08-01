@@ -1,5 +1,6 @@
 import { api, getApiErrorMessage } from "#/lib/api";
 import { queryKeys } from "#/lib/queryKeys";
+import { userMediaSearchQueryOptions } from "#/features/media/queries";
 import {
   ActionIcon,
   Badge,
@@ -15,12 +16,12 @@ import {
 } from "@mantine/core";
 import type {
   MediaCollectionItemRecord,
-  MediaRecord,
 } from "@media-voyage/shared/api";
 import { IconPlus, IconX, IconGripVertical } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useDebouncedValue } from "@mantine/hooks";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import type { DropResult } from "@hello-pangea/dnd";
 import { confirmDelete } from "#/lib/confirmModal";
@@ -33,10 +34,6 @@ import {
   showErrorNotification,
   showSuccessNotification,
 } from "#/lib/notifications";
-
-type CollectionItemsEditorProps = {
-  data: MediaRecord[];
-};
 
 function containerVariants(reduceMotion: boolean): Variants {
   if (reduceMotion) {
@@ -81,11 +78,13 @@ function listItemVariants(reduceMotion: boolean): Variants {
   };
 }
 
-export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
+export function CollectionItemsEditor() {
   const { id: collectionId } = useParams({
     from: "/_authenticated/collection/edit/$id",
   });
   const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
+  const [mediaSearch, setMediaSearch] = useState("");
+  const [debouncedMediaSearch] = useDebouncedValue(mediaSearch, 300);
   const [orderedItems, setOrderedItems] = useState<MediaCollectionItemRecord[]>(
     [],
   );
@@ -98,6 +97,11 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
     queryFn: () =>
       api<MediaCollectionItemRecord[]>(`/collectionItem/${collectionId}`),
   });
+  const {
+    data: searchResults = [],
+    isFetching: isSearchingMedia,
+    isError: isMediaSearchError,
+  } = useQuery(userMediaSearchQueryOptions(debouncedMediaSearch));
 
   useEffect(() => {
     setOrderedItems(collectionItems);
@@ -108,13 +112,39 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
       collectionItems.map((item) => item.userMediaId),
     );
 
-    return props.data
+    return searchResults
       .filter((entry) => !includedIds.has(entry.id))
       .map((entry) => ({
         value: entry.id,
         label: `${entry.title} (${capitalizeWords(entry.type)})`,
       }));
-  }, [collectionItems, props.data]);
+  }, [collectionItems, searchResults]);
+
+  const trimmedMediaSearch = mediaSearch.trim();
+  const isMediaSearchSettled =
+    debouncedMediaSearch.trim() === trimmedMediaSearch;
+  const isMediaSearchLoading =
+    trimmedMediaSearch.length >= 2 &&
+    (!isMediaSearchSettled || isSearchingMedia);
+  let searchEmptyMessage: string | undefined;
+
+  switch (true) {
+    case trimmedMediaSearch.length < 2:
+      searchEmptyMessage = "Type at least 2 characters to search";
+      break;
+    case isMediaSearchLoading:
+      searchEmptyMessage = "Searching your library...";
+      break;
+    case isMediaSearchError:
+      searchEmptyMessage = "Search failed";
+      break;
+    case searchResults.length === 0:
+      searchEmptyMessage = "No matches found";
+      break;
+    case availableMediaOptions.length === 0:
+      searchEmptyMessage = "All matching media is already included";
+      break;
+  }
 
   const addMutation = useMutation({
     mutationFn: async (userMediaId: string) =>
@@ -240,12 +270,17 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
               <Group align="end" grow>
                 <Select
                   label="Add media"
-                  placeholder={"Select an item to add"}
+                  placeholder="Type to search your library"
                   data={availableMediaOptions}
                   value={selectedMediaId}
                   onChange={setSelectedMediaId}
                   searchable
-                  disabled={availableMediaOptions.length === 0}
+                  searchValue={mediaSearch}
+                  onSearchChange={(value) => {
+                    setMediaSearch(value);
+                    setSelectedMediaId(null);
+                  }}
+                  nothingFoundMessage={searchEmptyMessage}
                 />
                 <Button
                   leftSection={<IconPlus size={16} />}
@@ -256,11 +291,6 @@ export function CollectionItemsEditor(props: CollectionItemsEditorProps) {
                 </Button>
               </Group>
 
-              {availableMediaOptions.length === 0 && (
-                <Text size="sm" c="dimmed">
-                  All of your media is already included in this collection.
-                </Text>
-              )}
             </Stack>
           </Card>
         </motion.div>

@@ -1,6 +1,6 @@
 import { api } from "#/lib/api";
 import { queryKeys } from "#/lib/queryKeys";
-import { queryOptions } from "@tanstack/react-query";
+import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import type {
   CalendarActivityResponse,
@@ -8,6 +8,8 @@ import type {
   UserMediaCounts,
   GetTrashedUserMediaResponse,
   GetUserMediaResponse,
+  GetUserMediaPageResponse,
+  GetUserMediaSearchResponse,
   MediaDetailedRecord,
   ReactionRecord,
   StatusHistoryRecord,
@@ -83,6 +85,49 @@ export function userMediaFilterQueryOptions(filters: UserMediaQuerySchema) {
   return queryOptions({
     queryKey: queryKeys.userMedia.filtered(filters),
     queryFn: () => getUserMediaFilterRecords(filters),
+  });
+}
+
+const USER_MEDIA_PAGE_SIZE = 24;
+
+async function getUserMediaFilterPageRecords(
+  filters: UserMediaQuerySchema,
+  page: number,
+) {
+  return api<GetUserMediaPageResponse>(
+    `/user-media/filter/page${buildFilterQuery({
+      ...filters,
+      page,
+      limit: USER_MEDIA_PAGE_SIZE,
+    })}`,
+  );
+}
+
+export function userMediaFilterInfiniteQueryOptions(
+  filters: UserMediaQuerySchema,
+) {
+  return infiniteQueryOptions({
+    queryKey: queryKeys.userMedia.filteredInfinite(filters),
+    queryFn: ({ pageParam }) =>
+      getUserMediaFilterPageRecords(filters, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+  });
+}
+
+async function getUserMediaSearchRecords(search: string) {
+  return api<GetUserMediaSearchResponse>(
+    `/user-media/search?search=${encodeURIComponent(search)}`,
+  );
+}
+
+export function userMediaSearchQueryOptions(search: string) {
+  const normalizedSearch = search.trim();
+
+  return queryOptions({
+    queryKey: queryKeys.userMedia.search(normalizedSearch),
+    queryFn: () => getUserMediaSearchRecords(normalizedSearch),
+    enabled: normalizedSearch.length >= 2,
   });
 }
 
