@@ -135,7 +135,13 @@ function SidebarNavLink({
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ context: { queryClient } }) => {
-    const session = await queryClient.ensureQueryData(sessionQueryOptions);
+    const cachedSession = queryClient.getQueryData(sessionQueryKey);
+    // A temporary empty session result must not stay cached indefinitely after
+    // the backend recovers. Valid sessions retain the global infinite cache.
+    const session =
+      cachedSession === null
+        ? await queryClient.fetchQuery({ ...sessionQueryOptions, staleTime: 0 })
+        : await queryClient.ensureQueryData(sessionQueryOptions);
 
     if (!session) {
       throw redirect({ to: "/auth/login" });

@@ -26,6 +26,17 @@ const authRuntimeFingerprint = {
   database: fingerprint(env.DATABASE_URL),
 };
 
+async function responseHasSession(response: Response) {
+  const body: unknown = await response.clone().json().catch(() => null);
+
+  return (
+    typeof body === "object" &&
+    body !== null &&
+    "session" in body &&
+    body.session !== null
+  );
+}
+
 function isSensitiveAuthPath(url: string) {
   return SENSITIVE_AUTH_PATHS.some((path) => url.startsWith(path));
 }
@@ -58,6 +69,9 @@ async function authRoutes(fastify: FastifyInstance) {
         });
         // Process authentication request
         const response = await auth.handler(req);
+        const authSessionPresent = isSessionCheck
+          ? await responseHasSession(response)
+          : undefined;
 
         if (isSessionCheck) {
           request.log.info(
@@ -66,6 +80,7 @@ async function authRoutes(fastify: FastifyInstance) {
               authSessionCookiePresent: SESSION_COOKIE_PATTERN.test(
                 request.headers.cookie ?? "",
               ),
+              authSessionPresent,
               origin: request.headers.origin,
               requestHost: request.headers.host,
               forwardedHost: request.headers["x-forwarded-host"],
