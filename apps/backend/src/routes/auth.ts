@@ -1,17 +1,9 @@
 import { createHash } from "node:crypto";
 import { fromNodeHeaders } from "better-auth/node";
-import { FastifyInstance, FastifyRequest } from "fastify";
+import { FastifyInstance } from "fastify";
 import { auth } from "../auth";
 import { env } from "../config";
 import { internalServerError } from "../errors";
-
-// Only credential-guessing endpoints need a tight limit. Session checks
-const SENSITIVE_AUTH_PATHS = [
-  "/api/auth/sign-in",
-  "/api/auth/sign-up",
-  "/api/auth/forget-password",
-  "/api/auth/reset-password",
-];
 
 const SESSION_CHECK_PATH = "/api/auth/get-session";
 const SESSION_COOKIE_PATTERN =
@@ -37,22 +29,10 @@ async function responseHasSession(response: Response) {
   );
 }
 
-function isSensitiveAuthPath(url: string) {
-  return SENSITIVE_AUTH_PATHS.some((path) => url.startsWith(path));
-}
-
 async function authRoutes(fastify: FastifyInstance) {
   fastify.route({
     method: ["GET", "POST"],
     url: "/api/auth/*",
-    config: {
-      rateLimit: {
-        keyGenerator: (request: FastifyRequest) =>
-          `${request.ip}:${isSensitiveAuthPath(request.url) ? "auth-sensitive" : "auth-routine"}`,
-        max: (request: FastifyRequest) => (isSensitiveAuthPath(request.url) ? 5 : 100),
-        timeWindow: "1 minute",
-      },
-    },
     async handler(request, reply) {
       try {
         const isSessionCheck = request.url.split("?", 1)[0] === SESSION_CHECK_PATH;
