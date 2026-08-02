@@ -18,12 +18,15 @@ import {
   Stack,
   Switch,
   Text,
+  TextInput,
   Title,
 } from "@mantine/core";
+import { schemaResolver, useForm } from "@mantine/form";
 import { modals } from "@mantine/modals";
 import { IconDownload, IconExternalLink, IconUsers } from "@tabler/icons-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { z } from "zod";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   component: RouteComponent,
@@ -37,8 +40,50 @@ function RouteComponent() {
 
   const [exporting, setExporting] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [changingEmail, setChangingEmail] = useState(false);
+  const [updatedEmail, setUpdatedEmail] = useState<string | null>(null);
+
+  const emailForm = useForm({
+    mode: "controlled",
+    initialValues: { email: "" },
+    validate: schemaResolver(
+      z.object({
+        email: z.email("Please enter a valid email address"),
+      }),
+    ),
+  });
 
   const defaultVisibility = data?.user.defaultVisibility ?? "private";
+  const currentEmail = updatedEmail ?? data?.user.email ?? "";
+
+  const handleChangeEmail = async ({ email }: typeof emailForm.values) => {
+    const newEmail = email.trim().toLowerCase();
+
+    if (newEmail === currentEmail.toLowerCase()) {
+      emailForm.setFieldError("email", "Enter a different email address");
+      return;
+    }
+
+    setChangingEmail(true);
+
+    try {
+      await authClient.changeEmail({
+        newEmail,
+        callbackURL: "/settings",
+      });
+      setUpdatedEmail(newEmail);
+      emailForm.reset();
+      showSuccessNotification({
+        message: "Your email address has been updated.",
+      });
+    } catch (error) {
+      showErrorNotification({
+        message: getApiErrorMessage(error, "Could not change your email"),
+      });
+    } finally {
+      setChangingEmail(false);
+    }
+  };
 
   const handleDefaultVisibility = async (value: string) => {
     // The control's value comes from the async session, so a remount can fire
@@ -159,6 +204,40 @@ function RouteComponent() {
               aria-label="Reduce motion"
             />
           </SettingRow>
+        </SettingsSection>
+
+        <SettingsSection
+          title="Account"
+          description="Update the email address you use to sign in."
+        >
+          <Stack
+            component="form"
+            gap="sm"
+            onSubmit={emailForm.onSubmit(handleChangeEmail)}
+          >
+            <Text size="sm" c="dimmed">
+              Current email: {currentEmail}
+            </Text>
+            <TextInput
+              label="New email address"
+              placeholder="you@example.com"
+              type="email"
+              {...emailForm.getInputProps("email")}
+            />
+            <Button
+              type="submit"
+              variant="light"
+              loading={changingEmail}
+              disabled={!emailForm.values.email.trim()}
+              w="fit-content"
+            >
+              Change email
+            </Button>
+            <Text size="xs" c="dimmed">
+              Email verification is not enabled yet, so this change takes
+              effect immediately.
+            </Text>
+          </Stack>
         </SettingsSection>
 
         <SettingsSection

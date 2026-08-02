@@ -1,10 +1,17 @@
 import { mediaDetailsParamsSchema, mediaSearchQuerySchema } from "@media-voyage/shared/api";
-import type { FastifyInstance } from "fastify";
+import type { FastifyContextConfig, FastifyInstance } from "fastify";
 import { getGameDetails } from "@/services/igdb";
 import { getOmdbDetails } from "@/services/omdb";
 import { getTvMazeDetails } from "@/services/tvMaze";
 import { requireAuth } from "@/require-auth";
 import { searchMedia } from "./service";
+
+const config: FastifyContextConfig = {
+  rateLimit: {
+    max: 20,
+    timeWindow: "1 minute",
+  },
+};
 
 async function mediaRoutes(fastify: FastifyInstance) {
   fastify.addHook("preHandler", requireAuth);
@@ -12,12 +19,7 @@ async function mediaRoutes(fastify: FastifyInstance) {
   fastify.get(
     "/search",
     {
-      config: {
-        rateLimit: {
-          max: 20,
-          timeWindow: "1 minute",
-        },
-      },
+      config,
     },
     async (request, reply) => {
       const query = mediaSearchQuerySchema.parse(request.query);
@@ -28,12 +30,7 @@ async function mediaRoutes(fastify: FastifyInstance) {
   fastify.get(
     "/omdb/:id",
     {
-      config: {
-        rateLimit: {
-          max: 20,
-          timeWindow: "1 minute",
-        },
-      },
+      config,
     },
     async (request, reply) => {
       const { id } = mediaDetailsParamsSchema.parse(request.params);
@@ -44,12 +41,7 @@ async function mediaRoutes(fastify: FastifyInstance) {
   fastify.get(
     "/igdb/:id",
     {
-      config: {
-        rateLimit: {
-          max: 20,
-          timeWindow: "1 minute",
-        },
-      },
+      config,
     },
     async (request, reply) => {
       const { id } = mediaDetailsParamsSchema.parse(request.params);
@@ -60,12 +52,7 @@ async function mediaRoutes(fastify: FastifyInstance) {
   fastify.get(
     "/tvmaze/:id",
     {
-      config: {
-        rateLimit: {
-          max: 20,
-          timeWindow: "1 minute",
-        },
-      },
+      config,
     },
     async (request, reply) => {
       const { id } = mediaDetailsParamsSchema.parse(request.params);

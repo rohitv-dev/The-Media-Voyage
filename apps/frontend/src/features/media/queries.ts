@@ -4,7 +4,6 @@ import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import type {
   CalendarActivityResponse,
-  DashboardStatsResponse,
   UserMediaCounts,
   GetTrashedUserMediaResponse,
   GetUserMediaResponse,
@@ -166,17 +165,6 @@ export const continueMediaFilters: UserMediaQuerySchema = {
 
 export const continueMediaQueryOptions =
   userMediaFilterQueryOptions(continueMediaFilters);
-
-// -- Dashboard ----------------------------------------------------------------
-
-export function getDashboardStats() {
-  return api<DashboardStatsResponse>("/user-media/dashboard/stats");
-}
-
-export const dashboardStatOptions = queryOptions({
-  queryKey: queryKeys.dashboardStats,
-  queryFn: getDashboardStats,
-});
 
 // -- Calendar -----------------------------------------------------------------
 

@@ -17,6 +17,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { useState } from "react";
 import { useFormContext } from "./context";
 import type { CatalogMetadata } from "../../catalogMetadata";
+import { formatDuration } from "../../formatDuration";
 
 type DurationParts = {
   hours: number;
@@ -99,13 +100,6 @@ function durationPartsToMinutes(parts: DurationParts) {
     Math.max(0, Math.trunc(parts.hours)) * 60 +
     Math.max(0, Math.trunc(parts.minutes))
   );
-}
-
-export function formatDuration(totalMinutes: number) {
-  const { hours, minutes } = minutesToDurationParts(totalMinutes);
-  if (hours === 0) return `${minutes} min`;
-  if (minutes === 0) return `${hours} hr`;
-  return `${hours} hr ${minutes} min`;
 }
 
 function numberInputValue(value: string | number) {

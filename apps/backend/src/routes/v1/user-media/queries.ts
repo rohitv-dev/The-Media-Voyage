@@ -285,8 +285,15 @@ export async function getUserMediaDropdowns(userId: string) {
 }
 
 export async function getDashboardStats(userId: string) {
-  const [totalMedia, collections, statusDistribution, mediaTypeDistribution, ratingDistribution, completionTrend] =
-    await Promise.all([
+  const [
+    totalMedia,
+    collections,
+    statusDistribution,
+    mediaTypeDistribution,
+    ratingDistribution,
+    completionTrend,
+    timeSpentByType,
+  ] = await Promise.all([
       db.select({ count: count() }).from(userMedia).where(activeUserMediaCondition(userId)),
       db.select({ count: count() }).from(mediaCollection).where(eq(mediaCollection.userId, userId)),
       db
@@ -317,7 +324,24 @@ export async function getDashboardStats(userId: string) {
         )
         .groupBy(sql`date_trunc('month', ${userMedia.completedAt})`)
         .orderBy(sql`date_trunc('month', ${userMedia.completedAt})`),
+      db
+        .select({
+          type: media.type,
+          minutes: sql<number>`coalesce(sum(${userMedia.timeSpent}), 0)::int`,
+        })
+        .from(userMedia)
+        .innerJoin(media, eq(media.id, userMedia.mediaId))
+        .where(
+          and(activeUserMediaCondition(userId), isNotNull(userMedia.timeSpent)),
+        )
+        .groupBy(media.type)
+        .orderBy(media.type),
     ]);
+
+  const normalizedTimeSpentByType = timeSpentByType.map((row) => ({
+    type: row.type,
+    minutes: Number(row.minutes) || 0,
+  }));
 
   const statusCounts = Object.fromEntries(statusDistribution.map((row) => [row.status, row.count])) as Partial<
     Record<Status, number>
@@ -338,6 +362,13 @@ export async function getDashboardStats(userId: string) {
     mediaTypeDistribution,
     ratingDistribution,
     completionTrend,
+    timeSpent: {
+      totalMinutes: normalizedTimeSpentByType.reduce(
+        (total, row) => total + row.minutes,
+        0,
+      ),
+      byType: normalizedTimeSpentByType,
+    },
   };
 }
 

@@ -17,6 +17,12 @@ export const auth = betterAuth({
     enabled: true,
   },
   user: {
+    changeEmail: {
+      enabled: true,
+      // Email verification is not configured yet, so allow unverified users
+      // to update their address immediately.
+      updateEmailWithoutVerification: true,
+    },
     additionalFields: {
       // Visibility applied to newly created library entries. Surfaced in the
       // session so the profile screen can read and update it directly.

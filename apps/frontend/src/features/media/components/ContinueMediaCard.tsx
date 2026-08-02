@@ -1,5 +1,4 @@
 import {
-  AspectRatio,
   Badge,
   Box,
   Card,
@@ -27,7 +26,6 @@ export function ContinueMediaCard({ media, onView }: ContinueMediaCardProps) {
   const reduceMotion = useAppReducedMotion();
   const [showCoverArt] = useCoverArtPreference();
   const hasImage = !!media.imageUrl && media.imageUrl !== "N/A";
-  const hasCoverArt = showCoverArt;
   const progress = media.progress ?? 0;
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -43,7 +41,7 @@ export function ContinueMediaCard({ media, onView }: ContinueMediaCardProps) {
     <Card
       component={motion.div}
       withBorder
-      p="sm"
+      p="xs"
       role="link"
       tabIndex={0}
       aria-label={`Resume ${media.title}`}
@@ -57,13 +55,22 @@ export function ContinueMediaCard({ media, onView }: ContinueMediaCardProps) {
       onKeyDown={handleKeyDown}
       style={{ cursor: "pointer" }}
     >
-      {hasCoverArt && (
-        <Card.Section>
-          <AspectRatio ratio={2 / 3}>
+      <Group gap="sm" wrap="nowrap" align="stretch">
+        {showCoverArt && (
+          <Box
+            h={64}
+            w={48}
+            style={{
+              borderRadius: "var(--mantine-radius-sm)",
+              overflow: "hidden",
+            }}
+          >
             {hasImage ? (
               <Image
                 src={media.imageUrl}
                 alt=""
+                h={64}
+                w={48}
                 fit="cover"
                 style={{
                   objectPosition: getImageObjectPosition("full", media),
@@ -71,6 +78,8 @@ export function ContinueMediaCard({ media, onView }: ContinueMediaCardProps) {
               />
             ) : (
               <Box
+                h={64}
+                w={48}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -79,7 +88,7 @@ export function ContinueMediaCard({ media, onView }: ContinueMediaCardProps) {
                 }}
               >
                 <IconPhotoOff
-                  size={24}
+                  size={20}
                   style={{
                     color: "var(--mantine-color-accent-6)",
                     opacity: 0.6,
@@ -87,30 +96,36 @@ export function ContinueMediaCard({ media, onView }: ContinueMediaCardProps) {
                 />
               </Box>
             )}
-          </AspectRatio>
-        </Card.Section>
-      )}
+          </Box>
+        )}
 
-      <Stack gap={8} mt={hasCoverArt ? "sm" : 0}>
-        <Stack gap={6}>
-          <Group gap="xs">
+        <Stack
+          gap={6}
+          style={{ flex: 1, justifyContent: "space-between", minWidth: 0 }}
+        >
+          <Group gap="xs" wrap="nowrap">
             {getTypeIcon(media.type)}
             <Text fw={600} size="sm" lineClamp={1} style={{ flex: 1 }}>
               {media.title}
             </Text>
           </Group>
-          <Badge size="xs" color={getStatusColor(media.status)} variant="light">
-            {media.status.replaceAll("_", " ")}
-          </Badge>
-        </Stack>
 
-        <Group gap="xs" wrap="nowrap">
-          <Progress value={progress} flex={1} size="sm" />
-          <Text size="xs" c="dimmed" w={30} ta="right">
-            {progress}%
-          </Text>
-        </Group>
-      </Stack>
+          <Group gap="xs" wrap="nowrap" justify="space-between">
+            <Badge
+              size="xs"
+              color={getStatusColor(media.status)}
+              variant="light"
+            >
+              {media.status.replaceAll("_", " ")}
+            </Badge>
+            <Text size="xs" c="dimmed">
+              {progress}%
+            </Text>
+          </Group>
+
+          <Progress value={progress} size="sm" />
+        </Stack>
+      </Group>
     </Card>
   );
 }

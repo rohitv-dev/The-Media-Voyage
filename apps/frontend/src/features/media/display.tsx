@@ -24,6 +24,19 @@ export function getStatusColor(status: Status) {
   }
 }
 
+export function getTypeColor(type: MediaRecord["type"]) {
+  switch (type) {
+    case "movie":
+      return "pink";
+    case "show":
+      return "cyan";
+    case "game":
+      return "teal";
+    case "book":
+      return "indigo";
+  }
+}
+
 export function getTypeIcon(type: MediaRecord["type"]) {
   switch (type) {
     case "movie":

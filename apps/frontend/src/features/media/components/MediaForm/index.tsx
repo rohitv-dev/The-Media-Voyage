@@ -33,7 +33,8 @@ import { MediaDetailsSection } from "./MediaDetailsSection";
 import { PersonalNotesSection } from "./PersonalNotesSection";
 import { ProgressTrackingSection } from "./ProgressTrackingSection";
 import { StatusDetailsSection } from "./StatusDetailsSection";
-import { formatDuration, getEstimatedTimeSpentMinutes } from "./TimeSpentModal";
+import { getEstimatedTimeSpentMinutes } from "./TimeSpentModal";
+import { formatDuration } from "../../formatDuration";
 import { hydrateMediaRecord } from "../../providers/hydrateMedia";
 
 const addInitialValues: UserMediaFormSchema = {

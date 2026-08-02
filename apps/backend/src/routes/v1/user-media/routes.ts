@@ -11,8 +11,9 @@ import {
   userMediaQuickActionSchema,
   userMediaSearchQuerySchema,
 } from "@media-voyage/shared/api";
-import { internalServerError } from "@/errors";
+import { internalServerError, notFound } from "@/errors";
 import { requireAuth } from "@/require-auth";
+import { toCsvRows } from "./csv";
 import {
   filterUserMedia,
   filterUserMediaPage,
@@ -59,9 +60,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     const { id } = userMediaIdParamsSchema.parse(request.params);
     const record = await findUserMediaById(request.userId, id);
 
-    if (!record) {
-      return reply.status(404).send({ error: "User media not found" });
-    }
+    if (!record) throw notFound("User media not found");
 
     return reply.send(record);
   });
@@ -71,9 +70,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     const input = userMediaFormSchema.parse(request.body);
     const record = await updateUserMedia(request.userId, id, input);
 
-    if (!record) {
-      return reply.status(404).send({ error: "User media not found or not updated" });
-    }
+    if (!record) throw notFound("User media not found or not updated");
 
     return reply.send(record);
   });
@@ -82,9 +79,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     const { id } = userMediaIdParamsSchema.parse(request.params);
     const record = await deleteUserMedia(request.userId, id);
 
-    if (!record) {
-      return reply.status(404).send({ error: "User media not found" });
-    }
+    if (!record) throw notFound("User media not found");
 
     return reply.send({ success: true });
   });
@@ -103,9 +98,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     const { id } = userMediaIdParamsSchema.parse(request.params);
     const record = await restoreUserMedia(request.userId, id);
 
-    if (!record) {
-      return reply.status(404).send({ error: "Deleted user media not found" });
-    }
+    if (!record) throw notFound("Deleted user media not found");
 
     return reply.send({ success: true });
   });
@@ -114,9 +107,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     const { id } = userMediaIdParamsSchema.parse(request.params);
     const record = await permanentlyDeleteUserMedia(request.userId, id);
 
-    if (!record) {
-      return reply.status(404).send({ error: "Deleted user media not found" });
-    }
+    if (!record) throw notFound("Deleted user media not found");
 
     return reply.send({ success: true });
   });
@@ -126,9 +117,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     const input = userMediaQuickActionSchema.parse(request.body);
     const record = await updateUserMediaQuickActions(request.userId, id, input);
 
-    if (!record) {
-      return reply.status(404).send({ error: "User media not found" });
-    }
+    if (!record) throw notFound("User media not found or quick actions not updated");
 
     return reply.send(record);
   });
@@ -138,9 +127,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     const input = mediaImageFocusSchema.parse(request.body);
     const record = await updateUserMediaImageFocus(request.userId, id, input);
 
-    if (!record) {
-      return reply.status(404).send({ error: "User media not found" });
-    }
+    if (!record) throw notFound("User media not found or image focus not updated");
 
     return reply.send(record);
   });
@@ -149,9 +136,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     const { id } = userMediaIdParamsSchema.parse(request.params);
     const history = await getUserMediaStatusHistory(request.userId, id);
 
-    if (!history) {
-      return reply.status(404).send({ error: "User media not found" });
-    }
+    if (!history) throw notFound("User media not found");
 
     return reply.send(history);
   });
@@ -227,40 +212,6 @@ async function userMediaRoutes(fastify: FastifyInstance) {
 
     return reply.send(csv);
   });
-}
-
-function toCsvRows(records: Awaited<ReturnType<typeof getUserMediaForExport>>) {
-  return records.map((record) => ({
-    id: record.id,
-    mediaId: record.mediaId,
-    title: record.title ?? "",
-    originalTitle: record.originalTitle ?? "",
-    type: record.type ?? "",
-    description: record.description ?? "",
-    imageUrl: record.imageUrl ?? "",
-    catalogSource: record.catalogSource ?? "",
-    externalId: record.externalId ?? "",
-    catalogMetadata: JSON.stringify(record.catalogMetadata ?? {}),
-    status: record.status ?? "pending",
-    rating: record.rating ?? "-",
-    review: record.review ?? "-",
-    notes: record.notes ?? "-",
-    progress: `${record.progress ?? 0}%`,
-    favorite: record.favorite ? "true" : "false",
-    rewatches: record.rewatches ?? "-",
-    timeSpent: record.timeSpent ? `${record.timeSpent} hours` : "-",
-    pagesRead: record.pagesRead ?? "-",
-    trackingSource: record.trackingSource ?? "",
-    tags: (record.tags ?? []).join(", "),
-    visibility: record.visibility ?? "private",
-    customFields: JSON.stringify(record.customFields ?? {}),
-    seasonsProgress: JSON.stringify(record.seasonsProgress ?? []),
-    startedAt: record.startedAt ? record.startedAt.toISOString().slice(0, 16) : "-",
-    completedAt: record.completedAt ? record.completedAt.toISOString().slice(0, 16) : "-",
-    lastProgressUpdate: record.lastProgressUpdate ? record.lastProgressUpdate.toISOString().slice(0, 16) : "-",
-    createdAt: record.createdAt ? record.createdAt.toISOString().slice(0, 16) : "-",
-    updatedAt: record.updatedAt ? record.updatedAt.toISOString().slice(0, 16) : "-",
-  }));
 }
 
 export default userMediaRoutes;

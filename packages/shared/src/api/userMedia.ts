@@ -349,6 +349,14 @@ export type DashboardStatsResponse = {
     month: string; // YYYY-MM
     count: number;
   }[];
+
+  timeSpent: {
+    totalMinutes: number;
+    byType: {
+      type: MediaType;
+      minutes: number;
+    }[];
+  };
 };
 
 export const calendarActivityQuerySchema = z.object({
