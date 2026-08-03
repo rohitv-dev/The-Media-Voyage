@@ -1,5 +1,4 @@
 import type { MediaRecord } from "@media-voyage/shared/api";
-import type { Status } from "@media-voyage/shared/userMediaSchema";
 import {
   IconBook,
   IconDeviceGamepad2,
@@ -7,7 +6,7 @@ import {
   IconMovie,
 } from "@tabler/icons-react";
 
-export function getStatusColor(status: Status) {
+export function getStatusColor(status: MediaRecord["status"]) {
   switch (status) {
     case "completed":
       return "green";

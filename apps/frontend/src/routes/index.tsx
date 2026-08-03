@@ -21,7 +21,9 @@ import {
   IconSearch,
   IconTags,
 } from "@tabler/icons-react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+
+const LANDING_PAGE_VISITED_KEY = "media-voyage:landing-page-visited";
 
 const FEATURES = [
   {
@@ -57,7 +59,21 @@ const FEATURES = [
   },
 ] as const;
 
-export const Route = createFileRoute("/")({ component: Home });
+export const Route = createFileRoute("/")({
+  beforeLoad: () => {
+    if (typeof window === "undefined") return;
+
+    const hasVisitedLandingPage =
+      window.localStorage.getItem(LANDING_PAGE_VISITED_KEY) === "true";
+
+    if (hasVisitedLandingPage) {
+      throw redirect({ to: "/media" });
+    }
+
+    window.localStorage.setItem(LANDING_PAGE_VISITED_KEY, "true");
+  },
+  component: Home,
+});
 
 function Home() {
   const session = authClient.useSession();
