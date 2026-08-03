@@ -8,3 +8,4 @@ export * from "./friends";
 export * from "./notifications";
 export * from "./recommendations";
 export * from "./tvMaze";
+export * from "./public";

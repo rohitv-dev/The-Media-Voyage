@@ -130,6 +130,7 @@ export const userMedia = pgTable(
   "user_media",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    publicId: uuid("public_id").defaultRandom().unique(),
     userId: text("user_id")
       .references(() => user.id, { onDelete: "cascade" })
       .notNull(),
@@ -230,6 +231,7 @@ export const userMediaStatusHistory = pgTable(
 
 export const mediaCollection = pgTable("media_collection", {
   id: uuid("id").primaryKey().defaultRandom(),
+  publicId: uuid("public_id").defaultRandom().unique(),
   userId: text("user_id")
     .references(() => user.id, { onDelete: "cascade" })
     .notNull(),
@@ -595,12 +597,11 @@ export const mediaCollectionItemsRelations = relations(mediaCollectionItems, ({ 
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
+  publicId: text("public_id").unique(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
-  // Applied to newly created user_media entries. Exposed through better-auth's
-  // `user.additionalFields`, so it rides along in the session.
   defaultVisibility: visibilityEnum("default_visibility").default("private").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")

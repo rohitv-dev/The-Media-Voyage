@@ -1,5 +1,6 @@
 import { MediaCard } from "#/features/media/components/MediaCard";
 import { CollectionVisibilityControl } from "#/features/media-collection/components/CollectionVisibilityControl";
+import { CopyPublicLinkButton } from "#/features/public/components/CopyPublicLinkButton";
 import { EmptyState } from "#/components/EmptyState";
 import {
   collectionItemsDetailedQueryOptions,
@@ -97,6 +98,10 @@ function RouteComponent() {
 
             <Group gap="md" wrap="wrap">
               <CollectionVisibilityControl collection={collection} />
+
+              {collection.visibility === "public" && (
+                <CopyPublicLinkButton resource="collection" resourceId={id} />
+              )}
 
               <Button
                 variant="light"

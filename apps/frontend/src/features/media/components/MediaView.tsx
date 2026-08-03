@@ -199,6 +199,9 @@ type MediaViewProps = {
   copyingToLibrary?: boolean;
   /** Shows the owner-only action for sending this entry to a friend. */
   onRecommendToFriend?: () => void;
+  /** Shows the owner-only action for copying this public entry's link. */
+  onCopyPublicLink?: () => void;
+  copyingPublicLink?: boolean;
 };
 
 export function MediaView({
@@ -211,6 +214,8 @@ export function MediaView({
   onCopyToLibrary,
   copyingToLibrary,
   onRecommendToFriend,
+  onCopyPublicLink,
+  copyingPublicLink,
 }: MediaViewProps) {
   const navigate = useNavigate();
   // Absent (rather than empty) notes mean the viewer isn't the owner.
@@ -365,6 +370,18 @@ export function MediaView({
                         onClick={onRecommendToFriend}
                       >
                         Recommend
+                      </Button>
+                    )}
+                    {!readOnly && onCopyPublicLink && (
+                      <Button
+                        w={{ base: "100%", xs: "auto" }}
+                        flex="0 0 auto"
+                        variant="light"
+                        leftSection={<IconCopy size={16} />}
+                        loading={copyingPublicLink}
+                        onClick={onCopyPublicLink}
+                      >
+                        Copy public link
                       </Button>
                     )}
                     {readOnly && onCopyToLibrary && (

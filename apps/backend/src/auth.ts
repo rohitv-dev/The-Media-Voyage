@@ -4,6 +4,7 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import * as schema from "@media-voyage/shared/schema";
 import { db } from "./db/db";
 import { env } from "./config";
+import { nanoid } from "nanoid";
 
 const oneHour = 60 * 60;
 const oneDay = 60 * 60 * 24;
@@ -19,17 +20,20 @@ export const auth = betterAuth({
   user: {
     changeEmail: {
       enabled: true,
-      // Email verification is not configured yet, so allow unverified users
-      // to update their address immediately.
       updateEmailWithoutVerification: true,
     },
     additionalFields: {
-      // Visibility applied to newly created library entries. Surfaced in the
-      // session so the profile screen can read and update it directly.
       defaultVisibility: {
         type: "string",
         required: false,
         defaultValue: "private",
+      },
+      publicId: {
+        fieldName: "public_id",
+        type: "string",
+        required: false,
+        input: false,
+        returned: true,
       },
     },
   },
@@ -42,6 +46,21 @@ export const auth = betterAuth({
     },
     expiresIn: oneDay * 30,
     updateAge: oneDay,
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          const publicId = nanoid(12);
+          return {
+            data: {
+              ...user,
+              publicId,
+            },
+          };
+        },
+      },
+    },
   },
   hooks: {
     before: createAuthMiddleware(async (ctx) => {

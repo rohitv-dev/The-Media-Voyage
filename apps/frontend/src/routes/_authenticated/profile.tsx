@@ -1,5 +1,6 @@
 import { authClient } from "#/auth/authClient";
 import { getApiErrorMessage } from "#/lib/api";
+import { CopyPublicLinkButton } from "#/features/public/components/CopyPublicLinkButton";
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -121,6 +122,8 @@ function RouteComponent() {
             <Button variant="light" disabled={true}>
               Change Profile Picture
             </Button>
+
+            <CopyPublicLinkButton resource="library" />
           </Stack>
         </Card>
 

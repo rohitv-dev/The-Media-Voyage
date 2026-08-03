@@ -24,6 +24,9 @@ import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedMediaIndexRouteImport } from './routes/_authenticated/media/index'
 import { Route as AuthenticatedFriendsIndexRouteImport } from './routes/_authenticated/friends/index'
 import { Route as AuthenticatedCollectionIndexRouteImport } from './routes/_authenticated/collection/index'
+import { Route as PublicMediaPublicIdRouteImport } from './routes/public/media.$publicId'
+import { Route as PublicLibraryPublicIdRouteImport } from './routes/public/library.$publicId'
+import { Route as PublicCollectionsPublicIdRouteImport } from './routes/public/collections.$publicId'
 import { Route as AuthenticatedFriendsUserIdRouteImport } from './routes/_authenticated/friends/$userId'
 import { Route as AuthenticatedCollectionAddRouteImport } from './routes/_authenticated/collection/add'
 import { Route as AuthenticatedMediaFormsRouteRouteImport } from './routes/_authenticated/media/_forms/route'
@@ -112,6 +115,22 @@ const AuthenticatedCollectionIndexRoute =
     path: '/collection/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const PublicMediaPublicIdRoute = PublicMediaPublicIdRouteImport.update({
+  id: '/public/media/$publicId',
+  path: '/public/media/$publicId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicLibraryPublicIdRoute = PublicLibraryPublicIdRouteImport.update({
+  id: '/public/library/$publicId',
+  path: '/public/library/$publicId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicCollectionsPublicIdRoute =
+  PublicCollectionsPublicIdRouteImport.update({
+    id: '/public/collections/$publicId',
+    path: '/public/collections/$publicId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedFriendsUserIdRoute =
   AuthenticatedFriendsUserIdRouteImport.update({
     id: '/friends/$userId',
@@ -188,6 +207,9 @@ export interface FileRoutesByFullPath {
   '/media': typeof AuthenticatedMediaFormsRouteRouteWithChildren
   '/collection/add': typeof AuthenticatedCollectionAddRoute
   '/friends/$userId': typeof AuthenticatedFriendsUserIdRoute
+  '/public/collections/$publicId': typeof PublicCollectionsPublicIdRoute
+  '/public/library/$publicId': typeof PublicLibraryPublicIdRoute
+  '/public/media/$publicId': typeof PublicMediaPublicIdRoute
   '/collection/': typeof AuthenticatedCollectionIndexRoute
   '/friends/': typeof AuthenticatedFriendsIndexRoute
   '/media/': typeof AuthenticatedMediaIndexRoute
@@ -214,6 +236,9 @@ export interface FileRoutesByTo {
   '/media': typeof AuthenticatedMediaIndexRoute
   '/collection/add': typeof AuthenticatedCollectionAddRoute
   '/friends/$userId': typeof AuthenticatedFriendsUserIdRoute
+  '/public/collections/$publicId': typeof PublicCollectionsPublicIdRoute
+  '/public/library/$publicId': typeof PublicLibraryPublicIdRoute
+  '/public/media/$publicId': typeof PublicMediaPublicIdRoute
   '/collection': typeof AuthenticatedCollectionIndexRoute
   '/friends': typeof AuthenticatedFriendsIndexRoute
   '/collection/edit/$id': typeof AuthenticatedCollectionEditIdRoute
@@ -241,6 +266,9 @@ export interface FileRoutesById {
   '/_authenticated/media/_forms': typeof AuthenticatedMediaFormsRouteRouteWithChildren
   '/_authenticated/collection/add': typeof AuthenticatedCollectionAddRoute
   '/_authenticated/friends/$userId': typeof AuthenticatedFriendsUserIdRoute
+  '/public/collections/$publicId': typeof PublicCollectionsPublicIdRoute
+  '/public/library/$publicId': typeof PublicLibraryPublicIdRoute
+  '/public/media/$publicId': typeof PublicMediaPublicIdRoute
   '/_authenticated/collection/': typeof AuthenticatedCollectionIndexRoute
   '/_authenticated/friends/': typeof AuthenticatedFriendsIndexRoute
   '/_authenticated/media/': typeof AuthenticatedMediaIndexRoute
@@ -269,6 +297,9 @@ export interface FileRouteTypes {
     | '/media'
     | '/collection/add'
     | '/friends/$userId'
+    | '/public/collections/$publicId'
+    | '/public/library/$publicId'
+    | '/public/media/$publicId'
     | '/collection/'
     | '/friends/'
     | '/media/'
@@ -295,6 +326,9 @@ export interface FileRouteTypes {
     | '/media'
     | '/collection/add'
     | '/friends/$userId'
+    | '/public/collections/$publicId'
+    | '/public/library/$publicId'
+    | '/public/media/$publicId'
     | '/collection'
     | '/friends'
     | '/collection/edit/$id'
@@ -321,6 +355,9 @@ export interface FileRouteTypes {
     | '/_authenticated/media/_forms'
     | '/_authenticated/collection/add'
     | '/_authenticated/friends/$userId'
+    | '/public/collections/$publicId'
+    | '/public/library/$publicId'
+    | '/public/media/$publicId'
     | '/_authenticated/collection/'
     | '/_authenticated/friends/'
     | '/_authenticated/media/'
@@ -338,6 +375,9 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthLoginRoute: typeof AuthLoginRoute
   AuthRegisterRoute: typeof AuthRegisterRoute
+  PublicCollectionsPublicIdRoute: typeof PublicCollectionsPublicIdRoute
+  PublicLibraryPublicIdRoute: typeof PublicLibraryPublicIdRoute
+  PublicMediaPublicIdRoute: typeof PublicMediaPublicIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -446,6 +486,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/collection/'
       preLoaderRoute: typeof AuthenticatedCollectionIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/public/media/$publicId': {
+      id: '/public/media/$publicId'
+      path: '/public/media/$publicId'
+      fullPath: '/public/media/$publicId'
+      preLoaderRoute: typeof PublicMediaPublicIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/public/library/$publicId': {
+      id: '/public/library/$publicId'
+      path: '/public/library/$publicId'
+      fullPath: '/public/library/$publicId'
+      preLoaderRoute: typeof PublicLibraryPublicIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/public/collections/$publicId': {
+      id: '/public/collections/$publicId'
+      path: '/public/collections/$publicId'
+      fullPath: '/public/collections/$publicId'
+      preLoaderRoute: typeof PublicCollectionsPublicIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/friends/$userId': {
       id: '/_authenticated/friends/$userId'
@@ -590,6 +651,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthLoginRoute: AuthLoginRoute,
   AuthRegisterRoute: AuthRegisterRoute,
+  PublicCollectionsPublicIdRoute: PublicCollectionsPublicIdRoute,
+  PublicLibraryPublicIdRoute: PublicLibraryPublicIdRoute,
+  PublicMediaPublicIdRoute: PublicMediaPublicIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -51,6 +51,7 @@ services:
       dockerfile: apps/frontend/Dockerfile
       args:
         VITE_API_URL: http://localhost:3000
+        VITE_PUBLIC_APP_URL: http://localhost:8080
     restart: unless-stopped
     depends_on:
       - backend

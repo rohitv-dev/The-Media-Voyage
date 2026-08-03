@@ -62,6 +62,10 @@ fastify.register(import("./routes/v1/recommendations/routes"), {
   prefix: "/api/v1/recommendations",
 });
 
+fastify.register(import("./routes/v1/public/routes"), {
+  prefix: "/api/v1/public",
+});
+
 const start = async () => {
   try {
     await fastify.listen({ host: env.HOST, port: env.PORT });

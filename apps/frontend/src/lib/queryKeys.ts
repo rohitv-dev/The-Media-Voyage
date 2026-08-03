@@ -47,6 +47,12 @@ export const queryKeys = {
     entry: (id: string) => ["friends", "entry", { id }] as const,
     comments: (id: string) => ["friends", "entry", { id }, "comments"] as const,
   },
+  public: {
+    library: (publicId: string) => ["public", "library", publicId] as const,
+    media: (publicId: string) => ["public", "media", publicId] as const,
+    collection: (publicId: string) =>
+      ["public", "collection", publicId] as const,
+  },
   notifications: {
     all: ["notifications"] as const,
     list: (page: number, limit: number) =>

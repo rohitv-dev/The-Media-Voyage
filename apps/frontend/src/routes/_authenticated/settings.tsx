@@ -1,6 +1,7 @@
 import { authClient } from "#/auth/authClient";
 import { SettingRow, SettingsSection } from "#/components/SettingsSection";
 import { shareLibrary } from "#/features/friends/queries";
+import { CopyPublicLinkButton } from "#/features/public/components/CopyPublicLinkButton";
 import { useCoverArtPreference } from "#/features/media/hooks/useCoverArtPreference";
 import { useCoverArtSizePreference } from "#/features/media/hooks/useCoverArtSizePreference";
 import { useReducedMotionPreference } from "#/hooks/useReducedMotionPreference";
@@ -307,6 +308,13 @@ function RouteComponent() {
             >
               Share with friends
             </Button>
+          </SettingRow>
+
+          <SettingRow
+            title="Public library link"
+            description="Copy a link to the public entries in your library."
+          >
+            <CopyPublicLinkButton resource="library" />
           </SettingRow>
         </SettingsSection>
 

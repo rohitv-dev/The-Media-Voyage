@@ -2,7 +2,7 @@ import { mediaCollection, userMedia } from "@media-voyage/shared";
 import type { MediaCollectionFormSchema, MediaCollectionUpdateSchema } from "@media-voyage/shared/api";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { isStricterThan } from "../friends/policy";
-import { requireOwnedCollection, userMediaInCollection } from "./queries";
+import { mediaCollectionSelect, requireOwnedCollection, userMediaInCollection } from "./queries";
 import { db } from "@/db/db";
 
 export async function createMediaCollection(userId: string, input: MediaCollectionFormSchema) {
@@ -14,7 +14,7 @@ export async function createMediaCollection(userId: string, input: MediaCollecti
       visibility: input.visibility,
       userId,
     })
-    .returning();
+    .returning(mediaCollectionSelect);
 
   return collection;
 }
@@ -26,7 +26,7 @@ export async function updateMediaCollection(userId: string, collectionId: string
     .update(mediaCollection)
     .set({ ...input, updatedAt: new Date() })
     .where(and(eq(mediaCollection.id, collectionId), eq(mediaCollection.userId, userId)))
-    .returning();
+    .returning(mediaCollectionSelect);
 
   return collection;
 }

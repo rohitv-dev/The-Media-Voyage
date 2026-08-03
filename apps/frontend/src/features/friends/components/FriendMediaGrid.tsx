@@ -48,6 +48,7 @@ export function FriendMediaGrid({
   return (
     <SimpleGrid
       spacing={{ base: "xs", md: "md" }}
+      verticalSpacing={{ base: "md", md: "lg" }}
       cols={{ base: 1, sm: 2, lg: 3, xl: 4 }}
     >
       <AnimatePresence mode="popLayout">

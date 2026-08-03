@@ -28,9 +28,14 @@ const configuredAuthUrl = import.meta.env.VITE_AUTH_URL?.trim();
 const authUrl = configuredAuthUrl
   ? normalizeUrl(new URL(configuredAuthUrl, window.location.origin))
   : new URL(apiUrl.origin);
+const configuredPublicAppUrl = import.meta.env.VITE_PUBLIC_APP_URL?.trim();
+const publicAppUrl = configuredPublicAppUrl
+  ? normalizeUrl(new URL(configuredPublicAppUrl, window.location.origin))
+  : new URL(window.location.origin);
 
 export const frontendConfig = {
   apiBaseUrl: apiUrl.toString().replace(/\/$/, ""),
   authBaseUrl: authUrl.origin,
+  publicAppUrl: publicAppUrl.origin,
   isProduction: import.meta.env.PROD,
 };

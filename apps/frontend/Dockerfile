@@ -22,8 +22,10 @@ COPY apps/frontend apps/frontend
 COPY packages/shared packages/shared
 ARG VITE_API_URL
 ARG VITE_AUTH_URL
+ARG VITE_PUBLIC_APP_URL
 ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_AUTH_URL=$VITE_AUTH_URL
+ENV VITE_PUBLIC_APP_URL=$VITE_PUBLIC_APP_URL
 RUN pnpm --filter @media-voyage/frontend build
 
 # Final image: nginx serving the static build output. No Node at all here.

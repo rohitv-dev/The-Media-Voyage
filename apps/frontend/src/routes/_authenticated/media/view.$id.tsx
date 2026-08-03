@@ -8,6 +8,7 @@ import { MediaView } from "#/features/media/components/MediaView";
 import { userMediaDetailedOptions } from "#/features/media/queries";
 import { RecommendFriendModal } from "#/features/recommendations/components/RecommendFriendModal";
 import { createFriendRecommendation } from "#/features/recommendations/queries";
+import { useCopyPublicLink } from "#/features/public/links";
 import { getApiErrorMessage } from "#/lib/api";
 import {
   showErrorNotification,
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/_authenticated/media/view/$id")({
 function RouteComponent() {
   const { id } = Route.useParams();
   const { data } = useSuspenseQuery(userMediaDetailedOptions(id));
+  const publicLink = useCopyPublicLink("media", id);
   const { data: session } = authClient.useSession();
   const reduceMotion = useAppReducedMotion();
   const [recommendOpened, { open: openRecommend, close: closeRecommend }] =
@@ -66,6 +68,10 @@ function RouteComponent() {
       <MediaView
         data={data}
         onRecommendToFriend={openRecommend}
+        onCopyPublicLink={
+          data.visibility === "public" ? publicLink.copy : undefined
+        }
+        copyingPublicLink={publicLink.copying}
         footer={
           session?.user.id ? (
             <SocialPanel

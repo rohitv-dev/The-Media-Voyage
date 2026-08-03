@@ -4,7 +4,7 @@ import { media, mediaCollection, mediaCollectionItems, userMedia } from "@media-
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { isStricterThan } from "../friends/policy";
 
-const mediaCollectionSelect = {
+export const mediaCollectionSelect = {
   id: mediaCollection.id,
   name: mediaCollection.name,
   description: mediaCollection.description,
