@@ -1,6 +1,7 @@
 import type { NotificationRecord } from "@media-voyage/shared/api";
 import {
   IconMessageCircle,
+  IconSend,
   IconThumbDown,
   IconThumbUp,
   IconUserCheck,
@@ -20,6 +21,23 @@ import dayjs from "dayjs";
 interface NotificationItemProps {
   notification: NotificationRecord;
   onClick: () => void;
+}
+
+function formatRecommendationOutcome(
+  outcome: NotificationRecord["recommendationOutcome"],
+) {
+  switch (outcome) {
+    case "added_to_library":
+      return "added to their library";
+    case "already_completed":
+      return "already completed";
+    case "not_interested":
+      return "wasn't interested in";
+    case "dismissed":
+      return "dismissed";
+    default:
+      return "responded to your recommendation";
+  }
 }
 
 function getNotificationDetails(notification: NotificationRecord) {
@@ -54,6 +72,26 @@ function getNotificationDetails(notification: NotificationRecord) {
         color: "teal",
         message: "accepted your friend request",
       };
+    case "friend_recommendation":
+      return {
+        icon: <IconSend size={11} />,
+        color: "orange",
+        message: "recommended",
+      };
+    case "friend_recommendation_response":
+      return {
+        icon: <IconMessageCircle size={11} />,
+        color: "blue",
+        message: formatRecommendationOutcome(
+          notification.recommendationOutcome,
+        ),
+      };
+    case "system_recommendation":
+      return {
+        icon: <IconSend size={11} />,
+        color: "violet",
+        message: "recommended for you",
+      };
   }
 }
 
@@ -62,7 +100,7 @@ export function NotificationItem({
   onClick,
 }: NotificationItemProps) {
   const details = getNotificationDetails(notification);
-  const hasMedia = notification.userMediaId && notification.mediaTitle;
+  const hasMedia = Boolean(notification.mediaTitle);
 
   return (
     <UnstyledButton

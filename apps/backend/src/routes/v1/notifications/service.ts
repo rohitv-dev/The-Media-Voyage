@@ -1,16 +1,26 @@
 import { db } from "@/db/db";
-import { media, notifications, user, userMedia } from "@media-voyage/shared";
+import {
+  media,
+  mediaRecommendations,
+  notifications,
+  user,
+  userMedia,
+} from "@media-voyage/shared";
 import type {
   MarkNotificationsSeenResponse,
   NotificationListQuery,
   NotificationListResponse,
 } from "@media-voyage/shared/api";
-import { and, count, desc, eq, isNull } from "drizzle-orm";
+import { aliasedTable } from "drizzle-orm";
+import { and, count, desc, eq, isNull, sql } from "drizzle-orm";
+
+const recommendationMedia = aliasedTable(media, "recommendation_media");
 
 type NotificationWriter = Pick<typeof db, "insert">;
 type NotificationInsert = typeof notifications.$inferInsert;
 type CreateNotificationInput = Pick<NotificationInsert, "recipientId" | "actorId" | "type"> & {
   userMediaId?: NotificationInsert["userMediaId"];
+  recommendationId?: NotificationInsert["recommendationId"];
 };
 
 export async function createNotification(database: NotificationWriter, input: CreateNotificationInput) {
@@ -29,7 +39,9 @@ export async function listNotifications(
         actorName: user.name,
         actorImage: user.image,
         userMediaId: notifications.userMediaId,
-        mediaTitle: media.title,
+        recommendationId: notifications.recommendationId,
+        recommendationOutcome: mediaRecommendations.outcome,
+        mediaTitle: sql<string | null>`coalesce(${media.title}, ${recommendationMedia.title})`,
         seenAt: notifications.seenAt,
         createdAt: notifications.createdAt,
       })
@@ -37,6 +49,8 @@ export async function listNotifications(
       .innerJoin(user, eq(user.id, notifications.actorId))
       .leftJoin(userMedia, eq(userMedia.id, notifications.userMediaId))
       .leftJoin(media, eq(media.id, userMedia.mediaId))
+      .leftJoin(mediaRecommendations, eq(mediaRecommendations.id, notifications.recommendationId))
+      .leftJoin(recommendationMedia, eq(recommendationMedia.id, mediaRecommendations.mediaId))
       .where(eq(notifications.recipientId, userId))
       .orderBy(desc(notifications.createdAt))
       .limit(limit)

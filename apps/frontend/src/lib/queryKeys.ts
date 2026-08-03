@@ -45,12 +45,15 @@ export const queryKeys = {
     collection: (collectionId: string) =>
       ["friends", "collection", { collectionId }] as const,
     entry: (id: string) => ["friends", "entry", { id }] as const,
-    comments: (id: string) =>
-      ["friends", "entry", { id }, "comments"] as const,
+    comments: (id: string) => ["friends", "entry", { id }, "comments"] as const,
   },
   notifications: {
     all: ["notifications"] as const,
     list: (page: number, limit: number) =>
       ["notifications", { page, limit }] as const,
+  },
+  recommendations: {
+    all: ["recommendations"] as const,
+    detail: (id: string) => ["recommendations", { id }] as const,
   },
 } as const;

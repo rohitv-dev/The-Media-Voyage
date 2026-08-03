@@ -13,7 +13,6 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Notifications } from "@mantine/notifications";
-import { ModalsProvider } from "@mantine/modals";
 import type { MediaRecord } from "@media-voyage/shared/api";
 import { FullScreenLoader } from "#/components/FullScreenLoader";
 import { AppThemeProvider } from "#/theme/ThemeProvider";
@@ -65,9 +64,7 @@ if (!rootElement.innerHTML) {
     <QueryClientProvider client={queryClient}>
       <AppThemeProvider>
         <Notifications />
-        <ModalsProvider>
-          <RouterProvider router={router} />
-        </ModalsProvider>
+        <RouterProvider router={router} />
       </AppThemeProvider>
     </QueryClientProvider>,
   );

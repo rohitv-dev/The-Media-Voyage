@@ -9,7 +9,7 @@ import {
 import { userMediaDetailedSelect, userMediaSourceName } from "./selects";
 import { db } from "@/db/db";
 
-type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+export type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 function hasMetadataValues(value: unknown): boolean {
   return !!value && typeof value === "object" && Object.keys(value).length > 0;
@@ -109,6 +109,54 @@ async function resolveDefaultVisibility(tx: DbTransaction, userId: string) {
     .limit(1);
 
   return row?.defaultVisibility ?? "private";
+}
+
+/**
+ * Ensures that a user has an active Planned entry for an existing canonical
+ * media record. The caller owns the surrounding transaction so this helper
+ * can be composed with other writes, such as recommendation resolution.
+ */
+export async function ensurePlannedUserMediaForMedia(
+  tx: DbTransaction,
+  userId: string,
+  mediaId: string,
+) {
+  const [existing] = await tx
+    .select({ id: userMedia.id, deletedAt: userMedia.deletedAt })
+    .from(userMedia)
+    .where(and(eq(userMedia.userId, userId), eq(userMedia.mediaId, mediaId)))
+    .for("update")
+    .limit(1);
+
+  if (existing) {
+    if (existing.deletedAt) {
+      throw conflict("This media is in your trash. Restore it before adding it again.");
+    }
+
+    return { id: existing.id, created: false };
+  }
+
+  const statusChangedAt = new Date();
+  const [createdUserMedia] = await tx
+    .insert(userMedia)
+    .values({
+      userId,
+      mediaId,
+      status: "planned",
+      statusChangedAt,
+      visibility: await resolveDefaultVisibility(tx, userId),
+    })
+    .returning({ id: userMedia.id });
+
+  await tx.insert(userMediaStatusHistory).values({
+    userMediaId: createdUserMedia.id,
+    fromStatus: null,
+    toStatus: "planned",
+    source: "recommendation",
+    changedAt: statusChangedAt,
+  });
+
+  return { id: createdUserMedia.id, created: true };
 }
 
 export async function createUserMedia(userId: string, input: UserMediaFormSchema) {

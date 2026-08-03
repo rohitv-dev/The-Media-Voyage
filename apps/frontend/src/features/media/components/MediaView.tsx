@@ -30,6 +30,7 @@ import {
   IconPencil,
   IconPlayerPlay,
   IconQuote,
+  IconSend,
 } from "@tabler/icons-react";
 import type {
   MediaDetailedRecord,
@@ -196,6 +197,8 @@ type MediaViewProps = {
   /** Shows a "Copy to my library" action in place of Update when readOnly. */
   onCopyToLibrary?: () => void;
   copyingToLibrary?: boolean;
+  /** Shows the owner-only action for sending this entry to a friend. */
+  onRecommendToFriend?: () => void;
 };
 
 export function MediaView({
@@ -207,6 +210,7 @@ export function MediaView({
   footer,
   onCopyToLibrary,
   copyingToLibrary,
+  onRecommendToFriend,
 }: MediaViewProps) {
   const navigate = useNavigate();
   // Absent (rather than empty) notes mean the viewer isn't the owner.
@@ -350,6 +354,17 @@ export function MediaView({
                         onClick={() => setCoverEditorOpen(true)}
                       >
                         Adjust cover
+                      </Button>
+                    )}
+                    {!readOnly && onRecommendToFriend && (
+                      <Button
+                        w={{ base: "100%", xs: "auto" }}
+                        flex="0 0 auto"
+                        variant="light"
+                        leftSection={<IconSend size={16} />}
+                        onClick={onRecommendToFriend}
+                      >
+                        Recommend
                       </Button>
                     )}
                     {readOnly && onCopyToLibrary && (

@@ -1,9 +1,20 @@
 import { authClient } from "#/auth/authClient";
 import { SocialPanel } from "#/features/friends/components/SocialPanel";
-import { friendMediaCommentsOptions } from "#/features/friends/queries";
+import {
+  friendMediaCommentsOptions,
+  friendsQueryOptions,
+} from "#/features/friends/queries";
 import { MediaView } from "#/features/media/components/MediaView";
 import { userMediaDetailedOptions } from "#/features/media/queries";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { RecommendFriendModal } from "#/features/recommendations/components/RecommendFriendModal";
+import { createFriendRecommendation } from "#/features/recommendations/queries";
+import { getApiErrorMessage } from "#/lib/api";
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from "#/lib/notifications";
+import { useDisclosure } from "@mantine/hooks";
+import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
@@ -22,11 +33,39 @@ function RouteComponent() {
   const { data } = useSuspenseQuery(userMediaDetailedOptions(id));
   const { data: session } = authClient.useSession();
   const reduceMotion = useAppReducedMotion();
+  const [recommendOpened, { open: openRecommend, close: closeRecommend }] =
+    useDisclosure(false);
+  const friendsQuery = useQuery({
+    ...friendsQueryOptions,
+    enabled: recommendOpened,
+  });
+  const recommendationMutation = useMutation({
+    mutationFn: createFriendRecommendation,
+    onSuccess: () => {
+      showSuccessNotification({
+        title: "Recommendation sent",
+        message: data.title + " was sent to your friend.",
+      });
+      closeRecommend();
+    },
+    onError: (error) => {
+      showErrorNotification({
+        title: "Could not send recommendation",
+        message: getApiErrorMessage(error),
+      });
+    },
+  });
+
+  const handleCloseRecommend = () => {
+    recommendationMutation.reset();
+    closeRecommend();
+  };
 
   return (
     <motion.div {...fadeUpEntranceProps(reduceMotion)}>
       <MediaView
         data={data}
+        onRecommendToFriend={openRecommend}
         footer={
           session?.user.id ? (
             <SocialPanel
@@ -36,6 +75,30 @@ function RouteComponent() {
             />
           ) : undefined
         }
+      />
+      <RecommendFriendModal
+        opened={recommendOpened}
+        onClose={handleCloseRecommend}
+        mediaTitle={data.title}
+        friends={friendsQuery.data ?? []}
+        friendsLoading={friendsQuery.isLoading}
+        friendsError={
+          friendsQuery.error
+            ? getApiErrorMessage(friendsQuery.error)
+            : undefined
+        }
+        submitError={
+          recommendationMutation.error
+            ? getApiErrorMessage(recommendationMutation.error)
+            : undefined
+        }
+        onSubmit={(input) =>
+          recommendationMutation.mutate({
+            ...input,
+            sourceUserMediaId: data.id,
+          })
+        }
+        pending={recommendationMutation.isPending}
       />
     </motion.div>
   );

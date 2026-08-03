@@ -1,11 +1,17 @@
-import { Outlet, Link, createRootRouteWithContext } from "@tanstack/react-router";
+import {
+  Outlet,
+  Link,
+  createRootRouteWithContext,
+} from "@tanstack/react-router";
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Button, Center, Stack, Text, Title } from "@mantine/core";
+import { ModalsProvider } from "@mantine/modals";
 import { FullScreenLoader } from "#/components/FullScreenLoader";
 import { frontendConfig } from "#/config";
 import { getApiErrorMessage } from "#/lib/api";
+import { recommendationModals } from "#/features/recommendations/components/ContextModal";
 
 interface RouteContext {
   queryClient: QueryClient;
@@ -20,12 +26,12 @@ export const Route = createRootRouteWithContext<RouteContext>()({
 
 function RootComponent() {
   return (
-    <>
+    <ModalsProvider modals={recommendationModals}>
       <Outlet />
       {!frontendConfig.isProduction && (
         <ReactQueryDevtools initialIsOpen={false} />
       )}
-    </>
+    </ModalsProvider>
   );
 }
 

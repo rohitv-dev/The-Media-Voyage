@@ -23,7 +23,7 @@ import { useQuery } from "@tanstack/react-query";
 import { NotificationPopover } from "#/features/notifications/components/NotificationPopover";
 import { latestNotificationsQueryOptions } from "#/features/notifications/queries";
 import { useMarkNotificationsSeen } from "#/features/notifications/hooks/useMarkNotificationsSeen";
-import { openRecommendationModal } from "#/features/recommendations/components/RecommendationContextModal";
+import { openRecommendationModal } from "#/features/recommendations/components/ContextModal";
 import { ThemeSwitcher } from "#/theme/ThemeSwitcher";
 
 interface AuthenticatedHeaderProps {

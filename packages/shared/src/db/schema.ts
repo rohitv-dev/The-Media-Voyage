@@ -10,6 +10,7 @@ import {
   pgEnum,
   integer,
   unique,
+  uniqueIndex,
   real,
   check,
 } from "drizzle-orm/pg-core";
@@ -57,6 +58,20 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "media_comment",
   "friend_request",
   "friend_request_accepted",
+  "friend_recommendation",
+  "friend_recommendation_response",
+  "system_recommendation",
+]);
+
+export const recommendationOriginEnum = pgEnum("recommendation_origin", ["friend", "system"]);
+
+export const recommendationStatusEnum = pgEnum("recommendation_status", ["pending", "resolved", "expired"]);
+
+export const recommendationOutcomeEnum = pgEnum("recommendation_outcome", [
+  "added_to_library",
+  "already_completed",
+  "not_interested",
+  "dismissed",
 ]);
 
 // Main Media (Canonical)
@@ -311,6 +326,86 @@ export const userMediaComments = pgTable(
   (table) => [index("user_media_comments_entry_created_idx").on(table.userMediaId, table.createdAt)],
 );
 
+export const mediaRecommendations = pgTable(
+  "media_recommendations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    origin: recommendationOriginEnum("origin").notNull(),
+    recipientId: text("recipient_id")
+      .references(() => user.id, { onDelete: "cascade" })
+      .notNull(),
+    senderId: text("sender_id").references(() => user.id, {
+      onDelete: "cascade",
+    }),
+    mediaId: uuid("media_id")
+      .references(() => media.id, { onDelete: "cascade" })
+      .notNull(),
+    recipientUserMediaId: uuid("recipient_user_media_id").references(() => userMedia.id, { onDelete: "set null" }),
+    senderNote: text("sender_note"),
+    recipientNote: text("recipient_note"),
+    status: recommendationStatusEnum("status").notNull().default("pending"),
+    outcome: recommendationOutcomeEnum("outcome"),
+    systemStrategyKey: text("system_strategy_key"),
+    systemStrategyVersion: text("system_strategy_version"),
+    systemReason: text("system_reason"),
+    systemRank: integer("system_rank"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    resolvedAt: timestamp("resolved_at"),
+    expiresAt: timestamp("expires_at"),
+  },
+  (table) => [
+    index("media_recommendations_recipient_status_created_idx").on(table.recipientId, table.status, table.createdAt),
+    index("media_recommendations_sender_created_idx").on(table.senderId, table.createdAt),
+    uniqueIndex("media_recommendations_friend_pending_unique")
+      .on(table.senderId, table.recipientId, table.mediaId)
+      .where(sql`${table.origin} = 'friend' and ${table.status} = 'pending'`),
+    uniqueIndex("media_recommendations_system_pending_unique")
+      .on(table.recipientId, table.mediaId)
+      .where(sql`${table.origin} = 'system' and ${table.status} = 'pending'`),
+    check(
+      "media_recommendations_origin_fields_check",
+      sql`(
+        ${table.origin} = 'friend'
+        and ${table.senderId} is not null
+        and ${table.systemStrategyKey} is null
+        and ${table.systemStrategyVersion} is null
+        and ${table.systemReason} is null
+        and ${table.systemRank} is null
+      ) or (
+        ${table.origin} = 'system'
+        and ${table.senderId} is null
+        and ${table.senderNote} is null
+        and ${table.systemStrategyKey} is not null
+        and ${table.systemReason} is not null
+      )`,
+    ),
+    check(
+      "media_recommendations_sender_recipient_distinct_check",
+      sql`${table.senderId} is null or ${table.senderId} <> ${table.recipientId}`,
+    ),
+    check(
+      "media_recommendations_status_fields_check",
+      sql`(
+        ${table.status} = 'pending'
+        and ${table.outcome} is null
+        and ${table.resolvedAt} is null
+        and ${table.recipientNote} is null
+        and ${table.recipientUserMediaId} is null
+      ) or (
+        ${table.status} = 'resolved'
+        and ${table.outcome} is not null
+        and ${table.resolvedAt} is not null
+      ) or (
+        ${table.status} = 'expired'
+        and ${table.origin} = 'system'
+        and ${table.outcome} is null
+        and ${table.resolvedAt} is null
+      )`,
+    ),
+  ],
+);
+
 export const notifications = pgTable(
   "notifications",
   {
@@ -325,6 +420,7 @@ export const notifications = pgTable(
     userMediaId: uuid("user_media_id").references(() => userMedia.id, {
       onDelete: "cascade",
     }),
+    recommendationId: uuid("recommendation_id").references(() => mediaRecommendations.id, { onDelete: "cascade" }),
     seenAt: timestamp("seen_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
@@ -336,6 +432,7 @@ export const notifications = pgTable(
 
 export const mediaRelations = relations(media, ({ many }) => ({
   userEntries: many(userMedia),
+  recommendations: many(mediaRecommendations),
 }));
 
 export const friendshipsRelations = relations(friendships, ({ one }) => ({
@@ -388,6 +485,33 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
     fields: [notifications.userMediaId],
     references: [userMedia.id],
   }),
+  recommendation: one(mediaRecommendations, {
+    fields: [notifications.recommendationId],
+    references: [mediaRecommendations.id],
+  }),
+}));
+
+export const mediaRecommendationsRelations = relations(mediaRecommendations, ({ one, many }) => ({
+  recipient: one(user, {
+    fields: [mediaRecommendations.recipientId],
+    references: [user.id],
+    relationName: "recommendationRecipient",
+  }),
+  sender: one(user, {
+    fields: [mediaRecommendations.senderId],
+    references: [user.id],
+    relationName: "recommendationSender",
+  }),
+  media: one(media, {
+    fields: [mediaRecommendations.mediaId],
+    references: [media.id],
+  }),
+  recipientUserMedia: one(userMedia, {
+    fields: [mediaRecommendations.recipientUserMediaId],
+    references: [userMedia.id],
+    relationName: "recommendationRecipientMedia",
+  }),
+  notifications: many(notifications),
 }));
 
 export const userMediaRelations = relations(userMedia, ({ one, many }) => ({
@@ -402,6 +526,9 @@ export const userMediaRelations = relations(userMedia, ({ one, many }) => ({
   source: one(sources, {
     fields: [userMedia.sourceId],
     references: [sources.id],
+  }),
+  recommendationRecipients: many(mediaRecommendations, {
+    relationName: "recommendationRecipientMedia",
   }),
   collectionItems: many(mediaCollectionItems),
   statusHistory: many(userMediaStatusHistory),
@@ -557,6 +684,12 @@ export const userRelations = relations(user, ({ many }) => ({
   }),
   sentNotifications: many(notifications, {
     relationName: "notificationActor",
+  }),
+  sentRecommendations: many(mediaRecommendations, {
+    relationName: "recommendationSender",
+  }),
+  receivedRecommendations: many(mediaRecommendations, {
+    relationName: "recommendationRecipient",
   }),
 }));
 

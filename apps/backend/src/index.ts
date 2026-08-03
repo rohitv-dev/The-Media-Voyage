@@ -58,6 +58,10 @@ fastify.register(import("./routes/v1/notifications/routes"), {
   prefix: "/api/v1/notifications",
 });
 
+fastify.register(import("./routes/v1/recommendations/routes"), {
+  prefix: "/api/v1/recommendations",
+});
+
 const start = async () => {
   try {
     await fastify.listen({ host: env.HOST, port: env.PORT });

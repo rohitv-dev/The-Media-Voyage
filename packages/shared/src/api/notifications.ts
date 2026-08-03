@@ -1,5 +1,8 @@
 import z from "zod";
-import { notificationTypeEnum } from "../db/schema";
+import {
+  notificationTypeEnum,
+  recommendationOutcomeEnum,
+} from "../db/schema";
 
 export const notificationListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -16,6 +19,10 @@ export const notificationRecordSchema = z.object({
   actorName: z.string(),
   actorImage: z.string().nullable(),
   userMediaId: z.uuid().nullable(),
+  recommendationId: z.uuid().nullable(),
+  recommendationOutcome: z
+    .enum(recommendationOutcomeEnum.enumValues)
+    .nullable(),
   mediaTitle: z.string().nullable(),
   seenAt: z.coerce.date().nullable(),
   createdAt: z.coerce.date(),

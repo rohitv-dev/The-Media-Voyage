@@ -1,4 +1,7 @@
-import type { NotificationListResponse } from "@media-voyage/shared/api";
+import type {
+  NotificationListResponse,
+  NotificationRecord,
+} from "@media-voyage/shared/api";
 import { IconBell, IconBellOff } from "@tabler/icons-react";
 import {
   ActionIcon,
@@ -21,7 +24,7 @@ interface NotificationPopoverProps {
   isLoading: boolean;
   isError: boolean;
   onChange: (opened: boolean) => void;
-  onOpenNotification: (userMediaId: string | null) => void;
+  onOpenNotification: (notification: NotificationRecord) => void;
   onViewAll: () => void;
 }
 
@@ -45,12 +48,7 @@ export function NotificationPopover({
       shadow="md"
       withinPortal
     >
-      <Indicator
-        color="red"
-        size={8}
-        offset={5}
-        disabled={unseenCount === 0}
-      >
+      <Indicator color="red" size={8} offset={5} disabled={unseenCount === 0}>
         <Popover.Target>
           <ActionIcon
             variant="subtle"
@@ -91,19 +89,14 @@ export function NotificationPopover({
               <NotificationItem
                 key={notification.id}
                 notification={notification}
-                onClick={() =>
-                  onOpenNotification(notification.userMediaId)
-                }
+                onClick={() => onOpenNotification(notification)}
               />
             ))}
           </Stack>
         ) : (
           <Center h={140}>
             <Stack gap="xs" align="center">
-              <IconBellOff
-                size={26}
-                color="var(--mantine-color-dimmed)"
-              />
+              <IconBellOff size={26} color="var(--mantine-color-dimmed)" />
               <Text size="sm" c="dimmed">
                 No notifications yet.
               </Text>
@@ -112,12 +105,7 @@ export function NotificationPopover({
         )}
 
         <Divider />
-        <Button
-          variant="subtle"
-          fullWidth
-          radius={0}
-          onClick={onViewAll}
-        >
+        <Button variant="subtle" fullWidth radius={0} onClick={onViewAll}>
           View all notifications
         </Button>
       </Popover.Dropdown>

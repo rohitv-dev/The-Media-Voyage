@@ -6,4 +6,5 @@ export * from "./tags";
 export * from "./sources";
 export * from "./friends";
 export * from "./notifications";
+export * from "./recommendations";
 export * from "./tvMaze";

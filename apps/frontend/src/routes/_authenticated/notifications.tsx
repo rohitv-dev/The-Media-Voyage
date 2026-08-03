@@ -2,6 +2,8 @@ import { EmptyState } from "#/components/EmptyState";
 import { NotificationItem } from "#/features/notifications/components/NotificationItem";
 import { useMarkNotificationsSeen } from "#/features/notifications/hooks/useMarkNotificationsSeen";
 import { notificationListQueryOptions } from "#/features/notifications/queries";
+import { openRecommendationModal } from "#/features/recommendations/components/ContextModal";
+import type { NotificationRecord } from "@media-voyage/shared/api";
 import {
   Badge,
   Box,
@@ -30,9 +32,7 @@ export const Route = createFileRoute("/_authenticated/notifications")({
   validateSearch: notificationsSearchSchema,
   loaderDeps: ({ search }) => search,
   loader: ({ context: { queryClient }, deps }) => {
-    queryClient.ensureQueryData(
-      notificationListQueryOptions(deps.page ?? 1),
-    );
+    queryClient.ensureQueryData(notificationListQueryOptions(deps.page ?? 1));
   },
   component: RouteComponent,
 });
@@ -41,21 +41,13 @@ function RouteComponent() {
   const navigate = Route.useNavigate();
   const search = Route.useSearch();
   const page = search.page ?? 1;
-  const {
-    data,
-    isLoading,
-    isFetching,
-    isError,
-    refetch,
-  } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
     ...notificationListQueryOptions(page),
     placeholderData: keepPreviousData,
   });
 
-  const {
-    mutate: markSeen,
-    isPending: isMarkingSeen,
-  } = useMarkNotificationsSeen();
+  const { mutate: markSeen, isPending: isMarkingSeen } =
+    useMarkNotificationsSeen();
 
   useEffect(() => {
     if (data?.unseenCount && !isMarkingSeen) {
@@ -63,9 +55,17 @@ function RouteComponent() {
     }
   }, [data?.unseenCount, isMarkingSeen, markSeen]);
 
-  const openNotification = (userMediaId: string | null) => {
-    if (userMediaId) {
-      navigate({ to: "/media/view/$id", params: { id: userMediaId } });
+  const openNotification = (notification: NotificationRecord) => {
+    if (notification.recommendationId) {
+      openRecommendationModal(notification.recommendationId);
+      return;
+    }
+
+    if (notification.userMediaId) {
+      navigate({
+        to: "/media/view/$id",
+        params: { id: notification.userMediaId },
+      });
       return;
     }
 
@@ -83,7 +83,8 @@ function RouteComponent() {
           <Stack gap={2}>
             <Title order={2}>Notifications</Title>
             <Text c="dimmed" size="sm">
-              Likes, comments, and friend activity from across your library.
+              Likes, comments, recommendations, and friend activity in one
+              place.
             </Text>
           </Stack>
 
@@ -91,7 +92,8 @@ function RouteComponent() {
             {isFetching && !isLoading && <Loader size="xs" />}
             {data && data.total > 0 && (
               <Badge variant="light" radius="xl">
-                {data.total} {data.total === 1 ? "notification" : "notifications"}
+                {data.total}{" "}
+                {data.total === 1 ? "notification" : "notifications"}
               </Badge>
             )}
           </Group>
@@ -119,7 +121,7 @@ function RouteComponent() {
           <EmptyState
             icon={<IconBellOff size={34} />}
             title="No notifications yet"
-            description="Likes, comments, and friend requests will appear here."
+            description="Likes, comments, recommendations, and friend requests will appear here."
           />
         ) : (
           <>
@@ -136,9 +138,7 @@ function RouteComponent() {
                 >
                   <NotificationItem
                     notification={notification}
-                    onClick={() =>
-                      openNotification(notification.userMediaId)
-                    }
+                    onClick={() => openNotification(notification)}
                   />
                 </Box>
               ))}
