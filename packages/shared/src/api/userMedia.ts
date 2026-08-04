@@ -104,7 +104,6 @@ export const mediaDetailedRecordSchema = z.object({
   source: z.string().nullable(),
   tags: z.array(z.string()),
   visibility: userMediaSelectSchema.shape.visibility,
-  customFields: userMediaSelectSchema.shape.customFields,
   seasonsProgress: seasonsProgressSchema,
 
   startedAt: userMediaSelectSchema.shape.startedAt,
@@ -191,7 +190,6 @@ export const userMediaFieldsSchema = userMediaInsertSchema.omit({
   updatedAt: true,
   deletedAt: true,
   lastProgressUpdate: true,
-  statusChangedAt: true,
 });
 
 export const userMediaFormSchema = userMediaInsertSchema
@@ -206,7 +204,6 @@ export const userMediaFormSchema = userMediaInsertSchema
     timeSpent: true,
     pagesRead: true,
     visibility: true,
-    customFields: true,
     seasonsProgress: true,
     startedAt: true,
     completedAt: true,

@@ -7,7 +7,6 @@ export function toCsvRows(records: UserMediaExportRecords) {
     id: record.id,
     mediaId: record.mediaId,
     title: record.title ?? "",
-    originalTitle: record.originalTitle ?? "",
     type: record.type ?? "",
     description: record.description ?? "",
     imageUrl: record.imageUrl ?? "",
@@ -26,7 +25,6 @@ export function toCsvRows(records: UserMediaExportRecords) {
     trackingSource: record.trackingSource ?? "",
     tags: (record.tags ?? []).join(", "),
     visibility: record.visibility ?? "private",
-    customFields: JSON.stringify(record.customFields ?? {}),
     seasonsProgress: JSON.stringify(record.seasonsProgress ?? []),
     startedAt: record.startedAt
       ? record.startedAt.toISOString().slice(0, 16)

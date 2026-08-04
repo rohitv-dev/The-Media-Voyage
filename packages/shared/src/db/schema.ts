@@ -82,7 +82,6 @@ export const media = pgTable(
     title: text("title").notNull(),
     type: mediaTypeEnum("type").notNull(),
 
-    originalTitle: text("original_title"),
     description: text("description"),
     imageUrl: text("image_url"),
     imageFocusX: real("image_focus_x"),
@@ -93,7 +92,7 @@ export const media = pgTable(
     metadata: jsonb("metadata").$type<CatalogMetadata>().default({}),
 
     createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
   },
   (table) => [
     unique("media_source_external_id_unique").on(table.source, table.externalId),
@@ -120,7 +119,7 @@ export const sources = pgTable(
     normalizedName: text("normalized_name").notNull(),
     color: text("color"),
     createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
   },
   (table) => [unique("sources_user_normalized_name_unique").on(table.userId, table.normalizedName)],
 );
@@ -139,7 +138,6 @@ export const userMedia = pgTable(
       .notNull(),
 
     status: statusEnum("status").notNull().default("planned"),
-    statusChangedAt: timestamp("status_changed_at").defaultNow().notNull(),
     rating: integer("rating"),
     review: text("review"),
     notes: text("notes"),
@@ -164,18 +162,14 @@ export const userMedia = pgTable(
 
     visibility: visibilityEnum("visibility").default("private"), // 'private' | 'friends' | 'public'
 
-    // Flexible future-proofing
-    customFields: jsonb("custom_fields").default({}),
-
     seasonsProgress: jsonb("seasons_progress").default([]),
 
     createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
     deletedAt: timestamp("deleted_at"),
   },
   (table) => [
     unique("user_media_unique").on(table.userId, table.mediaId),
-    index("user_media_status_changed_idx").on(table.userId, table.status, table.statusChangedAt),
   ],
 );
 
@@ -190,7 +184,7 @@ export const tags = pgTable(
     normalizedName: text("normalized_name").notNull(),
     color: text("color"),
     createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
   },
   (table) => [unique("tags_user_normalized_name_unique").on(table.userId, table.normalizedName)],
 );
@@ -240,7 +234,7 @@ export const mediaCollection = pgTable("media_collection", {
   visibility: visibilityEnum("visibility").default("private"),
   coverImage: text("cover_image"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
 });
 
 export const mediaCollectionItems = pgTable(
@@ -303,7 +297,7 @@ export const userMediaReactions = pgTable(
       .notNull(),
     value: integer("value").notNull(),
     createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
   },
   (table) => [
     unique("user_media_reactions_unique").on(table.userMediaId, table.userId),
@@ -323,7 +317,7 @@ export const userMediaComments = pgTable(
       .notNull(),
     body: text("body").notNull(),
     createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
   },
   (table) => [index("user_media_comments_entry_created_idx").on(table.userMediaId, table.createdAt)],
 );
@@ -352,7 +346,7 @@ export const mediaRecommendations = pgTable(
     systemReason: text("system_reason"),
     systemRank: integer("system_rank"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
     resolvedAt: timestamp("resolved_at"),
     expiresAt: timestamp("expires_at"),
   },

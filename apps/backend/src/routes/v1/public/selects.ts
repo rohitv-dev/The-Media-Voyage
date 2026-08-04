@@ -16,7 +16,6 @@ const {
   mediaId: _mediaId,
   visibility: _visibility,
   notes: _notes,
-  customFields: _customFields,
   ...publicMediaDetailFields
 } = {
   ...userMediaDetailedSelect,

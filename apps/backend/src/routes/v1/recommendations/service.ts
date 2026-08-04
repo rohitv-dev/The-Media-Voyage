@@ -123,7 +123,6 @@ export async function resolveRecommendation(
         recipientNote: input.recipientNote || null,
         recipientUserMediaId,
         resolvedAt: now,
-        updatedAt: now,
       })
       .where(and(eq(mediaRecommendations.id, recommendationId), eq(mediaRecommendations.status, "pending")))
       .returning({

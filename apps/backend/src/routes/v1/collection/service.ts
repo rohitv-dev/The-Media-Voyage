@@ -24,7 +24,7 @@ export async function updateMediaCollection(userId: string, collectionId: string
 
   const [collection] = await db
     .update(mediaCollection)
-    .set({ ...input, updatedAt: new Date() })
+    .set(input)
     .where(and(eq(mediaCollection.id, collectionId), eq(mediaCollection.userId, userId)))
     .returning(mediaCollectionSelect);
 
@@ -55,7 +55,7 @@ export async function bumpCollectionEntryVisibility(userId: string, collectionId
 
   const updated = await db
     .update(userMedia)
-    .set({ visibility: target, updatedAt: new Date() })
+    .set({ visibility: target })
     .where(and(eq(userMedia.userId, userId), isNull(userMedia.deletedAt), inArray(userMedia.id, stricterIds)))
     .returning({ id: userMedia.id });
 

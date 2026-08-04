@@ -136,14 +136,13 @@ export async function ensurePlannedUserMediaForMedia(
     return { id: existing.id, created: false };
   }
 
-  const statusChangedAt = new Date();
+  const changedAt = new Date();
   const [createdUserMedia] = await tx
     .insert(userMedia)
     .values({
       userId,
       mediaId,
       status: "planned",
-      statusChangedAt,
       visibility: await resolveDefaultVisibility(tx, userId),
     })
     .returning({ id: userMedia.id });
@@ -153,7 +152,7 @@ export async function ensurePlannedUserMediaForMedia(
     fromStatus: null,
     toStatus: "planned",
     source: "recommendation",
-    changedAt: statusChangedAt,
+    changedAt,
   });
 
   return { id: createdUserMedia.id, created: true };
@@ -244,14 +243,13 @@ export async function createUserMedia(userId: string, input: UserMediaFormSchema
 
     const sourceId = await resolveSourceId(tx, userId, sourceName);
 
-    const statusChangedAt = new Date();
+    const changedAt = new Date();
     const [createdUserMedia] = await tx
       .insert(userMedia)
       .values({
         userId,
         mediaId,
         status: input.status,
-        statusChangedAt,
         rating: input.rating,
         review: input.review,
         notes: input.notes,
@@ -264,7 +262,6 @@ export async function createUserMedia(userId: string, input: UserMediaFormSchema
         pagesRead: input.pagesRead,
         sourceId: sourceId ?? null,
         visibility: input.visibility ?? (await resolveDefaultVisibility(tx, userId)),
-        customFields: input.customFields,
         seasonsProgress: input.seasonsProgress,
       })
       .returning({
@@ -279,7 +276,7 @@ export async function createUserMedia(userId: string, input: UserMediaFormSchema
       toStatus: createdUserMedia.status,
       progressSnapshot: createdUserMedia.progress,
       source: "created",
-      changedAt: statusChangedAt,
+      changedAt,
     });
 
     await syncUserMediaTags(tx, userId, createdUserMedia.id, tagNames);
@@ -303,7 +300,6 @@ export async function updateUserMedia(userId: string, id: string, input: UserMed
       .select({
         progress: userMedia.progress,
         status: userMedia.status,
-        statusChangedAt: userMedia.statusChangedAt,
         lastProgressUpdate: userMedia.lastProgressUpdate,
       })
       .from(userMedia)
@@ -325,8 +321,6 @@ export async function updateUserMedia(userId: string, id: string, input: UserMed
       .set({
         ...updates,
         ...(sourceId !== undefined ? { sourceId } : {}),
-        updatedAt: now,
-        statusChangedAt: statusChanged ? now : existing.statusChangedAt,
         lastProgressUpdate: progressChanged || startedProgress ? now : existing.lastProgressUpdate,
       })
       .where(ownedUserMediaCondition(userId, id))
@@ -381,7 +375,6 @@ export async function updateUserMediaQuickActions(userId: string, id: string, qu
 
     const updates: Partial<typeof userMedia.$inferInsert> = {
       ...quickAction,
-      updatedAt: now,
     };
 
     if (quickAction.progress !== undefined || (statusChanged && quickAction.status === "in_progress")) {
@@ -389,8 +382,6 @@ export async function updateUserMediaQuickActions(userId: string, id: string, qu
     }
 
     if (statusChanged) {
-      updates.statusChangedAt = now;
-
       if (quickAction.status === "completed") {
         updates.completedAt = now;
         updates.progress = 100;
@@ -456,7 +447,6 @@ export async function updateUserMediaImageFocus(userId: string, id: string, inpu
       .set({
         imageFocusX: input.imageFocusX,
         imageFocusY: input.imageFocusY,
-        updatedAt: new Date(),
       })
       .where(eq(media.id, entry.mediaId));
 
@@ -475,7 +465,7 @@ export async function deleteUserMedia(userId: string, id: string) {
   const now = new Date();
   const [deleted] = await db
     .update(userMedia)
-    .set({ deletedAt: now, updatedAt: now })
+    .set({ deletedAt: now })
     .where(ownedUserMediaCondition(userId, id))
     .returning({ id: userMedia.id });
 
@@ -485,7 +475,7 @@ export async function deleteUserMedia(userId: string, id: string) {
 export async function restoreUserMedia(userId: string, id: string) {
   const [restored] = await db
     .update(userMedia)
-    .set({ deletedAt: null, updatedAt: new Date() })
+    .set({ deletedAt: null })
     .where(ownedDeletedUserMediaCondition(userId, id))
     .returning({ id: userMedia.id });
 

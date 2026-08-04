@@ -132,7 +132,7 @@ export async function updateNamedEntity(
     return { status: "not_found" };
   }
 
-  const updates: Partial<NamedEntityRow> = { updatedAt: new Date() };
+  const updates: Partial<NamedEntityRow> = {};
 
   if (input.name !== undefined) {
     const normalizedName = input.name.trim().toLowerCase();

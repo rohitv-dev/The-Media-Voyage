@@ -160,7 +160,7 @@ export async function setReaction(viewerId: string, userMediaId: string, { value
       .values({ userMediaId, userId: viewerId, value })
       .onConflictDoUpdate({
         target: [userMediaReactions.userMediaId, userMediaReactions.userId],
-        set: { value, updatedAt: new Date() },
+        set: { value },
       });
 
     if (entry.ownerId !== viewerId && existing?.value !== value) {
@@ -223,7 +223,7 @@ export async function deleteComment(viewerId: string, commentId: string) {
 export async function shareLibrary(userId: string, { visibility, onlyPrivate }: ShareLibraryInput) {
   const updated = await db
     .update(userMedia)
-    .set({ visibility, updatedAt: new Date() })
+    .set({ visibility })
     .where(
       and(
         eq(userMedia.userId, userId),

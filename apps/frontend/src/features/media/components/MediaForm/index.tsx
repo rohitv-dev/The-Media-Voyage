@@ -57,7 +57,6 @@ const addInitialValues: UserMediaFormSchema = {
   pagesRead: undefined,
   tags: [],
   visibility: "private",
-  customFields: undefined,
   seasonsProgress: [],
 };
 
