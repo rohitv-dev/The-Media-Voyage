@@ -5,6 +5,7 @@ import {
   friendsQueryOptions,
 } from "#/features/friends/queries";
 import { MediaView } from "#/features/media/components/MediaView";
+import { useMediaCardActions } from "#/features/media/hooks/useMediaCardActions";
 import { userMediaDetailedOptions } from "#/features/media/queries";
 import { RecommendFriendModal } from "#/features/recommendations/components/RecommendFriendModal";
 import { createFriendRecommendation } from "#/features/recommendations/queries";
@@ -33,6 +34,7 @@ function RouteComponent() {
   const { id } = Route.useParams();
   const { data } = useSuspenseQuery(userMediaDetailedOptions(id));
   const publicLink = useCopyPublicLink("media", id);
+  const { isActionPending, runQuickAction } = useMediaCardActions(data);
   const { data: session } = authClient.useSession();
   const reduceMotion = useAppReducedMotion();
   const [recommendOpened, { open: openRecommend, close: closeRecommend }] =
@@ -72,6 +74,8 @@ function RouteComponent() {
           data.visibility === "public" ? publicLink.copy : undefined
         }
         copyingPublicLink={publicLink.copying}
+        onQuickAction={runQuickAction}
+        quickActionPending={isActionPending}
         footer={
           session?.user.id ? (
             <SocialPanel

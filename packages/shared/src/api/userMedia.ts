@@ -5,7 +5,7 @@ import {
   userMediaSelectSchema,
 } from "../schemas/userMediaSchema";
 import { mediaInsertSchema, mediaSelectSchema } from "../schemas/mediaSchema";
-import { mediaTypeEnum, statusEnum } from "../";
+import { mediaTypeEnum, statusEnum, visibilityEnum } from "../";
 
 export const userMediaIdParamsSchema = z.object({
   id: userMediaSelectSchema.shape.id,
@@ -26,6 +26,7 @@ export const mediaRecordSchema = z.object({
   progress: userMediaSelectSchema.shape.progress,
   rating: userMediaSelectSchema.shape.rating,
   favorite: userMediaSelectSchema.shape.favorite,
+  visibility: userMediaSelectSchema.shape.visibility,
   source: z.string().nullable(),
   lastProgressUpdate: userMediaSelectSchema.shape.lastProgressUpdate,
 
@@ -56,6 +57,7 @@ export const userMediaQuickActionSchema = z
     favorite: z.boolean().optional(),
     status: userMediaSelectSchema.shape.status.optional(),
     progress: z.number().int().min(0).max(100).optional(),
+    visibility: z.enum(visibilityEnum.enumValues).optional(),
   })
   .refine((data) => Object.values(data).some((value) => value !== undefined), {
     message: "At least one quick action is required",

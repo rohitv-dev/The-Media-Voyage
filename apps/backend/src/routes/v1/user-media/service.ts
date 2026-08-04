@@ -401,6 +401,7 @@ export async function updateUserMediaQuickActions(userId: string, id: string, qu
         progress: userMedia.progress,
         rating: userMedia.rating,
         favorite: userMedia.favorite,
+        visibility: userMedia.visibility,
         source: userMediaSourceName,
         lastProgressUpdate: userMedia.lastProgressUpdate,
         createdAt: userMedia.createdAt,

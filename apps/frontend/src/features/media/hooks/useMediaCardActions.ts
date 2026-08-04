@@ -11,7 +11,7 @@ import type {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useDeleteMedia } from "./useDeleteMedia";
 
-export function useMediaCardActions(media: MediaRecord) {
+export function useMediaCardActions(media: Pick<MediaRecord, "id" | "title">) {
   const queryClient = useQueryClient();
   const { requestDelete: requestDeleteMedia, isDeletePending } =
     useDeleteMedia();

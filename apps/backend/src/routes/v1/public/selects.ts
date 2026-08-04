@@ -4,7 +4,11 @@ import {
   userMediaSummarySelect,
 } from "../user-media/selects";
 
-const { id: _summaryId, ...publicMediaSummaryFields } = userMediaSummarySelect;
+const {
+  id: _summaryId,
+  visibility: _summaryVisibility,
+  ...publicMediaSummaryFields
+} = userMediaSummarySelect;
 
 export const publicMediaSummarySelect = {
   publicId: userMedia.publicId,

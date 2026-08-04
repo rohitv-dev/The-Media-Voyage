@@ -3,6 +3,7 @@ import type {
   MediaRecord,
   UserMediaQuickAction,
 } from "@media-voyage/shared/api";
+import { visibilityEnumValues } from "@media-voyage/shared/userMediaSchema";
 import type { Status } from "@media-voyage/shared/userMediaSchema";
 import {
   IconCheck,
@@ -13,6 +14,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { getStatusColor } from "../../display";
+import { capitalizeWords } from "#/utils/strings";
 
 interface MediaCardQuickActionsProps {
   media: MediaRecord;
@@ -38,6 +40,8 @@ export function MediaCardQuickActions({
   onDelete,
   onEditCover,
 }: MediaCardQuickActionsProps) {
+  const activeVisibility = media.visibility ?? "private";
+
   return (
     <Menu position="bottom-end" shadow="md" width={210} withinPortal>
       <Menu.Target>
@@ -87,6 +91,30 @@ export function MediaCardQuickActions({
                 disabled={isPending}
               >
                 {status.label}
+              </Menu.Item>
+            ))}
+          </Menu.Sub.Dropdown>
+        </Menu.Sub>
+
+        <Menu.Sub>
+          <Menu.Sub.Target>
+            <Menu.Sub.Item disabled={isPending}>
+              Toggle Visibility
+            </Menu.Sub.Item>
+          </Menu.Sub.Target>
+          <Menu.Sub.Dropdown>
+            {[...visibilityEnumValues].reverse().map((visibility) => (
+              <Menu.Item
+                key={visibility}
+                rightSection={
+                  activeVisibility === visibility ? (
+                    <IconCheck size={15} />
+                  ) : undefined
+                }
+                onClick={() => onAction({ visibility })}
+                disabled={isPending}
+              >
+                {capitalizeWords(visibility)}
               </Menu.Item>
             ))}
           </Menu.Sub.Dropdown>

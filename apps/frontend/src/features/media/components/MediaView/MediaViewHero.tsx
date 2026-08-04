@@ -30,6 +30,8 @@ import {
   IconPlayerPlay,
   IconSend,
 } from "@tabler/icons-react";
+import type { UserMediaQuickAction } from "@media-voyage/shared/api";
+import { visibilityEnumValues } from "@media-voyage/shared/userMediaSchema";
 import { useNavigate } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { useLayoutEffect, useRef, useState } from "react";
@@ -109,6 +111,8 @@ type MediaViewHeroProps = {
   onRecommendToFriend?: () => void;
   onCopyPublicLink?: () => void;
   copyingPublicLink?: boolean;
+  onQuickAction?: (action: UserMediaQuickAction) => void;
+  quickActionPending?: boolean;
 };
 
 export function MediaViewHero({
@@ -122,6 +126,8 @@ export function MediaViewHero({
   onRecommendToFriend,
   onCopyPublicLink,
   copyingPublicLink,
+  onQuickAction,
+  quickActionPending,
 }: MediaViewHeroProps) {
   const navigate = useNavigate();
   const [coverEditorOpen, setCoverEditorOpen] = useState(false);
@@ -135,7 +141,9 @@ export function MediaViewHero({
   const hasSecondaryActions =
     canAdjustCover ||
     (!readOnly && Boolean(onRecommendToFriend)) ||
-    (!readOnly && Boolean(onCopyPublicLink));
+    (!readOnly && Boolean(onCopyPublicLink)) ||
+    (!readOnly && Boolean(onQuickAction));
+  const activeVisibility = data.visibility ?? "private";
 
   return (
     <>
@@ -251,6 +259,35 @@ export function MediaViewHero({
                               >
                                 Adjust cover
                               </Menu.Item>
+                            )}
+                            {onQuickAction && (
+                              <Menu.Sub>
+                                <Menu.Sub.Target>
+                                  <Menu.Sub.Item disabled={quickActionPending}>
+                                    Toggle Visibility
+                                  </Menu.Sub.Item>
+                                </Menu.Sub.Target>
+                                <Menu.Sub.Dropdown>
+                                  {[...visibilityEnumValues]
+                                    .reverse()
+                                    .map((visibility) => (
+                                      <Menu.Item
+                                        key={visibility}
+                                        rightSection={
+                                          activeVisibility === visibility ? (
+                                            <IconCheck size={15} />
+                                          ) : undefined
+                                        }
+                                        disabled={quickActionPending}
+                                        onClick={() =>
+                                          onQuickAction({ visibility })
+                                        }
+                                      >
+                                        {capitalizeWords(visibility)}
+                                      </Menu.Item>
+                                    ))}
+                                </Menu.Sub.Dropdown>
+                              </Menu.Sub>
                             )}
                             {onRecommendToFriend && (
                               <Menu.Item

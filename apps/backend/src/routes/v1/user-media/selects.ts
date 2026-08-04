@@ -32,6 +32,7 @@ export const userMediaSummarySelect = {
   progress: userMedia.progress,
   rating: userMedia.rating,
   favorite: userMedia.favorite,
+  visibility: userMedia.visibility,
   source: userMediaSourceName,
   lastProgressUpdate: userMedia.lastProgressUpdate,
   createdAt: userMedia.createdAt,

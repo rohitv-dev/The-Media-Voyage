@@ -1,5 +1,8 @@
 import { Container, Stack } from "@mantine/core";
-import type { MediaDetailedRecord } from "@media-voyage/shared/api";
+import type {
+  MediaDetailedRecord,
+  UserMediaQuickAction,
+} from "@media-voyage/shared/api";
 import type { ReactNode } from "react";
 import { MediaViewDetails } from "./MediaViewDetails";
 import { MediaViewHero } from "./MediaViewHero";
@@ -22,6 +25,8 @@ export type MediaViewProps = {
   onRecommendToFriend?: () => void;
   onCopyPublicLink?: () => void;
   copyingPublicLink?: boolean;
+  onQuickAction?: (action: UserMediaQuickAction) => void;
+  quickActionPending?: boolean;
 };
 
 export function MediaView(props: MediaViewProps) {
@@ -39,6 +44,8 @@ export function MediaView(props: MediaViewProps) {
           onRecommendToFriend={props.onRecommendToFriend}
           onCopyPublicLink={props.onCopyPublicLink}
           copyingPublicLink={props.copyingPublicLink}
+          onQuickAction={props.onQuickAction}
+          quickActionPending={props.quickActionPending}
         />
         <MediaViewDetails data={props.data} />
         <MediaViewStatusHistory

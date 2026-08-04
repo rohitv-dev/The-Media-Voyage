@@ -22,6 +22,11 @@ const {
   ...sharedDetailedSelect
 } = userMediaDetailedSelect;
 
+const {
+  visibility: _ownerOnlySummaryVisibility,
+  ...sharedSummarySelect
+} = userMediaSummarySelect;
+
 const likeCount = sql<number>`(
   select count(*)::int
   from ${userMediaReactions}
@@ -55,7 +60,7 @@ const ownerSelect = {
 };
 
 export const friendMediaSummarySelect = (viewerId: string) => ({
-  ...userMediaSummarySelect,
+  ...sharedSummarySelect,
   ...ownerSelect,
   likeCount,
   dislikeCount,

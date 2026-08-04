@@ -111,6 +111,7 @@ const ownerSchema = z.object({
 });
 
 export const friendMediaRecordSchema = mediaRecordSchema
+  .omit({ visibility: true })
   .extend(socialSummarySchema.shape)
   .extend(ownerSchema.shape);
 
