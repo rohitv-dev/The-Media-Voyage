@@ -39,10 +39,6 @@ export function useCopyPublicLink(
       const { publicId } = await getPublicLink(resource, resourceId);
       const url = buildPublicUrl(resource, publicId);
 
-      if (!navigator.clipboard?.writeText) {
-        throw new Error("Clipboard access is unavailable in this browser.");
-      }
-
       await navigator.clipboard.writeText(url);
     },
     onSuccess: () => {

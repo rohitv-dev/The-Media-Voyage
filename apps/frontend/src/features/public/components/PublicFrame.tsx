@@ -8,9 +8,9 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { IconSparkles } from "@tabler/icons-react";
 import type { ReactNode } from "react";
-import { Link, type ErrorComponentProps } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
+import type { ErrorComponentProps } from "@tanstack/react-router";
 import { ApiError, getApiErrorMessage } from "#/lib/api";
 
 export function PublicFrame({
@@ -51,10 +51,12 @@ export function PublicFrame({
               textDecoration: "none",
             }}
           >
-            <IconSparkles
-              size={24}
-              stroke={1.7}
-              color="var(--mantine-primary-color-6)"
+            <img
+              src="/media-voyage-mark.svg"
+              alt=""
+              aria-hidden="true"
+              width="24"
+              height="24"
             />
             <Text fw={700} style={{ letterSpacing: "-0.04em" }}>
               Media Voyage
