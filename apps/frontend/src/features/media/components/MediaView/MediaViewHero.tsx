@@ -1,5 +1,6 @@
 import { capitalizeWords } from "#/utils/strings";
 import {
+  ActionIcon,
   Badge,
   Box,
   Button,
@@ -7,6 +8,8 @@ import {
   Grid,
   Group,
   Image,
+  Loader,
+  Menu,
   Progress,
   Stack,
   Text,
@@ -19,6 +22,7 @@ import {
   IconArrowLeft,
   IconCheck,
   IconCopy,
+  IconDotsVertical,
   IconEdit,
   IconHeartFilled,
   IconPencil,
@@ -125,6 +129,13 @@ export function MediaViewHero({
   const reducedMotion = useAppReducedMotion();
   const tagColorMap = useTagColorMap();
   const progress = getProgress(data.progress);
+  const canAdjustCover = Boolean(
+    !readOnly && data.imageUrl && data.imageUrl !== "N/A",
+  );
+  const hasSecondaryActions =
+    canAdjustCover ||
+    (!readOnly && Boolean(onRecommendToFriend)) ||
+    (!readOnly && Boolean(onCopyPublicLink));
 
   return (
     <>
@@ -204,53 +215,69 @@ export function MediaViewHero({
                     {data.title}
                   </Title>
                   {!readOnly && (
-                    <Button
+                    <Group
+                      gap="xs"
+                      wrap="nowrap"
                       w={{ base: "100%", xs: "auto" }}
-                      flex="0 0 auto"
-                      leftSection={<IconEdit size={16} />}
-                      onClick={() =>
-                        navigate({
-                          to: "/media/update/$id",
-                          params: { id: data.id },
-                        })
-                      }
                     >
-                      Update
-                    </Button>
-                  )}
-                  {!readOnly && data.imageUrl && data.imageUrl !== "N/A" && (
-                    <Button
-                      w={{ base: "100%", xs: "auto" }}
-                      flex="0 0 auto"
-                      variant="light"
-                      leftSection={<IconPhotoEdit size={16} />}
-                      onClick={() => setCoverEditorOpen(true)}
-                    >
-                      Adjust cover
-                    </Button>
-                  )}
-                  {!readOnly && onRecommendToFriend && (
-                    <Button
-                      w={{ base: "100%", xs: "auto" }}
-                      flex="0 0 auto"
-                      variant="light"
-                      leftSection={<IconSend size={16} />}
-                      onClick={onRecommendToFriend}
-                    >
-                      Recommend
-                    </Button>
-                  )}
-                  {!readOnly && onCopyPublicLink && (
-                    <Button
-                      w={{ base: "100%", xs: "auto" }}
-                      flex="0 0 auto"
-                      variant="light"
-                      leftSection={<IconCopy size={16} />}
-                      loading={copyingPublicLink}
-                      onClick={onCopyPublicLink}
-                    >
-                      Copy public link
-                    </Button>
+                      <Button
+                        flex={1}
+                        leftSection={<IconEdit size={16} />}
+                        onClick={() =>
+                          navigate({
+                            to: "/media/update/$id",
+                            params: { id: data.id },
+                          })
+                        }
+                      >
+                        Update
+                      </Button>
+                      {hasSecondaryActions && (
+                        <Menu position="bottom-end" shadow="md" withinPortal>
+                          <Menu.Target>
+                            <ActionIcon
+                              variant="light"
+                              size="md"
+                              aria-label="More actions"
+                            >
+                              <IconDotsVertical size={18} />
+                            </ActionIcon>
+                          </Menu.Target>
+                          <Menu.Dropdown>
+                            {canAdjustCover && (
+                              <Menu.Item
+                                leftSection={<IconPhotoEdit size={16} />}
+                                onClick={() => setCoverEditorOpen(true)}
+                              >
+                                Adjust cover
+                              </Menu.Item>
+                            )}
+                            {onRecommendToFriend && (
+                              <Menu.Item
+                                leftSection={<IconSend size={16} />}
+                                onClick={onRecommendToFriend}
+                              >
+                                Recommend
+                              </Menu.Item>
+                            )}
+                            {onCopyPublicLink && (
+                              <Menu.Item
+                                leftSection={<IconCopy size={16} />}
+                                rightSection={
+                                  copyingPublicLink ? (
+                                    <Loader size="xs" />
+                                  ) : undefined
+                                }
+                                disabled={copyingPublicLink}
+                                onClick={onCopyPublicLink}
+                              >
+                                Copy public link
+                              </Menu.Item>
+                            )}
+                          </Menu.Dropdown>
+                        </Menu>
+                      )}
+                    </Group>
                   )}
                   {readOnly && onCopyToLibrary && (
                     <Button
