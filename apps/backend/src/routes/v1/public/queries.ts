@@ -18,7 +18,6 @@ import {
   desc,
   eq,
   inArray,
-  isNotNull,
   isNull,
 } from "drizzle-orm";
 import { db } from "@/db/db";
@@ -27,25 +26,17 @@ import { publicMediaDetailSelect, publicMediaSummarySelect } from "./selects";
 
 const publicVisibility = eq(userMedia.visibility, "public");
 
-type NullablePublicId = { publicId: string | null };
-
-function hasPublicId<T extends NullablePublicId>(
-  record: T,
-): record is T & { publicId: string } {
-  return record.publicId !== null;
-}
-
 type PublicMediaDetailWithPrivateSeasonNotes = Omit<
   PublicMediaDetail,
   "seasonsProgress"
 > & {
-  seasonsProgress: SeasonProgressEntry[] | null;
+  seasonsProgress: SeasonProgressEntry[];
 };
 
 function stripSeasonNotes(
   record: PublicMediaDetailWithPrivateSeasonNotes,
 ): PublicMediaDetail {
-  const seasonsProgress = record.seasonsProgress ?? [];
+  const seasonsProgress = record.seasonsProgress;
 
   return {
     ...record,
@@ -64,13 +55,12 @@ async function listPublicMedia(ownerId: string) {
       and(
         eq(userMedia.userId, ownerId),
         publicVisibility,
-        isNotNull(userMedia.publicId),
         isNull(userMedia.deletedAt),
       ),
     )
     .orderBy(desc(userMedia.updatedAt));
 
-  return records.filter(hasPublicId);
+  return records;
 }
 
 async function countPublicCollectionItems(
@@ -88,7 +78,6 @@ async function countPublicCollectionItems(
         inArray(mediaCollectionItems.collectionId, collectionIds),
         eq(userMedia.userId, ownerId),
         publicVisibility,
-        isNotNull(userMedia.publicId),
         isNull(userMedia.deletedAt),
       ),
     )
@@ -106,7 +95,6 @@ async function hasPublicLibraryContent(ownerId: string) {
         and(
           eq(userMedia.userId, ownerId),
           publicVisibility,
-          isNotNull(userMedia.publicId),
           isNull(userMedia.deletedAt),
         ),
       )
@@ -118,7 +106,6 @@ async function hasPublicLibraryContent(ownerId: string) {
         and(
           eq(mediaCollection.userId, ownerId),
           eq(mediaCollection.visibility, "public"),
-          isNotNull(mediaCollection.publicId),
         ),
       )
       .limit(1),
@@ -133,7 +120,7 @@ export async function getPublicLibrary(
   const [owner] = await db
     .select({ id: user.id, ownerName: user.name })
     .from(user)
-    .where(and(eq(user.publicId, publicId), isNotNull(user.publicId)))
+    .where(eq(user.publicId, publicId))
     .limit(1);
 
   if (!owner) throw notFound("Library not found");
@@ -153,27 +140,24 @@ export async function getPublicLibrary(
         and(
           eq(mediaCollection.userId, owner.id),
           eq(mediaCollection.visibility, "public"),
-          isNotNull(mediaCollection.publicId),
         ),
       )
       .orderBy(asc(mediaCollection.name)),
   ]);
 
-  const publicCollections = collections.filter(hasPublicId);
-
-  if (!data.length && !publicCollections.length) {
+  if (!data.length && !collections.length) {
     throw notFound("Library not found");
   }
 
   const itemCounts = await countPublicCollectionItems(
-    publicCollections.map((collection) => collection.collectionId),
+    collections.map((collection) => collection.collectionId),
     owner.id,
   );
 
   return {
     ownerName: owner.ownerName,
     media: data,
-    collections: publicCollections.map((collection) => ({
+    collections: collections.map((collection) => ({
       publicId: collection.publicId,
       name: collection.name,
       description: collection.description,
@@ -195,13 +179,12 @@ export async function getPublicMedia(
       and(
         eq(userMedia.publicId, publicId),
         publicVisibility,
-        isNotNull(userMedia.publicId),
         isNull(userMedia.deletedAt),
       ),
     )
     .limit(1);
 
-  if (!record || !hasPublicId(record)) {
+  if (!record) {
     throw notFound("Media entry not found");
   }
 
@@ -227,12 +210,11 @@ export async function getPublicCollection(
       and(
         eq(mediaCollection.publicId, publicId),
         eq(mediaCollection.visibility, "public"),
-        isNotNull(mediaCollection.publicId),
       ),
     )
     .limit(1);
 
-  if (!collection || !hasPublicId(collection)) {
+  if (!collection) {
     throw notFound("Collection not found");
   }
 
@@ -246,7 +228,6 @@ export async function getPublicCollection(
         eq(mediaCollectionItems.collectionId, collection.collectionId),
         eq(userMedia.userId, collection.ownerId),
         publicVisibility,
-        isNotNull(userMedia.publicId),
         isNull(userMedia.deletedAt),
       ),
     )
@@ -254,8 +235,6 @@ export async function getPublicCollection(
       asc(mediaCollectionItems.position),
       asc(mediaCollectionItems.createdAt),
     );
-  const publicData = data.filter(hasPublicId);
-
   return {
     ownerName: collection.ownerName,
     collection: {
@@ -263,9 +242,9 @@ export async function getPublicCollection(
       name: collection.name,
       description: collection.description,
       createdAt: collection.createdAt,
-      itemCount: publicData.length,
+      itemCount: data.length,
     },
-    data: publicData,
+    data,
   };
 }
 
@@ -301,13 +280,12 @@ export async function getOwnerPublicMediaLink(
         eq(userMedia.id, userMediaId),
         eq(userMedia.userId, userId),
         eq(userMedia.visibility, "public"),
-        isNotNull(userMedia.publicId),
         isNull(userMedia.deletedAt),
       ),
     )
     .limit(1);
 
-  if (!record?.publicId) throw notFound("Public media link not available");
+  if (!record) throw notFound("Public media link not available");
 
   return { publicId: record.publicId };
 }
@@ -324,12 +302,11 @@ export async function getOwnerPublicCollectionLink(
         eq(mediaCollection.id, collectionId),
         eq(mediaCollection.userId, userId),
         eq(mediaCollection.visibility, "public"),
-        isNotNull(mediaCollection.publicId),
       ),
     )
     .limit(1);
 
-  if (!collection?.publicId) {
+  if (!collection) {
     throw notFound("Public collection link not available");
   }
 

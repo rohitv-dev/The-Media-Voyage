@@ -33,8 +33,8 @@ type MediaTableProps = {
   data: MediaRecord[];
 };
 
-function formatDate(value: Date | null | undefined) {
-  return value ? dayjs(value).format("MMM D, YYYY") : "—";
+function formatDate(value: Date) {
+  return dayjs(value).format("MMM D, YYYY");
 }
 
 function MediaIdentity({ record }: { record: MediaRecord }) {
@@ -76,7 +76,7 @@ function MediaIdentity({ record }: { record: MediaRecord }) {
 }
 
 function ProgressCell({ record }: { record: MediaRecord }) {
-  const progress = Math.min(100, Math.max(0, record.progress ?? 0));
+  const progress = Math.min(100, Math.max(0, record.progress));
 
   if (record.status === "completed") {
     return (

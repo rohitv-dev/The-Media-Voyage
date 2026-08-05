@@ -53,7 +53,7 @@ export type FriendCollectionSummary = {
   id: string;
   name: string;
   description: string | null;
-  createdAt: string | null;
+  createdAt: string;
   /** Counts only the items this viewer is allowed to see. */
   itemCount: number;
 };

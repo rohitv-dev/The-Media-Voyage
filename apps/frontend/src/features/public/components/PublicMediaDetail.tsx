@@ -11,6 +11,7 @@ import {
   Box,
   Button,
   Card,
+  Divider,
   Grid,
   Group,
   Image,
@@ -26,6 +27,7 @@ import { IconArrowLeft, IconCheck, IconPlayerPlay } from "@tabler/icons-react";
 import { useRouter } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import dayjs from "dayjs";
+import { Fragment } from "react";
 import type { ReactNode } from "react";
 
 const formatDate = (value: Date | string | null | undefined) =>
@@ -39,10 +41,7 @@ function DetailItem({
   children: ReactNode;
 }) {
   return (
-    <Box
-      p="md"
-      style={{ borderTop: "1px solid var(--mantine-color-default-border)" }}
-    >
+    <Box p="md">
       <Text
         size="xs"
         c="dimmed"
@@ -62,13 +61,7 @@ function DetailItem({
 
 function SeasonRow({ season }: { season: SeasonProgressEntry }) {
   return (
-    <Group
-      justify="space-between"
-      wrap="wrap"
-      gap="xs"
-      p="md"
-      style={{ borderTop: "1px solid var(--mantine-color-default-border)" }}
-    >
+    <Group justify="space-between" wrap="wrap" gap="xs" p="md">
       <Group gap="xs" wrap="wrap">
         <Text size="sm" fw={700}>
           Season {season.season}
@@ -102,8 +95,8 @@ function SeasonRow({ season }: { season: SeasonProgressEntry }) {
 export function PublicMediaDetail({ data }: { data: PublicMediaDetailData }) {
   const router = useRouter();
   const reduceMotion = useAppReducedMotion();
-  const progress = Math.min(100, Math.max(0, data.progress ?? 0));
-  const metadata = data.catalogMetadata ?? {};
+  const progress = Math.min(100, Math.max(0, data.progress));
+  const metadata = data.catalogMetadata;
   const runtime = "runtime" in metadata ? metadata.runtime : undefined;
 
   return (
@@ -135,7 +128,7 @@ export function PublicMediaDetail({ data }: { data: PublicMediaDetailData }) {
             </Grid.Col>
             <Grid.Col span={{ base: 7, xs: 8, sm: 9 }}>
               <Stack gap="sm">
-                <Group gap="xs" c="var(--mantine-primary-color-6)">
+                <Group gap="xs" c="primary">
                   {getTypeIcon(data.type)}
                   <Text
                     size="xs"
@@ -199,13 +192,14 @@ export function PublicMediaDetail({ data }: { data: PublicMediaDetailData }) {
 
       <Paper withBorder p="xs" style={{ overflow: "hidden" }}>
         <Group px="md" py="sm" justify="space-between">
-          <Text size="sm" fw={800} c="var(--mantine-primary-color-6)">
+          <Text size="sm" fw={800} c="primary">
             Details
           </Text>
           {data.rating !== null && (
             <Rating readOnly size="sm" value={data.rating / 2} fractions={2} />
           )}
         </Group>
+        <Divider />
         <SimpleGrid cols={{ base: 2, sm: 4 }} spacing={0}>
           <DetailItem label="Source">{data.source ?? "—"}</DetailItem>
           <DetailItem label="Started">{formatDate(data.startedAt)}</DetailItem>
@@ -215,7 +209,6 @@ export function PublicMediaDetail({ data }: { data: PublicMediaDetailData }) {
           <DetailItem label="Last updated">
             {formatDate(data.lastProgressUpdate)}
           </DetailItem>
-          <DetailItem label="Rewatches">{data.rewatches ?? 0}</DetailItem>
           <DetailItem label="Time logged">
             {formatDuration(data.timeSpent ?? 0)}
           </DetailItem>
@@ -238,38 +231,38 @@ export function PublicMediaDetail({ data }: { data: PublicMediaDetailData }) {
       {data.type === "show" && (
         <Paper withBorder p="xs" style={{ overflow: "hidden" }}>
           <Group px="md" py="sm" justify="space-between">
-            <Text size="sm" fw={800} c="var(--mantine-primary-color-6)">
+            <Text size="sm" fw={800} c="primary">
               Seasons
             </Text>
             <Text size="xs" c="dimmed">
               {data.seasonsProgress.length} tracked
             </Text>
           </Group>
+          <Divider />
           {data.seasonsProgress.length === 0 ? (
-            <Text
-              size="sm"
-              c="dimmed"
-              p="md"
-              style={{
-                borderTop: "1px solid var(--mantine-color-default-border)",
-              }}
-            >
+            <Text size="sm" c="dimmed" p="md">
               No seasons tracked yet.
             </Text>
           ) : (
-            [...data.seasonsProgress]
-              .sort((a, b) => a.season - b.season)
-              .map((season) => (
-                <SeasonRow key={season.season} season={season} />
-              ))
+            <Stack gap={0}>
+              {[...data.seasonsProgress]
+                .sort((a, b) => a.season - b.season)
+                .map((season, index) => (
+                  <Fragment key={season.season}>
+                    {index > 0 && <Divider />}
+                    <SeasonRow season={season} />
+                  </Fragment>
+                ))}
+            </Stack>
           )}
         </Paper>
       )}
 
       <Paper withBorder p={{ base: "md", sm: "lg" }}>
-        <Text size="sm" fw={800} c="var(--mantine-primary-color-6)" mb="xs">
+        <Text size="sm" fw={800} c="primary">
           Review
         </Text>
+        <Divider my="sm" />
         <Text size="sm" lh={1.7} style={{ whiteSpace: "pre-wrap" }}>
           {data.review?.trim() || "No review has been added yet."}
         </Text>

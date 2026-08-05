@@ -4,6 +4,7 @@ import {
   calendarActivityQuerySchema,
   mediaPickerQuerySchema,
   mediaImageFocusSchema,
+  userMediaPatchSchema,
   userMediaFormSchema,
   userMediaIdParamsSchema,
   userMediaPageQuerySchema,
@@ -67,7 +68,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
 
   fastify.patch("/:id", async (request, reply) => {
     const { id } = userMediaIdParamsSchema.parse(request.params);
-    const input = userMediaFormSchema.parse(request.body);
+    const input = userMediaPatchSchema.parse(request.body);
     const record = await updateUserMedia(request.userId, id, input);
 
     if (!record) throw notFound("User media not found or not updated");

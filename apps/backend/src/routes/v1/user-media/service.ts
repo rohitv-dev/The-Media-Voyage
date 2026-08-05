@@ -1,5 +1,10 @@
 import { media, sources, tags, user, userMedia, userMediaStatusHistory, userMediaTags } from "@media-voyage/shared";
-import type { MediaImageFocus, UserMediaFormSchema, UserMediaQuickAction } from "@media-voyage/shared/api";
+import type {
+  MediaImageFocus,
+  UserMediaFormSchema,
+  UserMediaPatchSchema,
+  UserMediaQuickAction,
+} from "@media-voyage/shared/api";
 import { and, eq, inArray } from "drizzle-orm";
 import { conflict } from "@/errors";
 import {
@@ -257,7 +262,6 @@ export async function createUserMedia(userId: string, input: UserMediaFormSchema
         completedAt: input.completedAt,
         progress: input.progress,
         favorite: input.favorite,
-        rewatches: input.rewatches,
         timeSpent: input.timeSpent,
         pagesRead: input.pagesRead,
         sourceId: sourceId ?? null,
@@ -292,8 +296,8 @@ export async function createUserMedia(userId: string, input: UserMediaFormSchema
   });
 }
 
-export async function updateUserMedia(userId: string, id: string, input: UserMediaFormSchema) {
-  const { title: _title, type: _type, mediaId: _mediaId, tags: tagNames, source: sourceName, ...updates } = input;
+export async function updateUserMedia(userId: string, id: string, input: UserMediaPatchSchema) {
+  const { tags: tagNames, source: sourceName, ...updates } = input;
 
   return db.transaction(async (tx) => {
     const [existing] = await tx

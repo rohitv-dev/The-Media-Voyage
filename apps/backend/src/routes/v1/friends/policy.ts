@@ -8,7 +8,7 @@
  * live Postgres. See policy.test.ts.
  */
 
-export type Visibility = "private" | "friends" | "public" | null;
+export type Visibility = "private" | "friends" | "public";
 
 /**
  * Anything owned by a user and shared by a visibility setting. Both user_media
@@ -30,8 +30,7 @@ export type FriendshipRow = {
  * Whether `viewerId` may see a shared resource (an entry or a collection).
  *
  * `isFriend` must already account for an *accepted* friendship in either
- * direction. A null visibility is treated as private, matching the column's
- * default, so nothing ever becomes visible by omission.
+ * direction.
  */
 export function canView(
   viewerId: string,
@@ -50,15 +49,14 @@ export function canView(
  * collection against the entries inside it — never to grant access, which is
  * always `canView`'s job.
  */
-const VISIBILITY_RANK: Record<Exclude<Visibility, null>, number> = {
+const VISIBILITY_RANK: Record<Visibility, number> = {
   private: 0,
   friends: 1,
   public: 2,
 };
 
 export function visibilityRank(visibility: Visibility): number {
-  // Null behaves as private here for the same reason it does in canView.
-  return visibility === null ? 0 : VISIBILITY_RANK[visibility];
+  return VISIBILITY_RANK[visibility];
 }
 
 /**

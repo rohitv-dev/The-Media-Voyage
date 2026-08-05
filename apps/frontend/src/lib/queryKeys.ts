@@ -62,4 +62,10 @@ export const queryKeys = {
     all: ["recommendations"] as const,
     detail: (id: string) => ["recommendations", { id }] as const,
   },
+  tags: {
+    all: ["tags"] as const,
+  },
+  sources: {
+    all: ["sources"] as const,
+  },
 } as const;

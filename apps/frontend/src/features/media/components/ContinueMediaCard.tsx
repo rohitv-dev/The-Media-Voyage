@@ -26,7 +26,7 @@ export function ContinueMediaCard({ media, onView }: ContinueMediaCardProps) {
   const reduceMotion = useAppReducedMotion();
   const [showCoverArt] = useCoverArtPreference();
   const hasImage = !!media.imageUrl && media.imageUrl !== "N/A";
-  const progress = media.progress ?? 0;
+  const progress = media.progress;
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.target !== event.currentTarget) return;

@@ -123,9 +123,9 @@ function PublicMediaCard({ media }: { media: PublicMediaSummary }) {
 
             {(media.status === "in_progress" || media.status === "on_hold") && (
               <Group gap="xs" wrap="nowrap">
-                <Progress value={media.progress ?? 0} flex={1} size="sm" />
+                <Progress value={media.progress} flex={1} size="sm" />
                 <Text size="xs" c="dimmed" w={34} ta="right">
-                  {media.progress ?? 0}%
+                  {media.progress}%
                 </Text>
               </Group>
             )}

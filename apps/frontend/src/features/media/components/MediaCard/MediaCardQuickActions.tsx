@@ -40,7 +40,7 @@ export function MediaCardQuickActions({
   onDelete,
   onEditCover,
 }: MediaCardQuickActionsProps) {
-  const activeVisibility = media.visibility ?? "private";
+  const activeVisibility = media.visibility;
 
   return (
     <Menu position="bottom-end" shadow="md" width={210} withinPortal>
@@ -123,7 +123,7 @@ export function MediaCardQuickActions({
         <Menu.Sub>
           <Menu.Sub.Target>
             <Menu.Sub.Item disabled={isPending}>
-              Progress · {media.progress ?? 0}%
+              Progress · {media.progress}%
             </Menu.Sub.Item>
           </Menu.Sub.Target>
           <Menu.Sub.Dropdown>

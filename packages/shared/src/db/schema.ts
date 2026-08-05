@@ -89,10 +89,10 @@ export const media = pgTable(
     source: text("source"),
     externalId: text("external_id"),
 
-    metadata: jsonb("metadata").$type<CatalogMetadata>().default({}),
+    metadata: jsonb("metadata").$type<CatalogMetadata>().default({}).notNull(),
 
-    createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
   },
   (table) => [
     unique("media_source_external_id_unique").on(table.source, table.externalId),
@@ -118,8 +118,8 @@ export const sources = pgTable(
     name: text("name").notNull(),
     normalizedName: text("normalized_name").notNull(),
     color: text("color"),
-    createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
   },
   (table) => [unique("sources_user_normalized_name_unique").on(table.userId, table.normalizedName)],
 );
@@ -129,7 +129,7 @@ export const userMedia = pgTable(
   "user_media",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    publicId: uuid("public_id").defaultRandom().unique(),
+    publicId: uuid("public_id").defaultRandom().unique().notNull(),
     userId: text("user_id")
       .references(() => user.id, { onDelete: "cascade" })
       .notNull(),
@@ -144,13 +144,11 @@ export const userMedia = pgTable(
 
     startedAt: timestamp("started_at"),
     completedAt: timestamp("completed_at"),
-    progress: integer("progress").default(0), // 0 to 100
+    progress: integer("progress").default(0).notNull(), // 0 to 100
 
-    favorite: boolean("favorite").default(false),
+    favorite: boolean("favorite").default(false).notNull(),
 
-    rewatches: integer("rewatches").default(0),
-
-    lastProgressUpdate: timestamp("last_progress_update").defaultNow(),
+    lastProgressUpdate: timestamp("last_progress_update").defaultNow().notNull(),
 
     timeSpent: integer("time_spent"),
 
@@ -160,12 +158,12 @@ export const userMedia = pgTable(
       onDelete: "set null",
     }),
 
-    visibility: visibilityEnum("visibility").default("private"), // 'private' | 'friends' | 'public'
+    visibility: visibilityEnum("visibility").default("private").notNull(), // 'private' | 'friends' | 'public'
 
-    seasonsProgress: jsonb("seasons_progress").default([]),
+    seasonsProgress: jsonb("seasons_progress").default([]).notNull(),
 
-    createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
     deletedAt: timestamp("deleted_at"),
   },
   (table) => [
@@ -183,8 +181,8 @@ export const tags = pgTable(
     name: text("name").notNull(),
     normalizedName: text("normalized_name").notNull(),
     color: text("color"),
-    createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
   },
   (table) => [unique("tags_user_normalized_name_unique").on(table.userId, table.normalizedName)],
 );
@@ -199,7 +197,7 @@ export const userMediaTags = pgTable(
     tagId: uuid("tag_id")
       .references(() => tags.id, { onDelete: "cascade" })
       .notNull(),
-    createdAt: timestamp("created_at").defaultNow(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
     unique("user_media_tags_unique").on(table.userMediaId, table.tagId),
@@ -225,16 +223,15 @@ export const userMediaStatusHistory = pgTable(
 
 export const mediaCollection = pgTable("media_collection", {
   id: uuid("id").primaryKey().defaultRandom(),
-  publicId: uuid("public_id").defaultRandom().unique(),
+  publicId: uuid("public_id").defaultRandom().unique().notNull(),
   userId: text("user_id")
     .references(() => user.id, { onDelete: "cascade" })
     .notNull(),
   name: text("name").notNull(),
   description: text("description"),
-  visibility: visibilityEnum("visibility").default("private"),
-  coverImage: text("cover_image"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
+  visibility: visibilityEnum("visibility").default("private").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
 });
 
 export const mediaCollectionItems = pgTable(
@@ -248,7 +245,7 @@ export const mediaCollectionItems = pgTable(
       .references(() => userMedia.id, { onDelete: "cascade" })
       .notNull(),
     position: integer("position").default(0).notNull(),
-    createdAt: timestamp("created_at").defaultNow(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
     unique("media_collection_item_unique").on(table.collectionId, table.userMediaId),
@@ -273,7 +270,7 @@ export const friendships = pgTable(
       .references(() => user.id, { onDelete: "cascade" })
       .notNull(),
     status: friendshipStatusEnum("status").notNull().default("pending"),
-    createdAt: timestamp("created_at").defaultNow(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
     respondedAt: timestamp("responded_at"),
   },
   (table) => [
@@ -296,8 +293,8 @@ export const userMediaReactions = pgTable(
       .references(() => user.id, { onDelete: "cascade" })
       .notNull(),
     value: integer("value").notNull(),
-    createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
   },
   (table) => [
     unique("user_media_reactions_unique").on(table.userMediaId, table.userId),
@@ -316,8 +313,8 @@ export const userMediaComments = pgTable(
       .references(() => user.id, { onDelete: "cascade" })
       .notNull(),
     body: text("body").notNull(),
-    createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
   },
   (table) => [index("user_media_comments_entry_created_idx").on(table.userMediaId, table.createdAt)],
 );

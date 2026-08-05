@@ -57,7 +57,6 @@ export const publicMediaDetailSchema = z.object({
   review: userMediaSelectSchema.shape.review,
   progress: userMediaSelectSchema.shape.progress,
   favorite: userMediaSelectSchema.shape.favorite,
-  rewatches: userMediaSelectSchema.shape.rewatches,
   timeSpent: userMediaSelectSchema.shape.timeSpent,
   pagesRead: userMediaSelectSchema.shape.pagesRead,
   source: z.string().nullable(),

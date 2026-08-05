@@ -3,6 +3,7 @@ import {
   Button,
   Center,
   Container,
+  Divider,
   Group,
   Stack,
   Text,
@@ -36,9 +37,6 @@ export function PublicFrame({
           component="header"
           justify="space-between"
           py={{ base: "md", sm: "lg" }}
-          style={{
-            borderBottom: "1px solid var(--mantine-color-default-border)",
-          }}
         >
           <Link
             to="/"
@@ -80,6 +78,8 @@ export function PublicFrame({
             )}
           </Group>
         </Group>
+
+        <Divider />
 
         {children}
 

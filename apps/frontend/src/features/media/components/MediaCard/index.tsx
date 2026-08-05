@@ -17,7 +17,6 @@ interface MediaCardProps {
   media: MediaRecord;
   onView?: (id: string) => void;
   onEdit?: (id: string) => void;
-  /** Someone else's entry: no quick actions, no edit. */
   readOnly?: boolean;
   /** Replaces the Edit button — used for social counts on friends' entries. */
   footerRight?: ReactNode;

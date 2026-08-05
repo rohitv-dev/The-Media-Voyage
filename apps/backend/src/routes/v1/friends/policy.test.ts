@@ -60,12 +60,6 @@ describe("canView", () => {
     ).toBe(false);
   });
 
-  it("treats missing visibility as private", () => {
-    // The column is nullable, so a null must never read as "shared".
-    expect(canView(FRIEND, { ownerId: OWNER, visibility: null }, true)).toBe(false);
-    expect(canView(STRANGER, { ownerId: OWNER, visibility: null }, false)).toBe(false);
-  });
-
   /**
    * The same expectations as above, written as a table. When a rule has many
    * combinations this is easier to scan than one `it` per case — each row
@@ -74,7 +68,7 @@ describe("canView", () => {
   describe("full matrix", () => {
     const cases: Array<{
       viewer: string;
-      visibility: "private" | "friends" | "public" | null;
+      visibility: "private" | "friends" | "public";
       isFriend: boolean;
       expected: boolean;
     }> = [
@@ -87,8 +81,6 @@ describe("canView", () => {
       { viewer: STRANGER, visibility: "private", isFriend: false, expected: false },
       { viewer: STRANGER, visibility: "friends", isFriend: false, expected: false },
       { viewer: STRANGER, visibility: "public", isFriend: false, expected: true },
-      { viewer: FRIEND, visibility: null, isFriend: true, expected: false },
-      { viewer: STRANGER, visibility: null, isFriend: false, expected: false },
     ];
 
     it.each(cases)(
@@ -106,10 +98,6 @@ describe("visibility strictness", () => {
   it("orders visibility from most to least restrictive", () => {
     expect(visibilityRank("private")).toBeLessThan(visibilityRank("friends"));
     expect(visibilityRank("friends")).toBeLessThan(visibilityRank("public"));
-  });
-
-  it("ranks a missing visibility as private", () => {
-    expect(visibilityRank(null)).toBe(visibilityRank("private"));
   });
 
   it("flags an entry stricter than the collection it sits in", () => {
@@ -133,10 +121,6 @@ describe("visibility strictness", () => {
     expect(isStricterThan("public", "private")).toBe(false);
   });
 
-  it("treats a null entry visibility as private when comparing", () => {
-    expect(isStricterThan(null, "friends")).toBe(true);
-    expect(isStricterThan(null, "private")).toBe(false);
-  });
 });
 
 describe("resolveFriendRequest", () => {

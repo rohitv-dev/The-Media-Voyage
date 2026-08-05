@@ -52,7 +52,6 @@ const addInitialValues: UserMediaFormSchema = {
   startedAt: undefined,
   completedAt: undefined,
   progress: undefined,
-  rewatches: 0,
   timeSpent: undefined,
   pagesRead: undefined,
   tags: [],
@@ -423,6 +422,8 @@ export function MediaForm(props: MediaFormProps) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.userMedia.statusHistory(data.id),
         }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.tags.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.sources.all }),
         ...(!isAddMode
           ? [queryClient.invalidateQueries(userMediaDetailedOptions(data.id))]
           : []),

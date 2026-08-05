@@ -100,7 +100,6 @@ export const mediaDetailedRecordSchema = z.object({
   notes: userMediaSelectSchema.shape.notes,
   progress: userMediaSelectSchema.shape.progress,
   favorite: userMediaSelectSchema.shape.favorite,
-  rewatches: userMediaSelectSchema.shape.rewatches,
   timeSpent: userMediaSelectSchema.shape.timeSpent,
   pagesRead: userMediaSelectSchema.shape.pagesRead,
   source: z.string().nullable(),
@@ -184,56 +183,48 @@ export type GetTrashedUserMediaResponse = z.infer<
   typeof getTrashedUserMediaResponseSchema
 >;
 
-export const userMediaFieldsSchema = userMediaInsertSchema.omit({
-  id: true,
-  userId: true,
-  mediaId: true,
-  createdAt: true,
-  updatedAt: true,
-  deletedAt: true,
-  lastProgressUpdate: true,
+const userMediaTrackingFieldsSchema = z.object({
+  status: userMediaInsertSchema.shape.status,
+  rating: userMediaInsertSchema.shape.rating,
+  favorite: userMediaInsertSchema.shape.favorite,
+  review: userMediaInsertSchema.shape.review,
+  notes: userMediaInsertSchema.shape.notes,
+  progress: userMediaInsertSchema.shape.progress,
+  timeSpent: userMediaInsertSchema.shape.timeSpent,
+  pagesRead: z.number().int().min(0).nullable().optional(),
+  visibility: userMediaInsertSchema.shape.visibility,
+  seasonsProgress: seasonsProgressSchema.optional(),
+  startedAt: userMediaInsertSchema.shape.startedAt,
+  completedAt: userMediaInsertSchema.shape.completedAt,
+  source: z.string().nullable().optional(),
+  tags: z.array(z.string()).nullable().optional(),
 });
 
-export const userMediaFormSchema = userMediaInsertSchema
-  .pick({
-    status: true,
-    rating: true,
-    favorite: true,
-    review: true,
-    notes: true,
-    progress: true,
-    rewatches: true,
-    timeSpent: true,
-    pagesRead: true,
-    visibility: true,
-    seasonsProgress: true,
-    startedAt: true,
-    completedAt: true,
-  })
-  .extend(
-    mediaInsertSchema.pick({
+export const userMediaFormSchema = userMediaTrackingFieldsSchema.extend(
+  mediaInsertSchema
+    .pick({
       title: true,
       type: true,
       imageUrl: true,
       externalId: true,
       description: true,
       metadata: true,
-    }).shape,
-  )
-  .extend(
-    z.object({
+    })
+    .extend({
       mediaId: z.string().optional(),
       mediaSource: z.string().optional(),
-      source: z.string().nullable().optional(),
-      tags: z.array(z.string()).nullable().optional(),
-      pagesRead: z.number().int().min(0).nullable().optional(),
     }).shape,
-  )
-  .extend({
-    seasonsProgress: seasonsProgressSchema.optional(),
-  });
+);
 
 export type UserMediaFormSchema = z.infer<typeof userMediaFormSchema>;
+
+export const userMediaPatchSchema = userMediaTrackingFieldsSchema
+  .partial()
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one user-media field is required",
+  });
+
+export type UserMediaPatchSchema = z.infer<typeof userMediaPatchSchema>;
 
 const arrayFromJson = <T extends z.ZodTypeAny>(schema: T) =>
   z.preprocess((value) => {

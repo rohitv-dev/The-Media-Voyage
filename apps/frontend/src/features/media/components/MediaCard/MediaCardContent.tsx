@@ -80,9 +80,9 @@ export function MediaCardContent({
       {(media.status === "in_progress" || media.status === "on_hold") && (
         <Stack gap={6} mt={4}>
           <Group gap="xs" wrap="nowrap">
-            <Progress value={media.progress ?? 0} flex={1} />
+            <Progress value={media.progress} flex={1} />
             <Text size="xs" c="dimmed" w={32} ta="right">
-              {media.progress ?? 0}%
+              {media.progress}%
             </Text>
           </Group>
           {staleProgressDays !== null && (

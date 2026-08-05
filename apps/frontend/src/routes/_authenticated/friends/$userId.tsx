@@ -108,7 +108,7 @@ function RouteComponent() {
           />
         ) : (
           <>
-            <Text fw={700}>All shared entries</Text>
+            <Text fw={700}>All entries</Text>
             <FriendMediaGrid records={records} />
           </>
         )}

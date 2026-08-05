@@ -40,7 +40,7 @@ export type FriendRecord = z.infer<typeof friendRecordSchema>;
 
 export const friendRequestRecordSchema = friendUserSchema.extend({
   friendshipId: z.uuid(),
-  createdAt: z.coerce.date().nullable(),
+  createdAt: z.coerce.date(),
 });
 
 export type FriendRequestRecord = z.infer<typeof friendRequestRecordSchema>;
@@ -92,7 +92,7 @@ export const commentRecordSchema = z.object({
   userId: z.string(),
   name: z.string(),
   body: z.string(),
-  createdAt: z.coerce.date().nullable(),
+  createdAt: z.coerce.date(),
 });
 
 export type CommentRecord = z.infer<typeof commentRecordSchema>;
