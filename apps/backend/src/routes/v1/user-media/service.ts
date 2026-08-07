@@ -304,6 +304,7 @@ export async function updateUserMedia(userId: string, id: string, input: UserMed
       .select({
         progress: userMedia.progress,
         status: userMedia.status,
+        startedAt: userMedia.startedAt,
         lastProgressUpdate: userMedia.lastProgressUpdate,
       })
       .from(userMedia)
@@ -317,6 +318,7 @@ export async function updateUserMedia(userId: string, id: string, input: UserMed
 
     const progressChanged = updates.progress !== undefined && updates.progress !== existing.progress;
     const startedProgress = updates.status === "in_progress" && existing.status !== "in_progress";
+    const shouldSetStartedAt = startedProgress && existing.startedAt === null && updates.startedAt === undefined;
     const statusChanged = updates.status !== undefined && updates.status !== existing.status;
     const now = new Date();
 
@@ -325,6 +327,7 @@ export async function updateUserMedia(userId: string, id: string, input: UserMed
       .set({
         ...updates,
         ...(sourceId !== undefined ? { sourceId } : {}),
+        ...(shouldSetStartedAt ? { startedAt: now } : {}),
         lastProgressUpdate: progressChanged || startedProgress ? now : existing.lastProgressUpdate,
       })
       .where(ownedUserMediaCondition(userId, id))
@@ -366,6 +369,7 @@ export async function updateUserMediaQuickActions(userId: string, id: string, qu
       .select({
         status: userMedia.status,
         progress: userMedia.progress,
+        startedAt: userMedia.startedAt,
       })
       .from(userMedia)
       .where(ownedUserMediaCondition(userId, id))
@@ -383,6 +387,10 @@ export async function updateUserMediaQuickActions(userId: string, id: string, qu
 
     if (quickAction.progress !== undefined || (statusChanged && quickAction.status === "in_progress")) {
       updates.lastProgressUpdate = now;
+    }
+
+    if (statusChanged && quickAction.status === "in_progress" && existing.startedAt === null) {
+      updates.startedAt = now;
     }
 
     if (statusChanged) {

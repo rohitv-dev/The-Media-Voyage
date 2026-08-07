@@ -31,7 +31,12 @@ export function listCollectionItems(collectionId: string) {
     .from(mediaCollectionItems)
     .innerJoin(userMedia, eq(mediaCollectionItems.userMediaId, userMedia.id))
     .innerJoin(media, eq(userMedia.mediaId, media.id))
-    .where(eq(mediaCollectionItems.collectionId, collectionId))
+    .where(
+      and(
+        eq(mediaCollectionItems.collectionId, collectionId),
+        isNull(userMedia.deletedAt),
+      ),
+    )
     .orderBy(asc(mediaCollectionItems.position), asc(mediaCollectionItems.createdAt));
 }
 
@@ -41,7 +46,12 @@ export function listCollectionItemsDetailed(collectionId: string) {
     .from(mediaCollectionItems)
     .innerJoin(userMedia, eq(mediaCollectionItems.userMediaId, userMedia.id))
     .innerJoin(media, eq(userMedia.mediaId, media.id))
-    .where(eq(mediaCollectionItems.collectionId, collectionId))
+    .where(
+      and(
+        eq(mediaCollectionItems.collectionId, collectionId),
+        isNull(userMedia.deletedAt),
+      ),
+    )
     .orderBy(asc(mediaCollectionItems.position), asc(mediaCollectionItems.createdAt));
 }
 

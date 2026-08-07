@@ -16,7 +16,7 @@ import type {
   SeasonProgressEntry,
 } from "@media-voyage/shared/api";
 import { and, count, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
-import { canView } from "./policy";
+import { canView, visibleEntryVisibilities } from "./policy";
 import {
   commentRecordSelect,
   friendMediaDetailedSelect,
@@ -306,16 +306,14 @@ export async function getFriendCollection(
 
   if (!collection) throw notFound("Collection not found");
 
-  const isFriend =
-    collection.ownerId !== viewerId && collection.visibility === "friends"
-      ? await areFriends(viewerId, collection.ownerId)
-      : false;
+  const isOwner = collection.ownerId === viewerId;
+  const isFriend = !isOwner && (await areFriends(viewerId, collection.ownerId));
 
   if (!canView(viewerId, collection, isFriend)) {
     throw notFound("Collection not found");
   }
 
-  const isOwner = collection.ownerId === viewerId;
+  const entryVisibilities = visibleEntryVisibilities(isOwner, isFriend);
 
   const data = await db
     .select(friendMediaSummarySelect(viewerId))
@@ -327,9 +325,9 @@ export async function getFriendCollection(
       and(
         eq(mediaCollectionItems.collectionId, collectionId),
         isNull(userMedia.deletedAt),
-        // The owner sees everything of their own; anyone else only the
-        // entries that are themselves shared.
-        ...(isOwner ? [] : [inArray(userMedia.visibility, [...SHARED_VISIBILITIES])]),
+        ...(entryVisibilities
+          ? [inArray(userMedia.visibility, entryVisibilities)]
+          : []),
       ),
     )
     .orderBy(mediaCollectionItems.position);

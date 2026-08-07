@@ -33,14 +33,40 @@ export type AddMediaCollectionItem = z.infer<
   typeof addMediaCollectionItemSchema
 >;
 
-export const reorderMediaCollectionItemsSchema = z.object({
-  items: z.array(
-    z.object({
-      id: mediaCollectionItemSelectSchema.shape.id,
-      position: mediaCollectionItemSelectSchema.shape.position,
-    }),
-  ),
-});
+export const reorderMediaCollectionItemsSchema = z
+  .object({
+    items: z
+      .array(
+        z.object({
+          id: mediaCollectionItemSelectSchema.shape.id,
+          position: mediaCollectionItemSelectSchema.shape.position,
+        }),
+      )
+      .min(1),
+  })
+  .superRefine(({ items }, context) => {
+    const ids = new Set(items.map((item) => item.id));
+    if (ids.size !== items.length) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Collection item ids must be unique",
+        path: ["items"],
+      });
+    }
+
+    const positions = items.map((item) => item.position).sort((a, b) => a - b);
+    const hasCompleteOrder = positions.every(
+      (position, index) => position === index + 1,
+    );
+
+    if (!hasCompleteOrder) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Collection item positions must be a complete sequence starting at 1",
+        path: ["items"],
+      });
+    }
+  });
 
 export type ReorderMediaCollectionItems = z.infer<
   typeof reorderMediaCollectionItemsSchema

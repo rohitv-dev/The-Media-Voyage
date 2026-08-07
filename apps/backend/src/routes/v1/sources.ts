@@ -5,9 +5,6 @@ import {
   createNamedEntity,
   deleteNamedEntity,
   listNamedEntitiesWithUsage,
-  sendNamedEntityCreate,
-  sendNamedEntityDelete,
-  sendNamedEntityUpdate,
   updateNamedEntity,
 } from "./namedEntity";
 import { requireAuth } from "@/require-auth";
@@ -22,24 +19,24 @@ async function sourcesRoutes(fastify: FastifyInstance) {
 
   fastify.post("/", async (request, reply) => {
     const input = sourceFormSchema.parse(request.body);
-    const result = await createNamedEntity(sources, request.userId, input);
+    const result = await createNamedEntity(sources, request.userId, input, "source");
 
-    return sendNamedEntityCreate(reply, result, "source");
+    return reply.status(201).send(result);
   });
 
   fastify.patch("/:sourceId", async (request, reply) => {
     const { sourceId } = sourceIdParamsSchema.parse(request.params);
     const input = updateSourceSchema.parse(request.body);
-    const result = await updateNamedEntity(sources, request.userId, sourceId, input);
+    const result = await updateNamedEntity(sources, request.userId, sourceId, input, "source");
 
-    return sendNamedEntityUpdate(reply, result, "source");
+    return reply.send(result);
   });
 
   fastify.delete("/:sourceId", async (request, reply) => {
     const { sourceId } = sourceIdParamsSchema.parse(request.params);
-    const result = await deleteNamedEntity(sources, request.userId, sourceId);
+    await deleteNamedEntity(sources, request.userId, sourceId, "source");
 
-    return sendNamedEntityDelete(reply, result, "source");
+    return reply.send({ success: true });
   });
 }
 

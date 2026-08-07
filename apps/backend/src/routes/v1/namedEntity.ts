@@ -2,7 +2,7 @@ import { db } from "@/db/db";
 import { sources, tags } from "@media-voyage/shared";
 import { and, count, eq, ne } from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
-import type { FastifyReply } from "fastify";
+import { conflict, notFound } from "@/errors";
 
 /**
  * Shared query/service helpers for "named entity" resources — user-owned
@@ -18,18 +18,14 @@ type NamedEntityTable = typeof tags | typeof sources;
 
 // tags and sources share an identical row shape, so one select type covers
 // both.
-export type NamedEntityRow = typeof tags.$inferSelect;
+type NamedEntityRow = typeof tags.$inferSelect;
 
 type NamedEntityInput = {
   name?: string;
   color?: string | null;
 };
 
-type UpdateResult = { status: "not_found" } | { status: "duplicate" } | { status: "success"; entity: NamedEntityRow };
-
-type CreateResult = { status: "duplicate" } | { status: "success"; entity: NamedEntityRow };
-
-type DeleteResult = { status: "not_found" } | { status: "success" };
+type NamedEntityLabel = "tag" | "source";
 
 /**
  * List every entity owned by the user together with a usage count of how many
@@ -52,7 +48,7 @@ export function listNamedEntitiesWithUsage(table: NamedEntityTable, usageJoinCol
     .orderBy(table.name);
 }
 
-export async function findOwnedNamedEntity(
+async function findOwnedNamedEntity(
   table: NamedEntityTable,
   userId: string,
   id: string,
@@ -99,12 +95,13 @@ export async function createNamedEntity(
   table: NamedEntityTable,
   userId: string,
   input: { name: string; color?: string | null },
-): Promise<CreateResult> {
+  label: NamedEntityLabel,
+) {
   const normalizedName = input.name.trim().toLowerCase();
-  const conflict = await findByNormalizedNameAny(table, userId, normalizedName);
+  const duplicate = await findByNormalizedNameAny(table, userId, normalizedName);
 
-  if (conflict) {
-    return { status: "duplicate" };
+  if (duplicate) {
+    throw conflict(`A ${label} with that name already exists`);
   }
 
   const [created] = await db
@@ -117,7 +114,7 @@ export async function createNamedEntity(
     })
     .returning();
 
-  return { status: "success", entity: created };
+  return created;
 }
 
 export async function updateNamedEntity(
@@ -125,21 +122,22 @@ export async function updateNamedEntity(
   userId: string,
   id: string,
   input: NamedEntityInput,
-): Promise<UpdateResult> {
+  label: NamedEntityLabel,
+) {
   const existing = await findOwnedNamedEntity(table, userId, id);
 
   if (!existing) {
-    return { status: "not_found" };
+    throw notFound(`${label === "tag" ? "Tag" : "Source"} not found`);
   }
 
   const updates: Partial<NamedEntityRow> = {};
 
   if (input.name !== undefined) {
     const normalizedName = input.name.trim().toLowerCase();
-    const conflict = await findByNormalizedName(table, userId, normalizedName, id);
+    const duplicate = await findByNormalizedName(table, userId, normalizedName, id);
 
-    if (conflict) {
-      return { status: "duplicate" };
+    if (duplicate) {
+      throw conflict(`A ${label} with that name already exists`);
     }
 
     updates.name = input.name.trim();
@@ -156,53 +154,21 @@ export async function updateNamedEntity(
     .where(and(eq(table.id, id), eq(table.userId, userId)))
     .returning();
 
-  return { status: "success", entity: updated };
+  return updated;
 }
 
-export async function deleteNamedEntity(table: NamedEntityTable, userId: string, id: string): Promise<DeleteResult> {
+export async function deleteNamedEntity(
+  table: NamedEntityTable,
+  userId: string,
+  id: string,
+  label: NamedEntityLabel,
+) {
   const existing = await findOwnedNamedEntity(table, userId, id);
 
   if (!existing) {
-    return { status: "not_found" };
+    throw notFound(`${label === "tag" ? "Tag" : "Source"} not found`);
   }
 
   await db.delete(table).where(and(eq(table.id, id), eq(table.userId, userId)));
 
-  return { status: "success" };
-}
-
-/**
- * Map an {@link updateNamedEntity} result onto the HTTP response. `label` is
- * the lowercase entity noun (e.g. "tag", "source") used in the error copy.
- */
-export function sendNamedEntityUpdate(reply: FastifyReply, result: UpdateResult, label: string) {
-  const Label = label.charAt(0).toUpperCase() + label.slice(1);
-
-  switch (result.status) {
-    case "not_found":
-      return reply.status(404).send({ error: `${Label} not found` });
-    case "duplicate":
-      return reply.status(409).send({ error: `A ${label} with that name already exists` });
-    case "success":
-      return reply.send(result.entity);
-  }
-}
-
-/** Map a {@link createNamedEntity} result onto the HTTP response. */
-export function sendNamedEntityCreate(reply: FastifyReply, result: CreateResult, label: string) {
-  if (result.status === "duplicate") {
-    return reply.status(409).send({ error: `A ${label} with that name already exists` });
-  }
-
-  return reply.status(201).send(result.entity);
-}
-
-/** Map a {@link deleteNamedEntity} result onto the HTTP response. */
-export function sendNamedEntityDelete(reply: FastifyReply, result: DeleteResult, label: string) {
-  if (result.status === "not_found") {
-    const Label = label.charAt(0).toUpperCase() + label.slice(1);
-    return reply.status(404).send({ error: `${Label} not found` });
-  }
-
-  return reply.status(200).send({ success: true });
 }

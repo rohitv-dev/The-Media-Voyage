@@ -45,6 +45,18 @@ export function canView(
 }
 
 /**
+ * Entry visibilities a collection viewer may see. Collection visibility opens
+ * the collection itself; entries still keep their own visibility boundary.
+ */
+export function visibleEntryVisibilities(isOwner: boolean, isFriend: boolean) {
+  if (isOwner) return undefined;
+
+  return isFriend
+    ? (["friends", "public"] as const)
+    : (["public"] as const);
+}
+
+/**
  * Visibility ordered from most to least restrictive. Used to compare a
  * collection against the entries inside it — never to grant access, which is
  * always `canView`'s job.

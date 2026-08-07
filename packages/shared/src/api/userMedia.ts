@@ -148,15 +148,6 @@ export const mediaImageFocusSchema = z
 
 export type MediaImageFocus = z.infer<typeof mediaImageFocusSchema>;
 
-export const getUserDetailedMediaResponseSchema = z.object({
-  success: z.boolean(),
-  data: mediaDetailedRecordSchema,
-});
-
-export type GetUserDetailedMediaResponse = z.infer<
-  typeof getUserDetailedMediaResponseSchema
->;
-
 export const getUserMediaResponseSchema = z.object({
   success: z.boolean(),
   count: z.number(),

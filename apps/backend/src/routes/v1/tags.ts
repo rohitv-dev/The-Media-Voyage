@@ -5,9 +5,6 @@ import {
   createNamedEntity,
   deleteNamedEntity,
   listNamedEntitiesWithUsage,
-  sendNamedEntityCreate,
-  sendNamedEntityDelete,
-  sendNamedEntityUpdate,
   updateNamedEntity,
 } from "./namedEntity";
 import { requireAuth } from "@/require-auth";
@@ -22,24 +19,24 @@ async function tagsRoutes(fastify: FastifyInstance) {
 
   fastify.post("/", async (request, reply) => {
     const input = tagFormSchema.parse(request.body);
-    const result = await createNamedEntity(tags, request.userId, input);
+    const result = await createNamedEntity(tags, request.userId, input, "tag");
 
-    return sendNamedEntityCreate(reply, result, "tag");
+    return reply.status(201).send(result);
   });
 
   fastify.patch("/:tagId", async (request, reply) => {
     const { tagId } = tagIdParamsSchema.parse(request.params);
     const input = updateTagSchema.parse(request.body);
-    const result = await updateNamedEntity(tags, request.userId, tagId, input);
+    const result = await updateNamedEntity(tags, request.userId, tagId, input, "tag");
 
-    return sendNamedEntityUpdate(reply, result, "tag");
+    return reply.send(result);
   });
 
   fastify.delete("/:tagId", async (request, reply) => {
     const { tagId } = tagIdParamsSchema.parse(request.params);
-    const result = await deleteNamedEntity(tags, request.userId, tagId);
+    await deleteNamedEntity(tags, request.userId, tagId, "tag");
 
-    return sendNamedEntityDelete(reply, result, "tag");
+    return reply.send({ success: true });
   });
 }
 

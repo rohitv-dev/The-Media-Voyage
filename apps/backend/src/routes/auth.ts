@@ -1,33 +1,8 @@
-import { createHash } from "node:crypto";
 import { fromNodeHeaders } from "better-auth/node";
 import { FastifyInstance } from "fastify";
 import { auth } from "../auth";
 import { env } from "../config";
 import { internalServerError } from "../errors";
-
-const SESSION_CHECK_PATH = "/api/auth/get-session";
-const SESSION_COOKIE_PATTERN =
-  /(?:^|;\s*)(?:__Secure-)?better-auth\.session_token=/;
-
-function fingerprint(value: string) {
-  return createHash("sha256").update(value).digest("hex").slice(0, 12);
-}
-
-const authRuntimeFingerprint = {
-  secret: fingerprint(env.BETTER_AUTH_SECRET),
-  database: fingerprint(env.DATABASE_URL),
-};
-
-async function responseHasSession(response: Response) {
-  const body: unknown = await response.clone().json().catch(() => null);
-
-  return (
-    typeof body === "object" &&
-    body !== null &&
-    "session" in body &&
-    body.session !== null
-  );
-}
 
 async function authRoutes(fastify: FastifyInstance) {
   fastify.route({
@@ -35,7 +10,6 @@ async function authRoutes(fastify: FastifyInstance) {
     url: "/api/auth/*",
     async handler(request, reply) {
       try {
-        const isSessionCheck = request.url.split("?", 1)[0] === SESSION_CHECK_PATH;
         // Construct request URL
         const url = new URL(request.url, env.BETTER_AUTH_URL);
 
@@ -49,26 +23,6 @@ async function authRoutes(fastify: FastifyInstance) {
         });
         // Process authentication request
         const response = await auth.handler(req);
-        const authSessionPresent = isSessionCheck
-          ? await responseHasSession(response)
-          : undefined;
-
-        if (isSessionCheck) {
-          request.log.info(
-            {
-              authRuntimeFingerprint,
-              authSessionCookiePresent: SESSION_COOKIE_PATTERN.test(
-                request.headers.cookie ?? "",
-              ),
-              authSessionPresent,
-              origin: request.headers.origin,
-              requestHost: request.headers.host,
-              forwardedHost: request.headers["x-forwarded-host"],
-              statusCode: response.status,
-            },
-            "Better Auth session check",
-          );
-        }
 
         // Forward response to client
         reply.status(response.status);

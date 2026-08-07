@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  reorderMediaCollectionItemsSchema,
   userMediaFormSchema,
   userMediaPatchSchema,
 } from "@media-voyage/shared/api";
@@ -67,5 +68,41 @@ describe("user-media request schemas", () => {
 
     expect(createResult).not.toHaveProperty("rewatches");
     expect(patchResult).toEqual({ progress: 42 });
+  });
+});
+
+describe("collection reorder request schema", () => {
+  const firstId = "11111111-1111-4111-8111-111111111111";
+  const secondId = "22222222-2222-4222-8222-222222222222";
+
+  it("accepts a complete sequential order", () => {
+    expect(
+      reorderMediaCollectionItemsSchema.safeParse({
+        items: [
+          { id: secondId, position: 1 },
+          { id: firstId, position: 2 },
+        ],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects empty, duplicate, and incomplete orders", () => {
+    expect(reorderMediaCollectionItemsSchema.safeParse({ items: [] }).success).toBe(false);
+    expect(
+      reorderMediaCollectionItemsSchema.safeParse({
+        items: [
+          { id: firstId, position: 1 },
+          { id: firstId, position: 2 },
+        ],
+      }).success,
+    ).toBe(false);
+    expect(
+      reorderMediaCollectionItemsSchema.safeParse({
+        items: [
+          { id: firstId, position: 1 },
+          { id: secondId, position: 3 },
+        ],
+      }).success,
+    ).toBe(false);
   });
 });

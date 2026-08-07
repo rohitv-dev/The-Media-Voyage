@@ -5,6 +5,10 @@ import { AppError } from "./errors";
 export function registerErrorHandler(fastify: FastifyInstance) {
   fastify.setErrorHandler((error, request, reply) => {
     if (error instanceof AppError) {
+      if (error.statusCode >= 500) {
+        request.log.error({ err: error }, "Application request error");
+      }
+
       return reply.status(error.statusCode).send({
         success: false,
         type: error.type,

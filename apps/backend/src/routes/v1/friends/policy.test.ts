@@ -16,13 +16,7 @@
  * fiddly to set up as real database rows.
  */
 import { describe, expect, it } from "vitest";
-import {
-  canView,
-  isStricterThan,
-  resolveFriendRequest,
-  visibilityRank,
-  type FriendshipRow,
-} from "./policy";
+import { canView, isStricterThan, resolveFriendRequest, visibleEntryVisibilities, visibilityRank, type FriendshipRow } from "./policy";
 
 const OWNER = "user-owner";
 const FRIEND = "user-friend";
@@ -34,6 +28,10 @@ describe("canView", () => {
     expect(canView(OWNER, { ownerId: OWNER, visibility: "private" }, false)).toBe(true);
   });
 
+  it("denies a stranger a private entry", () => {
+    expect(canView(STRANGER, { ownerId: OWNER, visibility: "private" }, false)).toBe(false);
+  });
+
   it("lets anyone see a public entry, friend or not", () => {
     const entry = { ownerId: OWNER, visibility: "public" as const };
 
@@ -42,22 +40,16 @@ describe("canView", () => {
   });
 
   it("lets a friend see a friends-visible entry", () => {
-    expect(
-      canView(FRIEND, { ownerId: OWNER, visibility: "friends" }, true),
-    ).toBe(true);
+    expect(canView(FRIEND, { ownerId: OWNER, visibility: "friends" }, true)).toBe(true);
   });
 
   it("denies a non-friend a friends-visible entry", () => {
-    expect(
-      canView(STRANGER, { ownerId: OWNER, visibility: "friends" }, false),
-    ).toBe(false);
+    expect(canView(STRANGER, { ownerId: OWNER, visibility: "friends" }, false)).toBe(false);
   });
 
   it("denies a friend a private entry", () => {
     // Being friends is not blanket access — the entry must be shared too.
-    expect(
-      canView(FRIEND, { ownerId: OWNER, visibility: "private" }, true),
-    ).toBe(false);
+    expect(canView(FRIEND, { ownerId: OWNER, visibility: "private" }, true)).toBe(false);
   });
 
   /**
@@ -86,11 +78,26 @@ describe("canView", () => {
     it.each(cases)(
       "viewer=$viewer visibility=$visibility isFriend=$isFriend -> $expected",
       ({ viewer, visibility, isFriend, expected }) => {
-        expect(canView(viewer, { ownerId: OWNER, visibility }, isFriend)).toBe(
-          expected,
-        );
+        expect(canView(viewer, { ownerId: OWNER, visibility }, isFriend)).toBe(expected);
       },
     );
+  });
+});
+
+describe("visibleEntryVisibilities", () => {
+  it("keeps private entries for the owner only", () => {
+    expect(visibleEntryVisibilities(true, false)).toBeUndefined();
+  });
+
+  it("lets a friend see friends and public entries", () => {
+    expect(visibleEntryVisibilities(false, true)).toEqual([
+      "friends",
+      "public",
+    ]);
+  });
+
+  it("lets a stranger see public entries only", () => {
+    expect(visibleEntryVisibilities(false, false)).toEqual(["public"]);
   });
 });
 
@@ -120,7 +127,6 @@ describe("visibility strictness", () => {
     expect(isStricterThan("friends", "private")).toBe(false);
     expect(isStricterThan("public", "private")).toBe(false);
   });
-
 });
 
 describe("resolveFriendRequest", () => {
@@ -138,15 +144,11 @@ describe("resolveFriendRequest", () => {
   });
 
   it("reports already friends when one is accepted", () => {
-    expect(
-      resolveFriendRequest(OWNER, friendship({ status: "accepted" })),
-    ).toEqual({ type: "already_friends" });
+    expect(resolveFriendRequest(OWNER, friendship({ status: "accepted" }))).toEqual({ type: "already_friends" });
   });
 
   it("reports a duplicate when we already requested them", () => {
-    expect(
-      resolveFriendRequest(OWNER, friendship({ requesterId: OWNER })),
-    ).toEqual({ type: "already_requested" });
+    expect(resolveFriendRequest(OWNER, friendship({ requesterId: OWNER }))).toEqual({ type: "already_requested" });
   });
 
   it("accepts their pending request instead of mirroring it", () => {
@@ -170,9 +172,10 @@ describe("resolveFriendRequest", () => {
   });
 
   it("also replaces a declined row we ourselves sent, allowing a re-request", () => {
-    expect(
-      resolveFriendRequest(OWNER, friendship({ status: "declined" })),
-    ).toEqual({ type: "replace_existing", friendshipId: "friendship-1" });
+    expect(resolveFriendRequest(OWNER, friendship({ status: "declined" }))).toEqual({
+      type: "replace_existing",
+      friendshipId: "friendship-1",
+    });
   });
 
   it("is unaffected by which side of the row the requester sits on", () => {

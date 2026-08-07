@@ -57,14 +57,38 @@ export async function reorderCollectionItems(
 
   if (!items.length) throw badRequest("items are required");
 
-  await Promise.all(
-    items.map((item) =>
-      db
+  await db.transaction(async (tx) => {
+    const existingItems = await tx
+      .select({ id: mediaCollectionItems.id })
+      .from(mediaCollectionItems)
+      .where(eq(mediaCollectionItems.collectionId, collectionId))
+      .for("update");
+    const existingIds = new Set(existingItems.map((item) => item.id));
+
+    if (
+      existingIds.size !== items.length ||
+      items.some((item) => !existingIds.has(item.id))
+    ) {
+      throw conflict("Collection changed. Refresh and try again.");
+    }
+
+    for (const item of items) {
+      const [updated] = await tx
         .update(mediaCollectionItems)
         .set({ position: item.position })
-        .where(and(eq(mediaCollectionItems.collectionId, collectionId), eq(mediaCollectionItems.id, item.id))),
-    ),
-  );
+        .where(
+          and(
+            eq(mediaCollectionItems.collectionId, collectionId),
+            eq(mediaCollectionItems.id, item.id),
+          ),
+        )
+        .returning({ id: mediaCollectionItems.id });
+
+      if (!updated) {
+        throw conflict("Collection changed. Refresh and try again.");
+      }
+    }
+  });
 }
 
 export async function removeCollectionItem(userId: string, collectionId: string, itemId: string) {
