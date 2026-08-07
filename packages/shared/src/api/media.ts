@@ -102,6 +102,11 @@ export type OpenLibrarySearchBook = {
   subject?: string[];
 };
 
+export type OpenLibraryWork = {
+  description?: string | { value?: string };
+  subjects?: string[];
+};
+
 export const mediaResponseSchema = z.object({
   source: z.string(),
   id: mediaSelectSchema.shape.id,

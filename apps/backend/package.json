@@ -7,7 +7,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "dev": "tsx watch src/index.ts",
-    "build": "esbuild ./src/index.ts --bundle --platform=node --format=cjs --outfile=./dist/index.cjs",
+    "build": "esbuild ./src/index.ts ./src/scripts/refresh-catalog-metadata.ts --bundle --platform=node --format=cjs --outdir=./dist --entry-names=[name] --out-extension:.js=.cjs",
     "start": "node dist/index.cjs"
   },
   "keywords": [],
