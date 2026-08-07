@@ -40,7 +40,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return data as Promise<T>;
 }
 
-export function getDownloadFilename(contentDisposition: string | null) {
+function getDownloadFilename(contentDisposition: string | null) {
   if (!contentDisposition) return undefined;
 
   const encodedFilename = contentDisposition.match(

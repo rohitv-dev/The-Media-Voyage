@@ -1,7 +1,5 @@
-import {
-  showNotification,
-  type NotificationData,
-} from "@mantine/notifications";
+import { showNotification } from "@mantine/notifications";
+import type { NotificationData } from "@mantine/notifications";
 
 export function showSuccessNotification(notificationData: NotificationData) {
   showNotification({

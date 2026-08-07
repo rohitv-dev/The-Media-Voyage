@@ -19,7 +19,7 @@ export const sessionQueryOptions = queryOptions({
   queryFn: getSession,
 })
 
-export async function getSession() {
+async function getSession() {
   for (let attempt = 1; attempt <= RETRY_ATTEMPTS; attempt++) {
     const { data, error } = await authClient.getSession()
 

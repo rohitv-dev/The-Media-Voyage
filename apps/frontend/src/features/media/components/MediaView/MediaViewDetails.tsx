@@ -32,7 +32,7 @@ function MetaItem({ label, value }: { label: string; value: ReactNode }) {
 export function MediaViewDetails({ data }: { data: MediaViewData }) {
   const sourceColorMap = useSourceColorMap();
   const progress = getProgress(data.progress);
-  const catalogMetadata = data.catalogMetadata ?? undefined;
+  const catalogMetadata = data.catalogMetadata;
 
   const metaItems = [
     { label: "Status", value: capitalizeWords(data.status) },
@@ -53,10 +53,10 @@ export function MediaViewDetails({ data }: { data: MediaViewData }) {
     },
     { label: "Started", value: formatDate(data.startedAt) },
     { label: "Completed", value: formatDate(data.completedAt) },
-    ...(catalogMetadata?.genre
+    ...(catalogMetadata.genre
       ? [{ label: "Genre", value: catalogMetadata.genre }]
       : []),
-    ...(catalogMetadata?.catalogRating
+    ...(catalogMetadata.catalogRating
       ? [{ label: "Catalog Rating", value: catalogMetadata.catalogRating }]
       : []),
   ];

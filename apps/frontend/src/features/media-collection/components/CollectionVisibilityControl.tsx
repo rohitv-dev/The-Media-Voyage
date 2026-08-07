@@ -36,7 +36,7 @@ export function CollectionVisibilityControl({
   collection: MediaCollectionRecord;
 }) {
   const queryClient = useQueryClient();
-  const current = collection.visibility ?? "private";
+  const current = collection.visibility;
 
   const refresh = () =>
     Promise.all([
@@ -82,7 +82,7 @@ export function CollectionVisibilityControl({
               <List.Item key={entry.userMediaId}>
                 {entry.title}{" "}
                 <Text span c="dimmed" size="xs">
-                  ({entry.visibility ?? "private"})
+                  ({entry.visibility})
                 </Text>
               </List.Item>
             ))}

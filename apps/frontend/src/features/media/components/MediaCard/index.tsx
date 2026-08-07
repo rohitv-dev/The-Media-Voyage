@@ -1,5 +1,6 @@
 import { useCoverArtPreference } from "#/features/media/hooks/useCoverArtPreference";
 import { useCoverArtSizePreference } from "#/features/media/hooks/useCoverArtSizePreference";
+import type { CoverArtSize } from "#/features/media/hooks/useCoverArtSizePreference";
 import { useMediaCardActions } from "#/features/media/hooks/useMediaCardActions";
 import { Card, Stack } from "@mantine/core";
 import type { MediaRecord } from "@media-voyage/shared/api";
@@ -13,28 +14,51 @@ import { MediaCardCoverArt } from "./MediaCardCoverArt";
 import { MediaCardFooter } from "./MediaCardFooter";
 import { MediaCardQuickActions } from "./MediaCardQuickActions";
 
-interface MediaCardProps {
-  media: MediaRecord;
+interface MediaCardBaseProps {
   onView?: (id: string) => void;
-  onEdit?: (id: string) => void;
-  readOnly?: boolean;
   /** Replaces the Edit button — used for social counts on friends' entries. */
   footerRight?: ReactNode;
 }
 
-export function MediaCard({
+type MediaCardProps = MediaCardBaseProps &
+  (
+    | {
+        media: MediaRecord;
+        onEdit?: (id: string) => void;
+        readOnly?: false;
+      }
+    | {
+        media: Omit<MediaRecord, "visibility">;
+        onEdit?: never;
+        readOnly: true;
+      }
+  );
+
+interface MediaCardPresentationProps extends MediaCardBaseProps {
+  media: Omit<MediaRecord, "visibility">;
+  onEdit?: (id: string) => void;
+  quickActions?: ReactNode;
+  isActionPending?: boolean;
+  isDeletePending?: boolean;
+  onDelete?: () => void;
+  coverEditorOpen?: boolean;
+  coverArtSize: CoverArtSize;
+}
+
+function MediaCardPresentation({
   media,
   onView,
   onEdit,
-  readOnly,
   footerRight,
-}: MediaCardProps) {
+  quickActions,
+  isActionPending,
+  isDeletePending,
+  onDelete,
+  coverEditorOpen,
+  coverArtSize,
+}: MediaCardPresentationProps) {
   const reduceMotion = useAppReducedMotion();
   const [showCoverArt] = useCoverArtPreference();
-  const [coverArtSize] = useCoverArtSizePreference();
-  const [coverEditorOpen, setCoverEditorOpen] = useState(false);
-  const { isActionPending, isDeletePending, requestDelete, runQuickAction } =
-    useMediaCardActions(media);
 
   const openMedia = () => {
     if (coverEditorOpen) return;
@@ -95,31 +119,57 @@ export function MediaCard({
         gap="sm"
         mt={showCoverArt ? "sm" : "0"}
       >
-        <MediaCardContent
-          media={media}
-          readOnly={readOnly}
-          quickActions={
-            !readOnly ? (
-              <MediaCardQuickActions
-                media={media}
-                isPending={isActionPending}
-                onAction={runQuickAction}
-                onDelete={requestDelete}
-                onEditCover={() => setCoverEditorOpen(true)}
-              />
-            ) : null
-          }
-        />
+        <MediaCardContent media={media} quickActions={quickActions} />
         <MediaCardFooter
           media={media}
-          readOnly={readOnly}
           onEdit={onEdit}
           footerRight={footerRight}
           isActionPending={isActionPending}
           isDeletePending={isDeletePending}
-          onDelete={requestDelete}
+          onDelete={onDelete}
         />
       </Stack>
+    </Card>
+  );
+}
+
+function EditableMediaCard({
+  media,
+  onView,
+  onEdit,
+  footerRight,
+  coverArtSize,
+}: MediaCardBaseProps & {
+  media: MediaRecord;
+  onEdit?: (id: string) => void;
+  coverArtSize: CoverArtSize;
+}) {
+  const [coverEditorOpen, setCoverEditorOpen] = useState(false);
+  const { isActionPending, isDeletePending, requestDelete, runQuickAction } =
+    useMediaCardActions(media);
+
+  return (
+    <>
+      <MediaCardPresentation
+        media={media}
+        onView={onView}
+        onEdit={onEdit}
+        footerRight={footerRight}
+        quickActions={
+          <MediaCardQuickActions
+            media={media}
+            isPending={isActionPending}
+            onAction={runQuickAction}
+            onDelete={requestDelete}
+            onEditCover={() => setCoverEditorOpen(true)}
+          />
+        }
+        isActionPending={isActionPending}
+        isDeletePending={isDeletePending}
+        onDelete={requestDelete}
+        coverEditorOpen={coverEditorOpen}
+        coverArtSize={coverArtSize}
+      />
 
       <MediaCoverArtFocusModal
         opened={coverEditorOpen}
@@ -131,6 +181,23 @@ export function MediaCard({
         imageFocusY={media.imageFocusY}
         coverArtSize={coverArtSize}
       />
-    </Card>
+    </>
   );
+}
+
+export function MediaCard(props: MediaCardProps) {
+  const [coverArtSize] = useCoverArtSizePreference();
+
+  if (props.readOnly) {
+    return (
+      <MediaCardPresentation
+        media={props.media}
+        onView={props.onView}
+        footerRight={props.footerRight}
+        coverArtSize={coverArtSize}
+      />
+    );
+  }
+
+  return <EditableMediaCard {...props} coverArtSize={coverArtSize} />;
 }

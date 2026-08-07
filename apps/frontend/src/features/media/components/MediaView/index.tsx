@@ -13,7 +13,7 @@ import { MediaViewStatusHistory } from "./MediaViewStatusHistory";
 export type MediaViewData = Omit<MediaDetailedRecord, "notes" | "visibility"> &
   Partial<Pick<MediaDetailedRecord, "notes" | "visibility">>;
 
-export type MediaViewProps = {
+type MediaViewProps = {
   data: MediaViewData;
   readOnly?: boolean;
   onBack?: () => void;

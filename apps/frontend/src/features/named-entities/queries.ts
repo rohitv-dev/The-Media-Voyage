@@ -9,7 +9,7 @@ import { useMemo } from "react";
  * their list query and name→color lookup are generated from one factory
  * instead of being copy-pasted per feature.
  */
-export function createNamedEntityQueries<
+function createNamedEntityQueries<
   T extends { name: string; color: string | null },
 >(key: string) {
   const options = queryOptions({

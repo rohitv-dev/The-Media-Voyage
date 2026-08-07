@@ -1,6 +1,7 @@
 import z from "zod";
 import { mediaDetailedRecordSchema, mediaRecordSchema } from "./userMedia";
 import { visibilityEnum } from "../";
+import { mediaCollectionSelectSchema } from "../schemas/mediaCollection";
 
 export const friendRequestSchema = z.object({
   email: z.email().trim().toLowerCase(),
@@ -136,3 +137,31 @@ export type FriendMediaListResponse = {
   friend: FriendRecord;
   data: FriendMediaRecord[];
 };
+
+export const friendCollectionSummarySchema = z.object({
+  id: mediaCollectionSelectSchema.shape.id,
+  name: mediaCollectionSelectSchema.shape.name,
+  description: mediaCollectionSelectSchema.shape.description,
+  createdAt: mediaCollectionSelectSchema.shape.createdAt,
+  /** Counts only the items this viewer is allowed to see. */
+  itemCount: z.number().int().nonnegative(),
+});
+
+export type FriendCollectionSummary = z.infer<
+  typeof friendCollectionSummarySchema
+>;
+
+export const friendCollectionResponseSchema = z.object({
+  collection: z.object({
+    id: mediaCollectionSelectSchema.shape.id,
+    name: mediaCollectionSelectSchema.shape.name,
+    description: mediaCollectionSelectSchema.shape.description,
+    ownerId: ownerSchema.shape.ownerId,
+    ownerName: ownerSchema.shape.ownerName,
+  }),
+  data: z.array(friendMediaRecordSchema),
+});
+
+export type FriendCollectionResponse = z.infer<
+  typeof friendCollectionResponseSchema
+>;

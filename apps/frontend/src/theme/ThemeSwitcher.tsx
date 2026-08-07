@@ -35,7 +35,7 @@ function Swatch({ id }: { id: ThemeId }) {
 }
 
 /** Full-width theme option — used inside the menu and on the profile page. */
-export function ThemeOption({
+function ThemeOption({
   id,
   active,
   onSelect,

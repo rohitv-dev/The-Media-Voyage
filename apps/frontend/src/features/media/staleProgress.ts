@@ -1,4 +1,4 @@
-export const STALE_PROGRESS_DAYS = 10;
+const STALE_PROGRESS_DAYS = 10;
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 

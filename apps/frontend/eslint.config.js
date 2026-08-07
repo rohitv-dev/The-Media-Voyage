@@ -15,6 +15,15 @@ export default [
     },
   },
   {
-    ignores: ['eslint.config.js', 'prettier.config.js'],
+    ignores: [
+      'eslint.config.js',
+      'prettier.config.js',
+      'android/**/build/**',
+      'android/app/release/**',
+      'android/app/src/main/assets/**',
+      'dist/**',
+      'coverage/**',
+      'src/routeTree.gen.ts',
+    ],
   },
 ]

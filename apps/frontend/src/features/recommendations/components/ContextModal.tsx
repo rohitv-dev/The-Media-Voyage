@@ -17,7 +17,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { recommendationDetailOptions, resolveRecommendation } from "../queries";
 
-export type ContextModalProps = {
+type ContextModalProps = {
   recommendationId: string;
 };
 
@@ -34,7 +34,7 @@ function outcomeMessage(result: RecommendationResolutionResponse) {
   }
 }
 
-export function ContextModal({
+function ContextModal({
   context,
   id,
   innerProps,

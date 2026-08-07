@@ -11,7 +11,7 @@ import {
  * capitalizeWords labelling) consistent everywhere a media enum is offered
  * as a dropdown.
  */
-export function toSelectOptions<T extends string>(values: readonly T[]) {
+function toSelectOptions<T extends string>(values: readonly T[]) {
   return values.map((value) => ({ value, label: capitalizeWords(value) }));
 }
 

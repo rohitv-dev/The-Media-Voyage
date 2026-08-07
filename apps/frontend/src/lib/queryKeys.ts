@@ -18,7 +18,6 @@ export const queryKeys = {
       ["user-media", "filtered-infinite", filters] as const,
     search: (search: string) => ["user-media", "search", search] as const,
     trash: ["user-media", "trash"] as const,
-    count: ["user-media", "count"] as const,
     dropdowns: ["user-media", "dropdowns"] as const,
   },
   dashboardStats: ["dashboard-stats"] as const,

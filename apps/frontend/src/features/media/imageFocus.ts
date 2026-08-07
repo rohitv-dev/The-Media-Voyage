@@ -1,7 +1,7 @@
 import type { MediaImageFocus } from "@media-voyage/shared/api";
 import type { CoverArtSize } from "./hooks/useCoverArtSizePreference";
 
-export type ImageFocusPoint = {
+type ImageFocusPoint = {
   x: number;
   y: number;
 };

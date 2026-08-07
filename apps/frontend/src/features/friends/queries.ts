@@ -4,6 +4,8 @@ import { queryOptions } from "@tanstack/react-query";
 import type {
   CommentFormInput,
   CommentRecord,
+  FriendCollectionResponse,
+  FriendCollectionSummary,
   FriendMediaDetailed,
   FriendMediaListResponse,
   FriendMediaRecord,
@@ -49,26 +51,6 @@ export function friendMediaQueryOptions(userId: string) {
   });
 }
 
-export type FriendCollectionSummary = {
-  id: string;
-  name: string;
-  description: string | null;
-  createdAt: string;
-  /** Counts only the items this viewer is allowed to see. */
-  itemCount: number;
-};
-
-export type FriendCollectionDetail = {
-  collection: {
-    id: string;
-    name: string;
-    description: string | null;
-    ownerId: string;
-    ownerName: string;
-  };
-  data: FriendMediaRecord[];
-};
-
 export function friendCollectionsQueryOptions(userId: string) {
   return queryOptions({
     queryKey: queryKeys.friends.collections(userId),
@@ -83,7 +65,7 @@ export function friendCollectionDetailOptions(collectionId: string) {
   return queryOptions({
     queryKey: queryKeys.friends.collection(collectionId),
     queryFn: () =>
-      api<FriendCollectionDetail>(`/friends/collections/${collectionId}`),
+      api<FriendCollectionResponse>(`/friends/collections/${collectionId}`),
   });
 }
 

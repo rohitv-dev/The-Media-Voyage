@@ -15,14 +15,12 @@ import { getStaleProgressDays } from "../../staleProgress";
 import { useSourceColorMap } from "#/features/named-entities/queries";
 
 interface MediaCardContentProps {
-  media: MediaRecord;
-  readOnly?: boolean;
-  quickActions: ReactNode;
+  media: Omit<MediaRecord, "visibility">;
+  quickActions?: ReactNode;
 }
 
 export function MediaCardContent({
   media,
-  readOnly,
   quickActions,
 }: MediaCardContentProps) {
   const sourceColorMap = useSourceColorMap();
@@ -46,7 +44,7 @@ export function MediaCardContent({
           {media.favorite && (
             <IconHeartFilled size={18} color="red" aria-label="Favorite" />
           )}
-          {!readOnly && quickActions}
+          {quickActions}
         </Group>
       </Group>
 

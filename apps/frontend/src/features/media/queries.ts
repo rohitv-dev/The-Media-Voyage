@@ -4,7 +4,6 @@ import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import type {
   CalendarActivityResponse,
-  UserMediaCounts,
   GetTrashedUserMediaResponse,
   GetUserMediaResponse,
   GetUserMediaPageResponse,
@@ -41,15 +40,6 @@ function buildFilterQuery(filters: Record<string, unknown>): string {
 
 // -- User media ---------------------------------------------------------------
 
-async function getUserMedia() {
-  return api<GetUserMediaResponse>("/user-media");
-}
-
-export const userMediaQueryOptions = queryOptions({
-  queryKey: queryKeys.userMedia.all,
-  queryFn: getUserMedia,
-});
-
 async function getUserMediaDetailedRecord(id: string) {
   return api<MediaDetailedRecord & { reactions: ReactionRecord[] }>(
     `/user-media/${id}`,
@@ -80,7 +70,7 @@ async function getUserMediaFilterRecords(filters: UserMediaQuerySchema) {
   );
 }
 
-export function userMediaFilterQueryOptions(filters: UserMediaQuerySchema) {
+function userMediaFilterQueryOptions(filters: UserMediaQuerySchema) {
   return queryOptions({
     queryKey: queryKeys.userMedia.filtered(filters),
     queryFn: () => getUserMediaFilterRecords(filters),
@@ -139,15 +129,6 @@ export const trashedUserMediaQueryOptions = queryOptions({
   queryFn: getDeletedUserMedia,
 });
 
-async function getUserMediaCounts() {
-  return api<UserMediaCounts>("/user-media/counts");
-}
-
-export const userMediaCountOptions = queryOptions({
-  queryKey: queryKeys.userMedia.count,
-  queryFn: getUserMediaCounts,
-});
-
 async function getUserMediaDropdowns() {
   return api<UserMediaDropdowns>("/user-media/dropdowns");
 }
@@ -177,7 +158,7 @@ function calendarMonthRange(month: string) {
   };
 }
 
-export function getCalendarActivity(month: string) {
+function getCalendarActivity(month: string) {
   const { from, to } = calendarMonthRange(month);
 
   return api<CalendarActivityResponse>(

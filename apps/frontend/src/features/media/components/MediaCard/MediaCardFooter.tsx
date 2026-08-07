@@ -5,18 +5,16 @@ import dayjs from "dayjs";
 import type { ReactNode } from "react";
 
 interface MediaCardFooterProps {
-  media: MediaRecord;
-  readOnly?: boolean;
+  media: Omit<MediaRecord, "visibility">;
   onEdit?: (id: string) => void;
   footerRight?: ReactNode;
-  isActionPending: boolean;
-  isDeletePending: boolean;
-  onDelete: () => void;
+  isActionPending?: boolean;
+  isDeletePending?: boolean;
+  onDelete?: () => void;
 }
 
 export function MediaCardFooter({
   media,
-  readOnly,
   onEdit,
   footerRight,
   isActionPending,
@@ -32,7 +30,7 @@ export function MediaCardFooter({
       </Text>
 
       {footerRight ??
-        (!readOnly && (
+        (onDelete && (
           <Group gap="xs" wrap="nowrap">
             {onEdit && (
               <Button

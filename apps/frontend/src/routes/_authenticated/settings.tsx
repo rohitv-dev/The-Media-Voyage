@@ -211,34 +211,32 @@ function RouteComponent() {
           title="Account"
           description="Update the email address you use to sign in."
         >
-          <Stack
-            component="form"
-            gap="sm"
-            onSubmit={emailForm.onSubmit(handleChangeEmail)}
-          >
-            <Text size="sm" c="dimmed">
-              Current email: {currentEmail}
-            </Text>
-            <TextInput
-              label="New email address"
-              placeholder="you@example.com"
-              type="email"
-              {...emailForm.getInputProps("email")}
-            />
-            <Button
-              type="submit"
-              variant="light"
-              loading={changingEmail}
-              disabled={!emailForm.values.email.trim()}
-              w="fit-content"
-            >
-              Change email
-            </Button>
-            <Text size="xs" c="dimmed">
-              Email verification is not enabled yet, so this change takes
-              effect immediately.
-            </Text>
-          </Stack>
+          <form onSubmit={emailForm.onSubmit(handleChangeEmail)}>
+            <Stack gap="sm">
+              <Text size="sm" c="dimmed">
+                Current email: {currentEmail}
+              </Text>
+              <TextInput
+                label="New email address"
+                placeholder="you@example.com"
+                type="email"
+                {...emailForm.getInputProps("email")}
+              />
+              <Button
+                type="submit"
+                variant="light"
+                loading={changingEmail}
+                disabled={!emailForm.values.email.trim()}
+                w="fit-content"
+              >
+                Change email
+              </Button>
+              <Text size="xs" c="dimmed">
+                Email verification is not enabled yet, so this change takes
+                effect immediately.
+              </Text>
+            </Stack>
+          </form>
         </SettingsSection>
 
         <SettingsSection

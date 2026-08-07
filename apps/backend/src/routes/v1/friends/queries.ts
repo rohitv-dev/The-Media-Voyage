@@ -8,7 +8,13 @@ import {
   userMediaComments,
   userMediaReactions,
 } from "@media-voyage/shared";
-import type { FriendRecord, FriendRequestsResponse, SeasonProgressEntry } from "@media-voyage/shared/api";
+import type {
+  FriendCollectionResponse,
+  FriendCollectionSummary,
+  FriendRecord,
+  FriendRequestsResponse,
+  SeasonProgressEntry,
+} from "@media-voyage/shared/api";
 import { and, count, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { canView } from "./policy";
 import {
@@ -248,7 +254,10 @@ async function countVisibleCollectionItems(collectionIds: string[]) {
   return new Map(rows.map((row) => [row.collectionId, row.total]));
 }
 
-export async function listFriendCollections(viewerId: string, friendId: string) {
+export async function listFriendCollections(
+  viewerId: string,
+  friendId: string,
+): Promise<FriendCollectionSummary[]> {
   await getFriend(viewerId, friendId);
 
   const collections = await db
@@ -277,7 +286,10 @@ export async function listFriendCollections(viewerId: string, friendId: string) 
  * visibility independently gates the entry. A private entry filed in a shared
  * collection stays hidden.
  */
-export async function getFriendCollection(viewerId: string, collectionId: string) {
+export async function getFriendCollection(
+  viewerId: string,
+  collectionId: string,
+): Promise<FriendCollectionResponse> {
   const [collection] = await db
     .select({
       id: mediaCollection.id,
