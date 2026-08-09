@@ -11,6 +11,7 @@ vi.mock("../config", () => ({
 }));
 
 import {
+  findTmdbByImdbId,
   getTmdbDetails,
   getTmdbRecommendations,
   searchTmdb,
@@ -24,6 +25,63 @@ describe("TMDB service", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     fetchMock.mockReset();
+  });
+
+  it("finds the requested movie type by IMDb ID", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        movie_results: [
+          {
+            id: 25,
+            title: "Mapped Movie",
+            adult: false,
+            poster_path: "/mapped.jpg",
+          },
+        ],
+        tv_results: [
+          {
+            id: 26,
+            name: "Wrong Type",
+            adult: false,
+            poster_path: null,
+          },
+        ],
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(findTmdbByImdbId("tt1234567", "movie")).resolves.toEqual({
+      id: "",
+      source: "tmdb_movie",
+      externalId: "25",
+      title: "Mapped Movie",
+      type: "movie",
+      imageUrl: "https://image.tmdb.org/t/p/w500/mapped.jpg",
+    });
+
+    const url = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(url.pathname).toBe("/3/find/tt1234567");
+    expect(url.searchParams.get("external_source")).toBe("imdb_id");
+    expect(url.searchParams.get("language")).toBe("en-US");
+  });
+
+  it("returns null when IMDb lookup has no non-adult result for the requested type", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        movie_results: [],
+        tv_results: [
+          {
+            id: 27,
+            name: "Filtered Show",
+            adult: true,
+            poster_path: null,
+          },
+        ],
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(findTmdbByImdbId("tt7654321", "show")).resolves.toBeNull();
   });
 
   it("searches movies with bearer authentication and filters adult results", async () => {
@@ -72,10 +130,7 @@ describe("TMDB service", () => {
       },
     ]);
 
-    const [requestUrl, options] = fetchMock.mock.calls[0] as [
-      URL,
-      RequestInit,
-    ];
+    const [requestUrl, options] = fetchMock.mock.calls[0] as [URL, RequestInit];
     const url = new URL(String(requestUrl));
 
     expect(url.pathname).toBe("/3/search/movie");
@@ -207,9 +262,7 @@ describe("TMDB service", () => {
     );
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(
-      getTmdbRecommendations("movie", 31),
-    ).resolves.toEqual([
+    await expect(getTmdbRecommendations("movie", 31)).resolves.toEqual([
       {
         id: "",
         source: "tmdb_movie",
@@ -284,7 +337,9 @@ describe("TMDB service", () => {
   it.each([401, 429, 500])(
     "sanitizes TMDB HTTP %s failures without exposing the token",
     async (status) => {
-      fetchMock.mockResolvedValue(jsonResponse({ status_message: "No" }, status));
+      fetchMock.mockResolvedValue(
+        jsonResponse({ status_message: "No" }, status),
+      );
       vi.stubGlobal("fetch", fetchMock);
 
       let caught: unknown;

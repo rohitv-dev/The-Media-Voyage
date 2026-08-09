@@ -143,6 +143,18 @@ export type SourceMediaRecord = z.infer<typeof mediaResponseSchema>;
 
 export type TmdbMediaSource = "tmdb_movie" | "tmdb_tv";
 
+export type TmdbMediaRecord =
+  | (SourceMediaRecord & {
+      source: "tmdb_movie";
+      externalId: string;
+      type: "movie";
+    })
+  | (SourceMediaRecord & {
+      source: "tmdb_tv";
+      externalId: string;
+      type: "show";
+    });
+
 export interface TmdbMediaDetails extends SourceMediaRecord {
   source: TmdbMediaSource;
   type: TmdbMediaType;

@@ -64,6 +64,64 @@ export const recommendationDetailSchema = z.discriminatedUnion("origin", [
 
 export type RecommendationDetail = z.infer<typeof recommendationDetailSchema>;
 
+const systemRecommendationProviderSchema = z.enum([
+  "tmdb_movie",
+  "tmdb_tv",
+  "igdb",
+  "open_library",
+]);
+
+const systemRecommendationPreviewMediaSchema = z.object({
+  source: systemRecommendationProviderSchema,
+  externalId: z.string().min(1),
+  title: z.string(),
+  type: z.enum(mediaTypeEnum.enumValues),
+  imageUrl: z.string().nullable(),
+});
+
+const systemRecommendationPreviewSeedSchema = z.object({
+  userMediaId: z.uuid(),
+  title: z.string(),
+  type: z.enum(mediaTypeEnum.enumValues),
+  status: z.enum(["completed", "revisiting"]),
+  rating: z.number().int().min(0).max(10).nullable(),
+  favorite: z.boolean(),
+  catalogSource: z.string().nullable(),
+  catalogExternalId: z.string().nullable(),
+  mappingStatus: z.enum(["mapped", "unmapped", "provider_error"]),
+  mappingReason: z.enum([
+    "imdb_match",
+    "provider_id",
+    "unsupported_source",
+    "invalid_external_id",
+    "missing_imdb_id",
+    "tmdb_not_found",
+    "provider_error",
+  ]),
+  recommendationSource: systemRecommendationProviderSchema.nullable(),
+  recommendationExternalId: z.string().nullable(),
+  candidateCount: z.number().int().nonnegative(),
+});
+
+export const systemRecommendationPreviewResponseSchema = z.object({
+  strategyKey: z.literal("provider_recommendations"),
+  strategyVersion: z.literal("1"),
+  eligibleSeedCount: z.number().int().nonnegative(),
+  seeds: z.array(systemRecommendationPreviewSeedSchema),
+  recommendations: z.array(
+    z.object({
+      rank: z.number().int().positive(),
+      reason: z.string(),
+      seedUserMediaId: z.uuid(),
+      media: systemRecommendationPreviewMediaSchema,
+    }),
+  ),
+});
+
+export type SystemRecommendationPreviewResponse = z.infer<
+  typeof systemRecommendationPreviewResponseSchema
+>;
+
 export const createFriendRecommendationSchema = z.object({
   recipientId: z.string().min(1),
   sourceUserMediaId: z.uuid(),

@@ -1,0 +1,354 @@
+import type {
+  SourceMediaRecord,
+  SystemRecommendationPreviewResponse,
+} from "@media-voyage/shared/api";
+import { getGameRecommendations } from "@/services/igdb";
+import { getOpenLibraryRecommendations } from "@/services/openLibrary";
+import { findTmdbByImdbId, getTmdbRecommendations } from "@/services/tmdb";
+import { getTvMazeDetails } from "@/services/tvMaze";
+import { findSystemPreviewLibrary } from "./queries";
+
+const MAX_PRODUCTIVE_SEEDS = 3;
+const MAX_SEED_ATTEMPTS = 10;
+const MAX_RECOMMENDATIONS = 10;
+
+type LibraryItem = Awaited<ReturnType<typeof findSystemPreviewLibrary>>[number];
+type PreviewMedia =
+  SystemRecommendationPreviewResponse["recommendations"][number]["media"];
+type ProviderIdentity = Pick<PreviewMedia, "source" | "externalId" | "type">;
+
+type PreviewSeed = LibraryItem & {
+  status: "completed" | "revisiting";
+  deletedAt: null;
+};
+
+type SeedRun = {
+  seed: PreviewSeed;
+  mappingStatus: "mapped" | "unmapped" | "provider_error";
+  mappingReason: SystemRecommendationPreviewResponse["seeds"][number]["mappingReason"];
+  mappedMedia: ProviderIdentity | null;
+  candidates: PreviewMedia[];
+  error?: unknown;
+};
+
+function isPreviewSeed(item: LibraryItem): item is PreviewSeed {
+  return (
+    item.deletedAt === null &&
+    (item.status === "completed" || item.status === "revisiting") &&
+    (item.favorite || item.rating === null || item.rating >= 7)
+  );
+}
+
+function seedTimestamp(seed: PreviewSeed) {
+  return (seed.completedAt ?? seed.updatedAt).getTime();
+}
+
+export function selectPreviewSeeds(library: LibraryItem[]): PreviewSeed[] {
+  return library
+    .filter(isPreviewSeed)
+    .sort(
+      (left, right) =>
+        Number(right.favorite) - Number(left.favorite) ||
+        (right.rating ?? -1) - (left.rating ?? -1) ||
+        seedTimestamp(right) - seedTimestamp(left),
+    )
+    .slice(0, MAX_SEED_ATTEMPTS);
+}
+
+function positiveInteger(value: string | null): number | null {
+  if (!value || !/^\d+$/.test(value)) return null;
+
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+async function mapSeedToProvider(seed: PreviewSeed) {
+  if (seed.type === "movie" && seed.catalogSource === "omdb") {
+    if (!seed.externalId || !/^tt\d+$/i.test(seed.externalId)) {
+      return {
+        mappedMedia: null,
+        mappingReason: "invalid_external_id",
+      } as const;
+    }
+
+    const movie = await findTmdbByImdbId(seed.externalId, "movie");
+    return {
+      mappedMedia: movie
+        ? {
+            source: movie.source,
+            externalId: movie.externalId,
+            type: movie.type,
+          }
+        : null,
+      mappingReason: movie ? "imdb_match" : "tmdb_not_found",
+    } as const;
+  }
+
+  if (seed.type === "show" && seed.catalogSource === "tvmaze") {
+    const tvMazeId = positiveInteger(seed.externalId);
+    if (!tvMazeId) {
+      return {
+        mappedMedia: null,
+        mappingReason: "invalid_external_id",
+      } as const;
+    }
+
+    const details = await getTvMazeDetails(String(tvMazeId));
+    const imdbId = details?.externals?.imdb;
+
+    if (!imdbId || !/^tt\d+$/i.test(imdbId)) {
+      return { mappedMedia: null, mappingReason: "missing_imdb_id" } as const;
+    }
+
+    const show = await findTmdbByImdbId(imdbId, "show");
+    return {
+      mappedMedia: show
+        ? {
+            source: show.source,
+            externalId: show.externalId,
+            type: show.type,
+          }
+        : null,
+      mappingReason: show ? "imdb_match" : "tmdb_not_found",
+    } as const;
+  }
+
+  if (seed.type === "game" && seed.catalogSource === "igdb") {
+    const gameId = positiveInteger(seed.externalId);
+    return {
+      mappedMedia: gameId
+        ? {
+            source: "igdb" as const,
+            externalId: String(gameId),
+            type: "game" as const,
+          }
+        : null,
+      mappingReason: gameId ? "provider_id" : "invalid_external_id",
+    } as const;
+  }
+
+  if (seed.type === "book" && seed.catalogSource === "open_library") {
+    const workId = seed.externalId?.trim();
+    const isWorkId = workId && /^OL\d+W$/i.test(workId);
+    return {
+      mappedMedia: isWorkId
+        ? {
+            source: "open_library" as const,
+            externalId: workId,
+            type: "book" as const,
+          }
+        : null,
+      mappingReason: isWorkId ? "provider_id" : "invalid_external_id",
+    } as const;
+  }
+
+  return { mappedMedia: null, mappingReason: "unsupported_source" } as const;
+}
+
+function toPreviewMedia(record: SourceMediaRecord): PreviewMedia | null {
+  if (!record.externalId) return null;
+
+  const isSupported =
+    (record.source === "tmdb_movie" && record.type === "movie") ||
+    (record.source === "tmdb_tv" && record.type === "show") ||
+    (record.source === "igdb" && record.type === "game") ||
+    (record.source === "open_library" && record.type === "book");
+
+  if (!isSupported) return null;
+
+  return {
+    source: record.source,
+    externalId: record.externalId,
+    title: record.title,
+    type: record.type,
+    imageUrl: record.imageUrl,
+  } as PreviewMedia;
+}
+
+async function getProviderRecommendations(
+  seed: PreviewSeed,
+  mappedMedia: ProviderIdentity,
+) {
+  let candidates: SourceMediaRecord[];
+
+  if (seed.type === "movie" || seed.type === "show") {
+    const tmdbId = positiveInteger(mappedMedia.externalId);
+    if (!tmdbId) return [];
+    candidates = await getTmdbRecommendations(seed.type, tmdbId);
+  } else if (seed.type === "game") {
+    candidates = await getGameRecommendations(mappedMedia.externalId);
+  } else {
+    candidates = await getOpenLibraryRecommendations(mappedMedia.externalId);
+  }
+
+  return candidates
+    .map(toPreviewMedia)
+    .filter((candidate): candidate is PreviewMedia => candidate !== null);
+}
+
+async function runSeed(seed: PreviewSeed): Promise<SeedRun> {
+  let mappedMedia: ProviderIdentity | null = null;
+
+  try {
+    const mapping = await mapSeedToProvider(seed);
+    mappedMedia = mapping.mappedMedia;
+    if (!mappedMedia) {
+      return {
+        seed,
+        mappingStatus: "unmapped",
+        mappingReason: mapping.mappingReason,
+        mappedMedia: null,
+        candidates: [],
+      };
+    }
+
+    return {
+      seed,
+      mappingStatus: "mapped",
+      mappingReason: mapping.mappingReason,
+      mappedMedia,
+      candidates: await getProviderRecommendations(seed, mappedMedia),
+    };
+  } catch (error) {
+    return {
+      seed,
+      mappingStatus: "provider_error",
+      mappingReason: "provider_error",
+      mappedMedia,
+      candidates: [],
+      error,
+    };
+  }
+}
+
+async function collectSeedRuns(seeds: PreviewSeed[]) {
+  const runs: SeedRun[] = [];
+  let productiveSeedCount = 0;
+
+  for (const seed of seeds) {
+    const run = await runSeed(seed);
+    runs.push(run);
+
+    if (run.mappingStatus === "mapped" && run.candidates.length > 0) {
+      productiveSeedCount += 1;
+    }
+    if (productiveSeedCount === MAX_PRODUCTIVE_SEEDS) break;
+  }
+
+  return runs;
+}
+
+function normalizedTitle(type: LibraryItem["type"], title: string) {
+  return `${type}:${title.trim().toLocaleLowerCase("en-US").replace(/\s+/g, " ")}`;
+}
+
+function mediaIdentity(source: string, externalId: string) {
+  return `${source}:${externalId}`;
+}
+
+function recommendationReason(seed: PreviewSeed) {
+  if (seed.favorite) return `Because "${seed.title}" is a favorite`;
+  if (seed.rating !== null) {
+    return `Because you rated "${seed.title}" ${seed.rating}/10`;
+  }
+  if (seed.status === "revisiting") {
+    return `Because you're revisiting "${seed.title}"`;
+  }
+  return `Because you completed "${seed.title}"`;
+}
+
+function buildRecommendations(
+  library: LibraryItem[],
+  runs: SeedRun[],
+): SystemRecommendationPreviewResponse["recommendations"] {
+  const excludedTitles = new Set(
+    library.map((item) => normalizedTitle(item.type, item.title)),
+  );
+  const excludedIdentities = new Set<string>();
+
+  for (const run of runs) {
+    if (run.mappedMedia) {
+      excludedIdentities.add(
+        mediaIdentity(run.mappedMedia.source, run.mappedMedia.externalId),
+      );
+    }
+  }
+
+  const recommendations: SystemRecommendationPreviewResponse["recommendations"] =
+    [];
+  const seen = new Set<string>();
+  const maxCandidateCount = Math.max(
+    0,
+    ...runs.map((run) => run.candidates.length),
+  );
+
+  candidateLoop: for (let index = 0; index < maxCandidateCount; index += 1) {
+    for (const run of runs) {
+      const candidate = run.candidates[index];
+      if (!candidate) continue;
+
+      const identity = mediaIdentity(candidate.source, candidate.externalId);
+      const title = normalizedTitle(candidate.type, candidate.title);
+
+      if (
+        seen.has(identity) ||
+        excludedIdentities.has(identity) ||
+        excludedTitles.has(title)
+      ) {
+        continue;
+      }
+
+      seen.add(identity);
+      recommendations.push({
+        rank: recommendations.length + 1,
+        reason: recommendationReason(run.seed),
+        seedUserMediaId: run.seed.userMediaId,
+        media: candidate,
+      });
+
+      if (recommendations.length === MAX_RECOMMENDATIONS) {
+        break candidateLoop;
+      }
+    }
+  }
+
+  return recommendations;
+}
+
+export async function getSystemRecommendationPreview(
+  userId: string,
+): Promise<SystemRecommendationPreviewResponse> {
+  const library = await findSystemPreviewLibrary(userId);
+  const eligibleSeeds = library.filter(isPreviewSeed);
+  const seeds = selectPreviewSeeds(library);
+  const runs = await collectSeedRuns(seeds);
+
+  if (
+    runs.length > 0 &&
+    runs.every((run) => run.mappingStatus === "provider_error")
+  ) {
+    throw runs[0].error;
+  }
+
+  return {
+    strategyKey: "provider_recommendations",
+    strategyVersion: "1",
+    eligibleSeedCount: eligibleSeeds.length,
+    seeds: runs.map((run) => ({
+      userMediaId: run.seed.userMediaId,
+      title: run.seed.title,
+      type: run.seed.type,
+      status: run.seed.status,
+      rating: run.seed.rating,
+      favorite: run.seed.favorite,
+      catalogSource: run.seed.catalogSource,
+      catalogExternalId: run.seed.externalId,
+      mappingStatus: run.mappingStatus,
+      mappingReason: run.mappingReason,
+      recommendationSource: run.mappedMedia?.source ?? null,
+      recommendationExternalId: run.mappedMedia?.externalId ?? null,
+      candidateCount: run.candidates.length,
+    })),
+    recommendations: buildRecommendations(library, runs),
+  } satisfies SystemRecommendationPreviewResponse;
+}

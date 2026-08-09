@@ -148,3 +148,19 @@ export async function getOpenLibraryDetails(
 
   return Object.keys(details).length > 0 ? details : null;
 }
+
+export async function getOpenLibraryRecommendations(
+  externalId: string,
+): Promise<SourceMediaRecord[]> {
+  const work = await fetchOpenLibraryWork(externalId);
+  const subject = work?.subjects?.find((value) => value.trim());
+
+  if (!subject) return [];
+
+  const escapedSubject = subject.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const recommendations = await searchOpenLibrary(
+    `subject:"${escapedSubject}"`,
+  );
+
+  return recommendations.filter((book) => book.externalId !== externalId);
+}

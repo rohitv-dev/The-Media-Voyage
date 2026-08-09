@@ -3,23 +3,40 @@ import {
   recommendationIdParamsSchema,
   resolveRecommendationSchema,
 } from "@media-voyage/shared/api";
-import type { FastifyInstance } from "fastify";
+import type { FastifyContextConfig, FastifyInstance } from "fastify";
 import { requireAuth } from "@/require-auth";
 import { getRecommendationDetail } from "./queries";
-import {
-  createFriendRecommendation,
-  resolveRecommendation,
-} from "./service";
+import { createFriendRecommendation, resolveRecommendation } from "./service";
+import { getSystemRecommendationPreview } from "./system-preview";
+
+const systemPreviewConfig: FastifyContextConfig = {
+  rateLimit: {
+    max: 5,
+    timeWindow: "1 minute",
+  },
+};
 
 async function recommendationRoutes(fastify: FastifyInstance) {
   fastify.addHook("preHandler", requireAuth);
 
   fastify.post("/", async (request, reply) => {
     const input = createFriendRecommendationSchema.parse(request.body);
-    const recommendation = await createFriendRecommendation(request.userId, input);
+    const recommendation = await createFriendRecommendation(
+      request.userId,
+      input,
+    );
 
     return reply.status(201).send(recommendation);
   });
+
+  fastify.get(
+    "/system/preview",
+    { config: systemPreviewConfig },
+    async (request, reply) => {
+      reply.header("Cache-Control", "no-store");
+      return reply.send(await getSystemRecommendationPreview(request.userId));
+    },
+  );
 
   fastify.get("/:id", async (request, reply) => {
     const { id } = recommendationIdParamsSchema.parse(request.params);

@@ -43,6 +43,26 @@ export async function findFriendRecommendationSource(
   return source;
 }
 
+export async function findSystemPreviewLibrary(userId: string) {
+  return db
+    .select({
+      userMediaId: userMedia.id,
+      title: media.title,
+      type: media.type,
+      catalogSource: media.source,
+      externalId: media.externalId,
+      status: userMedia.status,
+      rating: userMedia.rating,
+      favorite: userMedia.favorite,
+      completedAt: userMedia.completedAt,
+      updatedAt: userMedia.updatedAt,
+      deletedAt: userMedia.deletedAt,
+    })
+    .from(userMedia)
+    .innerJoin(media, eq(media.id, userMedia.mediaId))
+    .where(eq(userMedia.userId, userId));
+}
+
 async function findProfiles(ids: string[]) {
   if (!ids.length) return new Map<string, RecommendationUser>();
 

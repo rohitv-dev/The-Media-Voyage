@@ -1,7 +1,6 @@
 import type {
-  SourceMediaRecord,
   TmdbMediaDetails,
-  TmdbMediaSource,
+  TmdbMediaRecord,
   TmdbMediaType,
 } from "@media-voyage/shared/api";
 import { z } from "zod";
@@ -13,17 +12,8 @@ const TMDB_POSTER_URL = "https://image.tmdb.org/t/p/w500";
 const TMDB_LANGUAGE = "en-US";
 const TMDB_NETWORK_RETRY_DELAY_MS = 200;
 
-type TmdbMovieRecord = SourceMediaRecord & {
-  source: "tmdb_movie";
-  externalId: string;
-  type: "movie";
-};
-
-type TmdbShowRecord = SourceMediaRecord & {
-  source: "tmdb_tv";
-  externalId: string;
-  type: "show";
-};
+type TmdbMovieRecord = Extract<TmdbMediaRecord, { source: "tmdb_movie" }>;
+type TmdbShowRecord = Extract<TmdbMediaRecord, { source: "tmdb_tv" }>;
 
 const tmdbResultBaseSchema = z.object({
   id: z.number().int().positive(),
@@ -45,6 +35,11 @@ const tmdbMovieResultsSchema = z.object({
 
 const tmdbShowResultsSchema = z.object({
   results: z.array(tmdbShowResultSchema),
+});
+
+const tmdbFindResultsSchema = z.object({
+  movie_results: z.array(tmdbMovieResultSchema),
+  tv_results: z.array(tmdbShowResultSchema),
 });
 
 const tmdbGenreSchema = z.object({
@@ -158,10 +153,7 @@ async function fetchTmdb(
   }
 }
 
-function parseResults(
-  type: TmdbMediaType,
-  data: unknown,
-): SourceMediaRecord[] {
+function parseResults(type: TmdbMediaType, data: unknown): TmdbMediaRecord[] {
   if (type === "movie") {
     const parsed = tmdbMovieResultsSchema.safeParse(data);
     if (!parsed.success) return invalidResponse(parsed.error);
@@ -174,15 +166,13 @@ function parseResults(
   const parsed = tmdbShowResultsSchema.safeParse(data);
   if (!parsed.success) return invalidResponse(parsed.error);
 
-  return parsed.data.results
-    .filter((result) => !result.adult)
-    .map(showRecord);
+  return parsed.data.results.filter((result) => !result.adult).map(showRecord);
 }
 
 export async function searchTmdb(
   query: string,
   type: TmdbMediaType,
-): Promise<SourceMediaRecord[]> {
+): Promise<TmdbMediaRecord[]> {
   const data = await fetchTmdb(`search/${tmdbPath(type)}`, {
     query,
     include_adult: "false",
@@ -191,6 +181,26 @@ export async function searchTmdb(
   });
 
   return parseResults(type, data);
+}
+
+export async function findTmdbByImdbId(
+  imdbId: string,
+  type: TmdbMediaType,
+): Promise<TmdbMediaRecord | null> {
+  const data = await fetchTmdb(`find/${encodeURIComponent(imdbId)}`, {
+    external_source: "imdb_id",
+    language: TMDB_LANGUAGE,
+  });
+  const parsed = tmdbFindResultsSchema.safeParse(data);
+  if (!parsed.success) return invalidResponse(parsed.error);
+
+  if (type === "movie") {
+    const result = parsed.data.movie_results.find((item) => !item.adult);
+    return result ? movieRecord(result) : null;
+  }
+
+  const result = parsed.data.tv_results.find((item) => !item.adult);
+  return result ? showRecord(result) : null;
 }
 
 export async function getTmdbDetails(
@@ -237,7 +247,7 @@ export async function getTmdbDetails(
 export async function getTmdbRecommendations(
   type: TmdbMediaType,
   id: number,
-): Promise<SourceMediaRecord[]> {
+): Promise<TmdbMediaRecord[]> {
   const data = await fetchTmdb(
     `${tmdbPath(type)}/${id}/recommendations`,
     {
