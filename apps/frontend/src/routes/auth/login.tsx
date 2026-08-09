@@ -1,4 +1,5 @@
 import { authClient } from "#/auth/authClient";
+import { ChangePasswordModal } from "#/auth/ChangePasswordModal";
 import { getApiErrorMessage } from "#/lib/api";
 import { showErrorNotification } from "#/lib/notifications";
 import {
@@ -14,6 +15,7 @@ import {
 } from "@mantine/core";
 import { schemaResolver, useForm } from "@mantine/form";
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { z } from "zod";
 
 export const Route = createFileRoute("/auth/login")({
@@ -27,6 +29,7 @@ const loginSchema = z.object({
 
 function RouteComponent() {
   const navigate = Route.useNavigate();
+  const [changePasswordOpened, setChangePasswordOpened] = useState(false);
   const form = useForm({
     mode: "controlled",
     initialValues: {
@@ -55,6 +58,17 @@ function RouteComponent() {
     }
   });
 
+  const openChangePassword = () => {
+    const emailResult = loginSchema.shape.email.safeParse(form.values.email);
+
+    if (!emailResult.success) {
+      form.setFieldError("email", "Please enter a valid email");
+      return;
+    }
+
+    setChangePasswordOpened(true);
+  };
+
   return (
     <Center w="100%" mih="100vh" p={{ base: "md", sm: "xl" }}>
       <Paper
@@ -82,6 +96,15 @@ function RouteComponent() {
               {...form.getInputProps("password")}
             />
 
+            <Button
+              variant="subtle"
+              size="compact-sm"
+              onClick={openChangePassword}
+              w="fit-content"
+            >
+              Change password
+            </Button>
+
             <Button type="submit" mt="md">
               Sign in
             </Button>
@@ -103,6 +126,13 @@ function RouteComponent() {
           </Anchor>
         </Text>
       </Paper>
+
+      <ChangePasswordModal
+        opened={changePasswordOpened}
+        onClose={() => setChangePasswordOpened(false)}
+        email={form.values.email.trim().toLowerCase()}
+        onSuccess={() => navigate({ to: "/media" })}
+      />
     </Center>
   );
 }

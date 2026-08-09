@@ -1,4 +1,5 @@
 import { authClient } from "#/auth/authClient";
+import { ChangePasswordModal } from "#/auth/ChangePasswordModal";
 import { SettingRow, SettingsSection } from "#/components/SettingsSection";
 import { shareLibrary } from "#/features/friends/queries";
 import { CopyPublicLinkButton } from "#/features/public/components/CopyPublicLinkButton";
@@ -15,6 +16,7 @@ import {
   Anchor,
   Button,
   Container,
+  Group,
   SegmentedControl,
   Stack,
   Switch,
@@ -42,6 +44,7 @@ function RouteComponent() {
   const [exporting, setExporting] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [changingEmail, setChangingEmail] = useState(false);
+  const [changePasswordOpened, setChangePasswordOpened] = useState(false);
   const [updatedEmail, setUpdatedEmail] = useState<string | null>(null);
 
   const emailForm = useForm({
@@ -209,34 +212,49 @@ function RouteComponent() {
 
         <SettingsSection
           title="Account"
-          description="Update the email address you use to sign in."
+          description="Update the email address and password you use to sign in."
         >
           <form onSubmit={emailForm.onSubmit(handleChangeEmail)}>
             <Stack gap="sm">
               <Text size="sm" c="dimmed">
                 Current email: {currentEmail}
               </Text>
-              <TextInput
-                label="New email address"
-                placeholder="you@example.com"
-                type="email"
-                {...emailForm.getInputProps("email")}
-              />
-              <Button
-                type="submit"
-                variant="light"
-                loading={changingEmail}
-                disabled={!emailForm.values.email.trim()}
-                w="fit-content"
-              >
-                Change email
-              </Button>
+              <Group align="flex-end" gap="sm" wrap="wrap">
+                <TextInput
+                  flex={1}
+                  miw={220}
+                  label="New email address"
+                  placeholder="you@example.com"
+                  type="email"
+                  {...emailForm.getInputProps("email")}
+                />
+                <Button
+                  type="submit"
+                  variant="light"
+                  loading={changingEmail}
+                  disabled={!emailForm.values.email.trim()}
+                >
+                  Change email
+                </Button>
+              </Group>
               <Text size="xs" c="dimmed">
                 Email verification is not enabled yet, so this change takes
                 effect immediately.
               </Text>
             </Stack>
           </form>
+
+          <SettingRow
+            title="Password"
+            description="Change your password and sign out on other devices."
+          >
+            <Button
+              variant="light"
+              onClick={() => setChangePasswordOpened(true)}
+            >
+              Change password
+            </Button>
+          </SettingRow>
         </SettingsSection>
 
         <SettingsSection
@@ -384,6 +402,11 @@ function RouteComponent() {
           </SettingRow>
         </SettingsSection>
       </Stack>
+
+      <ChangePasswordModal
+        opened={changePasswordOpened}
+        onClose={() => setChangePasswordOpened(false)}
+      />
     </Container>
   );
 }
