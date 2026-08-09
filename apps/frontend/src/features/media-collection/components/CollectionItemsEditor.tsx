@@ -1,6 +1,8 @@
 import { api, getApiErrorMessage } from "#/lib/api";
 import { queryKeys } from "#/lib/queryKeys";
 import { userMediaSearchQueryOptions } from "#/features/media/queries";
+import { EmptyState } from "#/components/EmptyState";
+import { collectionQueryOptions } from "#/features/media-collection/queries";
 import {
   ActionIcon,
   Badge,
@@ -8,25 +10,37 @@ import {
   Button,
   Card,
   Container,
+  Flex,
   Group,
   Select,
   Stack,
   Text,
   Title,
+  Tooltip,
 } from "@mantine/core";
-import type {
-  MediaCollectionItemRecord,
-} from "@media-voyage/shared/api";
-import { IconPlus, IconX, IconGripVertical } from "@tabler/icons-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams } from "@tanstack/react-router";
+import type { MediaCollectionItemRecord } from "@media-voyage/shared/api";
+import {
+  IconArrowLeft,
+  IconBooks,
+  IconCheck,
+  IconGripVertical,
+  IconList,
+  IconPlus,
+  IconX,
+} from "@tabler/icons-react";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import type { DropResult } from "@hello-pangea/dnd";
 import { confirmDelete } from "#/lib/confirmModal";
 import { motion } from "motion/react";
-import type { Variants } from "motion/react";
 import { capitalizeWords } from "#/utils/strings";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { fadeUpEntranceProps } from "#/theme/motion";
@@ -35,53 +49,11 @@ import {
   showSuccessNotification,
 } from "#/lib/notifications";
 
-function containerVariants(reduceMotion: boolean): Variants {
-  if (reduceMotion) {
-    return { hidden: {}, show: {} };
-  }
-
-  return {
-    hidden: {},
-    show: {
-      transition: {
-        staggerChildren: 0.08,
-        delayChildren: 0.15,
-      },
-    },
-  };
-}
-
-function listItemVariants(reduceMotion: boolean): Variants {
-  if (reduceMotion) {
-    return {
-      hidden: { opacity: 1, y: 0, scale: 1 },
-      show: { opacity: 1, y: 0, scale: 1 },
-    };
-  }
-
-  return {
-    hidden: {
-      opacity: 0,
-      y: -20,
-      scale: 0.98,
-    },
-    show: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: {
-        type: "spring",
-        stiffness: 400,
-        damping: 28,
-      },
-    },
-  };
-}
-
 export function CollectionItemsEditor() {
   const { id: collectionId } = useParams({
     from: "/_authenticated/collection/edit/$id",
   });
+  const navigate = useNavigate();
   const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
   const [mediaSearch, setMediaSearch] = useState("");
   const [debouncedMediaSearch] = useDebouncedValue(mediaSearch, 300);
@@ -91,11 +63,14 @@ export function CollectionItemsEditor() {
   const [canSaveOrder, setCanSaveOrder] = useState(false);
   const queryClient = useQueryClient();
   const reduceMotion = useAppReducedMotion();
+  const { data: collections } = useSuspenseQuery(collectionQueryOptions);
+  const collection = collections.find((entry) => entry.id === collectionId);
 
   const { data: collectionItems = [], isPending: isLoadingItems } = useQuery({
     queryKey: queryKeys.collection.items(collectionId),
     queryFn: () =>
       api<MediaCollectionItemRecord[]>(`/collectionItem/${collectionId}`),
+    enabled: Boolean(collection),
   });
   const {
     data: searchResults = [],
@@ -262,18 +237,63 @@ export function CollectionItemsEditor() {
     setCanSaveOrder(true);
   };
 
+  if (!collection) {
+    return (
+      <Container size="lg" py="md">
+        <EmptyState
+          icon={<IconBooks size={36} />}
+          title="Collection not found"
+          description="This collection may have been removed or is no longer available."
+          radius="lg"
+        >
+          <Button
+            variant="light"
+            leftSection={<IconArrowLeft size={16} />}
+            onClick={() => navigate({ to: "/collection" })}
+          >
+            Back to collections
+          </Button>
+        </EmptyState>
+      </Container>
+    );
+  }
+
   return (
-    <Container pt="sm">
+    <Container size="lg" py="md">
       <Stack gap="lg">
         <motion.div {...fadeUpEntranceProps(reduceMotion, -15)}>
-          <Card withBorder shadow="sm" p="lg">
-            <Stack gap="sm">
-              <Title order={2}>Edit Collection Items</Title>
-              <Text c="dimmed">
-                Pick media from your library and add it to this collection.
-              </Text>
+          <Stack gap="xs">
+            <Button
+              variant="subtle"
+              color="gray"
+              px={0}
+              w="fit-content"
+              leftSection={<IconArrowLeft size={16} />}
+              onClick={() =>
+                navigate({
+                  to: "/collection/view/$id",
+                  params: { id: collectionId },
+                })
+              }
+            >
+              Back to collection
+            </Button>
+            <Title order={2}>Edit items in {collection.name}</Title>
+            <Text c="dimmed">
+              Add media from your library, then drag items into the order you
+              want.
+            </Text>
+          </Stack>
+        </motion.div>
 
-              <Group align="end" grow>
+        <motion.div {...fadeUpEntranceProps(reduceMotion, -15)}>
+          <Card withBorder radius="lg" p="lg">
+            <Stack gap="md">
+              <Flex
+                direction={{ base: "column", sm: "row" }}
+                align={{ base: "stretch", sm: "flex-end" }}
+                gap="sm"
+              >
                 <Select
                   label="Add media"
                   placeholder="Type to search your library"
@@ -287,121 +307,160 @@ export function CollectionItemsEditor() {
                     setSelectedMediaId(null);
                   }}
                   nothingFoundMessage={searchEmptyMessage}
+                  style={{ flex: 1 }}
                 />
                 <Button
                   leftSection={<IconPlus size={16} />}
                   onClick={handleAdd}
                   loading={addMutation.isPending}
+                  disabled={!selectedMediaId}
                 >
                   Add to collection
                 </Button>
-              </Group>
-
+              </Flex>
             </Stack>
           </Card>
         </motion.div>
 
         <Stack gap="md">
           <motion.div {...fadeUpEntranceProps(reduceMotion, -15)}>
-            <Group justify="space-between">
-              <Title order={3}>Collection items</Title>
-              <Group>
+            <Group justify="space-between" align="center">
+              <Group gap="sm">
+                <Title order={3}>Collection items</Title>
+                <Badge color="gray" variant="light">
+                  {orderedItems.length}{" "}
+                  {orderedItems.length === 1 ? "item" : "items"}
+                </Badge>
+              </Group>
+              {canSaveOrder ? (
                 <Button
-                  variant="light"
                   size="sm"
-                  disabled={!canSaveOrder}
                   onClick={() => saveOrderMutation.mutate(orderedItems)}
                   loading={saveOrderMutation.isPending}
                 >
                   Save order
                 </Button>
-                <Badge color="teal" variant="light">
-                  {orderedItems.length} items
-                </Badge>
-              </Group>
+              ) : (
+                <Group gap={6} c="dimmed">
+                  <IconCheck size={16} />
+                  <Text size="sm">Order saved</Text>
+                </Group>
+              )}
             </Group>
           </motion.div>
 
           {isLoadingItems ? (
             <Text c="dimmed">Loading collection items...</Text>
           ) : orderedItems.length === 0 ? (
-            <Text c="dimmed">This collection does not have any items yet.</Text>
+            <EmptyState
+              icon={<IconList size={32} />}
+              title="No items yet"
+              description="Search your library above to add the first item to this collection."
+              radius="lg"
+            />
           ) : (
             <DragDropContext onDragEnd={handleDragEnd}>
               <Droppable droppableId="collection-items">
                 {(provided) => (
                   <Box ref={provided.innerRef} {...provided.droppableProps}>
-                    <motion.div
-                      variants={containerVariants(reduceMotion)}
-                      initial="hidden"
-                      animate="show"
-                    >
-                      <Stack gap="sm">
-                        {orderedItems.map((item, index) => (
-                          <motion.div
-                            key={item.id}
-                            variants={listItemVariants(reduceMotion)}
-                          >
-                            <Draggable
-                              key={item.id}
-                              draggableId={item.id}
-                              index={index}
+                    <Stack gap="sm">
+                      {orderedItems.map((item, index) => (
+                        <Draggable
+                          key={item.id}
+                          draggableId={item.id}
+                          index={index}
+                        >
+                          {(innerProvided, snapshot) => (
+                            <Card
+                              ref={innerProvided.innerRef}
+                              {...innerProvided.draggableProps}
+                              withBorder
+                              padding="md"
+                              radius="md"
+                              style={{
+                                ...innerProvided.draggableProps.style,
+                                transition: snapshot.isDropAnimating
+                                  ? reduceMotion
+                                    ? "none"
+                                    : "transform 160ms cubic-bezier(0.2, 0, 0, 1)"
+                                  : innerProvided.draggableProps.style
+                                      ?.transition,
+                                transformOrigin: "center",
+                                boxShadow: snapshot.isDragging
+                                  ? "var(--mantine-shadow-xl)"
+                                  : undefined,
+                                opacity: snapshot.isDragging ? 0.95 : 1,
+                              }}
                             >
-                              {(innerProvided, snapshot) => (
-                                <Card
-                                  p="xs"
-                                  ref={innerProvided.innerRef}
-                                  {...innerProvided.draggableProps}
-                                  {...innerProvided.dragHandleProps}
-                                  withBorder
-                                  padding="md"
-                                  style={{
-                                    ...innerProvided.draggableProps.style,
-                                    cursor: snapshot.isDragging
-                                      ? "grabbing"
-                                      : "grab",
-                                    transformOrigin: "center",
-                                    boxShadow: snapshot.isDragging
-                                      ? "var(--mantine-shadow-xl)"
-                                      : undefined,
-                                    opacity: snapshot.isDragging ? 0.95 : 1,
-                                  }}
-                                >
-                                  <Group justify="space-between" align="center">
-                                    <Group gap="md">
-                                      <ActionIcon
-                                        variant="subtle"
-                                        color="gray"
-                                        style={{ cursor: "inherit" }}
-                                      >
-                                        <IconGripVertical size={18} />
-                                      </ActionIcon>
-
-                                      <Stack gap={2}>
-                                        <Text fw={600}>{item.title}</Text>
-                                        <Text size="xs" c="dimmed">
-                                          {capitalizeWords(item.type)}
-                                        </Text>
-                                      </Stack>
-                                    </Group>
-
+                              <Group
+                                justify="space-between"
+                                align="center"
+                                wrap="nowrap"
+                              >
+                                <Group gap="sm" wrap="nowrap" miw={0}>
+                                  <Tooltip label="Drag to reorder" withArrow>
                                     <ActionIcon
-                                      color="red"
+                                      {...innerProvided.dragHandleProps}
                                       variant="subtle"
-                                      aria-label={`Remove ${item.title} from collection`}
-                                      loading={removeMutation.isPending}
-                                      onClick={() => handleRemove(item)}
+                                      color="gray"
+                                      aria-label={`Drag ${item.title} to reorder`}
+                                      style={{
+                                        cursor: snapshot.isDragging
+                                          ? "grabbing"
+                                          : "grab",
+                                      }}
                                     >
-                                      <IconX size={16} />
+                                      <IconGripVertical size={18} />
                                     </ActionIcon>
-                                  </Group>
-                                </Card>
-                              )}
-                            </Draggable>
-                          </motion.div>
-                        ))}
-                      </Stack>
-                    </motion.div>
+                                  </Tooltip>
+
+                                  <Text
+                                    size="xs"
+                                    fw={700}
+                                    c="dimmed"
+                                    ff="monospace"
+                                    w={22}
+                                  >
+                                    {String(index + 1).padStart(2, "0")}
+                                  </Text>
+
+                                  <Stack gap={2} miw={0}>
+                                    <Text fw={600} truncate>
+                                      {item.title}
+                                    </Text>
+                                    <Text size="xs" c="dimmed">
+                                      {capitalizeWords(item.type)}
+                                    </Text>
+                                  </Stack>
+                                </Group>
+
+                                <Tooltip
+                                  label="Remove from collection"
+                                  withArrow
+                                >
+                                  <ActionIcon
+                                    color="red"
+                                    variant="subtle"
+                                    aria-label={`Remove ${item.title} from collection`}
+                                    loading={
+                                      removeMutation.isPending &&
+                                      removeMutation.variables === item.id
+                                    }
+                                    disabled={
+                                      removeMutation.isPending &&
+                                      removeMutation.variables !== item.id
+                                    }
+                                    onClick={() => handleRemove(item)}
+                                  >
+                                    <IconX size={16} />
+                                  </ActionIcon>
+                                </Tooltip>
+                              </Group>
+                            </Card>
+                          )}
+                        </Draggable>
+                      ))}
+                    </Stack>
 
                     {provided.placeholder}
                   </Box>
