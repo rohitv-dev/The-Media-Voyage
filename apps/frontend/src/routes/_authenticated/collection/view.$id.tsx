@@ -1,5 +1,6 @@
 import { MediaCard } from "#/features/media/components/MediaCard";
 import { CollectionVisibilityControl } from "#/features/media-collection/components/CollectionVisibilityControl";
+import { CollectionDetailsModal } from "#/features/media-collection/components/CollectionDetailsModal";
 import { CopyPublicLinkButton } from "#/features/public/components/CopyPublicLinkButton";
 import { EmptyState } from "#/components/EmptyState";
 import {
@@ -16,7 +17,13 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { IconArrowLeft, IconBooks, IconEdit } from "@tabler/icons-react";
+import {
+  IconArrowLeft,
+  IconBooks,
+  IconEdit,
+  IconPencil,
+} from "@tabler/icons-react";
+import { useDisclosure } from "@mantine/hooks";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "motion/react";
@@ -35,13 +42,15 @@ function RouteComponent() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const reduceMotion = useAppReducedMotion();
+  const [detailsOpened, { open: openDetails, close: closeDetails }] =
+    useDisclosure();
   const { data: collections } = useSuspenseQuery(collectionQueryOptions);
   const { data: items } = useSuspenseQuery(
     collectionItemsDetailedQueryOptions(id),
   );
   const collection = collections.find((entry) => entry.id === id);
 
-  const goToEdit = () =>
+  const goToItems = () =>
     navigate({ to: "/collection/edit/$id", params: { id } });
 
   if (!collection) {
@@ -104,11 +113,19 @@ function RouteComponent() {
               )}
 
               <Button
+                variant="default"
+                leftSection={<IconPencil size={16} />}
+                onClick={openDetails}
+              >
+                Edit details
+              </Button>
+
+              <Button
                 variant="light"
                 leftSection={<IconEdit size={16} />}
-                onClick={goToEdit}
+                onClick={goToItems}
               >
-                Edit collection
+                Edit items
               </Button>
             </Group>
           </Group>
@@ -124,9 +141,9 @@ function RouteComponent() {
               mt="xs"
               variant="light"
               leftSection={<IconEdit size={16} />}
-              onClick={goToEdit}
+              onClick={goToItems}
             >
-              Edit collection
+              Add items
             </Button>
           </EmptyState>
         ) : (
@@ -162,6 +179,12 @@ function RouteComponent() {
           </SimpleGrid>
         )}
       </Stack>
+
+      <CollectionDetailsModal
+        collection={collection}
+        opened={detailsOpened}
+        onClose={closeDetails}
+      />
     </Container>
   );
 }

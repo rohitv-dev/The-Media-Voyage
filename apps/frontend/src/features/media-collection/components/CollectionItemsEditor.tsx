@@ -162,6 +162,9 @@ export function CollectionItemsEditor() {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.collection.itemsDetailed(collectionId),
       });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.collection.all,
+      });
       setSelectedMediaId(null);
       showSuccessNotification({ message: "Added to collection" });
     },
@@ -181,6 +184,9 @@ export function CollectionItemsEditor() {
       });
       await queryClient.invalidateQueries({
         queryKey: queryKeys.collection.itemsDetailed(collectionId),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.collection.all,
       });
       showSuccessNotification({ message: "Removed from collection" });
     },

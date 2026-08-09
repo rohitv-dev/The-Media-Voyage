@@ -82,7 +82,11 @@ export type MediaCollectionFormSchema = z.infer<
   typeof mediaCollectionFormSchema
 >;
 
-export const mediaCollectionUpdateSchema = mediaCollectionFormSchema.partial();
+export const mediaCollectionUpdateSchema = mediaCollectionFormSchema
+  .partial()
+  .extend({
+    pinned: mediaCollectionSelectSchema.shape.pinned.optional(),
+  });
 
 export type MediaCollectionUpdateSchema = z.infer<
   typeof mediaCollectionUpdateSchema
@@ -114,10 +118,19 @@ export const mediaCollectionRecord = z.object({
   name: mediaCollectionSelectSchema.shape.name,
   description: mediaCollectionSelectSchema.shape.description,
   visibility: mediaCollectionSelectSchema.shape.visibility,
+  pinned: mediaCollectionSelectSchema.shape.pinned,
   createdAt: mediaCollectionSelectSchema.shape.createdAt,
 });
 
 export type MediaCollectionRecord = z.infer<typeof mediaCollectionRecord>;
+
+export const mediaCollectionSummaryRecord = mediaCollectionRecord.extend({
+  itemCount: z.number().int().nonnegative(),
+});
+
+export type MediaCollectionSummaryRecord = z.infer<
+  typeof mediaCollectionSummaryRecord
+>;
 
 export const mediaCollectionItemRecord = z.object({
   id: mediaCollectionItemSelectSchema.shape.id,

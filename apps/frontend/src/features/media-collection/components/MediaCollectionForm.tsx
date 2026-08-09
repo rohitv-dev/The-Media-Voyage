@@ -11,11 +11,15 @@ import {
   Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import type { MediaCollectionFormSchema } from "@media-voyage/shared/api";
+import type {
+  MediaCollectionFormSchema,
+  MediaCollectionRecord,
+} from "@media-voyage/shared/api";
 import { IconCheck } from "@tabler/icons-react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useUnsavedChangesBlocker } from "#/hooks/useUnsavedChangesBlocker";
+import { queryKeys } from "#/lib/queryKeys";
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -23,6 +27,7 @@ import {
 
 export function MediaCollectionForm() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const form = useForm<MediaCollectionFormSchema>({
     initialValues: {
@@ -39,21 +44,28 @@ export function MediaCollectionForm() {
 
   const createCollectionMutation = useMutation({
     mutationFn: async (values: MediaCollectionFormSchema) =>
-      api("/collection", {
+      api<MediaCollectionRecord>("/collection", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(values),
       }),
-    onSuccess: () => {
+    onSuccess: async (collection) => {
       form.resetDirty();
+
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.collection.all,
+      });
 
       showSuccessNotification({
         title: "Collection created",
-        message: "Your collection has been saved successfully.",
+        message: "Add media to start filling your collection.",
       });
-      navigate({ to: "/media" });
+      navigate({
+        to: "/collection/edit/$id",
+        params: { id: collection.id },
+      });
     },
     onError: (error) => {
       showErrorNotification({

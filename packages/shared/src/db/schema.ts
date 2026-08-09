@@ -230,6 +230,7 @@ export const mediaCollection = pgTable("media_collection", {
   name: text("name").notNull(),
   description: text("description"),
   visibility: visibilityEnum("visibility").default("private").notNull(),
+  pinned: boolean("pinned").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
 });

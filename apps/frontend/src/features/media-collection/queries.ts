@@ -4,12 +4,13 @@ import type {
   CollectionVisibilityMismatch,
   MediaCollectionItemDetailedRecord,
   MediaCollectionRecord,
+  MediaCollectionSummaryRecord,
   MediaCollectionUpdateSchema,
 } from "@media-voyage/shared/api";
 import { queryOptions } from "@tanstack/react-query";
 
 async function getCollections() {
-  return api<MediaCollectionRecord[]>("/collection");
+  return api<MediaCollectionSummaryRecord[]>("/collection");
 }
 
 export const collectionQueryOptions = queryOptions({

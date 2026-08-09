@@ -1,7 +1,7 @@
 import { db } from "@/db/db";
 import { notFound } from "@/errors";
 import { media, mediaCollection, mediaCollectionItems, userMedia } from "@media-voyage/shared";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { isStricterThan } from "../friends/policy";
 
 export const mediaCollectionSelect = {
@@ -9,11 +9,43 @@ export const mediaCollectionSelect = {
   name: mediaCollection.name,
   description: mediaCollection.description,
   visibility: mediaCollection.visibility,
+  pinned: mediaCollection.pinned,
   createdAt: mediaCollection.createdAt,
 };
 
 export function listMediaCollections(userId: string) {
-  return db.select(mediaCollectionSelect).from(mediaCollection).where(eq(mediaCollection.userId, userId));
+  return db
+    .select({
+      ...mediaCollectionSelect,
+      itemCount: count(userMedia.id),
+    })
+    .from(mediaCollection)
+    .leftJoin(
+      mediaCollectionItems,
+      eq(mediaCollectionItems.collectionId, mediaCollection.id),
+    )
+    .leftJoin(
+      userMedia,
+      and(
+        eq(userMedia.id, mediaCollectionItems.userMediaId),
+        eq(userMedia.userId, userId),
+        isNull(userMedia.deletedAt),
+      ),
+    )
+    .where(eq(mediaCollection.userId, userId))
+    .groupBy(
+      mediaCollection.id,
+      mediaCollection.name,
+      mediaCollection.description,
+      mediaCollection.visibility,
+      mediaCollection.pinned,
+      mediaCollection.createdAt,
+    )
+    .orderBy(
+      desc(mediaCollection.pinned),
+      asc(sql`lower(${mediaCollection.name})`),
+      asc(mediaCollection.createdAt),
+    );
 }
 
 /** Base ownership-check primitive, shared with the collection-item routes. */
