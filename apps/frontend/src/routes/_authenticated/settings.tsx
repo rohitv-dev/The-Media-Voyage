@@ -17,6 +17,7 @@ import {
   Button,
   Container,
   Group,
+  Image,
   SegmentedControl,
   Stack,
   Switch,
@@ -368,25 +369,18 @@ function RouteComponent() {
             </Anchor>
           </SettingRow>
 
-          <SettingRow title="Movies" description="OMDb">
+          <SettingRow title="Movies & shows" description="TMDB">
             <Anchor
-              href="https://omdbapi.com/"
+              href="https://www.themoviedb.org/"
               target="_blank"
               rel="noreferrer"
-              aria-label="Open OMDb"
+              aria-label="Open TMDB"
             >
-              <IconExternalLink size={18} />
-            </Anchor>
-          </SettingRow>
-
-          <SettingRow title="Shows" description="TVMaze">
-            <Anchor
-              href="https://www.tvmaze.com/"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Open TVMaze"
-            >
-              <IconExternalLink size={18} />
+              <Image
+                src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short.svg"
+                alt="TMDB"
+                w={72}
+              />
             </Anchor>
           </SettingRow>
 
@@ -400,6 +394,11 @@ function RouteComponent() {
               <IconExternalLink size={18} />
             </Anchor>
           </SettingRow>
+
+          <Text size="xs" c="dimmed">
+            This product uses the TMDB API but is not endorsed or certified by
+            TMDB.
+          </Text>
         </SettingsSection>
       </Stack>
 

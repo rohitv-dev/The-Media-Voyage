@@ -3,31 +3,32 @@ import {
   applyCatalogRefresh,
   getCatalogRefreshChanges,
   refreshIgdb,
-  refreshOmdb,
   refreshOpenLibrary,
-  refreshTvMaze,
+  refreshTmdb,
 } from "./catalogMetadataRefresh";
 
 describe("catalog metadata refresh mappings", () => {
-  it("maps OMDb movie details", () => {
+  it("maps TMDB movie details", () => {
     expect(
-      refreshOmdb({
-        Title: "Dune",
-        Year: "2021",
-        imdbID: "tt1160419",
-        Type: "movie",
-        Poster: "poster",
-        Plot: "A desert epic.",
-        Genre: "Adventure, Drama",
-        Runtime: "155 min",
-        imdbRating: "8.0",
+      refreshTmdb({
+        id: "",
+        source: "tmdb_movie",
+        externalId: "438631",
+        title: "Dune",
+        type: "movie",
+        imageUrl: null,
+        description: "A desert epic.",
+        genres: ["Adventure", "Drama"],
+        runtimeMinutes: 155,
+        catalogRating: 8,
+        seasons: [],
       }),
     ).toEqual({
       description: "A desert epic.",
       metadata: {
-        genre: "Adventure, Drama",
-        runtime: "155 min",
-        catalogRating: "8.0/10",
+        genre: ["Adventure", "Drama"],
+        runtime: 155,
+        catalogRating: 8,
       },
     });
   });
@@ -43,29 +44,31 @@ describe("catalog metadata refresh mappings", () => {
       }),
     ).toEqual({
       description: "An adventure.",
-      metadata: { genre: "RPG", catalogRating: "8.9/10" },
+      metadata: { genre: ["RPG"], catalogRating: 8.9 },
     });
   });
 
-  it("strips TVMaze HTML while preserving its metadata", () => {
+  it("maps TMDB show details", () => {
     expect(
-      refreshTvMaze({
-        id: 1,
-        name: "Show",
+      refreshTmdb({
+        id: "",
+        source: "tmdb_tv",
+        externalId: "1",
+        title: "Show",
+        type: "show",
+        imageUrl: null,
+        description: "A story.",
         genres: ["Drama", "Mystery"],
-        image: null,
-        rating: { average: 8.2 },
-        summary: "<p>A &amp; B <strong>story</strong>.</p>",
-        runtime: 45,
-        averageRuntime: null,
+        runtimeMinutes: 45,
+        catalogRating: 8.2,
         seasons: [],
       }),
     ).toEqual({
-      description: "A & B story.",
+      description: "A story.",
       metadata: {
-        genre: "Drama, Mystery",
-        runtime: "45 min",
-        catalogRating: "8.2/10",
+        genre: ["Drama", "Mystery"],
+        runtime: 45,
+        catalogRating: 8.2,
       },
     });
   });
@@ -80,7 +83,7 @@ describe("catalog metadata refresh mappings", () => {
     ).toEqual({
       description: "A book description.",
       metadata: {
-        genre: "Fantasy, Adventure, Magic, Epic, Fiction",
+        genre: ["Fantasy", "Adventure", "Magic", "Epic", "Fiction"],
         numberOfPages: 412,
       },
     });
@@ -93,14 +96,14 @@ describe("catalog metadata refresh changes", () => {
       getCatalogRefreshChanges(
         {
           description: "Existing description",
-          metadata: { genre: "Drama" },
+          metadata: { genre: ["Drama"] },
         },
         {
           description: "Existing description",
-          metadata: { genre: "Drama", runtime: "60 min" },
+          metadata: { genre: ["Drama"], runtime: 60 },
         },
       ),
-    ).toEqual({ metadata: { genre: "Drama", runtime: "60 min" } });
+    ).toEqual({ metadata: { genre: ["Drama"], runtime: 60 } });
   });
 
   it("preserves existing values when the provider has no usable refresh", () => {
@@ -108,7 +111,7 @@ describe("catalog metadata refresh changes", () => {
       getCatalogRefreshChanges(
         {
           description: "Existing description",
-          metadata: { genre: "Drama" },
+          metadata: { genre: ["Drama"] },
         },
         {},
       ),
@@ -122,7 +125,7 @@ describe("catalog metadata refresh changes", () => {
       applyCatalogRefresh(
         "dry-run",
         { description: null, metadata: {} },
-        { metadata: { genre: "Drama" } },
+        { metadata: { genre: ["Drama"] } },
         writeChanges,
       ),
     ).resolves.toBe("updated");
@@ -137,11 +140,13 @@ describe("catalog metadata refresh changes", () => {
       applyCatalogRefresh(
         "apply",
         { description: null, metadata: {} },
-        { metadata: { genre: "Drama" } },
+        { metadata: { genre: ["Drama"] } },
         writeChanges,
       ),
     ).resolves.toBe("updated");
 
-    expect(writeChanges).toHaveBeenCalledWith({ metadata: { genre: "Drama" } });
+    expect(writeChanges).toHaveBeenCalledWith({
+      metadata: { genre: ["Drama"] },
+    });
   });
 });

@@ -13,7 +13,7 @@ import {
   Loader,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconPlus, IconX } from "@tabler/icons-react";
+import { IconPlus, IconRefresh, IconX } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import type { SeasonProgressEntry } from "@media-voyage/shared/api";
 import { statusEnumValues } from "@media-voyage/shared/userMediaSchema";
@@ -22,6 +22,8 @@ import { useFormContext } from "./context";
 
 type SeasonsProgressFieldProps = {
   isLoading?: boolean;
+  canSync?: boolean;
+  onSync?: () => void;
 };
 
 function formatEpisodeCount(entry: SeasonProgressEntry) {
@@ -33,6 +35,8 @@ function formatEpisodeCount(entry: SeasonProgressEntry) {
 
 export function SeasonsProgressField({
   isLoading = false,
+  canSync = false,
+  onSync,
 }: SeasonsProgressFieldProps) {
   const form = useFormContext();
   const [opened, { open, close }] = useDisclosure(false);
@@ -113,7 +117,19 @@ export function SeasonsProgressField({
               <Text size="xs">Loading season data...</Text>
             </Group>
           )}
-          <Button variant="light" size="xs" onClick={open}>
+          {canSync && (
+            <Button
+              type="button"
+              variant="light"
+              size="xs"
+              leftSection={<IconRefresh size={14} />}
+              loading={isLoading}
+              onClick={onSync}
+            >
+              Sync seasons
+            </Button>
+          )}
+          <Button type="button" variant="light" size="xs" onClick={open}>
             Manage Seasons
           </Button>
         </Group>

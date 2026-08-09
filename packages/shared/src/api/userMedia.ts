@@ -69,8 +69,6 @@ export const seasonProgressEntrySchema = z.object({
   season: z.number().int().min(1),
   status: z.enum(statusEnum.enumValues),
   expectedEpisodeCount: z.number().int().min(0).nullable().optional(),
-  premiereDate: z.string().nullable().optional(),
-  endDate: z.string().nullable().optional(),
   episodesWatched: z.number().int().min(0).optional(),
   rating: z.number().min(0).max(10).optional(),
   notes: z.string().optional(),
@@ -92,6 +90,7 @@ export const mediaDetailedRecordSchema = z.object({
   imageFocusX: mediaSelectSchema.shape.imageFocusX,
   imageFocusY: mediaSelectSchema.shape.imageFocusY,
   catalogSource: mediaSelectSchema.shape.source,
+  catalogExternalId: mediaSelectSchema.shape.externalId,
   catalogMetadata: mediaSelectSchema.shape.metadata,
 
   status: userMediaSelectSchema.shape.status,
@@ -248,9 +247,7 @@ export const userMediaSearchQuerySchema = z.object({
   search: z.string().trim().min(2),
 });
 
-export type UserMediaSearchQuery = z.infer<
-  typeof userMediaSearchQuerySchema
->;
+export type UserMediaSearchQuery = z.infer<typeof userMediaSearchQuerySchema>;
 
 export const userMediaSearchRecordSchema = z.object({
   id: userMediaSelectSchema.shape.id,
@@ -258,9 +255,7 @@ export const userMediaSearchRecordSchema = z.object({
   type: mediaSelectSchema.shape.type,
 });
 
-export type UserMediaSearchRecord = z.infer<
-  typeof userMediaSearchRecordSchema
->;
+export type UserMediaSearchRecord = z.infer<typeof userMediaSearchRecordSchema>;
 
 export const getUserMediaSearchResponseSchema = z.array(
   userMediaSearchRecordSchema,
@@ -275,9 +270,7 @@ export const userMediaPageQuerySchema = userMediaQuerySchema.extend({
   limit: z.coerce.number().int().min(1).max(100).default(24),
 });
 
-export type UserMediaPageQuerySchema = z.infer<
-  typeof userMediaPageQuerySchema
->;
+export type UserMediaPageQuerySchema = z.infer<typeof userMediaPageQuerySchema>;
 
 export const getUserMediaPageResponseSchema = z.object({
   success: z.literal(true),

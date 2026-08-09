@@ -2,15 +2,13 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db/db";
 import { media, type CatalogMetadata } from "@media-voyage/shared/schema";
 import { getGameDetails } from "@/services/igdb";
-import { getOmdbDetails } from "@/services/omdb";
 import { getOpenLibraryDetails } from "@/services/openLibrary";
-import { getTvMazeDetails } from "@/services/tvMaze";
+import { getTmdbDetails } from "@/services/tmdb";
 import {
   applyCatalogRefresh,
   refreshIgdb,
-  refreshOmdb,
   refreshOpenLibrary,
-  refreshTvMaze,
+  refreshTmdb,
   type CatalogRefresh,
   type CatalogRefreshMode,
 } from "./catalogMetadataRefresh";
@@ -48,9 +46,9 @@ function isSupportedProviderRecord(record: CatalogRecord): boolean {
   if (!record.externalId) return false;
 
   return (
-    (record.source === "omdb" && record.type === "movie") ||
+    (record.source === "tmdb_movie" && record.type === "movie") ||
     (record.source === "igdb" && record.type === "game") ||
-    (record.source === "tvmaze" && record.type === "show") ||
+    (record.source === "tmdb_tv" && record.type === "show") ||
     (record.source === "open_library" && record.type === "book")
   );
 }
@@ -61,17 +59,16 @@ async function refreshFromProvider(
   if (!isSupportedProviderRecord(record) || !record.externalId) return null;
 
   switch (record.source) {
-    case "omdb":
-      return record.type === "movie"
-        ? refreshOmdb(await getOmdbDetails(record.externalId))
+    case "tmdb_movie":
+    case "tmdb_tv": {
+      const tmdbType = record.source === "tmdb_movie" ? "movie" : "show";
+      return record.type === tmdbType
+        ? refreshTmdb(await getTmdbDetails(tmdbType, Number(record.externalId)))
         : null;
+    }
     case "igdb":
       return record.type === "game"
         ? refreshIgdb(await getGameDetails(record.externalId))
-        : null;
-    case "tvmaze":
-      return record.type === "show"
-        ? refreshTvMaze(await getTvMazeDetails(record.externalId))
         : null;
     case "open_library":
       return record.type === "book"

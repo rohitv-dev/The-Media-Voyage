@@ -18,7 +18,7 @@ export function MediaCardCoverArt({
   imageFocusX,
   imageFocusY,
 }: MediaCardCoverArtProps) {
-  const hasImage = !!imageUrl && imageUrl !== "N/A";
+  const hasImage = !!imageUrl;
   const [imageStatus, setImageStatus] = useState<
     "loading" | "loaded" | "error"
   >(hasImage ? "loading" : "error");

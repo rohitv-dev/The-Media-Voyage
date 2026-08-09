@@ -1,9 +1,5 @@
 import type { CatalogMetadata } from "@media-voyage/shared";
-import type {
-  IgdbGame,
-  OmdbMovie,
-  TvMazeDetails,
-} from "@media-voyage/shared/api";
+import type { IgdbGame, TmdbMediaDetails } from "@media-voyage/shared/api";
 import type { OpenLibraryDetails } from "@/services/openLibrary";
 
 export type CatalogRefresh = {
@@ -18,15 +14,6 @@ type ExistingCatalogValues = {
   metadata: CatalogMetadata;
 };
 
-const namedHtmlEntities: Record<string, string> = {
-  amp: "&",
-  apos: "'",
-  gt: ">",
-  lt: "<",
-  nbsp: " ",
-  quot: '"',
-};
-
 function nonEmpty(value: string | null | undefined): string | undefined {
   const trimmed = value?.trim();
   return trimmed || undefined;
@@ -38,51 +25,14 @@ function metadataOrUndefined(
   return Object.keys(metadata).length ? metadata : undefined;
 }
 
-export function stripTvMazeHtml(value: string): string | undefined {
-  const withoutTags = value.replace(/<[^>]*>/g, " ");
-  const decoded = withoutTags.replace(
-    /&(#x[\da-f]+|#\d+|amp|apos|gt|lt|nbsp|quot);/gi,
-    (entity, encoded: string) => {
-      const lowerCase = encoded.toLowerCase();
-
-      if (lowerCase.startsWith("#x")) {
-        return String.fromCodePoint(Number.parseInt(lowerCase.slice(2), 16));
-      }
-
-      if (lowerCase.startsWith("#")) {
-        return String.fromCodePoint(Number.parseInt(lowerCase.slice(1), 10));
-      }
-
-      return namedHtmlEntities[lowerCase] ?? entity;
-    },
-  );
-
-  return nonEmpty(decoded.replace(/\s+/g, " ").replace(/\s+([,.:;!?])/g, "$1"));
-}
-
-export function refreshOmdb(details: OmdbMovie | null): CatalogRefresh {
-  const metadata: CatalogMetadata<"movie"> = {};
-
-  if (details?.Genre) metadata.genre = details.Genre;
-  if (details?.Runtime) metadata.runtime = details.Runtime;
-  if (details?.imdbRating && details.imdbRating !== "N/A") {
-    metadata.catalogRating = `${details.imdbRating}/10`;
-  }
-
-  return {
-    description: nonEmpty(details?.Plot),
-    metadata: metadataOrUndefined(metadata),
-  };
-}
-
 export function refreshIgdb(details: IgdbGame | null): CatalogRefresh {
   const metadata: CatalogMetadata<"game"> = {};
 
   if (details?.genres?.length) {
-    metadata.genre = details.genres.map((genre) => genre.name).join(", ");
+    metadata.genre = details.genres.map((genre) => genre.name);
   }
   if (details?.rating) {
-    metadata.catalogRating = `${(details.rating / 10).toFixed(1)}/10`;
+    metadata.catalogRating = Number((details.rating / 10).toFixed(1));
   }
 
   return {
@@ -91,24 +41,19 @@ export function refreshIgdb(details: IgdbGame | null): CatalogRefresh {
   };
 }
 
-export function refreshTvMaze(details: TvMazeDetails | null): CatalogRefresh {
-  const metadata: CatalogMetadata<"show"> = {};
-  const runtime = details?.averageRuntime ?? details?.runtime;
+export function refreshTmdb(details: TmdbMediaDetails | null): CatalogRefresh {
+  const metadata: CatalogMetadata<"movie" | "show"> = {};
 
-  if (details?.genres.length) metadata.genre = details.genres.join(", ");
-  if (runtime !== null && runtime !== undefined)
-    metadata.runtime = `${runtime} min`;
-  if (
-    details?.rating.average !== null &&
-    details?.rating.average !== undefined
-  ) {
-    metadata.catalogRating = `${details.rating.average}/10`;
+  if (details?.genres.length) metadata.genre = details.genres;
+  if (details?.runtimeMinutes) {
+    metadata.runtime = details.runtimeMinutes;
+  }
+  if (details?.catalogRating !== null && details?.catalogRating !== undefined) {
+    metadata.catalogRating = details.catalogRating;
   }
 
   return {
-    description: details?.summary
-      ? stripTvMazeHtml(details.summary)
-      : undefined,
+    description: nonEmpty(details?.description),
     metadata: metadataOrUndefined(metadata),
   };
 }
@@ -118,8 +63,7 @@ export function refreshOpenLibrary(
 ): CatalogRefresh {
   const metadata: CatalogMetadata<"book"> = {};
 
-  if (details?.genres?.length)
-    metadata.genre = details.genres.slice(0, 5).join(", ");
+  if (details?.genres?.length) metadata.genre = details.genres.slice(0, 5);
   if (details?.numberOfPages) metadata.numberOfPages = details.numberOfPages;
 
   return {

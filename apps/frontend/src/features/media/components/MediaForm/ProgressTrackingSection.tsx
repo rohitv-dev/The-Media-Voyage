@@ -23,6 +23,8 @@ type ProgressTrackingSectionProps = {
   catalogMetadata?: CatalogMetadata;
   numberOfPages?: number;
   isLoadingSeasonInfo?: boolean;
+  canSyncSeasons?: boolean;
+  onSyncSeasons?: () => void;
 };
 
 export function ProgressTrackingSection({
@@ -30,6 +32,8 @@ export function ProgressTrackingSection({
   catalogMetadata,
   numberOfPages,
   isLoadingSeasonInfo = false,
+  canSyncSeasons = false,
+  onSyncSeasons,
 }: ProgressTrackingSectionProps) {
   const form = useFormContext();
   const isMobile = useMediaQuery("(max-width: 47.99em)");
@@ -117,7 +121,13 @@ export function ProgressTrackingSection({
               {...form.getInputProps("tags")}
             />
 
-            {isShow && <SeasonsProgressField isLoading={isLoadingSeasonInfo} />}
+            {isShow && (
+              <SeasonsProgressField
+                isLoading={isLoadingSeasonInfo}
+                canSync={canSyncSeasons}
+                onSync={onSyncSeasons}
+              />
+            )}
           </Stack>
         </Collapse>
       </Card>

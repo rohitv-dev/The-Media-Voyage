@@ -12,19 +12,9 @@ const OPEN_LIBRARY_COVERS_URL = "https://covers.openlibrary.org";
 const SEARCH_FIELDS = [
   "key",
   "title",
-  "subtitle",
-  "author_key",
   "author_name",
-  "first_publish_year",
-  "edition_count",
   "cover_i",
-  "cover_edition_key",
   "number_of_pages_median",
-  "isbn",
-  "language",
-  "publisher",
-  "ratings_average",
-  "ratings_count",
   "subject",
 ].join(",");
 

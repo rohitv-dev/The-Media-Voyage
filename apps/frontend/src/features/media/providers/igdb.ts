@@ -14,11 +14,11 @@ export async function hydrateIgdb(
   const metadata: CatalogMetadata<"game"> = {};
 
   if (details?.genres?.length) {
-    metadata.genre = details.genres.map((genre) => genre.name).join(", ");
+    metadata.genre = details.genres.map((genre) => genre.name);
   }
 
   if (details?.rating) {
-    metadata.catalogRating = `${(details.rating / 10).toFixed(1)}/10`;
+    metadata.catalogRating = Number((details.rating / 10).toFixed(1));
   }
 
   return {

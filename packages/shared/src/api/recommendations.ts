@@ -90,12 +90,9 @@ const systemRecommendationPreviewSeedSchema = z.object({
   catalogExternalId: z.string().nullable(),
   mappingStatus: z.enum(["mapped", "unmapped", "provider_error"]),
   mappingReason: z.enum([
-    "imdb_match",
     "provider_id",
     "unsupported_source",
     "invalid_external_id",
-    "missing_imdb_id",
-    "tmdb_not_found",
     "provider_error",
   ]),
   recommendationSource: systemRecommendationProviderSchema.nullable(),
@@ -105,7 +102,7 @@ const systemRecommendationPreviewSeedSchema = z.object({
 
 export const systemRecommendationPreviewResponseSchema = z.object({
   strategyKey: z.literal("provider_recommendations"),
-  strategyVersion: z.literal("1"),
+  strategyVersion: z.literal("3"),
   eligibleSeedCount: z.number().int().nonnegative(),
   seeds: z.array(systemRecommendationPreviewSeedSchema),
   recommendations: z.array(

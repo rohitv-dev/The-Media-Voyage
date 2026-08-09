@@ -10,12 +10,7 @@ vi.mock("../config", () => ({
   },
 }));
 
-import {
-  findTmdbByImdbId,
-  getTmdbDetails,
-  getTmdbRecommendations,
-  searchTmdb,
-} from "./tmdb";
+import { getTmdbDetails, getTmdbRecommendations, searchTmdb } from "./tmdb";
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status });
@@ -25,63 +20,6 @@ describe("TMDB service", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     fetchMock.mockReset();
-  });
-
-  it("finds the requested movie type by IMDb ID", async () => {
-    fetchMock.mockResolvedValue(
-      jsonResponse({
-        movie_results: [
-          {
-            id: 25,
-            title: "Mapped Movie",
-            adult: false,
-            poster_path: "/mapped.jpg",
-          },
-        ],
-        tv_results: [
-          {
-            id: 26,
-            name: "Wrong Type",
-            adult: false,
-            poster_path: null,
-          },
-        ],
-      }),
-    );
-    vi.stubGlobal("fetch", fetchMock);
-
-    await expect(findTmdbByImdbId("tt1234567", "movie")).resolves.toEqual({
-      id: "",
-      source: "tmdb_movie",
-      externalId: "25",
-      title: "Mapped Movie",
-      type: "movie",
-      imageUrl: "https://image.tmdb.org/t/p/w500/mapped.jpg",
-    });
-
-    const url = new URL(String(fetchMock.mock.calls[0][0]));
-    expect(url.pathname).toBe("/3/find/tt1234567");
-    expect(url.searchParams.get("external_source")).toBe("imdb_id");
-    expect(url.searchParams.get("language")).toBe("en-US");
-  });
-
-  it("returns null when IMDb lookup has no non-adult result for the requested type", async () => {
-    fetchMock.mockResolvedValue(
-      jsonResponse({
-        movie_results: [],
-        tv_results: [
-          {
-            id: 27,
-            name: "Filtered Show",
-            adult: true,
-            poster_path: null,
-          },
-        ],
-      }),
-    );
-    vi.stubGlobal("fetch", fetchMock);
-
-    await expect(findTmdbByImdbId("tt7654321", "show")).resolves.toBeNull();
   });
 
   it("searches movies with bearer authentication and filters adult results", async () => {
@@ -201,6 +139,7 @@ describe("TMDB service", () => {
       genres: ["Drama", "Mystery"],
       runtimeMinutes: 127,
       catalogRating: 8.4,
+      seasons: [],
     });
 
     const url = new URL(String(fetchMock.mock.calls[0][0]));
@@ -208,8 +147,8 @@ describe("TMDB service", () => {
     expect(url.searchParams.get("language")).toBe("en-US");
   });
 
-  it("normalizes show details and missing optional fields", async () => {
-    fetchMock.mockResolvedValue(
+  it("normalizes show seasons and filters specials and empty seasons", async () => {
+    fetchMock.mockResolvedValueOnce(
       jsonResponse({
         id: 41,
         name: "A Detailed Show",
@@ -217,8 +156,25 @@ describe("TMDB service", () => {
         poster_path: null,
         overview: null,
         genres: [{ name: "Comedy" }],
-        episode_run_time: [],
+        episode_run_time: [0, 48, 50],
+        last_episode_to_air: { runtime: 55 },
         vote_average: null,
+        seasons: [
+          { season_number: 0, episode_count: 8 },
+          { season_number: 1, episode_count: 10 },
+          { season_number: 2, episode_count: 0 },
+          { season_number: 3, episode_count: 12 },
+        ],
+      }),
+    );
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        "season/1": {
+          episodes: [{ runtime: 42 }, { runtime: 44 }],
+        },
+        "season/3": {
+          episodes: [{ runtime: 46 }, { runtime: null }, { runtime: 0 }],
+        },
       }),
     );
     vi.stubGlobal("fetch", fetchMock);
@@ -232,13 +188,117 @@ describe("TMDB service", () => {
       imageUrl: null,
       description: null,
       genres: ["Comedy"],
-      runtimeMinutes: null,
+      runtimeMinutes: 44,
       catalogRating: null,
+      seasons: [
+        { seasonNumber: 1, episodeCount: 10 },
+        { seasonNumber: 3, episodeCount: 12 },
+      ],
     });
 
     expect(new URL(String(fetchMock.mock.calls[0][0])).pathname).toBe(
       "/3/tv/41",
     );
+    const runtimeUrl = new URL(String(fetchMock.mock.calls[1][0]));
+    expect(runtimeUrl.pathname).toBe("/3/tv/41");
+    expect(runtimeUrl.searchParams.get("append_to_response")).toBe(
+      "season/1,season/3",
+    );
+    expect(runtimeUrl.searchParams.get("language")).toBe("en-US");
+  });
+
+  it("batches runtime requests for shows with more than 20 seasons", async () => {
+    const seasons = Array.from({ length: 21 }, (_, index) => ({
+      season_number: index + 1,
+      episode_count: 1,
+    }));
+    const firstBatch = Object.fromEntries(
+      seasons
+        .slice(0, 20)
+        .map((season) => [
+          `season/${season.season_number}`,
+          { episodes: [{ runtime: 40 }] },
+        ]),
+    );
+
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse({
+          id: 44,
+          name: "Long-Running Show",
+          adult: false,
+          poster_path: null,
+          overview: null,
+          genres: [],
+          episode_run_time: [],
+          vote_average: null,
+          seasons,
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse(firstBatch))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          "season/21": { episodes: [{ runtime: 61 }] },
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getTmdbDetails("show", 44)).resolves.toMatchObject({
+      runtimeMinutes: 41,
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    const firstRuntimeUrl = new URL(String(fetchMock.mock.calls[1][0]));
+    const secondRuntimeUrl = new URL(String(fetchMock.mock.calls[2][0]));
+    expect(
+      firstRuntimeUrl.searchParams.get("append_to_response")?.split(","),
+    ).toHaveLength(20);
+    expect(secondRuntimeUrl.searchParams.get("append_to_response")).toBe(
+      "season/21",
+    );
+  });
+
+  it("falls back to the last aired episode runtime", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        id: 42,
+        name: "Show Without Series Runtime",
+        adult: false,
+        poster_path: null,
+        overview: null,
+        genres: [],
+        episode_run_time: [],
+        last_episode_to_air: { runtime: 46 },
+        vote_average: null,
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getTmdbDetails("show", 42)).resolves.toMatchObject({
+      runtimeMinutes: 46,
+      seasons: [],
+    });
+  });
+
+  it("normalizes missing optional show fields", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        id: 43,
+        name: "Sparse Show",
+        adult: false,
+        poster_path: null,
+        overview: null,
+        genres: [],
+        episode_run_time: [],
+        vote_average: null,
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getTmdbDetails("show", 43)).resolves.toMatchObject({
+      runtimeMinutes: null,
+      seasons: [],
+    });
   });
 
   it("normalizes recommendations and filters adult results", async () => {

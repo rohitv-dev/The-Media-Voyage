@@ -11,6 +11,7 @@ const TMDB_API_URL = "https://api.themoviedb.org/3/";
 const TMDB_POSTER_URL = "https://image.tmdb.org/t/p/w500";
 const TMDB_LANGUAGE = "en-US";
 const TMDB_NETWORK_RETRY_DELAY_MS = 200;
+const TMDB_APPEND_LIMIT = 20;
 
 type TmdbMovieRecord = Extract<TmdbMediaRecord, { source: "tmdb_movie" }>;
 type TmdbShowRecord = Extract<TmdbMediaRecord, { source: "tmdb_tv" }>;
@@ -37,11 +38,6 @@ const tmdbShowResultsSchema = z.object({
   results: z.array(tmdbShowResultSchema),
 });
 
-const tmdbFindResultsSchema = z.object({
-  movie_results: z.array(tmdbMovieResultSchema),
-  tv_results: z.array(tmdbShowResultSchema),
-});
-
 const tmdbGenreSchema = z.object({
   name: z.string(),
 });
@@ -57,7 +53,30 @@ const tmdbShowDetailsSchema = tmdbShowResultSchema.extend({
   overview: z.string().nullable().optional(),
   genres: z.array(tmdbGenreSchema),
   episode_run_time: z.array(z.number().int().nonnegative()).optional(),
+  last_episode_to_air: z
+    .object({
+      runtime: z.number().int().nonnegative().nullable().optional(),
+    })
+    .nullable()
+    .optional(),
   vote_average: z.number().min(0).max(10).nullable().optional(),
+  seasons: z
+    .array(
+      z.object({
+        season_number: z.number().int().nonnegative(),
+        episode_count: z.number().int().nonnegative(),
+      }),
+    )
+    .optional()
+    .default([]),
+});
+
+const tmdbSeasonRuntimeSchema = z.object({
+  episodes: z.array(
+    z.object({
+      runtime: z.number().nonnegative().nullable().optional(),
+    }),
+  ),
 });
 
 function tmdbPath(type: TmdbMediaType): "movie" | "tv" {
@@ -169,6 +188,57 @@ function parseResults(type: TmdbMediaType, data: unknown): TmdbMediaRecord[] {
   return parsed.data.results.filter((result) => !result.adult).map(showRecord);
 }
 
+async function getAverageEpisodeRuntime(
+  showId: number,
+  seasonNumbers: number[],
+): Promise<number | null> {
+  const batches = Array.from(
+    { length: Math.ceil(seasonNumbers.length / TMDB_APPEND_LIMIT) },
+    (_, index) =>
+      seasonNumbers.slice(
+        index * TMDB_APPEND_LIMIT,
+        (index + 1) * TMDB_APPEND_LIMIT,
+      ),
+  );
+
+  const responses = await Promise.all(
+    batches.map((batch) =>
+      fetchTmdb(`tv/${showId}`, {
+        append_to_response: batch
+          .map((seasonNumber) => `season/${seasonNumber}`)
+          .join(","),
+        language: TMDB_LANGUAGE,
+      }),
+    ),
+  );
+
+  const runtimes: number[] = [];
+
+  responses.forEach((response, batchIndex) => {
+    const record = z.record(z.string(), z.unknown()).safeParse(response);
+    if (!record.success) return invalidResponse(record.error);
+
+    for (const seasonNumber of batches[batchIndex]) {
+      const season = tmdbSeasonRuntimeSchema.safeParse(
+        record.data[`season/${seasonNumber}`],
+      );
+      if (!season.success) return invalidResponse(season.error);
+
+      for (const episode of season.data.episodes) {
+        if (episode.runtime && episode.runtime > 0) {
+          runtimes.push(episode.runtime);
+        }
+      }
+    }
+  });
+
+  if (!runtimes.length) return null;
+
+  const average =
+    runtimes.reduce((total, runtime) => total + runtime, 0) / runtimes.length;
+  return Number(average.toFixed(1));
+}
+
 export async function searchTmdb(
   query: string,
   type: TmdbMediaType,
@@ -181,26 +251,6 @@ export async function searchTmdb(
   });
 
   return parseResults(type, data);
-}
-
-export async function findTmdbByImdbId(
-  imdbId: string,
-  type: TmdbMediaType,
-): Promise<TmdbMediaRecord | null> {
-  const data = await fetchTmdb(`find/${encodeURIComponent(imdbId)}`, {
-    external_source: "imdb_id",
-    language: TMDB_LANGUAGE,
-  });
-  const parsed = tmdbFindResultsSchema.safeParse(data);
-  if (!parsed.success) return invalidResponse(parsed.error);
-
-  if (type === "movie") {
-    const result = parsed.data.movie_results.find((item) => !item.adult);
-    return result ? movieRecord(result) : null;
-  }
-
-  const result = parsed.data.tv_results.find((item) => !item.adult);
-  return result ? showRecord(result) : null;
 }
 
 export async function getTmdbDetails(
@@ -227,6 +277,7 @@ export async function getTmdbDetails(
           ? parsed.data.runtime
           : null,
       catalogRating: parsed.data.vote_average ?? null,
+      seasons: [],
     };
   }
 
@@ -234,13 +285,27 @@ export async function getTmdbDetails(
   if (!parsed.success) return invalidResponse(parsed.error);
   if (parsed.data.adult) throw notFound("TMDB media not found");
 
+  const seasons = parsed.data.seasons
+    .filter((season) => season.season_number > 0 && season.episode_count > 0)
+    .map((season) => ({
+      seasonNumber: season.season_number,
+      episodeCount: season.episode_count,
+    }));
+  const averageEpisodeRuntime = await getAverageEpisodeRuntime(
+    id,
+    seasons.map((season) => season.seasonNumber),
+  );
+
   return {
     ...showRecord(parsed.data),
     description: parsed.data.overview?.trim() || null,
     genres: parsed.data.genres.map((genre) => genre.name),
     runtimeMinutes:
-      parsed.data.episode_run_time?.find((runtime) => runtime > 0) ?? null,
+      averageEpisodeRuntime ??
+      parsed.data.episode_run_time?.find((runtime) => runtime > 0) ??
+      (parsed.data.last_episode_to_air?.runtime || null),
     catalogRating: parsed.data.vote_average ?? null,
+    seasons,
   };
 }
 

@@ -14,7 +14,7 @@ Media Voyage is a personal media-tracking app for keeping tabs on the movies, sh
 - Per-entry visibility with a configurable default, plus direct library sharing
 - Trash with restore for soft-deleted entries
 - Tag and source management
-- Media lookup via OMDb (movies), TVMaze (shows), IGDB (games), and Open Library (books)
+- Media lookup via TMDB (movies and shows), IGDB (games), and Open Library (books)
 - CSV export of your whole library
 - Appearance settings: light/dark theme, cover art toggle and size, reduced motion
 
@@ -33,7 +33,7 @@ Media Voyage is a personal media-tracking app for keeping tabs on the movies, sh
    pnpm install
    ```
 
-2. Copy `.env.example` to `.env` and fill in the required values: `DATABASE_URL`, `BETTER_AUTH_SECRET` (32+ random characters), `BETTER_AUTH_URL`, `FRONTEND_URL`, and the IGDB/OMDB credentials. TVMaze and Open Library need no API key.
+2. Copy `.env.example` to `.env` and fill in the required values: `DATABASE_URL`, `BETTER_AUTH_SECRET` (32+ random characters), `BETTER_AUTH_URL`, `FRONTEND_URL`, `TMDB_API_READ_ACCESS_TOKEN`, and the IGDB credentials. Open Library needs no API key.
 
    Registration is gated by `SIGNUP_INVITE_CODE` — signups must supply that code, and it is required when `NODE_ENV=production`.
 
@@ -49,6 +49,22 @@ Media Voyage is a personal media-tracking app for keeping tabs on the movies, sh
    pnpm dev
    ```
 
+## TMDB Provider Cutover
+
+OMDb and TVMaze catalog records are not compatible with TMDB identities. During
+the provider cutover, stop application writes, review the target database, and
+clear the catalog in a transaction:
+
+```sql
+BEGIN;
+DELETE FROM media;
+COMMIT;
+```
+
+The existing foreign-key cascades remove related library and recommendation
+data while retaining users and authentication records. Run this manually only
+after the TMDB-enabled deployment and token are ready.
+
 ## Project Structure
 
 - `apps/frontend` — React/Vite client
@@ -59,11 +75,11 @@ Media Voyage is a personal media-tracking app for keeping tabs on the movies, sh
 
 Run from the repo root:
 
-| Script | Description |
-| --- | --- |
-| `pnpm dev` | Run frontend and backend together |
-| `pnpm frontend` / `pnpm backend` | Run just one side |
-| `pnpm lint` | Lint the frontend |
-| `pnpm db:push` | Push the Drizzle schema to the database |
-| `pnpm studio` | Open Drizzle Studio |
-| `pnpm frontend:build` / `pnpm backend:build` | Production builds |
+| Script                                       | Description                             |
+| -------------------------------------------- | --------------------------------------- |
+| `pnpm dev`                                   | Run frontend and backend together       |
+| `pnpm frontend` / `pnpm backend`             | Run just one side                       |
+| `pnpm lint`                                  | Lint the frontend                       |
+| `pnpm db:push`                               | Push the Drizzle schema to the database |
+| `pnpm studio`                                | Open Drizzle Studio                     |
+| `pnpm frontend:build` / `pnpm backend:build` | Production builds                       |

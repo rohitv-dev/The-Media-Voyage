@@ -10,7 +10,7 @@ export function hydrateOpenLibrary(record: SourceMediaRecord): HydratedMedia {
   }
 
   if (record.genres?.length) {
-    metadata.genre = record.genres.slice(0, 5).join(", ");
+    metadata.genre = record.genres.slice(0, 5);
   }
 
   if (!Object.keys(metadata).length) return {};

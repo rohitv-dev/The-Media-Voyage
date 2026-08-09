@@ -54,10 +54,15 @@ export function MediaViewDetails({ data }: { data: MediaViewData }) {
     { label: "Started", value: formatDate(data.startedAt) },
     { label: "Completed", value: formatDate(data.completedAt) },
     ...(catalogMetadata.genre
-      ? [{ label: "Genre", value: catalogMetadata.genre }]
+      ? [{ label: "Genre", value: catalogMetadata.genre.join(", ") }]
       : []),
-    ...(catalogMetadata.catalogRating
-      ? [{ label: "Catalog Rating", value: catalogMetadata.catalogRating }]
+    ...("catalogRating" in catalogMetadata && catalogMetadata.catalogRating
+      ? [
+          {
+            label: "Catalog Rating",
+            value: `${catalogMetadata.catalogRating}/10`,
+          },
+        ]
       : []),
   ];
 

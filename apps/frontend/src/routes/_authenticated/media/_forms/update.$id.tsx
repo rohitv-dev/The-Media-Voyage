@@ -24,7 +24,9 @@ function RouteComponent() {
     <MediaForm
       id={data.id}
       mode="update"
-      initialValues={data}
+      initialValues={{ ...data, metadata: data.catalogMetadata }}
+      catalogSource={data.catalogSource}
+      catalogExternalId={data.catalogExternalId}
       dropdowns={dropdowns}
     />
   );

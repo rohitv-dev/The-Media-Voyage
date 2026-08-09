@@ -49,6 +49,7 @@ export const userMediaDetailedSelect = {
   imageFocusX: media.imageFocusX,
   imageFocusY: media.imageFocusY,
   catalogSource: media.source,
+  catalogExternalId: media.externalId,
   catalogMetadata: media.metadata,
   status: userMedia.status,
   rating: userMedia.rating,

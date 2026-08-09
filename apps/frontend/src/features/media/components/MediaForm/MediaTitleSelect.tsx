@@ -32,8 +32,8 @@ import { useFormContext } from "./context";
 
 const sourceLabels: Record<string, string> = {
   db: "catalog",
-  omdb: "OMDb",
-  tvmaze: "TVMaze",
+  tmdb_movie: "TMDB",
+  tmdb_tv: "TMDB",
   igdb: "IGDB",
 };
 
@@ -59,7 +59,7 @@ function getMediaOptionValue(media: SourceMediaRecord) {
 
 function MediaOption({ media }: { media: SourceMediaRecord }) {
   const isTouchDevice = useMediaQuery("(hover: none)");
-  const imageUrl = media.imageUrl === "N/A" ? null : media.imageUrl;
+  const imageUrl = media.imageUrl;
   const avatar = <Avatar src={imageUrl} radius="sm" size={40} />;
   const optionDetails = (
     <>

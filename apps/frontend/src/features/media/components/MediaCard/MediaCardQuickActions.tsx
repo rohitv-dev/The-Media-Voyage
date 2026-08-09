@@ -146,7 +146,7 @@ export function MediaCardQuickActions({
 
         <Menu.Item
           leftSection={<IconPhotoEdit size={16} />}
-          disabled={isPending || !media.imageUrl || media.imageUrl === "N/A"}
+          disabled={isPending || !media.imageUrl}
           onClick={(event) => {
             event.stopPropagation();
             onEditCover();

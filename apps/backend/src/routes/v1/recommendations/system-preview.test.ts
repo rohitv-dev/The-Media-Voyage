@@ -3,18 +3,14 @@ import { internalServerError } from "@/errors";
 
 const {
   findSystemPreviewLibraryMock,
-  findTmdbByImdbIdMock,
   getGameRecommendationsMock,
   getOpenLibraryRecommendationsMock,
   getTmdbRecommendationsMock,
-  getTvMazeDetailsMock,
 } = vi.hoisted(() => ({
   findSystemPreviewLibraryMock: vi.fn(),
-  findTmdbByImdbIdMock: vi.fn(),
   getGameRecommendationsMock: vi.fn(),
   getOpenLibraryRecommendationsMock: vi.fn(),
   getTmdbRecommendationsMock: vi.fn(),
-  getTvMazeDetailsMock: vi.fn(),
 }));
 
 vi.mock("./queries", () => ({
@@ -22,7 +18,6 @@ vi.mock("./queries", () => ({
 }));
 
 vi.mock("@/services/tmdb", () => ({
-  findTmdbByImdbId: findTmdbByImdbIdMock,
   getTmdbRecommendations: getTmdbRecommendationsMock,
 }));
 
@@ -32,10 +27,6 @@ vi.mock("@/services/igdb", () => ({
 
 vi.mock("@/services/openLibrary", () => ({
   getOpenLibraryRecommendations: getOpenLibraryRecommendationsMock,
-}));
-
-vi.mock("@/services/tvMaze", () => ({
-  getTvMazeDetails: getTvMazeDetailsMock,
 }));
 
 import {
@@ -55,17 +46,13 @@ const IDS = {
   seventh: "77777777-7777-4777-8777-777777777777",
 };
 
-function imdbId(value: number) {
-  return `tt${String(value).padStart(7, "0")}`;
-}
-
 function libraryItem(overrides: Partial<LibraryItem> = {}): LibraryItem {
   return {
     userMediaId: IDS.first,
     title: "Seed",
     type: "movie",
-    catalogSource: "omdb",
-    externalId: imdbId(100),
+    catalogSource: "tmdb_movie",
+    externalId: "100",
     status: "completed",
     rating: null,
     favorite: false,
@@ -123,22 +110,12 @@ function book(id: string, title: string) {
 describe("system recommendation preview", () => {
   beforeEach(() => {
     findSystemPreviewLibraryMock.mockReset();
-    findTmdbByImdbIdMock.mockReset();
-    findTmdbByImdbIdMock.mockImplementation(
-      async (externalId: string, type: "movie" | "show") => {
-        const id = Number(externalId.slice(2));
-        return type === "movie"
-          ? movie(id, "Mapped movie")
-          : show(id, "Mapped show");
-      },
-    );
     getTmdbRecommendationsMock.mockReset();
     getGameRecommendationsMock.mockReset();
     getOpenLibraryRecommendationsMock.mockReset();
-    getTvMazeDetailsMock.mockReset();
   });
 
-  it("ranks eligible seeds and excludes explicitly low-rated non-favorites", () => {
+  it("ranks eligible seeds and excludes low-rated non-favorites", () => {
     const seeds = selectPreviewSeeds([
       libraryItem({
         userMediaId: IDS.first,
@@ -160,20 +137,14 @@ describe("system recommendation preview", () => {
         title: "Lower Rated",
         rating: 7,
       }),
-      libraryItem({
-        userMediaId: IDS.fifth,
-        title: "Low Rated",
-        rating: 6,
-      }),
+      libraryItem({ userMediaId: IDS.fifth, rating: 6 }),
       libraryItem({
         userMediaId: IDS.sixth,
-        title: "Deleted Favorite",
         favorite: true,
         deletedAt: new Date("2026-06-01T00:00:00.000Z"),
       }),
       libraryItem({
         userMediaId: IDS.seventh,
-        title: "Planned Favorite",
         favorite: true,
         status: "planned",
       }),
@@ -187,92 +158,57 @@ describe("system recommendation preview", () => {
     ]);
   });
 
-  it("continues past unmapped seeds until three mapped seeds are found", async () => {
+  it("uses stored TMDB IDs directly for movies and shows", async () => {
     findSystemPreviewLibraryMock.mockResolvedValue([
-      libraryItem({
-        userMediaId: IDS.first,
-        title: "Unsupported Favorite",
-        catalogSource: null,
-        externalId: null,
-        favorite: true,
-        rating: 10,
-      }),
+      libraryItem({ userMediaId: IDS.first, favorite: true }),
       libraryItem({
         userMediaId: IDS.second,
-        title: "Missing IMDb Favorite",
+        title: "Show Seed",
         type: "show",
-        catalogSource: "tvmaze",
+        catalogSource: "tmdb_tv",
         externalId: "200",
-        favorite: true,
         rating: 9,
-      }),
-      libraryItem({
-        userMediaId: IDS.third,
-        title: "Mapped One",
-        externalId: imdbId(301),
-        rating: 9,
-      }),
-      libraryItem({
-        userMediaId: IDS.fourth,
-        title: "Mapped Two",
-        externalId: imdbId(302),
-        rating: 8,
-      }),
-      libraryItem({
-        userMediaId: IDS.fifth,
-        title: "Mapped Three",
-        externalId: imdbId(303),
-        rating: 7,
       }),
     ]);
-    getTvMazeDetailsMock.mockResolvedValue({ externals: { imdb: null } });
-    getTmdbRecommendationsMock.mockImplementation(
-      async (_type: "movie" | "show", id: number) => [
-        movie(500 + id, `Recommendation ${id}`),
-      ],
-    );
+    getTmdbRecommendationsMock
+      .mockResolvedValueOnce([movie(501, "Movie Recommendation")])
+      .mockResolvedValueOnce([show(502, "Show Recommendation")]);
 
     const preview = await getSystemRecommendationPreview("user-1");
 
-    expect(preview.seeds.map((seed) => seed.mappingStatus)).toEqual([
-      "unmapped",
-      "unmapped",
-      "mapped",
-      "mapped",
-      "mapped",
+    expect(getTmdbRecommendationsMock).toHaveBeenNthCalledWith(1, "movie", 100);
+    expect(getTmdbRecommendationsMock).toHaveBeenNthCalledWith(2, "show", 200);
+    expect(preview.seeds).toMatchObject([
+      {
+        mappingReason: "provider_id",
+        recommendationSource: "tmdb_movie",
+        recommendationExternalId: "100",
+      },
+      {
+        mappingReason: "provider_id",
+        recommendationSource: "tmdb_tv",
+        recommendationExternalId: "200",
+      },
     ]);
-    expect(preview.seeds[0]).toMatchObject({
-      catalogSource: null,
-      catalogExternalId: null,
-      mappingReason: "unsupported_source",
-    });
-    expect(preview.seeds[1]).toMatchObject({
-      catalogSource: "tvmaze",
-      catalogExternalId: "200",
-      mappingReason: "missing_imdb_id",
-    });
-    expect(getTmdbRecommendationsMock).toHaveBeenCalledTimes(3);
-    expect(preview.recommendations).toHaveLength(3);
   });
 
-  it("continues past mapped seeds with empty recommendation pages", async () => {
+  it("continues past unmapped and empty seeds", async () => {
     findSystemPreviewLibraryMock.mockResolvedValue([
-      libraryItem({ userMediaId: IDS.first, rating: 10 }),
+      libraryItem({
+        userMediaId: IDS.first,
+        catalogSource: null,
+        externalId: null,
+        favorite: true,
+      }),
       libraryItem({
         userMediaId: IDS.second,
-        externalId: imdbId(200),
-        rating: 9,
+        externalId: "invalid",
+        rating: 10,
       }),
-      libraryItem({
-        userMediaId: IDS.third,
-        externalId: imdbId(300),
-        rating: 8,
-      }),
-      libraryItem({
-        userMediaId: IDS.fourth,
-        externalId: imdbId(400),
-        rating: 7,
-      }),
+      libraryItem({ userMediaId: IDS.third, externalId: "100", rating: 9 }),
+      libraryItem({ userMediaId: IDS.fourth, externalId: "200", rating: 8 }),
+      libraryItem({ userMediaId: IDS.fifth, externalId: "300", rating: 7 }),
+      libraryItem({ userMediaId: IDS.sixth, externalId: "400", rating: 7 }),
     ]);
     getTmdbRecommendationsMock.mockImplementation(
       async (_type: "movie" | "show", id: number) =>
@@ -281,106 +217,93 @@ describe("system recommendation preview", () => {
 
     const preview = await getSystemRecommendationPreview("user-1");
 
-    expect(preview.seeds).toHaveLength(4);
-    expect(preview.seeds[0]).toMatchObject({
-      mappingStatus: "mapped",
-      candidateCount: 0,
-    });
+    expect(preview.seeds.map((seed) => seed.mappingStatus)).toEqual([
+      "unmapped",
+      "unmapped",
+      "mapped",
+      "mapped",
+      "mapped",
+      "mapped",
+    ]);
+    expect(preview.seeds[0].mappingReason).toBe("unsupported_source");
+    expect(preview.seeds[1].mappingReason).toBe("invalid_external_id");
     expect(getTmdbRecommendationsMock).toHaveBeenCalledTimes(4);
     expect(preview.recommendations).toHaveLength(3);
   });
 
-  it("maps exact provider identities and round-robins filtered candidates", async () => {
-    findSystemPreviewLibraryMock.mockResolvedValue([
-      libraryItem({
-        userMediaId: IDS.first,
-        title: "OMDb Favorite",
-        favorite: true,
-      }),
-      libraryItem({
-        userMediaId: IDS.second,
-        title: "OMDb Seed",
-        catalogSource: "omdb",
-        externalId: imdbId(200),
-        rating: 9,
-      }),
-      libraryItem({
-        userMediaId: IDS.third,
-        title: "TVMaze Seed",
-        type: "show",
-        catalogSource: "tvmaze",
-        externalId: "300",
-        status: "revisiting",
-      }),
-      libraryItem({
-        userMediaId: IDS.fourth,
-        title: "Already Tracked",
-        catalogSource: "omdb",
-        externalId: imdbId(400),
-        status: "planned",
-      }),
-      libraryItem({
-        userMediaId: IDS.fifth,
-        title: "Trashed Candidate",
-        catalogSource: "omdb",
-        externalId: imdbId(800),
-        status: "planned",
-        deletedAt: new Date("2026-02-01T00:00:00.000Z"),
-      }),
-    ]);
-    getTvMazeDetailsMock.mockResolvedValue({
-      externals: { imdb: imdbId(300) },
-    });
+  it("uses up to six productive seeds", async () => {
+    const userMediaIds = Object.values(IDS);
+    findSystemPreviewLibraryMock.mockResolvedValue(
+      userMediaIds.map((userMediaId, index) =>
+        libraryItem({
+          userMediaId,
+          title: `Seed ${index + 1}`,
+          externalId: String(100 + index),
+        }),
+      ),
+    );
     getTmdbRecommendationsMock.mockImplementation(
-      async (_type: "movie" | "show", id: number) => {
-        if (id === 100) {
-          return [
-            movie(501, "First Movie"),
-            movie(999, "Shared Candidate"),
-            movie(700, "Already Tracked"),
-          ];
-        }
-        if (id === 200) {
-          return [movie(502, "Second Movie"), movie(999, "Shared Candidate")];
-        }
-        return [show(503, "First Show"), movie(800, "Trashed Candidate")];
-      },
+      async (_type: "movie" | "show", id: number) => [
+        movie(500 + id, `Recommendation ${id}`),
+      ],
     );
 
     const preview = await getSystemRecommendationPreview("user-1");
 
-    expect(findTmdbByImdbIdMock).toHaveBeenCalledWith(imdbId(200), "movie");
-    expect(findTmdbByImdbIdMock).toHaveBeenCalledWith(imdbId(300), "show");
-    expect(getTvMazeDetailsMock).toHaveBeenCalledWith("300");
-    expect(preview.eligibleSeedCount).toBe(3);
-    expect(preview.seeds.map((seed) => seed.mappingStatus)).toEqual([
-      "mapped",
-      "mapped",
-      "mapped",
+    expect(getTmdbRecommendationsMock).toHaveBeenCalledTimes(6);
+    expect(preview.seeds).toHaveLength(6);
+    expect(preview.recommendations).toHaveLength(6);
+  });
+
+  it("round-robins candidates and excludes tracked titles", async () => {
+    findSystemPreviewLibraryMock.mockResolvedValue([
+      libraryItem({
+        userMediaId: IDS.first,
+        title: "Favorite Movie",
+        favorite: true,
+      }),
+      libraryItem({
+        userMediaId: IDS.second,
+        title: "Rated Movie",
+        externalId: "200",
+        rating: 9,
+      }),
+      libraryItem({
+        userMediaId: IDS.third,
+        title: "Already Tracked",
+        externalId: "700",
+        status: "planned",
+      }),
     ]);
-    expect(preview.seeds.map((seed) => seed.mappingReason)).toEqual([
-      "imdb_match",
-      "imdb_match",
-      "imdb_match",
-    ]);
+    getTmdbRecommendationsMock
+      .mockResolvedValueOnce([
+        movie(501, "First Movie"),
+        movie(999, "Shared Candidate"),
+        movie(700, "Already Tracked"),
+      ])
+      .mockResolvedValueOnce([
+        movie(502, "Second Movie"),
+        movie(999, "Shared Candidate"),
+      ]);
+
+    const preview = await getSystemRecommendationPreview("user-1");
+
     expect(preview.recommendations.map(({ media }) => media.title)).toEqual([
       "First Movie",
       "Second Movie",
-      "First Show",
       "Shared Candidate",
     ]);
     expect(preview.recommendations[0]).toMatchObject({
       rank: 1,
-      reason: 'Because "OMDb Favorite" is a favorite',
+      reason: 'Because "Favorite Movie" is a favorite',
       seedUserMediaId: IDS.first,
     });
   });
 
-  it("uses IGDB and Open Library recommendations for game and book seeds", async () => {
+  it("keeps IGDB and Open Library recommendation behavior", async () => {
     findSystemPreviewLibraryMock.mockResolvedValue([
       libraryItem({
         userMediaId: IDS.first,
-        title: "Game Seed",
         type: "game",
         catalogSource: "igdb",
         externalId: "100",
@@ -388,7 +311,6 @@ describe("system recommendation preview", () => {
       }),
       libraryItem({
         userMediaId: IDS.second,
-        title: "Book Seed",
         type: "book",
         catalogSource: "open_library",
         externalId: "OL123W",
@@ -404,32 +326,14 @@ describe("system recommendation preview", () => {
 
     expect(getGameRecommendationsMock).toHaveBeenCalledWith("100");
     expect(getOpenLibraryRecommendationsMock).toHaveBeenCalledWith("OL123W");
-    expect(findTmdbByImdbIdMock).not.toHaveBeenCalled();
-    expect(preview.seeds).toMatchObject([
-      {
-        type: "game",
-        mappingReason: "provider_id",
-        recommendationSource: "igdb",
-        recommendationExternalId: "100",
-      },
-      {
-        type: "book",
-        mappingReason: "provider_id",
-        recommendationSource: "open_library",
-        recommendationExternalId: "OL123W",
-      },
-    ]);
-    expect(preview.recommendations.map(({ media }) => media)).toMatchObject([
-      { source: "igdb", type: "game", title: "Similar Game" },
-      {
-        source: "open_library",
-        type: "book",
-        title: "Similar Book",
-      },
+    expect(getTmdbRecommendationsMock).not.toHaveBeenCalled();
+    expect(preview.recommendations.map(({ media }) => media.source)).toEqual([
+      "igdb",
+      "open_library",
     ]);
   });
 
-  it("returns an empty preview without calling providers when there are no eligible seeds", async () => {
+  it("returns version 3 without provider calls when no seed is eligible", async () => {
     findSystemPreviewLibraryMock.mockResolvedValue([
       libraryItem({ status: "planned" }),
       libraryItem({ userMediaId: IDS.second, rating: 6 }),
@@ -437,7 +341,7 @@ describe("system recommendation preview", () => {
 
     await expect(getSystemRecommendationPreview("user-1")).resolves.toEqual({
       strategyKey: "provider_recommendations",
-      strategyVersion: "1",
+      strategyVersion: "3",
       eligibleSeedCount: 0,
       seeds: [],
       recommendations: [],
@@ -445,22 +349,14 @@ describe("system recommendation preview", () => {
     expect(getTmdbRecommendationsMock).not.toHaveBeenCalled();
   });
 
-  it("returns partial results and marks a failed seed without exposing its error", async () => {
+  it("returns partial results without exposing a failed provider error", async () => {
     findSystemPreviewLibraryMock.mockResolvedValue([
       libraryItem({ userMediaId: IDS.first, favorite: true }),
-      libraryItem({
-        userMediaId: IDS.second,
-        title: "Working Seed",
-        externalId: imdbId(200),
-        rating: 8,
-      }),
+      libraryItem({ userMediaId: IDS.second, externalId: "200", rating: 8 }),
     ]);
-    getTmdbRecommendationsMock.mockImplementation(
-      async (_type: "movie" | "show", id: number) => {
-        if (id === 100) throw internalServerError("TMDB request failed");
-        return [movie(501, "Working Recommendation")];
-      },
-    );
+    getTmdbRecommendationsMock
+      .mockRejectedValueOnce(internalServerError("TMDB request failed"))
+      .mockResolvedValueOnce([movie(501, "Working Recommendation")]);
 
     const preview = await getSystemRecommendationPreview("user-1");
 
@@ -472,14 +368,10 @@ describe("system recommendation preview", () => {
     expect(JSON.stringify(preview)).not.toContain("TMDB request failed");
   });
 
-  it("propagates the sanitized provider error when every selected seed fails", async () => {
+  it("propagates the sanitized error when every selected seed fails", async () => {
     findSystemPreviewLibraryMock.mockResolvedValue([
       libraryItem({ userMediaId: IDS.first, favorite: true }),
-      libraryItem({
-        userMediaId: IDS.second,
-        externalId: imdbId(200),
-        rating: 8,
-      }),
+      libraryItem({ userMediaId: IDS.second, externalId: "200", rating: 8 }),
     ]);
     getTmdbRecommendationsMock.mockRejectedValue(
       internalServerError("TMDB request failed"),
@@ -494,31 +386,7 @@ describe("system recommendation preview", () => {
     });
   });
 
-  it("reports exact-identity misses as unmapped without a title fallback", async () => {
-    findSystemPreviewLibraryMock.mockResolvedValue([
-      libraryItem({
-        catalogSource: "omdb",
-        externalId: "tt1234567",
-      }),
-    ]);
-    findTmdbByImdbIdMock.mockResolvedValue(null);
-
-    const preview = await getSystemRecommendationPreview("user-1");
-
-    expect(preview.seeds[0]).toMatchObject({
-      catalogSource: "omdb",
-      catalogExternalId: "tt1234567",
-      mappingStatus: "unmapped",
-      mappingReason: "tmdb_not_found",
-      recommendationSource: null,
-      recommendationExternalId: null,
-      candidateCount: 0,
-    });
-    expect(preview.recommendations).toEqual([]);
-    expect(getTmdbRecommendationsMock).not.toHaveBeenCalled();
-  });
-
-  it("limits the blended result to ten recommendations", async () => {
+  it("limits blended results to ten recommendations", async () => {
     findSystemPreviewLibraryMock.mockResolvedValue([libraryItem()]);
     getTmdbRecommendationsMock.mockResolvedValue(
       Array.from({ length: 15 }, (_, index) =>

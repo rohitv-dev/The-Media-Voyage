@@ -4,12 +4,11 @@ import type {
 } from "@media-voyage/shared/api";
 import { getGameRecommendations } from "@/services/igdb";
 import { getOpenLibraryRecommendations } from "@/services/openLibrary";
-import { findTmdbByImdbId, getTmdbRecommendations } from "@/services/tmdb";
-import { getTvMazeDetails } from "@/services/tvMaze";
+import { getTmdbRecommendations } from "@/services/tmdb";
 import { findSystemPreviewLibrary } from "./queries";
 
-const MAX_PRODUCTIVE_SEEDS = 3;
-const MAX_SEED_ATTEMPTS = 10;
+const MAX_PRODUCTIVE_SEEDS = 6;
+const MAX_SEED_ATTEMPTS = 15;
 const MAX_RECOMMENDATIONS = 10;
 
 type LibraryItem = Awaited<ReturnType<typeof findSystemPreviewLibrary>>[number];
@@ -62,54 +61,24 @@ function positiveInteger(value: string | null): number | null {
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
-async function mapSeedToProvider(seed: PreviewSeed) {
-  if (seed.type === "movie" && seed.catalogSource === "omdb") {
-    if (!seed.externalId || !/^tt\d+$/i.test(seed.externalId)) {
-      return {
-        mappedMedia: null,
-        mappingReason: "invalid_external_id",
-      } as const;
-    }
-
-    const movie = await findTmdbByImdbId(seed.externalId, "movie");
+function mapSeedToProvider(seed: PreviewSeed) {
+  if (
+    (seed.type === "movie" && seed.catalogSource === "tmdb_movie") ||
+    (seed.type === "show" && seed.catalogSource === "tmdb_tv")
+  ) {
+    const tmdbId = positiveInteger(seed.externalId);
     return {
-      mappedMedia: movie
+      mappedMedia: tmdbId
         ? {
-            source: movie.source,
-            externalId: movie.externalId,
-            type: movie.type,
+            source:
+              seed.type === "movie"
+                ? ("tmdb_movie" as const)
+                : ("tmdb_tv" as const),
+            externalId: String(tmdbId),
+            type: seed.type,
           }
         : null,
-      mappingReason: movie ? "imdb_match" : "tmdb_not_found",
-    } as const;
-  }
-
-  if (seed.type === "show" && seed.catalogSource === "tvmaze") {
-    const tvMazeId = positiveInteger(seed.externalId);
-    if (!tvMazeId) {
-      return {
-        mappedMedia: null,
-        mappingReason: "invalid_external_id",
-      } as const;
-    }
-
-    const details = await getTvMazeDetails(String(tvMazeId));
-    const imdbId = details?.externals?.imdb;
-
-    if (!imdbId || !/^tt\d+$/i.test(imdbId)) {
-      return { mappedMedia: null, mappingReason: "missing_imdb_id" } as const;
-    }
-
-    const show = await findTmdbByImdbId(imdbId, "show");
-    return {
-      mappedMedia: show
-        ? {
-            source: show.source,
-            externalId: show.externalId,
-            type: show.type,
-          }
-        : null,
-      mappingReason: show ? "imdb_match" : "tmdb_not_found",
+      mappingReason: tmdbId ? "provider_id" : "invalid_external_id",
     } as const;
   }
 
@@ -190,7 +159,7 @@ async function runSeed(seed: PreviewSeed): Promise<SeedRun> {
   let mappedMedia: ProviderIdentity | null = null;
 
   try {
-    const mapping = await mapSeedToProvider(seed);
+    const mapping = mapSeedToProvider(seed);
     mappedMedia = mapping.mappedMedia;
     if (!mappedMedia) {
       return {
@@ -332,7 +301,7 @@ export async function getSystemRecommendationPreview(
 
   return {
     strategyKey: "provider_recommendations",
-    strategyVersion: "1",
+    strategyVersion: "3",
     eligibleSeedCount: eligibleSeeds.length,
     seeds: runs.map((run) => ({
       userMediaId: run.seed.userMediaId,

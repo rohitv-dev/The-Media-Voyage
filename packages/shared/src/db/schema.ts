@@ -15,22 +15,26 @@ import {
   check,
 } from "drizzle-orm/pg-core";
 
-type MovieOrShowOrGameMetadata = {
-  genre?: string;
-  runtime?: string;
-  catalogRating?: string;
+type MovieOrShowMetadata = {
+  genre?: string[];
+  runtime?: number;
+  catalogRating?: number;
+};
+
+type GameMetadata = {
+  genre?: string[];
+  catalogRating?: number;
 };
 
 type BookMetadata = {
-  genre?: string;
+  genre?: string[];
   numberOfPages?: number;
-  catalogRating?: string;
 };
 
 export type CatalogMetadataByType = {
-  movie: MovieOrShowOrGameMetadata;
-  show: MovieOrShowOrGameMetadata;
-  game: MovieOrShowOrGameMetadata;
+  movie: MovieOrShowMetadata;
+  show: MovieOrShowMetadata;
+  game: GameMetadata;
   book: BookMetadata;
 };
 

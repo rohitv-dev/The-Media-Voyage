@@ -33,15 +33,11 @@ type TimeSpentModalProps = {
   catalogMetadata?: CatalogMetadata;
 };
 
-function parseRuntimeMinutes(metadata?: CatalogMetadata<"movie" | "show">) {
-  const runtime = metadata?.runtime;
-  if (!runtime) return undefined;
-
-  const match = runtime.match(/(\d+(?:\.\d+)?)\s*(?:min|minutes)\b/i);
-  if (!match) return undefined;
-
-  const minutes = Math.round(Number(match[1]));
-  return Number.isFinite(minutes) && minutes > 0 ? minutes : undefined;
+export function getCatalogRuntimeMinutes(metadata?: CatalogMetadata) {
+  if (!metadata || !("runtime" in metadata)) return undefined;
+  return metadata.runtime && metadata.runtime > 0
+    ? metadata.runtime
+    : undefined;
 }
 
 function getShowSummary(seasonsProgress?: SeasonProgressEntry[]): ShowSummary {
@@ -65,7 +61,7 @@ export function getEstimatedTimeSpentMinutes(
   metadata?: CatalogMetadata,
   seasonsProgress: SeasonProgressEntry[] = [],
 ) {
-  const runtimeMinutes = parseRuntimeMinutes(metadata);
+  const runtimeMinutes = getCatalogRuntimeMinutes(metadata);
 
   if (type === "movie") {
     return runtimeMinutes;
@@ -120,11 +116,28 @@ export function TimeSpentModal({ catalogMetadata }: TimeSpentModalProps) {
     catalogMetadata,
     form.values.seasonsProgress,
   );
-  const catalogRuntimeMinutes = parseRuntimeMinutes(catalogMetadata);
+  const catalogRuntimeMinutes = getCatalogRuntimeMinutes(catalogMetadata);
   const showSummary =
     form.values.type === "show"
       ? getShowSummary(form.values.seasonsProgress)
       : undefined;
+
+  if (form.values.type === "show" && catalogRuntimeMinutes) {
+    return (
+      <TextInput
+        label="Time Spent"
+        description={`${showSummary?.watchedEpisodeCount ?? 0} watched × ${catalogRuntimeMinutes} min average`}
+        variant="filled"
+        value={
+          form.values.timeSpent
+            ? formatDuration(Number(form.values.timeSpent))
+            : "No episodes watched"
+        }
+        readOnly
+        styles={{ input: { textAlign: "center" } }}
+      />
+    );
+  }
 
   const openModal = () => {
     setDraft(minutesToDurationParts(Number(form.values.timeSpent) || 0));

@@ -3,9 +3,8 @@ import type {
   SourceMediaRecord,
 } from "@media-voyage/shared/api";
 import { hydrateIgdb } from "./igdb";
-import { hydrateOmdb } from "./omdb";
 import { hydrateOpenLibrary } from "./openLibrary";
-import { hydrateTvMaze } from "./tvmaze";
+import { hydrateTmdb } from "./tmdb";
 import type { CatalogMetadata } from "../catalogMetadata";
 
 export type HydratedMedia = {
@@ -18,14 +17,13 @@ export async function hydrateMediaRecord(
   record: SourceMediaRecord,
 ): Promise<HydratedMedia> {
   switch (record.source) {
-    case "omdb":
-      return hydrateOmdb(record);
+    case "tmdb_movie":
+    case "tmdb_tv":
+      return hydrateTmdb(record);
     case "igdb":
       return hydrateIgdb(record);
     case "open_library":
       return hydrateOpenLibrary(record);
-    case "tvmaze":
-      return hydrateTvMaze(record);
     default:
       return {};
   }

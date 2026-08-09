@@ -114,7 +114,7 @@ export function PublicMediaDetail({ data }: { data: PublicMediaDetailData }) {
           <Grid gap={{ base: "md", sm: "xl" }} align="flex-start">
             <Grid.Col span={{ base: 5, xs: 4, sm: 3 }}>
               <Image
-                src={data.imageUrl === "N/A" ? null : data.imageUrl}
+                src={data.imageUrl}
                 alt={data.title}
                 radius="sm"
                 fit="cover"
@@ -217,12 +217,12 @@ export function PublicMediaDetail({ data }: { data: PublicMediaDetailData }) {
             {data.catalogSource ?? "—"}
           </DetailItem>
           {metadata.genre && (
-            <DetailItem label="Genre">{metadata.genre}</DetailItem>
+            <DetailItem label="Genre">{metadata.genre.join(", ")}</DetailItem>
           )}
-          {runtime && <DetailItem label="Runtime">{runtime}</DetailItem>}
-          {metadata.catalogRating && (
+          {runtime && <DetailItem label="Runtime">{runtime} min</DetailItem>}
+          {"catalogRating" in metadata && metadata.catalogRating && (
             <DetailItem label="Catalog rating">
-              {metadata.catalogRating}
+              {metadata.catalogRating}/10
             </DetailItem>
           )}
         </SimpleGrid>

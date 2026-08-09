@@ -137,9 +137,7 @@ export function MediaViewHero({
   const reducedMotion = useAppReducedMotion();
   const tagColorMap = useTagColorMap();
   const progress = getProgress(data.progress);
-  const canAdjustCover = Boolean(
-    !readOnly && data.imageUrl && data.imageUrl !== "N/A",
-  );
+  const canAdjustCover = Boolean(!readOnly && data.imageUrl);
   const hasSecondaryActions =
     canAdjustCover ||
     (!readOnly && Boolean(onRecommendToFriend)) ||
@@ -181,7 +179,7 @@ export function MediaViewHero({
           >
             <Grid.Col span={{ base: 4, xs: 3, sm: 3 }}>
               <Image
-                src={data.imageUrl === "N/A" ? null : data.imageUrl}
+                src={data.imageUrl}
                 alt={data.title}
                 radius="sm"
                 fit="cover"
@@ -422,7 +420,7 @@ export function MediaViewHero({
         </Card>
       </motion.div>
 
-      {!readOnly && data.imageUrl && data.imageUrl !== "N/A" && (
+      {!readOnly && data.imageUrl && (
         <MediaCoverArtFocusModal
           opened={coverEditorOpen}
           onClose={() => setCoverEditorOpen(false)}

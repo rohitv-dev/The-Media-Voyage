@@ -25,7 +25,6 @@ const environmentSchema = z.object({
   AUTH_COOKIE_DOMAIN: z.string().min(1).optional(),
   IGDB_CLIENT_ID: z.string().min(1, "IGDB_CLIENT_ID is required"),
   IGDB_CLIENT_SECRET: z.string().min(1, "IGDB_CLIENT_SECRET is required"),
-  OMDB_API_KEY: z.string().min(1, "OMDB_API_KEY is required"),
   TMDB_API_READ_ACCESS_TOKEN: z
     .string()
     .min(1, "TMDB_API_READ_ACCESS_TOKEN is required"),

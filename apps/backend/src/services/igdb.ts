@@ -56,7 +56,7 @@ async function fetchIgdbSearch(query: string): Promise<IgdbResponse> {
 }
 
 // Occasionally returns an empty result for a query that succeeds moments
-// later on an identical retry (same flakiness as OMDb's search endpoint).
+// later on an identical retry.
 export async function searchGames(query: string): Promise<SourceMediaRecord[]> {
   let data = await fetchIgdbSearch(query);
 

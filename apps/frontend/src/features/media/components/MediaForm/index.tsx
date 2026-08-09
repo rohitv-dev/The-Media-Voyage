@@ -38,9 +38,13 @@ import { MediaDetailsSection } from "./MediaDetailsSection";
 import { PersonalNotesSection } from "./PersonalNotesSection";
 import { ProgressTrackingSection } from "./ProgressTrackingSection";
 import { StatusDetailsSection } from "./StatusDetailsSection";
-import { getEstimatedTimeSpentMinutes } from "./TimeSpentModal";
+import {
+  getCatalogRuntimeMinutes,
+  getEstimatedTimeSpentMinutes,
+} from "./TimeSpentModal";
 import { formatDuration } from "../../formatDuration";
 import { hydrateMediaRecord } from "../../providers/hydrateMedia";
+import { mergeTmdbSeasons } from "../../providers/tmdb";
 import { getLibraryReturnDepth } from "../../libraryNavigation";
 
 const addInitialValues: UserMediaFormSchema = {
@@ -148,6 +152,8 @@ type MediaFormProps =
       id: string;
       mode: "update";
       initialValues: UserMediaFormSchema;
+      catalogSource: string | null;
+      catalogExternalId: string | null;
       dropdowns: UserMediaDropdowns;
     };
 
@@ -184,6 +190,16 @@ export function MediaForm(props: MediaFormProps) {
         }
       : {
           ...props.initialValues,
+          ...(props.initialValues.type === "show" &&
+          getCatalogRuntimeMinutes(props.initialValues.metadata)
+            ? {
+                timeSpent: getEstimatedTimeSpentMinutes(
+                  "show",
+                  props.initialValues.metadata,
+                  props.initialValues.seasonsProgress,
+                ),
+              }
+            : {}),
         },
     transformValues: (values) => ({
       ...values,
@@ -232,7 +248,7 @@ export function MediaForm(props: MediaFormProps) {
       });
       form.setFieldValue("seasonsProgress", completedSeasons);
 
-      if (form.values.type === "movie" || form.values.type === "show") {
+      if (form.values.type === "movie") {
         const estimatedMinutes = getEstimatedTimeSpentMinutes(
           form.values.type,
           catalogMetadataForTimeSpent,
@@ -283,6 +299,20 @@ export function MediaForm(props: MediaFormProps) {
       calculatedProgress !== form.values.progress
     ) {
       form.setFieldValue("progress", calculatedProgress);
+    }
+
+    const calculatedTimeSpent = getEstimatedTimeSpentMinutes(
+      "show",
+      catalogMetadataForTimeSpent,
+      value,
+    );
+    const nextTimeSpent = calculatedTimeSpent || undefined;
+
+    if (
+      getCatalogRuntimeMinutes(catalogMetadataForTimeSpent) &&
+      nextTimeSpent !== form.values.timeSpent
+    ) {
+      form.setFieldValue("timeSpent", nextTimeSpent);
     }
   });
 
@@ -347,6 +377,17 @@ export function MediaForm(props: MediaFormProps) {
 
     form.setFieldValue("metadata", metadata);
 
+    if (form.values.type === "show" && getCatalogRuntimeMinutes(metadata)) {
+      form.setFieldValue(
+        "timeSpent",
+        getEstimatedTimeSpentMinutes(
+          "show",
+          metadata,
+          form.values.seasonsProgress,
+        ),
+      );
+    }
+
     const calculatedProgress = calculateBookProgress(
       form.values.pagesRead,
       metadata,
@@ -398,6 +439,54 @@ export function MediaForm(props: MediaFormProps) {
     }
   };
 
+  const canSyncSeasons =
+    !isAddMode &&
+    props.catalogSource === "tmdb_tv" &&
+    Boolean(props.catalogExternalId);
+
+  const handleSyncSeasons = async () => {
+    if (
+      isAddMode ||
+      props.catalogSource !== "tmdb_tv" ||
+      !props.catalogExternalId
+    ) {
+      return;
+    }
+
+    setIsLoadingSeasonInfo(true);
+
+    try {
+      const hydrated = await hydrateMediaRecord({
+        id: "",
+        source: "tmdb_tv",
+        externalId: props.catalogExternalId,
+        title: form.values.title,
+        type: "show",
+        imageUrl: null,
+      });
+
+      applyCatalogMetadata(hydrated.metadata);
+      form.setFieldValue(
+        "seasonsProgress",
+        mergeTmdbSeasons(
+          form.values.seasonsProgress ?? [],
+          hydrated.seasonsProgress ?? [],
+        ),
+      );
+      showSuccessNotification({
+        title: "Seasons synced",
+        message: "Review the updated season counts, then save your changes.",
+      });
+    } catch (error) {
+      showErrorNotification({
+        title: "Could not sync seasons",
+        message: getApiErrorMessage(error),
+      });
+    } finally {
+      setIsLoadingSeasonInfo(false);
+    }
+  };
+
   const saveMutation = useMutation({
     mutationFn: async (data: UserMediaFormSchema) => {
       if (props.mode === "add") {
@@ -436,6 +525,7 @@ export function MediaForm(props: MediaFormProps) {
 
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats }),
         queryClient.invalidateQueries(userMediaDropdownOptions),
         queryClient.invalidateQueries({
           queryKey: queryKeys.userMedia.statusHistory(data.id),
@@ -516,6 +606,8 @@ export function MediaForm(props: MediaFormProps) {
                 catalogMetadata={catalogMetadataForTimeSpent}
                 numberOfPages={getBookPageCount(catalogMetadataForTimeSpent)}
                 isLoadingSeasonInfo={isLoadingSeasonInfo}
+                canSyncSeasons={canSyncSeasons}
+                onSyncSeasons={handleSyncSeasons}
               />
               <PersonalNotesSection />
               <FormActions

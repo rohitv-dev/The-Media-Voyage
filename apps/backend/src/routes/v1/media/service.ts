@@ -1,10 +1,12 @@
 import { db } from "@/db/db";
 import { searchGames } from "@/services/igdb";
-import { searchOmdb } from "@/services/omdb";
 import { searchOpenLibrary } from "@/services/openLibrary";
-import { searchTvMaze } from "@/services/tvMaze";
+import { searchTmdb } from "@/services/tmdb";
 import { media } from "@media-voyage/shared";
-import type { MediaSearchQuery, SourceMediaRecord } from "@media-voyage/shared/api";
+import type {
+  MediaSearchQuery,
+  SourceMediaRecord,
+} from "@media-voyage/shared/api";
 import { and, eq, ilike } from "drizzle-orm";
 
 const mediaSearchSelect = {
@@ -23,7 +25,9 @@ function searchLocalMedia({ q, type }: MediaSearchQuery) {
     .limit(10);
 }
 
-export async function searchMedia(query: MediaSearchQuery): Promise<SourceMediaRecord[]> {
+export async function searchMedia(
+  query: MediaSearchQuery,
+): Promise<SourceMediaRecord[]> {
   const localResults = await searchLocalMedia(query);
   const localRecords: SourceMediaRecord[] = localResults.map((record) => ({
     id: record.id,
@@ -42,10 +46,8 @@ export async function searchMedia(query: MediaSearchQuery): Promise<SourceMediaR
 
   switch (query.type) {
     case "movie":
-      externalRecords = await searchOmdb(query.q);
-      break;
     case "show":
-      externalRecords = await searchTvMaze(query.q);
+      externalRecords = await searchTmdb(query.q, query.type);
       break;
     case "game":
       externalRecords = await searchGames(query.q);
@@ -55,8 +57,12 @@ export async function searchMedia(query: MediaSearchQuery): Promise<SourceMediaR
       break;
   }
 
-  const localExternalIds = new Set(localRecords.map((record) => record.externalId).filter(Boolean));
-  const dedupedExternalRecords = externalRecords.filter((record) => !localExternalIds.has(record.externalId));
+  const localExternalIds = new Set(
+    localRecords.map((record) => record.externalId).filter(Boolean),
+  );
+  const dedupedExternalRecords = externalRecords.filter(
+    (record) => !localExternalIds.has(record.externalId),
+  );
 
   return [...localRecords, ...dedupedExternalRecords];
 }
