@@ -7,6 +7,7 @@ import {
   Burger,
   Button,
   Group,
+  Kbd,
   Stack,
   Text,
   Title,
@@ -16,6 +17,7 @@ import {
   IconHelp,
   IconLayoutSidebar,
   IconPlus,
+  IconSearch,
   IconUser,
 } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
@@ -36,6 +38,7 @@ interface AuthenticatedHeaderProps {
   onOpenMedia: (userMediaId: string) => void;
   onOpenFriends: () => void;
   onOpenShortcuts: () => void;
+  onOpenCommandPalette: () => void;
   onAddMedia: () => void;
   onOpenProfile: () => void;
 }
@@ -50,6 +53,7 @@ export function AuthenticatedHeader({
   onOpenMedia,
   onOpenFriends,
   onOpenShortcuts,
+  onOpenCommandPalette,
   onAddMedia,
   onOpenProfile,
 }: AuthenticatedHeaderProps) {
@@ -155,6 +159,31 @@ export function AuthenticatedHeader({
         </Group>
 
         <Group gap="sm" wrap="nowrap">
+          <Box visibleFrom="lg">
+            <Button
+              variant="default"
+              size="sm"
+              leftSection={<IconSearch size={16} />}
+              rightSection={<Kbd size="xs">Ctrl K</Kbd>}
+              onClick={onOpenCommandPalette}
+            >
+              Search or jump
+            </Button>
+          </Box>
+          <Box hiddenFrom="lg">
+            <Tooltip label="Search or jump" withArrow>
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                size="lg"
+                aria-label="Open command palette"
+                onClick={onOpenCommandPalette}
+              >
+                <IconSearch size={19} />
+              </ActionIcon>
+            </Tooltip>
+          </Box>
+
           <NotificationPopover
             opened={notificationsOpened}
             data={notificationData}

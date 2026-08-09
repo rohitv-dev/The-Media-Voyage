@@ -7,6 +7,7 @@ type ShortcutsHelpModalProps = {
 };
 
 const shortcuts: { keys: string[]; description: string }[] = [
+  { keys: ["Ctrl/⌘", "K"], description: "Open the command palette" },
   { keys: ["/"], description: "Focus the library search" },
   { keys: ["c"], description: "Add media" },
   { keys: ["r"], description: "Reset filters" },

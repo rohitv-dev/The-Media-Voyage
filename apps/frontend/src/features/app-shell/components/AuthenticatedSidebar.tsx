@@ -11,19 +11,12 @@ import {
 } from "@mantine/core";
 import type { NavLinkProps } from "@mantine/core";
 import {
-  IconBell,
   IconBooks,
-  IconCalendar,
   IconChevronRight,
-  IconDeviceTv,
   IconLogout,
   IconPlus,
   IconSettings,
-  IconTags,
-  IconTrash,
-  IconTrendingUp,
   IconUser,
-  IconUsers,
 } from "@tabler/icons-react";
 import { motion } from "motion/react";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
@@ -32,21 +25,10 @@ import { collectionQueryOptions } from "#/features/media-collection/queries";
 import { friendRequestsQueryOptions } from "#/features/friends/queries";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { latestNotificationsQueryOptions } from "#/features/notifications/queries";
+import { sidebarNavigationItems } from "#/features/app-shell/navigation";
+import type { AppShellPath } from "#/features/app-shell/navigation";
 
 const SIDEBAR_ACTIVE_PILL_ID = "sidebar-active-pill";
-
-const navigationItems = [
-  { label: "Dashboard", icon: IconTrendingUp, path: "/dashboard" },
-  { label: "Library", icon: IconBooks, path: "/media" },
-  { label: "Activity Calendar", icon: IconCalendar, path: "/calendar" },
-  { label: "Friends", icon: IconUsers, path: "/friends" },
-  { label: "Notifications", icon: IconBell, path: "/notifications" },
-  { label: "Tag Management", icon: IconTags, path: "/tags" },
-  { label: "Source Management", icon: IconDeviceTv, path: "/sources" },
-  { label: "Trash", icon: IconTrash, path: "/trash" },
-  { label: "Profile", icon: IconUser, path: "/profile" },
-  { label: "Settings", icon: IconSettings, path: "/settings" },
-] as const;
 
 interface SidebarNavLinkProps extends NavLinkProps {
   collapsed?: boolean;
@@ -118,7 +100,7 @@ function SidebarNavLink({
 
 interface AuthenticatedSidebarProps {
   railCollapsed: boolean;
-  onNavigate: (path: string) => void;
+  onNavigate: (path: AppShellPath) => void;
   onNavigateToCollection: (collectionId: string) => void;
   onLogout: () => void;
 }
@@ -148,7 +130,7 @@ export function AuthenticatedSidebar({
     >
       <Stack gap={0} p="sm" h="100%">
         <Stack gap={4}>
-          {navigationItems.map(({ label, icon, path }) => {
+          {sidebarNavigationItems.map(({ label, icon, path }) => {
             const Icon = icon;
             const rightSection =
               path === "/friends" && pendingRequests > 0 ? (

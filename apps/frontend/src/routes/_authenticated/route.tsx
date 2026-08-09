@@ -13,6 +13,8 @@ import { authClient } from "#/auth/authClient";
 import { ShortcutsHelpModal } from "#/components/ShortcutsHelpModal";
 import { AuthenticatedHeader } from "#/features/app-shell/components/AuthenticatedHeader";
 import { AuthenticatedSidebar } from "#/features/app-shell/components/AuthenticatedSidebar";
+import { CommandPalette } from "#/features/app-shell/components/CommandPalette";
+import type { AppShellPath } from "#/features/app-shell/navigation";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ context: { queryClient } }) => {
@@ -57,11 +59,14 @@ function AuthenticatedShell() {
 
   const [shortcutsOpened, { open: openShortcuts, close: closeShortcuts }] =
     useDisclosure();
-
-  const goTo = (to: Parameters<typeof navigate>[0]["to"]) => () => {
-    navigate({ to });
-    closeNavbar();
-  };
+  const [
+    commandPaletteOpened,
+    {
+      open: openCommandPalette,
+      close: closeCommandPalette,
+      toggle: toggleCommandPalette,
+    },
+  ] = useDisclosure();
 
   useHotkeys([
     [
@@ -88,6 +93,7 @@ function AuthenticatedShell() {
         openShortcuts();
       },
     ],
+    ["mod+K", toggleCommandPalette],
   ]);
 
   const logout = async () => {
@@ -96,28 +102,9 @@ function AuthenticatedShell() {
     navigate({ to: "/auth/login" });
   };
 
-  const navigateSidebar = (path: string) => {
-    switch (path) {
-      case "/dashboard":
-      case "/media":
-      case "/calendar":
-      case "/friends":
-      case "/tags":
-      case "/sources":
-      case "/trash":
-      case "/profile":
-      case "/settings":
-      case "/collection":
-      case "/media/add":
-        goTo(path)();
-        break;
-      case "/notifications":
-        navigate({ to: "/notifications" });
-        closeNavbar();
-        break;
-      default:
-        console.warn(`Unknown sidebar navigation path: ${path}`);
-    }
+  const navigateSidebar = (path: AppShellPath) => {
+    navigate({ to: path });
+    closeNavbar();
   };
 
   const navigateToCollection = (collectionId: string) => {
@@ -153,6 +140,7 @@ function AuthenticatedShell() {
         onOpenMedia={openMedia}
         onOpenFriends={openFriends}
         onOpenShortcuts={openShortcuts}
+        onOpenCommandPalette={openCommandPalette}
         onAddMedia={addMedia}
         onOpenProfile={openProfile}
       />
@@ -169,6 +157,12 @@ function AuthenticatedShell() {
       </AppShell.Main>
 
       <ShortcutsHelpModal opened={shortcutsOpened} onClose={closeShortcuts} />
+      <CommandPalette
+        opened={commandPaletteOpened}
+        onClose={closeCommandPalette}
+        onNavigate={navigateSidebar}
+        onOpenMedia={openMedia}
+      />
     </AppShell>
   );
 }
