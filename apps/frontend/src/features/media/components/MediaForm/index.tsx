@@ -6,7 +6,12 @@ import type {
   UserMediaFormSchema,
 } from "@media-voyage/shared/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCanGoBack, useRouter, useNavigate } from "@tanstack/react-router";
+import {
+  useCanGoBack,
+  useLocation,
+  useNavigate,
+  useRouter,
+} from "@tanstack/react-router";
 import { useState } from "react";
 import type { MouseEventHandler } from "react";
 import { FormProvider, useForm } from "./context";
@@ -36,6 +41,7 @@ import { StatusDetailsSection } from "./StatusDetailsSection";
 import { getEstimatedTimeSpentMinutes } from "./TimeSpentModal";
 import { formatDuration } from "../../formatDuration";
 import { hydrateMediaRecord } from "../../providers/hydrateMedia";
+import { getLibraryReturnDepth } from "../../libraryNavigation";
 
 const addInitialValues: UserMediaFormSchema = {
   title: "",
@@ -156,7 +162,19 @@ export function MediaForm(props: MediaFormProps) {
   const [isLoadingSeasonInfo, setIsLoadingSeasonInfo] = useState(false);
   const router = useRouter();
   const navigate = useNavigate();
+  const libraryReturnDepth = useLocation({
+    select: (location) => getLibraryReturnDepth(location.state),
+  });
   const queryClient = useQueryClient();
+
+  const returnToLibrary = () => {
+    if (libraryReturnDepth) {
+      router.history.go(-libraryReturnDepth);
+      return;
+    }
+
+    navigate({ to: "/media" });
+  };
 
   const form = useForm({
     initialValues: isAddMode
@@ -429,14 +447,12 @@ export function MediaForm(props: MediaFormProps) {
           : []),
       ]);
 
-      navigate(
-        isAddMode
-          ? { to: "/media" }
-          : {
-              to: "/media/view/$id",
-              params: { id: props.id },
-            },
-      );
+      if (isAddMode) {
+        navigate({ to: "/media" });
+        return;
+      }
+
+      returnToLibrary();
     },
 
     onError: (error: Error) => {
@@ -459,7 +475,7 @@ export function MediaForm(props: MediaFormProps) {
 
     requestDeleteMedia(props.id, props.initialValues.title, () => {
       form.resetDirty();
-      navigate({ to: "/media" });
+      returnToLibrary();
     });
   };
 

@@ -104,6 +104,7 @@ type MediaViewHeroProps = {
   data: MediaViewData;
   readOnly?: boolean;
   onBack?: () => void;
+  onEdit?: () => void;
   backLabel?: string;
   eyebrow?: string;
   onCopyToLibrary?: () => void;
@@ -119,6 +120,7 @@ export function MediaViewHero({
   data,
   readOnly,
   onBack,
+  onEdit,
   backLabel = "Back to library",
   eyebrow,
   onCopyToLibrary,
@@ -232,10 +234,12 @@ export function MediaViewHero({
                         flex={1}
                         leftSection={<IconEdit size={16} />}
                         onClick={() =>
-                          navigate({
-                            to: "/media/update/$id",
-                            params: { id: data.id },
-                          })
+                          onEdit
+                            ? onEdit()
+                            : navigate({
+                                to: "/media/update/$id",
+                                params: { id: data.id },
+                              })
                         }
                       >
                         Update

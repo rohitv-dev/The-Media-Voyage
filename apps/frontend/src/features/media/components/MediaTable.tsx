@@ -237,6 +237,10 @@ export function MediaTable({ data }: MediaTableProps) {
                       navigate({
                         to: "/media/update/$id",
                         params: { id: record.id },
+                        state: (previous) => ({
+                          ...previous,
+                          libraryReturnDepth: 1,
+                        }),
                       });
                     }}
                   >
@@ -263,7 +267,14 @@ export function MediaTable({ data }: MediaTableProps) {
           },
         ]}
         onRowClick={({ record }) =>
-          navigate({ to: "/media/view/$id", params: { id: record.id } })
+          navigate({
+            to: "/media/view/$id",
+            params: { id: record.id },
+            state: (previous) => ({
+              ...previous,
+              libraryReturnDepth: 1,
+            }),
+          })
         }
       />
       {data.length > 0 && (

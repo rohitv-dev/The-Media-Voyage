@@ -342,6 +342,10 @@ function RouteComponent() {
                           navigate({
                             to: "/media/view/$id",
                             params: { id },
+                            state: (previous) => ({
+                              ...previous,
+                              libraryReturnDepth: 1,
+                            }),
                             viewTransition: true,
                           })
                         }
@@ -349,6 +353,10 @@ function RouteComponent() {
                           navigate({
                             to: "/media/update/$id",
                             params: { id },
+                            state: (previous) => ({
+                              ...previous,
+                              libraryReturnDepth: 1,
+                            }),
                           })
                         }
                       />
@@ -419,7 +427,14 @@ function RouteComponent() {
         collections={collections ?? []}
         onView={(id) => {
           closePicker();
-          navigate({ to: "/media/view/$id", params: { id } });
+          navigate({
+            to: "/media/view/$id",
+            params: { id },
+            state: (previous) => ({
+              ...previous,
+              libraryReturnDepth: 1,
+            }),
+          });
         }}
       />
     </Container>

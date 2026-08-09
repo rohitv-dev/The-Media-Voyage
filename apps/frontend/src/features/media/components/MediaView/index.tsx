@@ -17,6 +17,7 @@ type MediaViewProps = {
   data: MediaViewData;
   readOnly?: boolean;
   onBack?: () => void;
+  onEdit?: () => void;
   backLabel?: string;
   eyebrow?: string;
   footer?: ReactNode;
@@ -37,6 +38,7 @@ export function MediaView(props: MediaViewProps) {
           data={props.data}
           readOnly={props.readOnly}
           onBack={props.onBack}
+          onEdit={props.onEdit}
           backLabel={props.backLabel}
           eyebrow={props.eyebrow}
           onCopyToLibrary={props.onCopyToLibrary}
