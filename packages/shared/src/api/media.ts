@@ -11,6 +11,24 @@ export const mediaSearchQuerySchema = z.object({
 
 export type MediaSearchQuery = z.infer<typeof mediaSearchQuerySchema>;
 
+export const tmdbMediaTypeSchema = z.enum(["movie", "show"]);
+
+export type TmdbMediaType = z.infer<typeof tmdbMediaTypeSchema>;
+
+export const tmdbSearchQuerySchema = z.object({
+  q: z.string().trim().min(1, "Query parameter 'q' is required"),
+  type: tmdbMediaTypeSchema,
+});
+
+export type TmdbSearchQuery = z.infer<typeof tmdbSearchQuerySchema>;
+
+export const tmdbMediaParamsSchema = z.object({
+  type: tmdbMediaTypeSchema,
+  id: z.coerce.number().int().positive("TMDB ID must be a positive integer"),
+});
+
+export type TmdbMediaParams = z.infer<typeof tmdbMediaParamsSchema>;
+
 export interface OmdbMedia {
   Title: string;
   Year: string;
@@ -122,3 +140,14 @@ export const mediaResponseSchema = z.object({
 });
 
 export type SourceMediaRecord = z.infer<typeof mediaResponseSchema>;
+
+export type TmdbMediaSource = "tmdb_movie" | "tmdb_tv";
+
+export interface TmdbMediaDetails extends SourceMediaRecord {
+  source: TmdbMediaSource;
+  type: TmdbMediaType;
+  description: string | null;
+  genres: string[];
+  runtimeMinutes: number | null;
+  catalogRating: number | null;
+}
