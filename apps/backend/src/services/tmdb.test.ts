@@ -280,6 +280,32 @@ describe("TMDB service", () => {
     });
   });
 
+  it("falls back when episode-level runtime enrichment fails", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse({
+          id: 45,
+          name: "Show With Runtime Fallback",
+          adult: false,
+          poster_path: null,
+          overview: null,
+          genres: [],
+          episode_run_time: [48],
+          last_episode_to_air: { runtime: 50 },
+          vote_average: null,
+          seasons: [{ season_number: 1, episode_count: 10 }],
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({}, 429));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getTmdbDetails("show", 45)).resolves.toMatchObject({
+      runtimeMinutes: 48,
+      seasons: [{ seasonNumber: 1, episodeCount: 10 }],
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it("normalizes missing optional show fields", async () => {
     fetchMock.mockResolvedValue(
       jsonResponse({

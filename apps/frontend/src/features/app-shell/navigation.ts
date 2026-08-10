@@ -4,6 +4,7 @@ import {
   IconCalendar,
   IconDeviceTv,
   IconSettings,
+  IconSparkles,
   IconTags,
   IconTrash,
   IconTrendingUp,
@@ -25,6 +26,13 @@ export const appNavigationItems = [
     icon: IconBooks,
     path: "/media",
     keywords: ["movies", "shows", "games", "books"],
+  },
+  {
+    label: "Recommendations",
+    description: "Generate ideas from your library",
+    icon: IconSparkles,
+    path: "/recommendations",
+    keywords: ["discover", "suggestions", "for you"],
   },
   {
     label: "Activity Calendar",

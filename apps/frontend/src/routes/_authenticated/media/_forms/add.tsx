@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLocation } from "@tanstack/react-router";
 import { MediaForm } from "#/features/media/components/MediaForm/index";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { userMediaDropdownOptions } from "#/features/media/queries";
@@ -11,12 +11,16 @@ export const Route = createFileRoute("/_authenticated/media/_forms/add")({
 function RouteComponent() {
   const { data } = useSuspenseQuery(userMediaDropdownOptions);
   const { session } = Route.useRouteContext();
+  const recommendationSelection = useLocation({
+    select: (location) => location.state.recommendationSelection,
+  });
 
   return (
     <MediaForm
       mode="add"
       dropdowns={data}
       defaultVisibility={toVisibility(session.user.defaultVisibility)}
+      recommendationSelection={recommendationSelection}
     />
   );
 }

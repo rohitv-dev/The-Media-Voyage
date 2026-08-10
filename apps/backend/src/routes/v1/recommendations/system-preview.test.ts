@@ -96,7 +96,15 @@ function game(id: number, title: string) {
   };
 }
 
-function book(id: string, title: string) {
+function book(
+  id: string,
+  title: string,
+  metadata: {
+    creators?: string[];
+    genres?: string[];
+    numberOfPages?: number;
+  } = {},
+) {
   return {
     id: "",
     source: "open_library" as const,
@@ -104,6 +112,7 @@ function book(id: string, title: string) {
     title,
     type: "book" as const,
     imageUrl: null,
+    ...metadata,
   };
 }
 
@@ -255,7 +264,7 @@ describe("system recommendation preview", () => {
     expect(preview.recommendations).toHaveLength(6);
   });
 
-  it("round-robins candidates and excludes tracked titles", async () => {
+  it("round-robins candidates and excludes tracked provider identities", async () => {
     findSystemPreviewLibraryMock.mockResolvedValue([
       libraryItem({
         userMediaId: IDS.first,
@@ -279,7 +288,7 @@ describe("system recommendation preview", () => {
       .mockResolvedValueOnce([
         movie(501, "First Movie"),
         movie(999, "Shared Candidate"),
-        movie(700, "Already Tracked"),
+        movie(700, "Localized Tracked Title"),
       ])
       .mockResolvedValueOnce([
         movie(502, "Second Movie"),
@@ -319,7 +328,11 @@ describe("system recommendation preview", () => {
     ]);
     getGameRecommendationsMock.mockResolvedValue([game(101, "Similar Game")]);
     getOpenLibraryRecommendationsMock.mockResolvedValue([
-      book("OL456W", "Similar Book"),
+      book("OL456W", "Similar Book", {
+        creators: ["Example Author"],
+        genres: ["Science fiction"],
+        numberOfPages: 320,
+      }),
     ]);
 
     const preview = await getSystemRecommendationPreview("user-1");
@@ -331,6 +344,11 @@ describe("system recommendation preview", () => {
       "igdb",
       "open_library",
     ]);
+    expect(preview.recommendations[1].media).toMatchObject({
+      creators: ["Example Author"],
+      genres: ["Science fiction"],
+      numberOfPages: 320,
+    });
   });
 
   it("returns version 3 without provider calls when no seed is eligible", async () => {

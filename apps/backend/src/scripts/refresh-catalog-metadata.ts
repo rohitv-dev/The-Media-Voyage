@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "@/db/db";
 import { media, type CatalogMetadata } from "@media-voyage/shared/schema";
 import { getGameDetails } from "@/services/igdb";
@@ -79,10 +79,6 @@ async function refreshFromProvider(
   }
 }
 
-function hasChanges(refresh: CatalogRefresh) {
-  return refresh.metadata !== undefined || refresh.description !== undefined;
-}
-
 async function main() {
   const mode = parseMode(process.argv.slice(2));
   if (!mode) {
@@ -128,20 +124,12 @@ async function main() {
         continue;
       }
 
-      if (!hasChanges(refreshed)) {
-        summary.unchanged += 1;
-        continue;
-      }
-
       const outcome = await applyCatalogRefresh(
         mode,
         record,
         refreshed,
         async (changes) => {
-          await db
-            .update(media)
-            .set(changes)
-            .where(and(eq(media.id, record.id)));
+          await db.update(media).set(changes).where(eq(media.id, record.id));
         },
       );
 

@@ -131,6 +131,9 @@ function toPreviewMedia(record: SourceMediaRecord): PreviewMedia | null {
     title: record.title,
     type: record.type,
     imageUrl: record.imageUrl,
+    creators: record.creators,
+    genres: record.genres,
+    numberOfPages: record.numberOfPages,
   } as PreviewMedia;
 }
 
@@ -233,15 +236,13 @@ function buildRecommendations(
   const excludedTitles = new Set(
     library.map((item) => normalizedTitle(item.type, item.title)),
   );
-  const excludedIdentities = new Set<string>();
-
-  for (const run of runs) {
-    if (run.mappedMedia) {
-      excludedIdentities.add(
-        mediaIdentity(run.mappedMedia.source, run.mappedMedia.externalId),
-      );
-    }
-  }
+  const excludedIdentities = new Set(
+    library.flatMap((item) =>
+      item.catalogSource && item.externalId
+        ? [mediaIdentity(item.catalogSource, item.externalId)]
+        : [],
+    ),
+  );
 
   const recommendations: SystemRecommendationPreviewResponse["recommendations"] =
     [];

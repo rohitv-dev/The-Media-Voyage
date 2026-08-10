@@ -1,10 +1,23 @@
-import type { MediaRecord } from "@media-voyage/shared/api";
+import type { MediaRecord, SourceMediaRecord } from "@media-voyage/shared/api";
 import {
   IconBook,
   IconDeviceGamepad2,
   IconDeviceTv,
   IconMovie,
 } from "@tabler/icons-react";
+import { capitalizeWords } from "#/utils/strings";
+
+const mediaSourceLabels: Record<string, string> = {
+  db: "Catalog",
+  tmdb_movie: "TMDB",
+  tmdb_tv: "TMDB",
+  igdb: "IGDB",
+  open_library: "Open Library",
+};
+
+export function getMediaSourceLabel(source: SourceMediaRecord["source"]) {
+  return mediaSourceLabels[source] ?? capitalizeWords(source);
+}
 
 export function getStatusColor(status: MediaRecord["status"]) {
   switch (status) {

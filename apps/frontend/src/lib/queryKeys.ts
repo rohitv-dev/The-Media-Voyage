@@ -59,6 +59,7 @@ export const queryKeys = {
   },
   recommendations: {
     all: ["recommendations"] as const,
+    preview: ["recommendations", "system-preview"] as const,
     detail: (id: string) => ["recommendations", { id }] as const,
   },
   tags: {

@@ -1,6 +1,6 @@
 import { api } from "#/lib/api";
 import { queryKeys } from "#/lib/queryKeys";
-import { capitalizeWords } from "#/utils/strings";
+import { getMediaSourceLabel } from "../../display";
 import {
   Avatar,
   Badge,
@@ -29,13 +29,6 @@ import {
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useFormContext } from "./context";
-
-const sourceLabels: Record<string, string> = {
-  db: "catalog",
-  tmdb_movie: "TMDB",
-  tmdb_tv: "TMDB",
-  igdb: "IGDB",
-};
 
 const searchPlaceholders: Record<MediaType, string> = {
   movie: "Search movies...",
@@ -78,7 +71,7 @@ function MediaOption({ media }: { media: SourceMediaRecord }) {
         variant="light"
         size="sm"
       >
-        {capitalizeWords(sourceLabels[media.source] ?? media.source)}
+        {getMediaSourceLabel(media.source)}
       </Badge>
     </>
   );
@@ -316,10 +309,7 @@ export function MediaTitleSelect(props: MediaTitleSelectProps) {
               size="sm"
               leftSection={<IconCheck size={12} />}
             >
-              Matched from{" "}
-              {capitalizeWords(
-                sourceLabels[props.value.source] ?? props.value.source,
-              )}
+              Matched from {getMediaSourceLabel(props.value.source)}
             </Badge>
           )}
         </Group>

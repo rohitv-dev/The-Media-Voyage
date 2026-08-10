@@ -6,6 +6,7 @@ import type {
   RecommendationDetail,
   RecommendationResolutionResponse,
   ResolveRecommendationInput,
+  SystemRecommendationPreviewResponse,
 } from "@media-voyage/shared/api";
 import { queryOptions } from "@tanstack/react-query";
 
@@ -15,6 +16,15 @@ export function recommendationDetailOptions(id: string) {
     queryFn: () => api<RecommendationDetail>(`/recommendations/${id}`),
   });
 }
+
+export const systemRecommendationPreviewOptions = queryOptions({
+  queryKey: queryKeys.recommendations.preview,
+  queryFn: () =>
+    api<SystemRecommendationPreviewResponse>("/recommendations/system/preview"),
+  enabled: false,
+  retry: false,
+  gcTime: Infinity,
+});
 
 export function createFriendRecommendation(
   input: CreateFriendRecommendationInput,

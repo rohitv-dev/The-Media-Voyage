@@ -2,6 +2,7 @@ import type {
   MediaDetailedRecord,
   SeasonProgressEntry,
   SourceMediaRecord,
+  SystemRecommendationPreviewResponse,
   UserMediaDropdowns,
   UserMediaFormSchema,
 } from "@media-voyage/shared/api";
@@ -12,7 +13,7 @@ import {
   useNavigate,
   useRouter,
 } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { MouseEventHandler } from "react";
 import { FormProvider, useForm } from "./context";
 import { api, getApiErrorMessage } from "#/lib/api";
@@ -147,6 +148,7 @@ type MediaFormProps =
       mode: "add";
       dropdowns: UserMediaDropdowns;
       defaultVisibility?: UserMediaFormSchema["visibility"];
+      recommendationSelection?: SourceMediaRecord;
     }
   | {
       id: string;
@@ -163,7 +165,7 @@ export function MediaForm(props: MediaFormProps) {
   const canGoBack = useCanGoBack();
 
   const [mediaRecord, setMediaRecord] = useState<SourceMediaRecord | null>(
-    null,
+    isAddMode ? (props.recommendationSelection ?? null) : null,
   );
   const [isLoadingSeasonInfo, setIsLoadingSeasonInfo] = useState(false);
   const router = useRouter();
@@ -187,6 +189,12 @@ export function MediaForm(props: MediaFormProps) {
       ? {
           ...addInitialValues,
           visibility: props.defaultVisibility ?? "private",
+          ...(props.recommendationSelection
+            ? {
+                title: props.recommendationSelection.title,
+                type: props.recommendationSelection.type,
+              }
+            : {}),
         }
       : {
           ...props.initialValues,
@@ -433,6 +441,12 @@ export function MediaForm(props: MediaFormProps) {
     }
   };
 
+  useEffect(() => {
+    if (!isAddMode || !props.recommendationSelection) return;
+
+    void handleTitleChange(props.recommendationSelection);
+  }, []);
+
   const handleSearchChange = (value: string) => {
     if (mediaRecord && mediaRecord.title !== value) {
       clearCatalogSelection();
@@ -538,6 +552,30 @@ export function MediaForm(props: MediaFormProps) {
       ]);
 
       if (isAddMode) {
+        if (props.recommendationSelection) {
+          queryClient.setQueryData<SystemRecommendationPreviewResponse>(
+            queryKeys.recommendations.preview,
+            (preview) =>
+              preview
+                ? {
+                    ...preview,
+                    recommendations: preview.recommendations.filter(
+                      ({ media }) =>
+                        media.source !== data.catalogSource ||
+                        media.externalId !== data.catalogExternalId,
+                    ),
+                  }
+                : preview,
+          );
+
+          if (canGoBack) {
+            router.history.back();
+          } else {
+            navigate({ to: "/recommendations" });
+          }
+          return;
+        }
+
         navigate({ to: "/media" });
         return;
       }

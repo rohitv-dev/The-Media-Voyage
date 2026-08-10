@@ -77,6 +77,9 @@ const systemRecommendationPreviewMediaSchema = z.object({
   title: z.string(),
   type: z.enum(mediaTypeEnum.enumValues),
   imageUrl: z.string().nullable(),
+  creators: z.array(z.string()).optional(),
+  genres: z.array(z.string()).optional(),
+  numberOfPages: z.number().optional(),
 });
 
 const systemRecommendationPreviewSeedSchema = z.object({

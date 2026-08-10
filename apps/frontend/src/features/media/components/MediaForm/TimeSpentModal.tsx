@@ -219,13 +219,9 @@ export function TimeSpentModal({ catalogMetadata }: TimeSpentModalProps) {
                   Catalog runtime
                 </Text>
                 <Text size="sm" c="dimmed">
-                  {form.values.type === "show"
-                    ? catalogRuntimeMinutes
-                      ? `${formatDuration(catalogRuntimeMinutes)} avg episode`
-                      : "Not available"
-                    : catalogRuntimeMinutes
-                      ? formatDuration(catalogRuntimeMinutes)
-                      : "Not available"}
+                  {catalogRuntimeMinutes
+                    ? formatDuration(catalogRuntimeMinutes)
+                    : "Not available"}
                 </Text>
               </Group>
 
@@ -238,9 +234,7 @@ export function TimeSpentModal({ catalogMetadata }: TimeSpentModalProps) {
               {estimatedTimeSpentMinutes ? (
                 <Group justify="space-between" align="center" gap="xs">
                   <Text size="xs" c="dimmed">
-                    {form.values.type === "show"
-                      ? `${showSummary?.watchedEpisodeCount ?? 0} episode${showSummary?.watchedEpisodeCount === 1 ? "" : "s"} watched · estimate ${formatDuration(estimatedTimeSpentMinutes)}`
-                      : `Suggested total: ${formatDuration(estimatedTimeSpentMinutes)}`}
+                    Suggested total: {formatDuration(estimatedTimeSpentMinutes)}
                   </Text>
                   <Button
                     type="button"
@@ -253,9 +247,7 @@ export function TimeSpentModal({ catalogMetadata }: TimeSpentModalProps) {
                 </Group>
               ) : (
                 <Text size="xs" c="dimmed">
-                  {form.values.type === "show" && catalogRuntimeMinutes
-                    ? "Add episodes watched under Seasons to calculate an estimate."
-                    : "Enter the total manually for this media type."}
+                  Enter the total manually for this media type.
                 </Text>
               )}
             </Stack>

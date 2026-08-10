@@ -291,10 +291,17 @@ export async function getTmdbDetails(
       seasonNumber: season.season_number,
       episodeCount: season.episode_count,
     }));
-  const averageEpisodeRuntime = await getAverageEpisodeRuntime(
-    id,
-    seasons.map((season) => season.seasonNumber),
-  );
+  let averageEpisodeRuntime: number | null = null;
+
+  try {
+    averageEpisodeRuntime = await getAverageEpisodeRuntime(
+      id,
+      seasons.map((season) => season.seasonNumber),
+    );
+  } catch {
+    // Episode-level runtime is an optional enrichment. The main details
+    // response still has usable show-level fallbacks when it is unavailable.
+  }
 
   return {
     ...showRecord(parsed.data),
