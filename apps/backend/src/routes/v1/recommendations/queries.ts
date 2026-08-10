@@ -60,7 +60,7 @@ export async function findSystemPreviewLibrary(userId: string) {
     })
     .from(userMedia)
     .innerJoin(media, eq(media.id, userMedia.mediaId))
-    .where(eq(userMedia.userId, userId));
+    .where(and(eq(userMedia.userId, userId), isNull(userMedia.deletedAt)));
 }
 
 async function findProfiles(ids: string[]) {

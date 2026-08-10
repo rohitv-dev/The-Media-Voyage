@@ -124,46 +124,71 @@ describe("system recommendation preview", () => {
     getOpenLibraryRecommendationsMock.mockReset();
   });
 
-  it("ranks eligible seeds and excludes low-rated non-favorites", () => {
+  it("applies status and signal rules when selecting seeds", () => {
     const seeds = selectPreviewSeeds([
       libraryItem({
         userMediaId: IDS.first,
-        title: "Recent Unrated",
-        updatedAt: new Date("2026-05-01T00:00:00.000Z"),
+        title: "Completed Low Rated",
+        rating: 6,
       }),
       libraryItem({
         userMediaId: IDS.second,
-        title: "Highly Rated",
-        rating: 9,
+        title: "Revisiting Low Rated",
+        status: "revisiting",
+        rating: 5,
       }),
       libraryItem({
         userMediaId: IDS.third,
-        title: "Favorite",
+        title: "Favorite In Progress",
         favorite: true,
+        status: "in_progress",
       }),
       libraryItem({
         userMediaId: IDS.fourth,
-        title: "Lower Rated",
-        rating: 7,
+        title: "Highly Rated In Progress",
+        status: "in_progress",
+        rating: 8,
       }),
-      libraryItem({ userMediaId: IDS.fifth, rating: 6 }),
+      libraryItem({
+        userMediaId: IDS.fifth,
+        title: "Unrated In Progress",
+        status: "in_progress",
+      }),
       libraryItem({
         userMediaId: IDS.sixth,
-        favorite: true,
-        deletedAt: new Date("2026-06-01T00:00:00.000Z"),
+        title: "Low Rated In Progress",
+        status: "in_progress",
+        rating: 6,
       }),
       libraryItem({
         userMediaId: IDS.seventh,
+        title: "Planned Favorite",
         favorite: true,
+        rating: 10,
         status: "planned",
+      }),
+      libraryItem({
+        title: "Dropped Favorite",
+        favorite: true,
+        status: "dropped",
+      }),
+      libraryItem({
+        title: "On Hold Favorite",
+        favorite: true,
+        status: "on_hold",
+      }),
+      libraryItem({
+        title: "Deleted Completed",
+        favorite: true,
+        deletedAt: new Date("2026-06-01T00:00:00.000Z"),
       }),
     ]);
 
     expect(seeds.map((seed) => seed.title)).toEqual([
-      "Favorite",
-      "Highly Rated",
-      "Lower Rated",
-      "Recent Unrated",
+      "Favorite In Progress",
+      "Highly Rated In Progress",
+      "Completed Low Rated",
+      "Revisiting Low Rated",
     ]);
   });
 
@@ -198,6 +223,40 @@ describe("system recommendation preview", () => {
         recommendationSource: "tmdb_tv",
         recommendationExternalId: "200",
       },
+    ]);
+  });
+
+  it("includes an in-progress favorite show as a seed", async () => {
+    findSystemPreviewLibraryMock.mockResolvedValue([
+      libraryItem({
+        userMediaId: IDS.first,
+        title: "Ted",
+        type: "show",
+        catalogSource: "tmdb_tv",
+        externalId: "100",
+        favorite: true,
+        rating: 9,
+      }),
+      libraryItem({
+        userMediaId: IDS.second,
+        title: "Ted Lasso",
+        type: "show",
+        catalogSource: "tmdb_tv",
+        externalId: "200",
+        status: "in_progress",
+        favorite: true,
+        rating: 9,
+      }),
+    ]);
+    getTmdbRecommendationsMock.mockResolvedValue([]);
+
+    const preview = await getSystemRecommendationPreview("user-1");
+
+    expect(getTmdbRecommendationsMock).toHaveBeenNthCalledWith(1, "show", 100);
+    expect(getTmdbRecommendationsMock).toHaveBeenNthCalledWith(2, "show", 200);
+    expect(preview.seeds.map((seed) => seed.title)).toEqual([
+      "Ted",
+      "Ted Lasso",
     ]);
   });
 
@@ -264,16 +323,16 @@ describe("system recommendation preview", () => {
     expect(preview.recommendations).toHaveLength(6);
   });
 
-  it("round-robins candidates and excludes tracked provider identities", async () => {
+  it("aggregates duplicate candidates and ranks multi-seed matches first", async () => {
     findSystemPreviewLibraryMock.mockResolvedValue([
       libraryItem({
         userMediaId: IDS.first,
-        title: "Favorite Movie",
+        title: "Favorite Seed",
         favorite: true,
       }),
       libraryItem({
         userMediaId: IDS.second,
-        title: "Rated Movie",
+        title: "Rated Seed",
         externalId: "200",
         rating: 9,
       }),
@@ -286,27 +345,62 @@ describe("system recommendation preview", () => {
     ]);
     getTmdbRecommendationsMock
       .mockResolvedValueOnce([
-        movie(501, "First Movie"),
         movie(999, "Shared Candidate"),
-        movie(700, "Localized Tracked Title"),
+        movie(501, "First Movie"),
       ])
       .mockResolvedValueOnce([
-        movie(502, "Second Movie"),
         movie(999, "Shared Candidate"),
+        movie(502, "Second Movie"),
       ]);
 
     const preview = await getSystemRecommendationPreview("user-1");
 
     expect(preview.recommendations.map(({ media }) => media.title)).toEqual([
+      "Shared Candidate",
       "First Movie",
       "Second Movie",
-      "Shared Candidate",
     ]);
     expect(preview.recommendations[0]).toMatchObject({
       rank: 1,
-      reason: 'Because "Favorite Movie" is a favorite',
+      reason:
+        'Because "Favorite Seed" is a favorite and you rated "Rated Seed" 9/10',
       seedUserMediaId: IDS.first,
+      seedUserMediaIds: [IDS.first, IDS.second],
     });
+  });
+
+  it("does not let deleted entries suppress active candidates", async () => {
+    findSystemPreviewLibraryMock.mockResolvedValue([
+      libraryItem({
+        userMediaId: IDS.first,
+        title: "Active Seed",
+        favorite: true,
+      }),
+      libraryItem({
+        userMediaId: IDS.second,
+        title: "Deleted Title",
+        externalId: "700",
+        favorite: true,
+        deletedAt: new Date("2026-06-01T00:00:00.000Z"),
+      }),
+    ]);
+    getTmdbRecommendationsMock.mockResolvedValue([
+      movie(700, "Different Deleted Title"),
+      movie(701, "Deleted Title"),
+      movie(702, "Usable Candidate"),
+      movie(703, "Another Candidate"),
+    ]);
+
+    const preview = await getSystemRecommendationPreview("user-1");
+
+    expect(preview.eligibleSeedCount).toBe(1);
+    expect(preview.seeds.map((seed) => seed.title)).toEqual(["Active Seed"]);
+    expect(getTmdbRecommendationsMock).toHaveBeenCalledTimes(1);
+    expect(preview.recommendations.map(({ media }) => media.title)).toEqual([
+      "Different Deleted Title",
+      "Deleted Title",
+      "Usable Candidate",
+    ]);
   });
 
   it("keeps IGDB and Open Library recommendation behavior", async () => {
@@ -354,12 +448,16 @@ describe("system recommendation preview", () => {
   it("returns version 3 without provider calls when no seed is eligible", async () => {
     findSystemPreviewLibraryMock.mockResolvedValue([
       libraryItem({ status: "planned" }),
-      libraryItem({ userMediaId: IDS.second, rating: 6 }),
+      libraryItem({
+        userMediaId: IDS.second,
+        status: "in_progress",
+        rating: 6,
+      }),
     ]);
 
     await expect(getSystemRecommendationPreview("user-1")).resolves.toEqual({
       strategyKey: "provider_recommendations",
-      strategyVersion: "3",
+      strategyVersion: "4",
       eligibleSeedCount: 0,
       seeds: [],
       recommendations: [],
@@ -404,17 +502,43 @@ describe("system recommendation preview", () => {
     });
   });
 
-  it("limits blended results to ten recommendations", async () => {
-    findSystemPreviewLibraryMock.mockResolvedValue([libraryItem()]);
-    getTmdbRecommendationsMock.mockResolvedValue(
-      Array.from({ length: 15 }, (_, index) =>
-        movie(500 + index, `Candidate ${index + 1}`),
+  it("caps each seed at three and the final list at ten recommendations", async () => {
+    findSystemPreviewLibraryMock.mockResolvedValue(
+      [IDS.first, IDS.second, IDS.third, IDS.fourth].map(
+        (userMediaId, seedIndex) =>
+          libraryItem({
+            userMediaId,
+            title: `Seed ${seedIndex + 1}`,
+            externalId: String(100 + seedIndex),
+          }),
       ),
+    );
+    getTmdbRecommendationsMock.mockImplementation(
+      async (_type: "movie" | "show", id: number) =>
+        Array.from({ length: 5 }, (_, index) =>
+          movie(id * 10 + index, `Candidate ${id}-${index + 1}`),
+        ),
     );
 
     const preview = await getSystemRecommendationPreview("user-1");
 
     expect(preview.recommendations).toHaveLength(10);
     expect(preview.recommendations.at(-1)?.rank).toBe(10);
+    expect(
+      preview.recommendations.reduce<Record<string, number>>(
+        (counts, recommendation) => {
+          for (const seedId of recommendation.seedUserMediaIds) {
+            counts[seedId] = (counts[seedId] ?? 0) + 1;
+          }
+          return counts;
+        },
+        {},
+      ),
+    ).toEqual({
+      [IDS.first]: 3,
+      [IDS.second]: 3,
+      [IDS.third]: 3,
+      [IDS.fourth]: 1,
+    });
   });
 });

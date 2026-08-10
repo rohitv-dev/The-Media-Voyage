@@ -132,8 +132,8 @@ export function SystemRecommendationsPage({
   const isFirstGeneration = isFetching && !data;
   const contributingSeedCount = data
     ? new Set(
-        data.recommendations.map(
-          (recommendation) => recommendation.seedUserMediaId,
+        data.recommendations.flatMap(
+          (recommendation) => recommendation.seedUserMediaIds,
         ),
       ).size
     : 0;

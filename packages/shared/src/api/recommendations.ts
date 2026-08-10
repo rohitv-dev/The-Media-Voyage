@@ -86,7 +86,7 @@ const systemRecommendationPreviewSeedSchema = z.object({
   userMediaId: z.uuid(),
   title: z.string(),
   type: z.enum(mediaTypeEnum.enumValues),
-  status: z.enum(["completed", "revisiting"]),
+  status: z.enum(["in_progress", "completed", "revisiting"]),
   rating: z.number().int().min(0).max(10).nullable(),
   favorite: z.boolean(),
   catalogSource: z.string().nullable(),
@@ -105,7 +105,7 @@ const systemRecommendationPreviewSeedSchema = z.object({
 
 export const systemRecommendationPreviewResponseSchema = z.object({
   strategyKey: z.literal("provider_recommendations"),
-  strategyVersion: z.literal("3"),
+  strategyVersion: z.literal("4"),
   eligibleSeedCount: z.number().int().nonnegative(),
   seeds: z.array(systemRecommendationPreviewSeedSchema),
   recommendations: z.array(
@@ -113,6 +113,7 @@ export const systemRecommendationPreviewResponseSchema = z.object({
       rank: z.number().int().positive(),
       reason: z.string(),
       seedUserMediaId: z.uuid(),
+      seedUserMediaIds: z.array(z.uuid()).min(1),
       media: systemRecommendationPreviewMediaSchema,
     }),
   ),

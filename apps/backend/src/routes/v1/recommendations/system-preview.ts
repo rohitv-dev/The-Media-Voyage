@@ -9,6 +9,7 @@ import { findSystemPreviewLibrary } from "./queries";
 
 const MAX_PRODUCTIVE_SEEDS = 6;
 const MAX_SEED_ATTEMPTS = 15;
+const MAX_CANDIDATES_PER_SEED = 3;
 const MAX_RECOMMENDATIONS = 10;
 
 type LibraryItem = Awaited<ReturnType<typeof findSystemPreviewLibrary>>[number];
@@ -17,7 +18,7 @@ type PreviewMedia =
 type ProviderIdentity = Pick<PreviewMedia, "source" | "externalId" | "type">;
 
 type PreviewSeed = LibraryItem & {
-  status: "completed" | "revisiting";
+  status: "in_progress" | "completed" | "revisiting";
   deletedAt: null;
 };
 
@@ -30,11 +31,22 @@ type SeedRun = {
   error?: unknown;
 };
 
+type CandidateAggregate = {
+  candidate: PreviewMedia;
+  seeds: PreviewSeed[];
+  firstProviderIndex: number;
+};
+
 function isPreviewSeed(item: LibraryItem): item is PreviewSeed {
+  if (item.deletedAt !== null) return false;
+
+  if (item.status === "completed" || item.status === "revisiting") {
+    return true;
+  }
+
   return (
-    item.deletedAt === null &&
-    (item.status === "completed" || item.status === "revisiting") &&
-    (item.favorite || item.rating === null || item.rating >= 7)
+    item.status === "in_progress" &&
+    (item.favorite || (item.rating !== null && item.rating >= 7))
   );
 }
 
@@ -42,15 +54,19 @@ function seedTimestamp(seed: PreviewSeed) {
   return (seed.completedAt ?? seed.updatedAt).getTime();
 }
 
+function compareSeedPriority(left: PreviewSeed, right: PreviewSeed) {
+  return (
+    Number(right.favorite) - Number(left.favorite) ||
+    (right.rating ?? -1) - (left.rating ?? -1) ||
+    seedTimestamp(right) - seedTimestamp(left) ||
+    left.userMediaId.localeCompare(right.userMediaId)
+  );
+}
+
 export function selectPreviewSeeds(library: LibraryItem[]): PreviewSeed[] {
   return library
     .filter(isPreviewSeed)
-    .sort(
-      (left, right) =>
-        Number(right.favorite) - Number(left.favorite) ||
-        (right.rating ?? -1) - (left.rating ?? -1) ||
-        seedTimestamp(right) - seedTimestamp(left),
-    )
+    .sort(compareSeedPriority)
     .slice(0, MAX_SEED_ATTEMPTS);
 }
 
@@ -229,60 +245,98 @@ function recommendationReason(seed: PreviewSeed) {
   return `Because you completed "${seed.title}"`;
 }
 
+function combinedRecommendationReason(seeds: PreviewSeed[]) {
+  const reasons = seeds.map((seed) =>
+    recommendationReason(seed).replace(/^Because /, ""),
+  );
+
+  if (reasons.length === 1) return `Because ${reasons[0]}`;
+  if (reasons.length === 2) return `Because ${reasons.join(" and ")}`;
+
+  return `Because ${reasons.slice(0, -1).join(", ")}, and ${reasons.at(-1)}`;
+}
+
 function buildRecommendations(
   library: LibraryItem[],
   runs: SeedRun[],
 ): SystemRecommendationPreviewResponse["recommendations"] {
+  const activeLibrary = library.filter((item) => item.deletedAt === null);
   const excludedTitles = new Set(
-    library.map((item) => normalizedTitle(item.type, item.title)),
+    activeLibrary.map((item) => normalizedTitle(item.type, item.title)),
   );
   const excludedIdentities = new Set(
-    library.flatMap((item) =>
+    activeLibrary.flatMap((item) =>
       item.catalogSource && item.externalId
         ? [mediaIdentity(item.catalogSource, item.externalId)]
         : [],
     ),
   );
 
-  const recommendations: SystemRecommendationPreviewResponse["recommendations"] =
-    [];
-  const seen = new Set<string>();
-  const maxCandidateCount = Math.max(
-    0,
-    ...runs.map((run) => run.candidates.length),
-  );
+  const aggregates = new Map<string, CandidateAggregate>();
 
-  candidateLoop: for (let index = 0; index < maxCandidateCount; index += 1) {
-    for (const run of runs) {
-      const candidate = run.candidates[index];
-      if (!candidate) continue;
+  for (const run of runs) {
+    const seenForSeed = new Set<string>();
+    let acceptedForSeed = 0;
 
+    for (const [providerIndex, candidate] of run.candidates.entries()) {
       const identity = mediaIdentity(candidate.source, candidate.externalId);
       const title = normalizedTitle(candidate.type, candidate.title);
 
       if (
-        seen.has(identity) ||
+        seenForSeed.has(identity) ||
         excludedIdentities.has(identity) ||
         excludedTitles.has(title)
       ) {
         continue;
       }
 
-      seen.add(identity);
-      recommendations.push({
-        rank: recommendations.length + 1,
-        reason: recommendationReason(run.seed),
-        seedUserMediaId: run.seed.userMediaId,
-        media: candidate,
-      });
+      seenForSeed.add(identity);
+      acceptedForSeed += 1;
 
-      if (recommendations.length === MAX_RECOMMENDATIONS) {
-        break candidateLoop;
+      const existing = aggregates.get(identity);
+      if (existing) {
+        if (
+          !existing.seeds.some(
+            (seed) => seed.userMediaId === run.seed.userMediaId,
+          )
+        ) {
+          existing.seeds.push(run.seed);
+          existing.seeds.sort(compareSeedPriority);
+        }
+        existing.firstProviderIndex = Math.min(
+          existing.firstProviderIndex,
+          providerIndex,
+        );
+      } else {
+        aggregates.set(identity, {
+          candidate,
+          seeds: [run.seed],
+          firstProviderIndex: providerIndex,
+        });
       }
+
+      if (acceptedForSeed === MAX_CANDIDATES_PER_SEED) break;
     }
   }
 
-  return recommendations;
+  return Array.from(aggregates.values())
+    .sort(
+      (left, right) =>
+        right.seeds.length - left.seeds.length ||
+        compareSeedPriority(left.seeds[0], right.seeds[0]) ||
+        left.firstProviderIndex - right.firstProviderIndex ||
+        mediaIdentity(left.candidate.source, left.candidate.externalId).localeCompare(
+          mediaIdentity(right.candidate.source, right.candidate.externalId),
+        ),
+    )
+    .slice(0, MAX_RECOMMENDATIONS)
+    .map((aggregate, index) => ({
+      rank: index + 1,
+      reason: combinedRecommendationReason(aggregate.seeds),
+      seedUserMediaId: aggregate.seeds[0].userMediaId,
+      seedUserMediaIds: aggregate.seeds.map((seed) => seed.userMediaId),
+      media: aggregate.candidate,
+    }));
 }
 
 export async function getSystemRecommendationPreview(
@@ -302,7 +356,7 @@ export async function getSystemRecommendationPreview(
 
   return {
     strategyKey: "provider_recommendations",
-    strategyVersion: "3",
+    strategyVersion: "4",
     eligibleSeedCount: eligibleSeeds.length,
     seeds: runs.map((run) => ({
       userMediaId: run.seed.userMediaId,

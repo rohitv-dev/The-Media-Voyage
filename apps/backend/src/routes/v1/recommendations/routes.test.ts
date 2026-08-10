@@ -32,7 +32,7 @@ import recommendationRoutes from "./routes";
 
 const preview = {
   strategyKey: "provider_recommendations",
-  strategyVersion: "3",
+  strategyVersion: "4",
   eligibleSeedCount: 0,
   seeds: [],
   recommendations: [],
