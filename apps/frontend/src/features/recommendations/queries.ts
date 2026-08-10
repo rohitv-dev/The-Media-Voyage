@@ -3,6 +3,8 @@ import { queryKeys } from "#/lib/queryKeys";
 import type {
   CreateFriendRecommendationInput,
   CreateRecommendationResponse,
+  DismissSystemRecommendationInput,
+  DismissSystemRecommendationResponse,
   RecommendationDetail,
   RecommendationResolutionResponse,
   ResolveRecommendationInput,
@@ -44,6 +46,19 @@ export function resolveRecommendation(
     `/recommendations/${id}/resolve`,
     {
       method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export function dismissSystemRecommendation(
+  input: DismissSystemRecommendationInput,
+) {
+  return api<DismissSystemRecommendationResponse>(
+    "/recommendations/system/dismiss",
+    {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),
     },

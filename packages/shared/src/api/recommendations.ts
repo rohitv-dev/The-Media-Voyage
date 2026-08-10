@@ -64,12 +64,29 @@ export const recommendationDetailSchema = z.discriminatedUnion("origin", [
 
 export type RecommendationDetail = z.infer<typeof recommendationDetailSchema>;
 
-const systemRecommendationProviderSchema = z.enum([
+export const systemRecommendationProviderSchema = z.enum([
   "tmdb_movie",
   "tmdb_tv",
   "igdb",
   "open_library",
 ]);
+
+export const dismissSystemRecommendationSchema = z.object({
+  source: systemRecommendationProviderSchema,
+  externalId: z.string().trim().min(1),
+});
+
+export type DismissSystemRecommendationInput = z.infer<
+  typeof dismissSystemRecommendationSchema
+>;
+
+export const dismissSystemRecommendationResponseSchema = z.object({
+  success: z.literal(true),
+});
+
+export type DismissSystemRecommendationResponse = z.infer<
+  typeof dismissSystemRecommendationResponseSchema
+>;
 
 const systemRecommendationPreviewMediaSchema = z.object({
   source: systemRecommendationProviderSchema,

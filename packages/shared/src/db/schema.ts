@@ -428,6 +428,26 @@ export const notifications = pgTable(
   ],
 );
 
+export const dismissedSystemRecommendations = pgTable(
+  "dismissed_system_recommendations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .references(() => user.id, { onDelete: "cascade" })
+      .notNull(),
+    source: text("source").notNull(),
+    externalId: text("external_id").notNull(),
+    dismissedAt: timestamp("dismissed_at").defaultNow().notNull(),
+  },
+  (table) => [
+    unique("dismissed_system_recommendations_unique").on(
+      table.userId,
+      table.source,
+      table.externalId,
+    ),
+  ],
+);
+
 export const mediaRelations = relations(media, ({ many }) => ({
   userEntries: many(userMedia),
   recommendations: many(mediaRecommendations),
@@ -511,6 +531,16 @@ export const mediaRecommendationsRelations = relations(mediaRecommendations, ({ 
   }),
   notifications: many(notifications),
 }));
+
+export const dismissedSystemRecommendationsRelations = relations(
+  dismissedSystemRecommendations,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [dismissedSystemRecommendations.userId],
+      references: [user.id],
+    }),
+  }),
+);
 
 export const userMediaRelations = relations(userMedia, ({ one, many }) => ({
   user: one(user, {
@@ -688,6 +718,7 @@ export const userRelations = relations(user, ({ many }) => ({
   receivedRecommendations: many(mediaRecommendations, {
     relationName: "recommendationRecipient",
   }),
+  dismissedSystemRecommendations: many(dismissedSystemRecommendations),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({

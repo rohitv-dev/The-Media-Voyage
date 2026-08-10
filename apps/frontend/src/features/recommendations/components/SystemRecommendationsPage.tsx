@@ -8,6 +8,8 @@ import { MediaCardCoverArt } from "#/features/media/components/MediaCard/MediaCa
 import { MediaCardSkeleton } from "#/features/media/components/MediaCardSkeleton";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { getApiErrorMessage } from "#/lib/api";
+import { queryKeys } from "#/lib/queryKeys";
+import { showErrorNotification } from "#/lib/notifications";
 import { gridItemMotionProps, pageStaggerVariants } from "#/theme/motion";
 import type {
   SourceMediaRecord,
@@ -32,9 +34,12 @@ import {
   IconPlus,
   IconSparkles,
 } from "@tabler/icons-react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "motion/react";
-import { systemRecommendationPreviewOptions } from "../queries";
+import {
+  dismissSystemRecommendation,
+  systemRecommendationPreviewOptions,
+} from "../queries";
 
 type Recommendation =
   SystemRecommendationPreviewResponse["recommendations"][number];
@@ -42,9 +47,13 @@ type Recommendation =
 function RecommendationCard({
   recommendation,
   onAdd,
+  onDismiss,
+  isDismissing,
 }: {
   recommendation: Recommendation;
   onAdd: (media: SourceMediaRecord) => void;
+  onDismiss: (media: Recommendation["media"]) => void;
+  isDismissing: boolean;
 }) {
   const reduceMotion = useAppReducedMotion();
   const { media } = recommendation;
@@ -114,6 +123,15 @@ function RecommendationCard({
           >
             Add to library
           </Button>
+          <Button
+            variant="subtle"
+            color="gray"
+            onClick={() => onDismiss(media)}
+            loading={isDismissing}
+            fullWidth
+          >
+            Dismiss
+          </Button>
         </Stack>
       </Card>
     </motion.div>
@@ -126,9 +144,35 @@ export function SystemRecommendationsPage({
   onAdd: (media: SourceMediaRecord) => void;
 }) {
   const reduceMotion = useAppReducedMotion();
+  const queryClient = useQueryClient();
   const { data, error, isError, isFetching, refetch } = useQuery(
     systemRecommendationPreviewOptions,
   );
+  const dismissMutation = useMutation({
+    mutationFn: dismissSystemRecommendation,
+    onSuccess: (_, input) => {
+      queryClient.setQueryData<SystemRecommendationPreviewResponse>(
+        queryKeys.recommendations.preview,
+        (current) =>
+          current
+            ? {
+                ...current,
+                recommendations: current.recommendations.filter(
+                  ({ media }) =>
+                    media.source !== input.source ||
+                    media.externalId !== input.externalId,
+                ),
+              }
+            : current,
+      );
+    },
+    onError: (dismissError) => {
+      showErrorNotification({
+        title: "Could not dismiss recommendation",
+        message: getApiErrorMessage(dismissError),
+      });
+    },
+  });
   const isFirstGeneration = isFetching && !data;
   const contributingSeedCount = data
     ? new Set(
@@ -247,6 +291,19 @@ export function SystemRecommendationsPage({
                     key={`${recommendation.media.source}:${recommendation.media.externalId}`}
                     recommendation={recommendation}
                     onAdd={onAdd}
+                    onDismiss={(media) =>
+                      dismissMutation.mutate({
+                        source: media.source,
+                        externalId: media.externalId,
+                      })
+                    }
+                    isDismissing={
+                      dismissMutation.isPending &&
+                      dismissMutation.variables?.source ===
+                        recommendation.media.source &&
+                      dismissMutation.variables?.externalId ===
+                        recommendation.media.externalId
+                    }
                   />
                 ))}
               </SimpleGrid>

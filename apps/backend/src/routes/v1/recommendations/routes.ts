@@ -1,11 +1,15 @@
 import {
   createFriendRecommendationSchema,
+  dismissSystemRecommendationSchema,
   recommendationIdParamsSchema,
   resolveRecommendationSchema,
 } from "@media-voyage/shared/api";
 import type { FastifyContextConfig, FastifyInstance } from "fastify";
 import { requireAuth } from "@/require-auth";
-import { getRecommendationDetail } from "./queries";
+import {
+  dismissSystemRecommendation,
+  getRecommendationDetail,
+} from "./queries";
 import { createFriendRecommendation, resolveRecommendation } from "./service";
 import { getSystemRecommendationPreview } from "./system-preview";
 
@@ -37,6 +41,17 @@ async function recommendationRoutes(fastify: FastifyInstance) {
       return reply.send(await getSystemRecommendationPreview(request.userId));
     },
   );
+
+  fastify.post("/system/dismiss", async (request, reply) => {
+    const input = dismissSystemRecommendationSchema.parse(request.body);
+    await dismissSystemRecommendation(
+      request.userId,
+      input.source,
+      input.externalId,
+    );
+
+    return reply.send({ success: true });
+  });
 
   fastify.get("/:id", async (request, reply) => {
     const { id } = recommendationIdParamsSchema.parse(request.params);

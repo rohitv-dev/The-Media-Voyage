@@ -1,4 +1,5 @@
 import {
+  dismissedSystemRecommendations,
   media,
   mediaRecommendations,
   user,
@@ -56,11 +57,31 @@ export async function findSystemPreviewLibrary(userId: string) {
       favorite: userMedia.favorite,
       completedAt: userMedia.completedAt,
       updatedAt: userMedia.updatedAt,
-      deletedAt: userMedia.deletedAt,
     })
     .from(userMedia)
     .innerJoin(media, eq(media.id, userMedia.mediaId))
     .where(and(eq(userMedia.userId, userId), isNull(userMedia.deletedAt)));
+}
+
+export async function findDismissedSystemRecommendations(userId: string) {
+  return db
+    .select({
+      source: dismissedSystemRecommendations.source,
+      externalId: dismissedSystemRecommendations.externalId,
+    })
+    .from(dismissedSystemRecommendations)
+    .where(eq(dismissedSystemRecommendations.userId, userId));
+}
+
+export async function dismissSystemRecommendation(
+  userId: string,
+  source: string,
+  externalId: string,
+) {
+  await db
+    .insert(dismissedSystemRecommendations)
+    .values({ userId, source, externalId })
+    .onConflictDoNothing();
 }
 
 async function findProfiles(ids: string[]) {

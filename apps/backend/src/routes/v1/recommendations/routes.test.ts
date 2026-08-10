@@ -3,12 +3,15 @@ import Fastify from "fastify";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { unauthorized } from "@/errors";
 
-const { getSystemRecommendationPreviewMock, requireAuthMock } = vi.hoisted(
-  () => ({
-    getSystemRecommendationPreviewMock: vi.fn(),
-    requireAuthMock: vi.fn(),
-  }),
-);
+const {
+  dismissSystemRecommendationMock,
+  getSystemRecommendationPreviewMock,
+  requireAuthMock,
+} = vi.hoisted(() => ({
+  dismissSystemRecommendationMock: vi.fn(),
+  getSystemRecommendationPreviewMock: vi.fn(),
+  requireAuthMock: vi.fn(),
+}));
 
 vi.mock("@/require-auth", () => ({
   requireAuth: requireAuthMock,
@@ -19,6 +22,7 @@ vi.mock("./system-preview", () => ({
 }));
 
 vi.mock("./queries", () => ({
+  dismissSystemRecommendation: dismissSystemRecommendationMock,
   getRecommendationDetail: vi.fn(),
   findFriendRecommendationSource: vi.fn(),
 }));
@@ -55,6 +59,8 @@ describe("system recommendation preview route", () => {
     });
     getSystemRecommendationPreviewMock.mockReset();
     getSystemRecommendationPreviewMock.mockResolvedValue(preview);
+    dismissSystemRecommendationMock.mockReset();
+    dismissSystemRecommendationMock.mockResolvedValue(undefined);
   });
 
   it("registers the static authenticated route with no-store caching", async () => {
@@ -87,6 +93,28 @@ describe("system recommendation preview route", () => {
 
       expect(response.statusCode).toBe(401);
       expect(getSystemRecommendationPreviewMock).not.toHaveBeenCalled();
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("persists an authenticated system recommendation dismissal", async () => {
+    const app = await buildApp();
+
+    try {
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/v1/recommendations/system/dismiss",
+        payload: { source: "tmdb_movie", externalId: "550" },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual({ success: true });
+      expect(dismissSystemRecommendationMock).toHaveBeenCalledWith(
+        "user-1",
+        "tmdb_movie",
+        "550",
+      );
     } finally {
       await app.close();
     }

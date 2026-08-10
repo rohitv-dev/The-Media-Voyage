@@ -192,6 +192,35 @@ describe("SystemRecommendationsPage", () => {
     });
   });
 
+  it("dismisses a recommendation and removes it from the current list", async () => {
+    apiMock
+      .mockResolvedValueOnce(preview)
+      .mockResolvedValueOnce({ success: true });
+    renderPage();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Generate recommendations" }),
+    );
+    expect(await screen.findByText("First Recommendation")).toBeTruthy();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Dismiss" })[0]);
+
+    await waitFor(() =>
+      expect(apiMock).toHaveBeenNthCalledWith(
+        2,
+        "/recommendations/system/dismiss",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ source: "tmdb_movie", externalId: "11" }),
+        }),
+      ),
+    );
+    await waitFor(() =>
+      expect(screen.queryByText("First Recommendation")).toBeNull(),
+    );
+    expect(screen.getByText("Second Recommendation")).toBeTruthy();
+  });
+
   it("shows distinct empty states for missing seeds and missing results", async () => {
     apiMock
       .mockResolvedValueOnce({
