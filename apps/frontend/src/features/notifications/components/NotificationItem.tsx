@@ -33,8 +33,6 @@ function formatRecommendationOutcome(
       return "already completed";
     case "not_interested":
       return "wasn't interested in";
-    case "dismissed":
-      return "dismissed";
     default:
       return "responded to your recommendation";
   }
@@ -85,12 +83,6 @@ function getNotificationDetails(notification: NotificationRecord) {
         message: formatRecommendationOutcome(
           notification.recommendationOutcome,
         ),
-      };
-    case "system_recommendation":
-      return {
-        icon: <IconSend size={11} />,
-        color: "violet",
-        message: "recommended for you",
       };
   }
 }

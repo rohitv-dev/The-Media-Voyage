@@ -1,5 +1,4 @@
 import {
-  Alert,
   Avatar,
   Button,
   Group,
@@ -14,7 +13,6 @@ import {
   IconCheck,
   IconClock,
   IconSend,
-  IconSparkles,
 } from "@tabler/icons-react";
 import { MessagePanel } from "./MessagePanel";
 
@@ -26,8 +24,6 @@ function formatOutcome(outcome: RecommendationDetail["outcome"]) {
       return "Already completed";
     case "not_interested":
       return "Not interested";
-    case "dismissed":
-      return "Dismissed";
     default:
       return "Not selected";
   }
@@ -44,33 +40,21 @@ export function ReadOnlyResponse({
 
   return (
     <Stack gap="md">
-      {detail.origin === "friend" && (
-        <Group gap="sm" wrap="nowrap">
-          <Avatar
-            src={detail.sender.image}
-            name={detail.sender.name}
-            color="accent"
-            radius="xl"
-          />
-          <Text size="sm" fw={700}>
-            {detail.viewerRole === "recipient"
-              ? detail.sender.name + " recommended this to you."
-              : "You recommended this to " + detail.recipient.name + "."}
-          </Text>
-        </Group>
-      )}
+      <Group gap="sm" wrap="nowrap">
+        <Avatar
+          src={detail.sender.image}
+          name={detail.sender.name}
+          color="accent"
+          radius="xl"
+        />
+        <Text size="sm" fw={700}>
+          {detail.viewerRole === "recipient"
+            ? detail.sender.name + " recommended this to you."
+            : "You recommended this to " + detail.recipient.name + "."}
+        </Text>
+      </Group>
 
-      {detail.origin === "system" && (
-        <Alert
-          icon={<IconSparkles size={18} />}
-          color="violet"
-          title="Why this was recommended"
-        >
-          {detail.systemReason}
-        </Alert>
-      )}
-
-      {detail.origin === "friend" && detail.senderNote && (
+      {detail.senderNote && (
         <MessagePanel
           label={detail.viewerRole === "sender" ? "Your note" : "Sender's note"}
           icon={<IconSend size={15} />}

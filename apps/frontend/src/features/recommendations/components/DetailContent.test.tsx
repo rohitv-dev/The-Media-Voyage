@@ -40,7 +40,6 @@ afterEach(() => cleanup());
 
 const friendDetail: RecommendationDetail = {
   id: "11111111-1111-4111-8111-111111111111",
-  origin: "friend",
   viewerRole: "recipient",
   recipient: {
     id: "recipient-1",
@@ -69,7 +68,6 @@ const friendDetail: RecommendationDetail = {
   createdAt: new Date(),
   updatedAt: new Date(),
   resolvedAt: null,
-  expiresAt: null,
 };
 
 function renderContent(

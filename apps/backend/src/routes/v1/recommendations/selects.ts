@@ -11,14 +11,9 @@ export const recommendationCoreSelect = {
   recipientNote: mediaRecommendations.recipientNote,
   status: mediaRecommendations.status,
   outcome: mediaRecommendations.outcome,
-  systemStrategyKey: mediaRecommendations.systemStrategyKey,
-  systemStrategyVersion: mediaRecommendations.systemStrategyVersion,
-  systemReason: mediaRecommendations.systemReason,
-  systemRank: mediaRecommendations.systemRank,
   createdAt: mediaRecommendations.createdAt,
   updatedAt: mediaRecommendations.updatedAt,
   resolvedAt: mediaRecommendations.resolvedAt,
-  expiresAt: mediaRecommendations.expiresAt,
 };
 
 export const recommendationMediaSelect = {

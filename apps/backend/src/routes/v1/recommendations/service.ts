@@ -34,7 +34,6 @@ export async function createFriendRecommendation(
     const [recommendation] = await tx
       .insert(mediaRecommendations)
       .values({
-        origin: "friend",
         recipientId: input.recipientId,
         senderId,
         mediaId: source.mediaId,
@@ -85,7 +84,6 @@ export async function resolveRecommendation(
     const [existing] = await tx
       .select({
         id: mediaRecommendations.id,
-        origin: mediaRecommendations.origin,
         senderId: mediaRecommendations.senderId,
         mediaId: mediaRecommendations.mediaId,
         status: mediaRecommendations.status,
@@ -99,10 +97,6 @@ export async function resolveRecommendation(
 
     if (existing.status !== "pending") {
       throw conflict("This recommendation has already been resolved");
-    }
-
-    if (input.outcome === "dismissed" && existing.origin !== "system") {
-      throw badRequest("Friend recommendations cannot be dismissed");
     }
 
     let recipientUserMediaId = await findRecipientEntry(tx, recipientId, existing.mediaId);
@@ -133,14 +127,12 @@ export async function resolveRecommendation(
 
     if (!updated) throw conflict("This recommendation has already been resolved");
 
-    if (existing.origin === "friend" && existing.senderId) {
-      await createNotification(tx, {
-        recipientId: existing.senderId,
-        actorId: recipientId,
-        type: "friend_recommendation_response",
-        recommendationId: existing.id,
-      });
-    }
+    await createNotification(tx, {
+      recipientId: existing.senderId,
+      actorId: recipientId,
+      type: "friend_recommendation_response",
+      recommendationId: existing.id,
+    });
 
     return {
       id: updated.id,

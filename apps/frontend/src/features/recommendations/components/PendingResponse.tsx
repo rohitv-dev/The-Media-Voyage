@@ -20,7 +20,6 @@ import {
   IconBook,
   IconCheck,
   IconMessageCircle,
-  IconSparkles,
   IconX,
 } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
@@ -118,36 +117,24 @@ export function PendingResponse({
 
   return (
     <Stack gap="md">
-      {detail.origin === "friend" && (
-        <Group gap="sm" wrap="nowrap">
-          <Avatar
-            src={detail.sender.image}
-            name={detail.sender.name}
-            color="accent"
-            radius="xl"
-          />
-          <Stack gap={0}>
-            <Text size="sm" fw={700}>
-              {detail.sender.name} recommended this to you.
-            </Text>
-            <Text size="xs" c="dimmed">
-              Choose what happens next.
-            </Text>
-          </Stack>
-        </Group>
-      )}
+      <Group gap="sm" wrap="nowrap">
+        <Avatar
+          src={detail.sender.image}
+          name={detail.sender.name}
+          color="accent"
+          radius="xl"
+        />
+        <Stack gap={0}>
+          <Text size="sm" fw={700}>
+            {detail.sender.name} recommended this to you.
+          </Text>
+          <Text size="xs" c="dimmed">
+            Choose what happens next.
+          </Text>
+        </Stack>
+      </Group>
 
-      {detail.origin === "system" && (
-        <Alert
-          icon={<IconSparkles size={18} />}
-          color="violet"
-          title="Why this was recommended"
-        >
-          {detail.systemReason}
-        </Alert>
-      )}
-
-      {detail.origin === "friend" && detail.senderNote && (
+      {detail.senderNote && (
         <MessagePanel
           label="Message from your friend"
           icon={<IconMessageCircle size={15} />}

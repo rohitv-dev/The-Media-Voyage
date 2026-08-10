@@ -3,7 +3,7 @@ import type {
   RecommendationDetail,
   ResolveRecommendationInput,
 } from "@media-voyage/shared/api";
-import { IconAlertCircle, IconClock } from "@tabler/icons-react";
+import { IconAlertCircle } from "@tabler/icons-react";
 import { DetailMedia } from "./DetailMedia";
 import { PendingResponse } from "./PendingResponse";
 import { ReadOnlyResponse } from "./ReadOnlyResponse";
@@ -57,16 +57,6 @@ export function DetailContent({
     <Stack gap="md">
       <DetailMedia detail={detail} />
 
-      {detail.status === "expired" && (
-        <Alert
-          icon={<IconClock size={18} />}
-          color="gray"
-          title="Recommendation expired"
-        >
-          This recommendation is no longer available to resolve.
-        </Alert>
-      )}
-
       {isPendingRecipient ? (
         <PendingResponse
           detail={detail}
@@ -75,9 +65,9 @@ export function DetailContent({
           onResolve={onResolve}
           onOpenLibrary={onOpenLibrary}
         />
-      ) : detail.status !== "expired" ? (
+      ) : (
         <ReadOnlyResponse detail={detail} onOpenLibrary={onOpenLibrary} />
-      ) : null}
+      )}
     </Stack>
   );
 }

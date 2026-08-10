@@ -64,18 +64,14 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "friend_request_accepted",
   "friend_recommendation",
   "friend_recommendation_response",
-  "system_recommendation",
 ]);
 
-export const recommendationOriginEnum = pgEnum("recommendation_origin", ["friend", "system"]);
-
-export const recommendationStatusEnum = pgEnum("recommendation_status", ["pending", "resolved", "expired"]);
+export const recommendationStatusEnum = pgEnum("recommendation_status", ["pending", "resolved"]);
 
 export const recommendationOutcomeEnum = pgEnum("recommendation_outcome", [
   "added_to_library",
   "already_completed",
   "not_interested",
-  "dismissed",
 ]);
 
 // Main Media (Canonical)
@@ -328,13 +324,14 @@ export const mediaRecommendations = pgTable(
   "media_recommendations",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    origin: recommendationOriginEnum("origin").notNull(),
     recipientId: text("recipient_id")
       .references(() => user.id, { onDelete: "cascade" })
       .notNull(),
-    senderId: text("sender_id").references(() => user.id, {
-      onDelete: "cascade",
-    }),
+    senderId: text("sender_id")
+      .references(() => user.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
     mediaId: uuid("media_id")
       .references(() => media.id, { onDelete: "cascade" })
       .notNull(),
@@ -343,44 +340,19 @@ export const mediaRecommendations = pgTable(
     recipientNote: text("recipient_note"),
     status: recommendationStatusEnum("status").notNull().default("pending"),
     outcome: recommendationOutcomeEnum("outcome"),
-    systemStrategyKey: text("system_strategy_key"),
-    systemStrategyVersion: text("system_strategy_version"),
-    systemReason: text("system_reason"),
-    systemRank: integer("system_rank"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
     resolvedAt: timestamp("resolved_at"),
-    expiresAt: timestamp("expires_at"),
   },
   (table) => [
     index("media_recommendations_recipient_status_created_idx").on(table.recipientId, table.status, table.createdAt),
     index("media_recommendations_sender_created_idx").on(table.senderId, table.createdAt),
     uniqueIndex("media_recommendations_friend_pending_unique")
       .on(table.senderId, table.recipientId, table.mediaId)
-      .where(sql`${table.origin} = 'friend' and ${table.status} = 'pending'`),
-    uniqueIndex("media_recommendations_system_pending_unique")
-      .on(table.recipientId, table.mediaId)
-      .where(sql`${table.origin} = 'system' and ${table.status} = 'pending'`),
-    check(
-      "media_recommendations_origin_fields_check",
-      sql`(
-        ${table.origin} = 'friend'
-        and ${table.senderId} is not null
-        and ${table.systemStrategyKey} is null
-        and ${table.systemStrategyVersion} is null
-        and ${table.systemReason} is null
-        and ${table.systemRank} is null
-      ) or (
-        ${table.origin} = 'system'
-        and ${table.senderId} is null
-        and ${table.senderNote} is null
-        and ${table.systemStrategyKey} is not null
-        and ${table.systemReason} is not null
-      )`,
-    ),
+      .where(sql`${table.status} = 'pending'`),
     check(
       "media_recommendations_sender_recipient_distinct_check",
-      sql`${table.senderId} is null or ${table.senderId} <> ${table.recipientId}`,
+      sql`${table.senderId} <> ${table.recipientId}`,
     ),
     check(
       "media_recommendations_status_fields_check",
@@ -394,11 +366,6 @@ export const mediaRecommendations = pgTable(
         ${table.status} = 'resolved'
         and ${table.outcome} is not null
         and ${table.resolvedAt} is not null
-      ) or (
-        ${table.status} = 'expired'
-        and ${table.origin} = 'system'
-        and ${table.outcome} is null
-        and ${table.resolvedAt} is null
       )`,
     ),
   ],

@@ -140,13 +140,19 @@ export async function getRecommendationDetail(
   const profileIds = [
     row.recommendation.recipientId,
     row.recommendation.senderId,
-  ].filter((id): id is string => id !== null);
+  ];
   const profiles = await findProfiles(profileIds);
   const recipient = profiles.get(row.recommendation.recipientId);
+  const sender = profiles.get(row.recommendation.senderId);
 
   if (!recipient)
     throw internalServerError(
       "The recommendation recipient could not be loaded",
+    );
+
+  if (!sender)
+    throw internalServerError(
+      "The recommendation sender could not be loaded",
     );
 
   const existingRecipientUserMedia = await findActiveRecipientUserMedia(
@@ -170,42 +176,10 @@ export async function getRecommendationDetail(
     createdAt: row.recommendation.createdAt,
     updatedAt: row.recommendation.updatedAt,
     resolvedAt: row.recommendation.resolvedAt,
-    expiresAt: row.recommendation.expiresAt,
   };
-
-  if (row.recommendation.origin === "friend") {
-    const sender = row.recommendation.senderId
-      ? profiles.get(row.recommendation.senderId)
-      : null;
-
-    if (!sender)
-      throw internalServerError(
-        "The recommendation sender could not be loaded",
-      );
-
-    return {
-      ...common,
-      origin: "friend",
-      sender,
-    };
-  }
-
-  if (
-    !row.recommendation.systemStrategyKey ||
-    !row.recommendation.systemReason
-  ) {
-    throw internalServerError(
-      "The system recommendation is missing its strategy context",
-    );
-  }
 
   return {
     ...common,
-    origin: "system",
-    sender: null,
-    systemStrategyKey: row.recommendation.systemStrategyKey,
-    systemStrategyVersion: row.recommendation.systemStrategyVersion,
-    systemReason: row.recommendation.systemReason,
-    systemRank: row.recommendation.systemRank,
+    sender,
   };
 }

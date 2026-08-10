@@ -1,7 +1,6 @@
 import z from "zod";
 import {
   mediaTypeEnum,
-  recommendationOriginEnum,
   recommendationOutcomeEnum,
   recommendationStatusEnum,
   statusEnum,
@@ -21,12 +20,11 @@ const recommendationMediaSchema = z.object({
   imageUrl: z.string().nullable(),
 });
 
-const recommendationDetailBaseSchema = z.object({
+export const recommendationDetailSchema = z.object({
   id: z.uuid(),
-  origin: z.enum(recommendationOriginEnum.enumValues),
   viewerRole: z.enum(["sender", "recipient"]),
   recipient: recommendationUserSchema,
-  sender: recommendationUserSchema.nullable(),
+  sender: recommendationUserSchema,
   media: recommendationMediaSchema,
   status: z.enum(recommendationStatusEnum.enumValues),
   outcome: z.enum(recommendationOutcomeEnum.enumValues).nullable(),
@@ -38,29 +36,7 @@ const recommendationDetailBaseSchema = z.object({
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   resolvedAt: z.coerce.date().nullable(),
-  expiresAt: z.coerce.date().nullable(),
 });
-
-export const friendRecommendationDetailSchema =
-  recommendationDetailBaseSchema.extend({
-    origin: z.literal("friend"),
-    sender: recommendationUserSchema,
-  });
-
-export const systemRecommendationDetailSchema =
-  recommendationDetailBaseSchema.extend({
-    origin: z.literal("system"),
-    sender: z.null(),
-    systemStrategyKey: z.string(),
-    systemStrategyVersion: z.string().nullable(),
-    systemReason: z.string(),
-    systemRank: z.number().int().nullable(),
-  });
-
-export const recommendationDetailSchema = z.discriminatedUnion("origin", [
-  friendRecommendationDetailSchema,
-  systemRecommendationDetailSchema,
-]);
 
 export type RecommendationDetail = z.infer<typeof recommendationDetailSchema>;
 

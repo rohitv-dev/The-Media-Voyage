@@ -29,8 +29,6 @@ function outcomeMessage(result: RecommendationResolutionResponse) {
       return "Saved your response.";
     case "not_interested":
       return "Saved as not interested.";
-    case "dismissed":
-      return "Dismissed recommendation.";
   }
 }
 
