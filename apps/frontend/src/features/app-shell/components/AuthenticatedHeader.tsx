@@ -110,8 +110,14 @@ export function AuthenticatedHeader({
         background: "var(--mantine-color-body)",
       }}
     >
-      <Group justify="space-between" h="100%" px={{ base: "md", sm: "lg" }}>
-        <Group gap="sm" wrap="nowrap">
+      <Group
+        justify="space-between"
+        h="100%"
+        px={{ base: "sm", sm: "lg" }}
+        gap="xs"
+        wrap="nowrap"
+      >
+        <Group gap="xs" wrap="nowrap" miw={0}>
           <Burger
             opened={navbarOpened}
             onClick={onToggleNavbar}
@@ -136,8 +142,8 @@ export function AuthenticatedHeader({
             </ActionIcon>
           </Tooltip>
 
-          <Box style={{ cursor: "pointer" }} onClick={onGoHome}>
-            <Group gap="sm" wrap="nowrap">
+          <Box style={{ cursor: "pointer", minWidth: 0 }} onClick={onGoHome}>
+            <Group gap="xs" wrap="nowrap" miw={0}>
               <img
                 src="/media-voyage-mark.svg"
                 alt=""
@@ -146,8 +152,17 @@ export function AuthenticatedHeader({
                 height="32"
                 style={{ display: "block" }}
               />
-              <Stack gap={0}>
-                <Title order={4} lh={1.1}>
+              <Stack gap={0} miw={0}>
+                <Title
+                  order={4}
+                  fz={{ base: "lg", sm: "h4" }}
+                  lh={1.1}
+                  style={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   Media Voyage
                 </Title>
                 <Text size="xs" c="dimmed" lh={1.2} visibleFrom="sm">
@@ -158,7 +173,7 @@ export function AuthenticatedHeader({
           </Box>
         </Group>
 
-        <Group gap="sm" wrap="nowrap">
+        <Group gap="xs" wrap="nowrap" style={{ flexShrink: 0 }}>
           <Box visibleFrom="lg">
             <Button
               variant="default"

@@ -1,7 +1,4 @@
-import type {
-  SourceMediaRecord,
-  SystemRecommendationPreviewResponse,
-} from "@media-voyage/shared/api";
+import type { SourceMediaRecord, SystemRecommendationPreviewResponse } from "@media-voyage/shared/api";
 import { getGameRecommendations } from "@/services/igdb";
 import { getOpenLibraryRecommendations } from "@/services/openLibrary";
 import { getTmdbRecommendations } from "@/services/tmdb";
@@ -13,8 +10,7 @@ const MAX_CANDIDATES_PER_SEED = 3;
 const MAX_RECOMMENDATIONS = 10;
 
 type LibraryItem = Awaited<ReturnType<typeof findSystemPreviewLibrary>>[number];
-type PreviewMedia =
-  SystemRecommendationPreviewResponse["recommendations"][number]["media"];
+type PreviewMedia = SystemRecommendationPreviewResponse["recommendations"][number]["media"];
 type ProviderIdentity = Pick<PreviewMedia, "source" | "externalId" | "type">;
 
 type PreviewSeed = LibraryItem & {
@@ -40,14 +36,13 @@ type CandidateAggregate = {
 function isPreviewSeed(item: LibraryItem): item is PreviewSeed {
   if (item.deletedAt !== null) return false;
 
-  if (item.status === "completed" || item.status === "revisiting") {
-    return true;
+  if (item.status === "revisiting" || item.favorite) return true;
+
+  if (item.rating !== null) {
+    return item.rating >= 7;
   }
 
-  return (
-    item.status === "in_progress" &&
-    (item.favorite || (item.rating !== null && item.rating >= 7))
-  );
+  return item.status === "completed";
 }
 
 function seedTimestamp(seed: PreviewSeed) {
@@ -64,10 +59,7 @@ function compareSeedPriority(left: PreviewSeed, right: PreviewSeed) {
 }
 
 export function selectPreviewSeeds(library: LibraryItem[]): PreviewSeed[] {
-  return library
-    .filter(isPreviewSeed)
-    .sort(compareSeedPriority)
-    .slice(0, MAX_SEED_ATTEMPTS);
+  return library.filter(isPreviewSeed).sort(compareSeedPriority).slice(0, MAX_SEED_ATTEMPTS);
 }
 
 function positiveInteger(value: string | null): number | null {
@@ -86,10 +78,7 @@ function mapSeedToProvider(seed: PreviewSeed) {
     return {
       mappedMedia: tmdbId
         ? {
-            source:
-              seed.type === "movie"
-                ? ("tmdb_movie" as const)
-                : ("tmdb_tv" as const),
+            source: seed.type === "movie" ? ("tmdb_movie" as const) : ("tmdb_tv" as const),
             externalId: String(tmdbId),
             type: seed.type,
           }
@@ -153,10 +142,7 @@ function toPreviewMedia(record: SourceMediaRecord): PreviewMedia | null {
   } as PreviewMedia;
 }
 
-async function getProviderRecommendations(
-  seed: PreviewSeed,
-  mappedMedia: ProviderIdentity,
-) {
+async function getProviderRecommendations(seed: PreviewSeed, mappedMedia: ProviderIdentity) {
   let candidates: SourceMediaRecord[];
 
   if (seed.type === "movie" || seed.type === "show") {
@@ -169,9 +155,7 @@ async function getProviderRecommendations(
     candidates = await getOpenLibraryRecommendations(mappedMedia.externalId);
   }
 
-  return candidates
-    .map(toPreviewMedia)
-    .filter((candidate): candidate is PreviewMedia => candidate !== null);
+  return candidates.map(toPreviewMedia).filter((candidate): candidate is PreviewMedia => candidate !== null);
 }
 
 async function runSeed(seed: PreviewSeed): Promise<SeedRun> {
@@ -209,18 +193,23 @@ async function runSeed(seed: PreviewSeed): Promise<SeedRun> {
   }
 }
 
-async function collectSeedRuns(seeds: PreviewSeed[]) {
+async function collectSeedRuns(library: LibraryItem[], seeds: PreviewSeed[]) {
   const runs: SeedRun[] = [];
   let productiveSeedCount = 0;
+
+  const { excludedTitles, excludedIdentities } = buildLibraryExclusions(library);
 
   for (const seed of seeds) {
     const run = await runSeed(seed);
     runs.push(run);
 
-    if (run.mappingStatus === "mapped" && run.candidates.length > 0) {
+    if (run.mappingStatus === "mapped" && hasUsableCandidate(run, excludedTitles, excludedIdentities)) {
       productiveSeedCount += 1;
     }
-    if (productiveSeedCount === MAX_PRODUCTIVE_SEEDS) break;
+
+    if (productiveSeedCount === MAX_PRODUCTIVE_SEEDS) {
+      break;
+    }
   }
 
   return runs;
@@ -246,9 +235,7 @@ function recommendationReason(seed: PreviewSeed) {
 }
 
 function combinedRecommendationReason(seeds: PreviewSeed[]) {
-  const reasons = seeds.map((seed) =>
-    recommendationReason(seed).replace(/^Because /, ""),
-  );
+  const reasons = seeds.map((seed) => recommendationReason(seed).replace(/^Because /, ""));
 
   if (reasons.length === 1) return `Because ${reasons[0]}`;
   if (reasons.length === 2) return `Because ${reasons.join(" and ")}`;
@@ -256,22 +243,33 @@ function combinedRecommendationReason(seeds: PreviewSeed[]) {
   return `Because ${reasons.slice(0, -1).join(", ")}, and ${reasons.at(-1)}`;
 }
 
+function buildLibraryExclusions(library: LibraryItem[]) {
+  const activeLibrary = library.filter((item) => item.deletedAt === null);
+
+  return {
+    excludedTitles: new Set(activeLibrary.map((item) => normalizedTitle(item.type, item.title))),
+    excludedIdentities: new Set(
+      activeLibrary.flatMap((item) =>
+        item.catalogSource && item.externalId ? [mediaIdentity(item.catalogSource, item.externalId)] : [],
+      ),
+    ),
+  };
+}
+
+function hasUsableCandidate(run: SeedRun, excludedTitles: Set<string>, excludedIdentities: Set<string>) {
+  return run.candidates.some((candidate) => {
+    const identity = mediaIdentity(candidate.source, candidate.externalId);
+    const title = normalizedTitle(candidate.type, candidate.title);
+
+    return !excludedIdentities.has(identity) && !excludedTitles.has(title);
+  });
+}
+
 function buildRecommendations(
   library: LibraryItem[],
   runs: SeedRun[],
 ): SystemRecommendationPreviewResponse["recommendations"] {
-  const activeLibrary = library.filter((item) => item.deletedAt === null);
-  const excludedTitles = new Set(
-    activeLibrary.map((item) => normalizedTitle(item.type, item.title)),
-  );
-  const excludedIdentities = new Set(
-    activeLibrary.flatMap((item) =>
-      item.catalogSource && item.externalId
-        ? [mediaIdentity(item.catalogSource, item.externalId)]
-        : [],
-    ),
-  );
-
+  const { excludedTitles, excludedIdentities } = buildLibraryExclusions(library);
   const aggregates = new Map<string, CandidateAggregate>();
 
   for (const run of runs) {
@@ -282,11 +280,7 @@ function buildRecommendations(
       const identity = mediaIdentity(candidate.source, candidate.externalId);
       const title = normalizedTitle(candidate.type, candidate.title);
 
-      if (
-        seenForSeed.has(identity) ||
-        excludedIdentities.has(identity) ||
-        excludedTitles.has(title)
-      ) {
+      if (seenForSeed.has(identity) || excludedIdentities.has(identity) || excludedTitles.has(title)) {
         continue;
       }
 
@@ -295,18 +289,11 @@ function buildRecommendations(
 
       const existing = aggregates.get(identity);
       if (existing) {
-        if (
-          !existing.seeds.some(
-            (seed) => seed.userMediaId === run.seed.userMediaId,
-          )
-        ) {
+        if (!existing.seeds.some((seed) => seed.userMediaId === run.seed.userMediaId)) {
           existing.seeds.push(run.seed);
           existing.seeds.sort(compareSeedPriority);
         }
-        existing.firstProviderIndex = Math.min(
-          existing.firstProviderIndex,
-          providerIndex,
-        );
+        existing.firstProviderIndex = Math.min(existing.firstProviderIndex, providerIndex);
       } else {
         aggregates.set(identity, {
           candidate,
@@ -339,18 +326,13 @@ function buildRecommendations(
     }));
 }
 
-export async function getSystemRecommendationPreview(
-  userId: string,
-): Promise<SystemRecommendationPreviewResponse> {
+export async function getSystemRecommendationPreview(userId: string): Promise<SystemRecommendationPreviewResponse> {
   const library = await findSystemPreviewLibrary(userId);
   const eligibleSeeds = library.filter(isPreviewSeed);
   const seeds = selectPreviewSeeds(library);
-  const runs = await collectSeedRuns(seeds);
+  const runs = await collectSeedRuns(library, seeds);
 
-  if (
-    runs.length > 0 &&
-    runs.every((run) => run.mappingStatus === "provider_error")
-  ) {
+  if (runs.length > 0 && runs.every((run) => run.mappingStatus === "provider_error")) {
     throw runs[0].error;
   }
 

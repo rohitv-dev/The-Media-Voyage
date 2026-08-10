@@ -124,7 +124,7 @@ describe("system recommendation preview", () => {
     getOpenLibraryRecommendationsMock.mockReset();
   });
 
-  it("applies status and signal rules when selecting seeds", () => {
+  it("selects favorites, highly rated media, revisiting items, and unrated completions", () => {
     const seeds = selectPreviewSeeds([
       libraryItem({
         userMediaId: IDS.first,
@@ -136,6 +136,11 @@ describe("system recommendation preview", () => {
         title: "Revisiting Low Rated",
         status: "revisiting",
         rating: 5,
+      }),
+      libraryItem({
+        userMediaId: "88888888-8888-4888-8888-888888888888",
+        title: "Completed Unrated",
+        updatedAt: new Date("2026-07-01T00:00:00.000Z"),
       }),
       libraryItem({
         userMediaId: IDS.third,
@@ -185,10 +190,13 @@ describe("system recommendation preview", () => {
     ]);
 
     expect(seeds.map((seed) => seed.title)).toEqual([
+      "Planned Favorite",
+      "Dropped Favorite",
+      "On Hold Favorite",
       "Favorite In Progress",
       "Highly Rated In Progress",
-      "Completed Low Rated",
       "Revisiting Low Rated",
+      "Completed Unrated",
     ]);
   });
 
@@ -403,6 +411,46 @@ describe("system recommendation preview", () => {
     ]);
   });
 
+  it("does not count fully excluded candidates as productive", async () => {
+    findSystemPreviewLibraryMock.mockResolvedValue([
+      libraryItem({
+        userMediaId: IDS.first,
+        title: "First Seed",
+        favorite: true,
+      }),
+      libraryItem({
+        userMediaId: IDS.second,
+        title: "Second Seed",
+        externalId: "200",
+        favorite: true,
+      }),
+      libraryItem({
+        userMediaId: IDS.third,
+        title: "Tracked Title",
+        externalId: "700",
+        status: "planned",
+      }),
+    ]);
+    getTmdbRecommendationsMock
+      .mockResolvedValueOnce([
+        movie(700, "Different Provider Title"),
+        movie(701, "Tracked Title"),
+      ])
+      .mockResolvedValueOnce([movie(702, "Useful Candidate")]);
+
+    const preview = await getSystemRecommendationPreview("user-1");
+
+    expect(getTmdbRecommendationsMock).toHaveBeenCalledTimes(2);
+    expect(preview.seeds.map((seed) => seed.title)).toEqual([
+      "First Seed",
+      "Second Seed",
+    ]);
+    expect(preview.seeds.map((seed) => seed.candidateCount)).toEqual([2, 1]);
+    expect(preview.recommendations.map(({ media }) => media.title)).toEqual([
+      "Useful Candidate",
+    ]);
+  });
+
   it("keeps IGDB and Open Library recommendation behavior", async () => {
     findSystemPreviewLibraryMock.mockResolvedValue([
       libraryItem({
@@ -445,7 +493,7 @@ describe("system recommendation preview", () => {
     });
   });
 
-  it("returns version 3 without provider calls when no seed is eligible", async () => {
+  it("returns version 4 without provider calls when no seed is eligible", async () => {
     findSystemPreviewLibraryMock.mockResolvedValue([
       libraryItem({ status: "planned" }),
       libraryItem({
