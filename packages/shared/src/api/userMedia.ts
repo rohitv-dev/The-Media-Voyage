@@ -266,7 +266,7 @@ export type GetUserMediaSearchResponse = z.infer<
 >;
 
 export const semanticSearchQuerySchema = z.object({
-  q: z.string().trim().min(10).max(500),
+  q: z.string().trim().min(5).max(500),
 });
 
 export type SemanticSearchQuery = z.infer<typeof semanticSearchQuerySchema>;

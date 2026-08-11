@@ -32,7 +32,7 @@ export function SemanticSearchPanel({
     event.preventDefault();
     const normalizedQuery = input.trim();
 
-    if (normalizedQuery.length >= 10) {
+    if (normalizedQuery.length >= 5) {
       onSearch(normalizedQuery);
     }
   };
@@ -61,7 +61,7 @@ export function SemanticSearchPanel({
             type="submit"
             size="xs"
             loading={isSearching}
-            disabled={input.trim().length < 10}
+            disabled={input.trim().length < 5}
           >
             Explore
           </Button>

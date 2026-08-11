@@ -135,7 +135,7 @@ export function userMediaSemanticSearchQueryOptions(query: string) {
   return queryOptions({
     queryKey: queryKeys.userMedia.semanticSearch(normalizedQuery),
     queryFn: () => getUserMediaSemanticSearchRecords(normalizedQuery),
-    enabled: normalizedQuery.length >= 10,
+    enabled: normalizedQuery.length >= 5,
   });
 }
 
