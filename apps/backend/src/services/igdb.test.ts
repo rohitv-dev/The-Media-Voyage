@@ -12,7 +12,7 @@ vi.mock("../config", () => ({
   env: { IGDB_CLIENT_ID: "client-id" },
 }));
 
-import { getGameRecommendations } from "./igdb";
+import { getGameDetails, getGameRecommendations } from "./igdb";
 
 const fetchMock = vi.fn();
 
@@ -101,5 +101,67 @@ describe("getGameRecommendations", () => {
       code: "INTERNAL_SERVER_ERROR",
       message: "IGDB request failed",
     });
+  });
+});
+
+describe("getGameDetails", () => {
+  beforeEach(() => {
+    getAccessTokenMock.mockReset();
+    getAccessTokenMock.mockResolvedValue("access-token");
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("maps semantic game metadata and normalizes its terms", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          {
+            id: 100,
+            name: "Semantic Game",
+            summary: "An adventure.",
+            genres: [{ id: 2, name: "RPG" }],
+            rating: 89.4,
+            themes: [{ id: 1, name: "Dark fantasy" }],
+            keywords: [
+              { id: 2, name: " boss battles " },
+              { id: 3, name: "Boss Battles" },
+              { id: 4, name: "medieval" },
+            ],
+            game_modes: [{ id: 5, name: "Single player" }],
+            player_perspectives: [{ id: 6, name: "Third person" }],
+          },
+        ]),
+        { status: 200 },
+      ),
+    );
+
+    await expect(getGameDetails("100")).resolves.toEqual({
+      id: 100,
+      name: "Semantic Game",
+      summary: "An adventure.",
+      genres: [{ id: 2, name: "RPG" }],
+      rating: 89.4,
+      themes: ["Dark fantasy"],
+      keywords: ["boss battles", "medieval"],
+      gameModes: ["Single player"],
+      playerPerspectives: ["Third person"],
+    });
+
+    const request = fetchMock.mock.calls[0][1];
+    expect(request.body).toContain("themes.name");
+    expect(request.body).toContain("keywords.name");
+    expect(request.body).toContain("game_modes.name");
+    expect(request.body).toContain("player_perspectives.name");
+  });
+
+  it("returns null when IGDB has no matching game", async () => {
+    fetchMock.mockResolvedValue(new Response("[]", { status: 200 }));
+
+    await expect(getGameDetails("100")).resolves.toBeNull();
   });
 });

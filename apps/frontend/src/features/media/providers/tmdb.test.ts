@@ -1,11 +1,10 @@
 import type { TmdbMediaDetails } from "@media-voyage/shared/api";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { hydrateTmdb, mergeTmdbSeasons } from "./tmdb";
 
 const apiMock = vi.hoisted(() => vi.fn());
 
 vi.mock("#/lib/api", () => ({ api: apiMock }));
-
-import { hydrateTmdb, mergeTmdbSeasons } from "./tmdb";
 
 function details(overrides: Partial<TmdbMediaDetails> = {}): TmdbMediaDetails {
   return {
@@ -33,6 +32,7 @@ describe("TMDB frontend hydration", () => {
         source: "tmdb_movie",
         type: "movie",
         title: "Example Movie",
+        keywords: ["space travel", "wormhole"],
         seasons: [],
       }),
     );
@@ -50,6 +50,7 @@ describe("TMDB frontend hydration", () => {
       description: "A show description.",
       metadata: {
         genre: ["Drama", "Mystery"],
+        keywords: ["space travel", "wormhole"],
         runtime: 45,
         catalogRating: 8.2,
       },

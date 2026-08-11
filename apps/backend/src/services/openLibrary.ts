@@ -4,6 +4,8 @@ import type {
   OpenLibraryWork,
   SourceMediaRecord,
 } from "@media-voyage/shared/api";
+import { normalizeCatalogTerms } from "@media-voyage/shared/catalogMetadata";
+import { env } from "../config";
 import { internalServerError } from "../errors";
 
 const OPEN_LIBRARY_API_URL = "https://openlibrary.org";
@@ -32,8 +34,20 @@ const getOpenLibraryWorkId = (key: string): string =>
 export type OpenLibraryDetails = {
   description?: string;
   genres?: string[];
+  subjects?: string[];
   numberOfPages?: number;
 };
+
+function openLibraryHeaders(): Record<string, string> {
+  return {
+    Accept: "application/json",
+    ...(env.OPEN_LIBRARY_CONTACT_EMAIL
+      ? {
+          "User-Agent": `Media Voyage (${env.OPEN_LIBRARY_CONTACT_EMAIL})`,
+        }
+      : {}),
+  };
+}
 
 async function fetchOpenLibrarySearch(
   query: string,
@@ -45,9 +59,7 @@ async function fetchOpenLibrarySearch(
   url.searchParams.set("limit", "20");
 
   const response = await fetch(url, {
-    headers: {
-      Accept: "application/json",
-    },
+    headers: openLibraryHeaders(),
   });
 
   if (!response.ok) {
@@ -65,9 +77,7 @@ async function fetchOpenLibraryWork(
     OPEN_LIBRARY_API_URL,
   );
   const response = await fetch(url, {
-    headers: {
-      Accept: "application/json",
-    },
+    headers: openLibraryHeaders(),
   });
 
   if (response.status === 404) {
@@ -128,9 +138,11 @@ export async function getOpenLibraryDetails(
   ]);
 
   const genres = book?.subject ?? work?.subjects;
+  const subjects = normalizeCatalogTerms(genres);
   const details: OpenLibraryDetails = {
     description: getWorkDescription(work),
     ...(genres?.length ? { genres } : {}),
+    ...(subjects ? { subjects } : {}),
     ...(book?.number_of_pages_median
       ? { numberOfPages: book.number_of_pages_median }
       : {}),

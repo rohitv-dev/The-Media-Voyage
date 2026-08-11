@@ -3,6 +3,7 @@ import type {
   TmdbMediaRecord,
   TmdbMediaType,
 } from "@media-voyage/shared/api";
+import { normalizeCatalogTerms } from "@media-voyage/shared/catalogMetadata";
 import { z } from "zod";
 import { env } from "../config";
 import { internalServerError, notFound } from "../errors";
@@ -42,9 +43,20 @@ const tmdbGenreSchema = z.object({
   name: z.string(),
 });
 
+const tmdbKeywordSchema = z.object({
+  name: z.string(),
+});
+
+const tmdbKeywordResponseSchema = z.union([
+  z.array(tmdbKeywordSchema),
+  z.object({ keywords: z.array(tmdbKeywordSchema) }),
+  z.object({ results: z.array(tmdbKeywordSchema) }),
+]);
+
 const tmdbMovieDetailsSchema = tmdbMovieResultSchema.extend({
   overview: z.string().nullable().optional(),
   genres: z.array(tmdbGenreSchema),
+  keywords: tmdbKeywordResponseSchema.optional(),
   runtime: z.number().int().nonnegative().nullable().optional(),
   vote_average: z.number().min(0).max(10).nullable().optional(),
 });
@@ -52,6 +64,7 @@ const tmdbMovieDetailsSchema = tmdbMovieResultSchema.extend({
 const tmdbShowDetailsSchema = tmdbShowResultSchema.extend({
   overview: z.string().nullable().optional(),
   genres: z.array(tmdbGenreSchema),
+  keywords: tmdbKeywordResponseSchema.optional(),
   episode_run_time: z.array(z.number().int().nonnegative()).optional(),
   last_episode_to_air: z
     .object({
@@ -115,6 +128,20 @@ function showRecord(
 
 function invalidResponse(cause: z.ZodError): never {
   throw internalServerError("TMDB returned an invalid response", { cause });
+}
+
+function keywordNames(
+  response: z.infer<typeof tmdbKeywordResponseSchema> | undefined,
+) {
+  if (!response) return undefined;
+
+  const keywords = Array.isArray(response)
+    ? response
+    : "keywords" in response
+      ? response.keywords
+      : response.results;
+
+  return normalizeCatalogTerms(keywords.map((keyword) => keyword.name));
 }
 
 function delay(milliseconds: number) {
@@ -259,7 +286,7 @@ export async function getTmdbDetails(
 ): Promise<TmdbMediaDetails> {
   const data = await fetchTmdb(
     `${tmdbPath(type)}/${id}`,
-    { language: TMDB_LANGUAGE },
+    { append_to_response: "keywords", language: TMDB_LANGUAGE },
     "TMDB media not found",
   );
 
@@ -268,10 +295,13 @@ export async function getTmdbDetails(
     if (!parsed.success) return invalidResponse(parsed.error);
     if (parsed.data.adult) throw notFound("TMDB media not found");
 
+    const keywords = keywordNames(parsed.data.keywords);
+
     return {
       ...movieRecord(parsed.data),
       description: parsed.data.overview?.trim() || null,
       genres: parsed.data.genres.map((genre) => genre.name),
+      ...(keywords ? { keywords } : {}),
       runtimeMinutes:
         parsed.data.runtime && parsed.data.runtime > 0
           ? parsed.data.runtime
@@ -284,6 +314,8 @@ export async function getTmdbDetails(
   const parsed = tmdbShowDetailsSchema.safeParse(data);
   if (!parsed.success) return invalidResponse(parsed.error);
   if (parsed.data.adult) throw notFound("TMDB media not found");
+
+  const keywords = keywordNames(parsed.data.keywords);
 
   const seasons = parsed.data.seasons
     .filter((season) => season.season_number > 0 && season.episode_count > 0)
@@ -307,6 +339,7 @@ export async function getTmdbDetails(
     ...showRecord(parsed.data),
     description: parsed.data.overview?.trim() || null,
     genres: parsed.data.genres.map((genre) => genre.name),
+    ...(keywords ? { keywords } : {}),
     runtimeMinutes:
       averageEpisodeRuntime ??
       parsed.data.episode_run_time?.find((runtime) => runtime > 0) ??

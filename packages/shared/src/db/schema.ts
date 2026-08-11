@@ -17,17 +17,23 @@ import {
 
 type MovieOrShowMetadata = {
   genre?: string[];
+  keywords?: string[];
   runtime?: number;
   catalogRating?: number;
 };
 
 type GameMetadata = {
   genre?: string[];
+  themes?: string[];
+  keywords?: string[];
+  gameModes?: string[];
+  playerPerspectives?: string[];
   catalogRating?: number;
 };
 
 type BookMetadata = {
   genre?: string[];
+  subjects?: string[];
   numberOfPages?: number;
 };
 

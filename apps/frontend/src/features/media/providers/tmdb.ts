@@ -23,6 +23,7 @@ export async function hydrateTmdb(
   const metadata: CatalogMetadata<"movie" | "show"> = {};
 
   if (details.genres.length) metadata.genre = details.genres;
+  if (details.keywords?.length) metadata.keywords = details.keywords;
   if (details.runtimeMinutes) {
     metadata.runtime = details.runtimeMinutes;
   }

@@ -19,6 +19,7 @@ describe("catalog metadata refresh mappings", () => {
         imageUrl: null,
         description: "A desert epic.",
         genres: ["Adventure", "Drama"],
+        keywords: ["space travel", "politics"],
         runtimeMinutes: 155,
         catalogRating: 8,
         seasons: [],
@@ -27,6 +28,7 @@ describe("catalog metadata refresh mappings", () => {
       description: "A desert epic.",
       metadata: {
         genre: ["Adventure", "Drama"],
+        keywords: ["space travel", "politics"],
         runtime: 155,
         catalogRating: 8,
       },
@@ -40,11 +42,22 @@ describe("catalog metadata refresh mappings", () => {
         name: "Game",
         summary: "An adventure.",
         genres: [{ id: 2, name: "RPG" }],
+        themes: ["Dark fantasy"],
+        keywords: ["boss battles", "medieval"],
+        gameModes: ["Single player"],
+        playerPerspectives: ["Third person"],
         rating: 89.4,
       }),
     ).toEqual({
       description: "An adventure.",
-      metadata: { genre: ["RPG"], catalogRating: 8.9 },
+      metadata: {
+        genre: ["RPG"],
+        themes: ["Dark fantasy"],
+        keywords: ["boss battles", "medieval"],
+        gameModes: ["Single player"],
+        playerPerspectives: ["Third person"],
+        catalogRating: 8.9,
+      },
     });
   });
 
@@ -78,12 +91,28 @@ describe("catalog metadata refresh mappings", () => {
       refreshOpenLibrary({
         description: "A book description.",
         genres: ["Fantasy", "Adventure", "Magic", "Epic", "Fiction", "Ignored"],
+        subjects: [
+          "Fantasy",
+          "Magic",
+          "Epic",
+          "Fiction",
+          "Ignored",
+          "Space opera",
+        ],
         numberOfPages: 412,
       }),
     ).toEqual({
       description: "A book description.",
       metadata: {
         genre: ["Fantasy", "Adventure", "Magic", "Epic", "Fiction"],
+        subjects: [
+          "Fantasy",
+          "Magic",
+          "Epic",
+          "Fiction",
+          "Ignored",
+          "Space opera",
+        ],
         numberOfPages: 412,
       },
     });
@@ -91,6 +120,21 @@ describe("catalog metadata refresh mappings", () => {
 });
 
 describe("catalog metadata refresh changes", () => {
+  it("does not write when the merged metadata is unchanged", () => {
+    expect(
+      getCatalogRefreshChanges(
+        {
+          description: "Existing description",
+          metadata: { keywords: ["space travel"] },
+        },
+        {
+          description: "Existing description",
+          metadata: { keywords: ["space travel"] },
+        },
+      ),
+    ).toEqual({});
+  });
+
   it("only returns fields that changed, allowing dry runs to avoid writes", () => {
     expect(
       getCatalogRefreshChanges(
@@ -116,6 +160,34 @@ describe("catalog metadata refresh changes", () => {
         {},
       ),
     ).toEqual({});
+  });
+
+  it("merges non-empty metadata without erasing existing enrichment", () => {
+    expect(
+      getCatalogRefreshChanges(
+        {
+          description: "Existing description",
+          metadata: {
+            genre: ["RPG"],
+            themes: ["Dark fantasy"],
+            keywords: ["old keyword"],
+          },
+        },
+        {
+          metadata: {
+            keywords: [],
+            gameModes: ["Single player"],
+          },
+        },
+      ),
+    ).toEqual({
+      metadata: {
+        genre: ["RPG"],
+        themes: ["Dark fantasy"],
+        keywords: ["old keyword"],
+        gameModes: ["Single player"],
+      },
+    });
   });
 
   it("does not write during a dry run", async () => {

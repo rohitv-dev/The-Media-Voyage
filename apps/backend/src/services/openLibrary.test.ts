@@ -1,4 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+const { environmentMock } = vi.hoisted(() => ({
+  environmentMock: {
+    OPEN_LIBRARY_CONTACT_EMAIL: undefined as string | undefined,
+  },
+}));
+
+vi.mock("../config", () => ({ env: environmentMock }));
+
 import {
   getOpenLibraryDetails,
   getOpenLibraryRecommendations,
@@ -10,6 +19,7 @@ describe("getOpenLibraryDetails", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     fetchMock.mockReset();
+    environmentMock.OPEN_LIBRARY_CONTACT_EMAIL = undefined;
   });
 
   it("uses the stored work ID and ignores a non-matching search result", async () => {
@@ -70,7 +80,38 @@ describe("getOpenLibraryDetails", () => {
 
     await expect(getOpenLibraryDetails("OL123W")).resolves.toEqual({
       genres: ["Fantasy"],
+      subjects: ["Fantasy"],
       numberOfPages: 412,
+    });
+
+    expect(fetchMock.mock.calls[0][1]).toEqual({
+      headers: { Accept: "application/json" },
+    });
+  });
+
+  it("identifies regular requests when a contact email is configured", async () => {
+    environmentMock.OPEN_LIBRARY_CONTACT_EMAIL = "support@example.com";
+    fetchMock
+      .mockResolvedValueOnce(new Response(JSON.stringify({}), { status: 404 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            numFound: 1,
+            start: 0,
+            docs: [{ key: "/works/OL123W", subject: ["Fantasy"] }],
+          }),
+          { status: 200 },
+        ),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await getOpenLibraryDetails("OL123W");
+
+    expect(fetchMock.mock.calls[0][1]).toEqual({
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "Media Voyage (support@example.com)",
+      },
     });
   });
 });

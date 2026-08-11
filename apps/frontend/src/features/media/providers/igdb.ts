@@ -17,6 +17,13 @@ export async function hydrateIgdb(
     metadata.genre = details.genres.map((genre) => genre.name);
   }
 
+  if (details?.themes?.length) metadata.themes = details.themes;
+  if (details?.keywords?.length) metadata.keywords = details.keywords;
+  if (details?.gameModes?.length) metadata.gameModes = details.gameModes;
+  if (details?.playerPerspectives?.length) {
+    metadata.playerPerspectives = details.playerPerspectives;
+  }
+
   if (details?.rating) {
     metadata.catalogRating = Number((details.rating / 10).toFixed(1));
   }

@@ -122,6 +122,13 @@ describe("TMDB service", () => {
         poster_path: "/movie.jpg",
         overview: "  A useful description.  ",
         genres: [{ name: "Drama" }, { name: "Mystery" }],
+        keywords: {
+          keywords: [
+            { name: " space travel " },
+            { name: "Space Travel" },
+            { name: "wormhole" },
+          ],
+        },
         runtime: 127,
         vote_average: 8.4,
       }),
@@ -137,6 +144,7 @@ describe("TMDB service", () => {
       imageUrl: "https://image.tmdb.org/t/p/w500/movie.jpg",
       description: "A useful description.",
       genres: ["Drama", "Mystery"],
+      keywords: ["space travel", "wormhole"],
       runtimeMinutes: 127,
       catalogRating: 8.4,
       seasons: [],
@@ -145,6 +153,7 @@ describe("TMDB service", () => {
     const url = new URL(String(fetchMock.mock.calls[0][0]));
     expect(url.pathname).toBe("/3/movie/31");
     expect(url.searchParams.get("language")).toBe("en-US");
+    expect(url.searchParams.get("append_to_response")).toBe("keywords");
   });
 
   it("normalizes show seasons and filters specials and empty seasons", async () => {
@@ -156,6 +165,7 @@ describe("TMDB service", () => {
         poster_path: null,
         overview: null,
         genres: [{ name: "Comedy" }],
+        keywords: { results: [{ name: " found family " }] },
         episode_run_time: [0, 48, 50],
         last_episode_to_air: { runtime: 55 },
         vote_average: null,
@@ -188,6 +198,7 @@ describe("TMDB service", () => {
       imageUrl: null,
       description: null,
       genres: ["Comedy"],
+      keywords: ["found family"],
       runtimeMinutes: 44,
       catalogRating: null,
       seasons: [

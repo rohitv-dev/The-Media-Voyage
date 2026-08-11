@@ -19,6 +19,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./catalogMetadata": "./src/catalogMetadata.ts",
     "./schema": "./src/db/schema.ts",
     "./api": "./src/api/index.ts",
     "./userMediaSchema": "./src/schemas/userMediaSchema.ts"

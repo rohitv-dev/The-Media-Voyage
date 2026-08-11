@@ -4,6 +4,7 @@ import type {
   IgdbResponse,
   SourceMediaRecord,
 } from "@media-voyage/shared/api";
+import { normalizeCatalogTerms } from "@media-voyage/shared/catalogMetadata";
 import { getAccessToken } from "./twitchAuth";
 import { env } from "../config";
 import { internalServerError } from "../errors";
@@ -55,6 +56,48 @@ async function fetchIgdbSearch(query: string): Promise<IgdbResponse> {
   `);
 }
 
+type IgdbNamedRecord = {
+  id: number;
+  name: string;
+};
+
+type IgdbGameResponse = {
+  id: number;
+  name: string;
+  summary?: string;
+  genres?: { id: number; name: string }[];
+  rating?: number;
+  themes?: IgdbNamedRecord[];
+  keywords?: IgdbNamedRecord[];
+  game_modes?: IgdbNamedRecord[];
+  player_perspectives?: IgdbNamedRecord[];
+};
+
+function toGameDetails(game: IgdbGameResponse): IgdbGame {
+  const themes = normalizeCatalogTerms(game.themes?.map((theme) => theme.name));
+  const keywords = normalizeCatalogTerms(
+    game.keywords?.map((keyword) => keyword.name),
+  );
+  const gameModes = normalizeCatalogTerms(
+    game.game_modes?.map((mode) => mode.name),
+  );
+  const playerPerspectives = normalizeCatalogTerms(
+    game.player_perspectives?.map((perspective) => perspective.name),
+  );
+
+  return {
+    id: game.id,
+    name: game.name,
+    ...(game.summary !== undefined ? { summary: game.summary } : {}),
+    ...(game.genres ? { genres: game.genres } : {}),
+    ...(game.rating !== undefined ? { rating: game.rating } : {}),
+    ...(themes ? { themes } : {}),
+    ...(keywords ? { keywords } : {}),
+    ...(gameModes ? { gameModes } : {}),
+    ...(playerPerspectives ? { playerPerspectives } : {}),
+  };
+}
+
 // Occasionally returns an empty result for a query that succeeds moments
 // later on an identical retry.
 export async function searchGames(query: string): Promise<SourceMediaRecord[]> {
@@ -72,12 +115,12 @@ export async function searchGames(query: string): Promise<SourceMediaRecord[]> {
 export async function getGameDetails(
   externalId: string,
 ): Promise<IgdbGame | null> {
-  const data = await fetchIgdb<IgdbGame[]>(`
-    fields id,name,summary,genres.name,rating;
+  const data = await fetchIgdb<IgdbGameResponse[]>(`
+    fields id,name,summary,genres.name,rating,themes.name,keywords.name,game_modes.name,player_perspectives.name;
     where id = ${Number(externalId)};
   `);
 
-  return data[0] ?? null;
+  return data[0] ? toGameDetails(data[0]) : null;
 }
 
 export async function getGameRecommendations(

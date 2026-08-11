@@ -44,6 +44,10 @@ export type IgdbGame = {
   name: string;
   summary?: string;
   genres?: { id: number; name: string }[];
+  themes?: string[];
+  keywords?: string[];
+  gameModes?: string[];
+  playerPerspectives?: string[];
   rating?: number;
 };
 
@@ -105,6 +109,7 @@ export interface TmdbMediaDetails extends SourceMediaRecord {
   type: TmdbMediaType;
   description: string | null;
   genres: string[];
+  keywords?: string[];
   runtimeMinutes: number | null;
   catalogRating: number | null;
   seasons: TmdbSeasonSummary[];

@@ -13,6 +13,7 @@
     "studio": "pnpm --filter @media-voyage/shared studio",
     "db:push": "pnpm --filter @media-voyage/shared db:push",
     "backend:build": "pnpm --filter @media-voyage/backend build",
+    "refresh-catalog-metadata": "pnpm backend:build && node apps/backend/dist/refresh-catalog-metadata.cjs",
     "frontend:build": "pnpm --filter @media-voyage/frontend build",
     "frontend:cap:sync": "pnpm --filter @media-voyage/frontend exec cap sync android",
     "frontend:cap:open": "pnpm --filter @media-voyage/frontend exec cap open android"

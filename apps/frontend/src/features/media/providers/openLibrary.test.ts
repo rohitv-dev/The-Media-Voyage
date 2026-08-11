@@ -32,6 +32,14 @@ describe("hydrateOpenLibrary", () => {
           "Classics",
           "Politics",
         ],
+        subjects: [
+          "Science fiction",
+          "Space opera",
+          "Adventure",
+          "Classics",
+          "Politics",
+          "Extra subject",
+        ],
         numberOfPages: 320,
       },
     });
