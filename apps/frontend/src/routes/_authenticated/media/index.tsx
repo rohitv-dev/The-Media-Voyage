@@ -1,6 +1,7 @@
 import {
   userMediaDropdownOptions,
   userMediaFilterInfiniteQueryOptions,
+  userMediaSemanticSearchQueryOptions,
 } from "#/features/media/queries";
 import {
   Box,
@@ -30,9 +31,9 @@ import { useDisclosure, useLocalStorage, useMediaQuery } from "@mantine/hooks";
 import { AnimatePresence, motion } from "motion/react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { gridItemMotionProps } from "#/theme/motion";
-import { MediaFilterCard } from
-  "#/features/media/components/MediaFilters/MediaFilterCard";
+import { MediaFilterCard } from "#/features/media/components/MediaFilters/MediaFilterCard";
 import { MediaPickerModal } from "#/features/media/components/MediaPickerModal";
+import { SemanticSearchPanel } from "#/features/media/components/SemanticSearchPanel";
 import { collectionQueryOptions } from "#/features/media-collection/queries";
 import {
   IconDice5,
@@ -40,14 +41,13 @@ import {
   IconLayoutGrid,
   IconMovie,
   IconPlus,
+  IconSearch,
   IconTable,
 } from "@tabler/icons-react";
-import { MediaAppliedFilters } from
-  "#/features/media/components/MediaFilters/MediaAppliedFilters";
+import { MediaAppliedFilters } from "#/features/media/components/MediaFilters/MediaAppliedFilters";
 import { MediaTable } from "#/features/media/components/MediaTable";
 import { useFilterPresets } from "#/features/media/hooks/useFilterPresets";
-import { FilterPresetsMenu } from
-  "#/features/media/components/MediaFilters/FilterPresetsMenu";
+import { FilterPresetsMenu } from "#/features/media/components/MediaFilters/FilterPresetsMenu";
 
 type ViewType = "grid" | "table";
 
@@ -64,6 +64,16 @@ function RouteComponent() {
   const search = Route.useSearch();
   const { data: dropdowns } = useQuery(userMediaDropdownOptions);
   const { data: collections } = useQuery(collectionQueryOptions);
+  const [semanticQuery, setSemanticQuery] = useState("");
+  const [semanticOpen, setSemanticOpen] = useState(false);
+  const isExploring = semanticQuery.length > 0;
+  const {
+    data: semanticRecords,
+    isPending: isSemanticPending,
+    isFetching: isSemanticFetching,
+    isError: isSemanticError,
+    error: semanticError,
+  } = useQuery(userMediaSemanticSearchQueryOptions(semanticQuery));
   const {
     data,
     isFetching,
@@ -74,7 +84,9 @@ function RouteComponent() {
     fetchNextPage,
     isFetchingNextPage,
     isFetchNextPageError,
-  } = useInfiniteQuery(userMediaFilterInfiniteQueryOptions(search));
+  } = useInfiniteQuery(
+    userMediaFilterInfiniteQueryOptions(search, !isExploring),
+  );
   const navigate = useNavigate();
   const reduceMotion = useAppReducedMotion();
   const isMdDown = useMediaQuery("(max-width: 47.99em)");
@@ -91,8 +103,13 @@ function RouteComponent() {
   const { presets, savePreset, deletePreset } = useFilterPresets();
   const skipNextSearchSyncRef = useRef(false);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
-  const records = data?.pages.flatMap((page) => page.data) ?? [];
-  const isInitialLoading = isPending && !data;
+  const normalRecords = data?.pages.flatMap((page) => page.data) ?? [];
+  const records = isExploring ? (semanticRecords ?? []) : normalRecords;
+  const isResultsFetching = isExploring ? isSemanticFetching : isFetching;
+  const isResultsPending = isExploring ? isSemanticPending : isPending;
+  const hasLoadedResults = isExploring
+    ? semanticRecords !== undefined
+    : data !== undefined;
 
   const hasAppliedFilters = Boolean(
     search.search ||
@@ -145,13 +162,16 @@ function RouteComponent() {
   };
 
   useEffect(() => {
-    if (isError) {
+    if (isError || isSemanticError) {
       showErrorNotification({
-        message: getApiErrorMessage(error, "Failed to load data"),
+        message: getApiErrorMessage(
+          isSemanticError ? semanticError : error,
+          isSemanticError ? "Explore search failed" : "Failed to load data",
+        ),
         title: "Please try again later",
       });
     }
-  }, [error, isError]);
+  }, [error, isError, isSemanticError, semanticError]);
 
   useEffect(() => {
     if (isMdDown && view !== "grid") {
@@ -163,6 +183,7 @@ function RouteComponent() {
     const sentinel = loadMoreRef.current;
 
     if (
+      isExploring ||
       !sentinel ||
       !hasNextPage ||
       isFetchingNextPage ||
@@ -183,7 +204,13 @@ function RouteComponent() {
     observer.observe(sentinel);
 
     return () => observer.disconnect();
-  }, [fetchNextPage, hasNextPage, isFetchNextPageError, isFetchingNextPage]);
+  }, [
+    fetchNextPage,
+    hasNextPage,
+    isExploring,
+    isFetchNextPageError,
+    isFetchingNextPage,
+  ]);
 
   useEffect(() => {
     if (skipNextSearchSyncRef.current) {
@@ -193,6 +220,13 @@ function RouteComponent() {
     setFilters(search);
   }, [search]);
 
+  const clearSemanticSearch = () => {
+    setSemanticQuery("");
+    setSemanticOpen(false);
+  };
+
+  const isInitialLoading = isResultsPending && !hasLoadedResults;
+
   return (
     <Container fluid pt="md" pb="md">
       <Stack gap="md">
@@ -200,7 +234,7 @@ function RouteComponent() {
           <Stack gap={2}>
             <Group gap="xs">
               <Title order={2}>Library</Title>
-              {isFetching && !isFetchingNextPage && <Loader size="xs" />}
+              {isResultsFetching && !isFetchingNextPage && <Loader size="xs" />}
             </Group>
             <Text c="dimmed" size="sm">
               Select an entry to view the full details, or use the action button
@@ -251,12 +285,23 @@ function RouteComponent() {
               onApply={updateAndApplyFilters}
               onSave={(name) => savePreset(name, filters)}
               onDelete={deletePreset}
+              disabled={isExploring}
             />
+            <Button
+              size="xs"
+              variant={semanticOpen ? "filled" : "light"}
+              leftSection={<IconSearch size={16} />}
+              aria-pressed={semanticOpen}
+              onClick={() => setSemanticOpen(true)}
+            >
+              Semantic search
+            </Button>
             <Box hiddenFrom="lg">
               <Button
                 size="xs"
                 leftSection={<IconFilter size={16} />}
                 onClick={open}
+                disabled={isExploring}
               >
                 Filters
               </Button>
@@ -264,10 +309,21 @@ function RouteComponent() {
           </Group>
         </Group>
 
-        <MediaAppliedFilters
-          filters={search}
-          updateAndApplyFilters={updateAndApplyFilters}
-        />
+        {semanticOpen && (
+          <SemanticSearchPanel
+            query={semanticQuery}
+            isSearching={isSemanticFetching}
+            onSearch={setSemanticQuery}
+            onClear={clearSemanticSearch}
+          />
+        )}
+
+        {!isExploring && (
+          <MediaAppliedFilters
+            filters={search}
+            updateAndApplyFilters={updateAndApplyFilters}
+          />
+        )}
 
         <Flex gap="sm">
           <Box flex="1">
@@ -285,37 +341,49 @@ function RouteComponent() {
                   <MediaCardSkeleton key={index} />
                 ))}
               </SimpleGrid>
-            ) : !isFetching && data && records.length === 0 ? (
+            ) : !isResultsFetching &&
+              hasLoadedResults &&
+              records.length === 0 ? (
               <EmptyState
                 icon={<IconMovie size={36} />}
                 title={
-                  hasAppliedFilters
-                    ? "No media match these filters"
-                    : "Your library is empty"
+                  isExploring
+                    ? "No semantic matches found"
+                    : hasAppliedFilters
+                      ? "No media match these filters"
+                      : "Your library is empty"
                 }
                 description={
-                  hasAppliedFilters
-                    ? "Clear the filters to see everything in your library."
-                    : "Add your first movie, show, book, or game to get started."
+                  isExploring
+                    ? "Try describing a different mood, theme, or story."
+                    : hasAppliedFilters
+                      ? "Clear the filters to see everything in your library."
+                      : "Add your first movie, show, book, or game to get started."
                 }
               >
                 <Button
                   mt="xs"
                   variant="light"
                   leftSection={
-                    hasAppliedFilters ? (
+                    isExploring || hasAppliedFilters ? (
                       <IconFilter size={16} />
                     ) : (
                       <IconPlus size={16} />
                     )
                   }
                   onClick={() =>
-                    hasAppliedFilters
-                      ? resetFilters()
-                      : navigate({ to: "/media/add" })
+                    isExploring
+                      ? clearSemanticSearch()
+                      : hasAppliedFilters
+                        ? resetFilters()
+                        : navigate({ to: "/media/add" })
                   }
                 >
-                  {hasAppliedFilters ? "Clear filters" : "Add media"}
+                  {isExploring
+                    ? "Clear explore search"
+                    : hasAppliedFilters
+                      ? "Clear filters"
+                      : "Add media"}
                 </Button>
               </EmptyState>
             ) : view === "table" ? (
@@ -366,9 +434,9 @@ function RouteComponent() {
               </SimpleGrid>
             )}
 
-            <Box ref={loadMoreRef} h={1} aria-hidden="true" />
+            {!isExploring && <Box ref={loadMoreRef} h={1} aria-hidden="true" />}
 
-            {(isFetchingNextPage || isFetchNextPageError) && (
+            {!isExploring && (isFetchingNextPage || isFetchNextPageError) && (
               <Stack align="center" gap="xs" mt="md">
                 {isFetchingNextPage && (
                   <Group gap="xs">
@@ -397,26 +465,60 @@ function RouteComponent() {
           </Box>
 
           <Box visibleFrom="lg" w={288} flex="0 0 288px">
-            <MediaFilterCard
-              filters={filters}
-              applyFilters={applyFilters}
-              resetFilters={resetFilters}
-              updateFilters={updateFilters}
-              dropdowns={dropdowns ?? { sources: [], tags: [] }}
-              compact
-            />
+            <fieldset
+              disabled={isExploring}
+              aria-label={
+                isExploring
+                  ? "Library filters are paused during semantic search"
+                  : undefined
+              }
+              style={{
+                border: 0,
+                margin: 0,
+                minWidth: 0,
+                opacity: isExploring ? 0.5 : 1,
+                padding: 0,
+                transition: "opacity 150ms ease",
+              }}
+            >
+              <MediaFilterCard
+                filters={filters}
+                applyFilters={applyFilters}
+                resetFilters={resetFilters}
+                updateFilters={updateFilters}
+                dropdowns={dropdowns ?? { sources: [], tags: [] }}
+                compact
+              />
+            </fieldset>
           </Box>
         </Flex>
       </Stack>
 
       <Drawer opened={opened} onClose={close}>
-        <MediaFilterCard
-          filters={filters}
-          applyFilters={applyFilters}
-          resetFilters={resetFilters}
-          updateFilters={updateFilters}
-          dropdowns={dropdowns ?? { sources: [], tags: [] }}
-        />
+        <fieldset
+          disabled={isExploring}
+          aria-label={
+            isExploring
+              ? "Library filters are paused during semantic search"
+              : undefined
+          }
+          style={{
+            border: 0,
+            margin: 0,
+            minWidth: 0,
+            opacity: isExploring ? 0.5 : 1,
+            padding: 0,
+            transition: "opacity 150ms ease",
+          }}
+        >
+          <MediaFilterCard
+            filters={filters}
+            applyFilters={applyFilters}
+            resetFilters={resetFilters}
+            updateFilters={updateFilters}
+            dropdowns={dropdowns ?? { sources: [], tags: [] }}
+          />
+        </fieldset>
       </Drawer>
 
       <MediaPickerModal

@@ -1,5 +1,8 @@
-import "dotenv/config";
+import { config as loadEnv } from "dotenv";
 import { z } from "zod";
+
+loadEnv({ quiet: true });
+loadEnv({ path: "apps/backend/.env", quiet: true });
 
 const isProduction = process.env.NODE_ENV === "production";
 

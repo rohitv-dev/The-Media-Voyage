@@ -4,9 +4,14 @@ import rateLimit from "@fastify/rate-limit";
 import compress from "@fastify/compress";
 import { env } from "./config";
 import { registerErrorHandler } from "./error-handler";
+import { disposeMediaEmbeddingPipeline } from "./services/mediaEmbeddings";
 
 const fastify = Fastify({
   logger: true,
+});
+
+fastify.addHook("onClose", async () => {
+  await disposeMediaEmbeddingPipeline();
 });
 
 fastify.register(compress, { global: true });
@@ -82,5 +87,14 @@ const start = async () => {
     process.exit(1);
   }
 };
+
+const shutdown = async (signal: string) => {
+  fastify.log.info({ signal }, "Shutting down");
+  await fastify.close();
+  process.exit(0);
+};
+
+process.once("SIGINT", () => void shutdown("SIGINT"));
+process.once("SIGTERM", () => void shutdown("SIGTERM"));
 
 start();

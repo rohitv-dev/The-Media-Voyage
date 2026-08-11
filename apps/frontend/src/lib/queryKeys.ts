@@ -17,6 +17,8 @@ export const queryKeys = {
     filteredInfinite: (filters: UserMediaQuerySchema) =>
       ["user-media", "filtered-infinite", filters] as const,
     search: (search: string) => ["user-media", "search", search] as const,
+    semanticSearch: (query: string) =>
+      ["user-media", "semantic-search", query] as const,
     trash: ["user-media", "trash"] as const,
     dropdowns: ["user-media", "dropdowns"] as const,
   },

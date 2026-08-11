@@ -11,7 +11,7 @@
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg17
     restart: unless-stopped
     environment:
       POSTGRES_USER: media_voyage
@@ -42,6 +42,8 @@ services:
       IGDB_CLIENT_ID: ${IGDB_CLIENT_ID}
       IGDB_CLIENT_SECRET: ${IGDB_CLIENT_SECRET}
       TMDB_API_READ_ACCESS_TOKEN: ${TMDB_API_READ_ACCESS_TOKEN}
+    volumes:
+      - transformers_cache:/app/.cache/transformers
     ports:
       - "3000:3000"
 
@@ -60,3 +62,4 @@ services:
 
 volumes:
   postgres_data:
+  transformers_cache:

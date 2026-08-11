@@ -1,4 +1,5 @@
 import {
+  EMBEDDING_MODEL,
   media,
   mediaCollection,
   mediaCollectionItems,
@@ -21,9 +22,11 @@ import {
   asc,
   between,
   count,
+  cosineDistance,
   desc,
   eq,
   gte,
+  gt,
   ilike,
   inArray,
   isNotNull,
@@ -176,6 +179,26 @@ export function searchUserMedia(userId: string, search: string) {
       and(activeUserMediaCondition(userId), ilike(media.title, `%${search}%`)),
     )
     .orderBy(asc(media.title), asc(userMedia.id))
+    .limit(20);
+}
+
+export function searchUserMediaSemantically(userId: string, embedding: number[]) {
+  const similarity = sql<number>`1 - (${cosineDistance(media.embedding, embedding)})`;
+  const minimumSimilarity = 0.35;
+
+  return db
+    .select(userMediaSummarySelect)
+    .from(userMedia)
+    .innerJoin(media, eq(userMedia.mediaId, media.id))
+    .where(
+      and(
+        activeUserMediaCondition(userId),
+        isNotNull(media.embedding),
+        eq(media.embeddingModel, EMBEDDING_MODEL),
+        gt(similarity, minimumSimilarity),
+      ),
+    )
+    .orderBy(desc(similarity), asc(media.title), asc(userMedia.id))
     .limit(20);
 }
 

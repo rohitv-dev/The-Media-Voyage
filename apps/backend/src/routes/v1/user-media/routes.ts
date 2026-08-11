@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyContextConfig, FastifyInstance } from "fastify";
 import Papa from "papaparse";
 import {
   calendarActivityQuerySchema,
@@ -11,9 +11,11 @@ import {
   userMediaQuerySchema,
   userMediaQuickActionSchema,
   userMediaSearchQuerySchema,
+  semanticSearchQuerySchema,
 } from "@media-voyage/shared/api";
 import { internalServerError, notFound } from "@/errors";
 import { requireAuth } from "@/require-auth";
+import { generateMediaEmbedding, ensureMediaEmbedding } from "@/services/mediaEmbeddings";
 import { toCsvRows } from "./csv";
 import {
   filterUserMedia,
@@ -29,6 +31,7 @@ import {
   listUserMedia,
   pickUserMedia,
   searchUserMedia,
+  searchUserMediaSemantically,
 } from "./queries";
 import {
   createUserMedia,
@@ -40,12 +43,23 @@ import {
   updateUserMediaQuickActions,
 } from "./service";
 
+const semanticSearchConfig: FastifyContextConfig = {
+  rateLimit: {
+    max: 10,
+    timeWindow: "1 minute",
+  },
+};
+
 async function userMediaRoutes(fastify: FastifyInstance) {
   fastify.addHook("preHandler", requireAuth);
 
   fastify.post("/", async (request, reply) => {
     const input = userMediaFormSchema.parse(request.body);
     const record = await createUserMedia(request.userId, input);
+
+    void ensureMediaEmbedding(record.mediaId).catch((error) => {
+      request.log.warn({ err: error, mediaId: record.mediaId }, "Media embedding failed after creation");
+    });
 
     return reply.status(201).send(record);
   });
@@ -55,6 +69,22 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     const records = await searchUserMedia(request.userId, search);
 
     return reply.send(records);
+  });
+
+  fastify.get("/semantic-search", { config: semanticSearchConfig }, async (request, reply) => {
+    const { q } = semanticSearchQuerySchema.parse(request.query);
+    reply.header("Cache-Control", "no-store");
+
+    try {
+      const embedding = await generateMediaEmbedding(q);
+      const records = await searchUserMediaSemantically(request.userId, embedding);
+
+      request.log.info({ records: records.map((r) => r.title) }, "Semantic search results");
+
+      return reply.send(records);
+    } catch (error) {
+      throw internalServerError("Semantic search failed", { cause: error });
+    }
   });
 
   fastify.get("/:id", async (request, reply) => {

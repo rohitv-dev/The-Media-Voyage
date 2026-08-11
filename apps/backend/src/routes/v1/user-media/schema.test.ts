@@ -1,20 +1,39 @@
 import { describe, expect, it } from "vitest";
 import {
   reorderMediaCollectionItemsSchema,
+  semanticSearchQuerySchema,
   userMediaFormSchema,
   userMediaPatchSchema,
 } from "@media-voyage/shared/api";
 
 describe("user-media request schemas", () => {
+  it("requires a bounded, meaningful semantic search query", () => {
+    expect(
+      semanticSearchQuerySchema.safeParse({ q: "too short" }).success,
+    ).toBe(false);
+    expect(
+      semanticSearchQuerySchema.safeParse({ q: "a".repeat(501) }).success,
+    ).toBe(false);
+    expect(
+      semanticSearchQuerySchema.safeParse({
+        q: "  atmospheric space horror  ",
+      }),
+    ).toMatchObject({ success: true, data: { q: "atmospheric space horror" } });
+  });
+
   it("keeps canonical media fields required for POST", () => {
-    expect(userMediaFormSchema.safeParse({ title: "Dune" }).success).toBe(false);
+    expect(userMediaFormSchema.safeParse({ title: "Dune" }).success).toBe(
+      false,
+    );
     expect(
       userMediaFormSchema.safeParse({ title: "Dune", type: "movie" }).success,
     ).toBe(true);
   });
 
   it("accepts a single tracking field for PATCH", () => {
-    expect(userMediaPatchSchema.parse({ progress: 42 })).toEqual({ progress: 42 });
+    expect(userMediaPatchSchema.parse({ progress: 42 })).toEqual({
+      progress: 42,
+    });
   });
 
   it("accepts nullable clears for tracking fields", () => {
@@ -87,7 +106,9 @@ describe("collection reorder request schema", () => {
   });
 
   it("rejects empty, duplicate, and incomplete orders", () => {
-    expect(reorderMediaCollectionItemsSchema.safeParse({ items: [] }).success).toBe(false);
+    expect(
+      reorderMediaCollectionItemsSchema.safeParse({ items: [] }).success,
+    ).toBe(false);
     expect(
       reorderMediaCollectionItemsSchema.safeParse({
         items: [

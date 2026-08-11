@@ -8,6 +8,7 @@ import type {
   GetUserMediaResponse,
   GetUserMediaPageResponse,
   GetUserMediaSearchResponse,
+  GetSemanticSearchResponse,
   MediaDetailedRecord,
   ReactionRecord,
   StatusHistoryRecord,
@@ -94,6 +95,7 @@ async function getUserMediaFilterPageRecords(
 
 export function userMediaFilterInfiniteQueryOptions(
   filters: UserMediaQuerySchema,
+  enabled = true,
 ) {
   return infiniteQueryOptions({
     queryKey: queryKeys.userMedia.filteredInfinite(filters),
@@ -101,6 +103,7 @@ export function userMediaFilterInfiniteQueryOptions(
       getUserMediaFilterPageRecords(filters, pageParam),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
+    enabled,
   });
 }
 
@@ -117,6 +120,22 @@ export function userMediaSearchQueryOptions(search: string) {
     queryKey: queryKeys.userMedia.search(normalizedSearch),
     queryFn: () => getUserMediaSearchRecords(normalizedSearch),
     enabled: normalizedSearch.length >= 2,
+  });
+}
+
+async function getUserMediaSemanticSearchRecords(query: string) {
+  return api<GetSemanticSearchResponse>(
+    `/user-media/semantic-search?q=${encodeURIComponent(query)}`,
+  );
+}
+
+export function userMediaSemanticSearchQueryOptions(query: string) {
+  const normalizedQuery = query.trim();
+
+  return queryOptions({
+    queryKey: queryKeys.userMedia.semanticSearch(normalizedQuery),
+    queryFn: () => getUserMediaSemanticSearchRecords(normalizedQuery),
+    enabled: normalizedQuery.length >= 10,
   });
 }
 

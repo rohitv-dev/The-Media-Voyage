@@ -3,8 +3,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { IconBookmark, IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import type { UserMediaQuerySchema } from "@media-voyage/shared/api";
 import type { FilterPreset } from "#/features/media/hooks/useFilterPresets";
-import { SavePresetModal } from
-  "#/features/media/components/MediaFilters/SavePresetModal";
+import { SavePresetModal } from "#/features/media/components/MediaFilters/SavePresetModal";
 import { confirmDelete } from "#/lib/confirmModal";
 import { showSuccessNotification } from "#/lib/notifications";
 
@@ -13,6 +12,7 @@ type FilterPresetsMenuProps = {
   onApply: (filters: UserMediaQuerySchema) => void;
   onSave: (name: string) => { ok: boolean; error?: string };
   onDelete: (id: string) => void;
+  disabled?: boolean;
 };
 
 export function FilterPresetsMenu({
@@ -20,6 +20,7 @@ export function FilterPresetsMenu({
   onApply,
   onSave,
   onDelete,
+  disabled = false,
 }: FilterPresetsMenuProps) {
   const [saveModalOpened, { open: openSaveModal, close: closeSaveModal }] =
     useDisclosure();
@@ -45,6 +46,7 @@ export function FilterPresetsMenu({
             size="xs"
             variant="light"
             leftSection={<IconBookmark size={16} />}
+            disabled={disabled}
           >
             Presets
           </Button>

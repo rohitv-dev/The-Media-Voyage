@@ -3,7 +3,7 @@
 # This is required because the backend depends on packages/shared,
 # which only exists inside the pnpm workspace.
 
-FROM node:24-alpine AS base
+FROM node:24-bookworm-slim AS base
 RUN corepack enable && corepack prepare pnpm@11.5.0 --activate
 
 # Install every workspace's dependencies first, in their own layer,
@@ -31,6 +31,10 @@ ENV NODE_ENV=production
 # Environment tab as real container env vars now that this is deployed as a
 # prebuilt image rather than a Dockerfile-type app — no ARG passthrough needed.
 
-COPY --from=build /app .
+COPY --from=build --chown=node:node /app .
+RUN mkdir -p /app/.cache/transformers \
+  && chown -R node:node /app/.cache
+USER node
+RUN test -w /app/.cache/transformers
 EXPOSE 3000
 CMD ["node", "apps/backend/dist/index.cjs"]

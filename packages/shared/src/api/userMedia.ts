@@ -265,6 +265,18 @@ export type GetUserMediaSearchResponse = z.infer<
   typeof getUserMediaSearchResponseSchema
 >;
 
+export const semanticSearchQuerySchema = z.object({
+  q: z.string().trim().min(10).max(500),
+});
+
+export type SemanticSearchQuery = z.infer<typeof semanticSearchQuerySchema>;
+
+export const getSemanticSearchResponseSchema = z.array(mediaRecordSchema);
+
+export type GetSemanticSearchResponse = z.infer<
+  typeof getSemanticSearchResponseSchema
+>;
+
 export const userMediaPageQuerySchema = userMediaQuerySchema.extend({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(24),

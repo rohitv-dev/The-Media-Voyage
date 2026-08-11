@@ -13,7 +13,9 @@ import {
   uniqueIndex,
   real,
   check,
+  vector,
 } from "drizzle-orm/pg-core";
+import { EMBEDDING_DIMENSIONS } from "../embedding";
 
 type MovieOrShowMetadata = {
   genre?: string[];
@@ -96,6 +98,9 @@ export const media = pgTable(
     externalId: text("external_id"),
 
     metadata: jsonb("metadata").$type<CatalogMetadata>().default({}).notNull(),
+    embedding: vector("embedding", { dimensions: EMBEDDING_DIMENSIONS }),
+    embeddingModel: text("embedding_model"),
+    embeddingUpdatedAt: timestamp("embedding_updated_at"),
 
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),

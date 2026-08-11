@@ -16,6 +16,7 @@ Media Voyage is a personal media-tracking app for keeping tabs on the movies, sh
 - Tag and source management
 - Media lookup via TMDB (movies and shows), IGDB (games), and Open Library (books)
 - CSV export of your whole library
+- Semantic library search using catalog descriptions and provider terms
 - Appearance settings: light/dark theme, cover art toggle and size, reduced motion
 
 ## Tech Stack
@@ -33,11 +34,15 @@ Media Voyage is a personal media-tracking app for keeping tabs on the movies, sh
    pnpm install
    ```
 
-2. Copy `.env.example` to `.env` and fill in the required values: `DATABASE_URL`, `BETTER_AUTH_SECRET` (32+ random characters), `BETTER_AUTH_URL`, `FRONTEND_URL`, `TMDB_API_READ_ACCESS_TOKEN`, and the IGDB credentials. Open Library needs no API key; `OPEN_LIBRARY_CONTACT_EMAIL` is optional and identifies regular API traffic.
+2. Copy `.env.example` to `.env` and fill in the required values: `DATABASE_URL`, `BETTER_AUTH_SECRET` (32+ random characters), `BETTER_AUTH_URL`, `FRONTEND_URL`, `TMDB_API_READ_ACCESS_TOKEN`, and the IGDB credentials. Open Library needs no API key; `OPEN_LIBRARY_CONTACT_EMAIL` is optional and identifies regular API traffic. Semantic embeddings run locally with MiniLM; the model is downloaded and cached on the first embedding run.
 
    Registration is gated by `SIGNUP_INVITE_CODE` — signups must supply that code, and it is required when `NODE_ENV=production`.
 
    To refresh existing provider metadata safely, run `pnpm refresh-catalog-metadata -- --dry-run`. After reviewing the output, use `pnpm refresh-catalog-metadata -- --apply` to write changes.
+
+   To preview catalog embeddings without loading the local model, run `pnpm embed-catalog-media -- --dry-run`. After reviewing the output, use `pnpm embed-catalog-media -- --apply` to download/cache MiniLM and generate missing or stale embeddings.
+
+   When upgrading an existing semantic-search database, apply `packages/shared/drizzle/migrate_media_embeddings_to_minilm.sql` once before deploying the MiniLM backend. It clears only the old derived vectors, changes the column to 384 dimensions, and guarantees no 1536-dimensional vector remains. The backend Docker cache is `/app/.cache/transformers`; keep that path on persistent storage in Dokploy and ensure it is writable by UID/GID `1000:1000`.
 
 3. Push the database schema:
 
@@ -84,4 +89,6 @@ Run from the repo root:
 | `pnpm lint`                                  | Lint the frontend                       |
 | `pnpm db:push`                               | Push the Drizzle schema to the database |
 | `pnpm studio`                                | Open Drizzle Studio                     |
+| `pnpm refresh-catalog-metadata -- --dry-run` | Preview provider metadata refresh       |
+| `pnpm embed-catalog-media -- --dry-run`      | Preview catalog embedding backfill      |
 | `pnpm frontend:build` / `pnpm backend:build` | Production builds                       |
