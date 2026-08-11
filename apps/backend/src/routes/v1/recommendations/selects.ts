@@ -2,7 +2,6 @@ import { media, mediaRecommendations, user } from "@media-voyage/shared";
 
 export const recommendationCoreSelect = {
   id: mediaRecommendations.id,
-  origin: mediaRecommendations.origin,
   recipientId: mediaRecommendations.recipientId,
   senderId: mediaRecommendations.senderId,
   mediaId: mediaRecommendations.mediaId,
