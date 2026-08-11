@@ -28,7 +28,6 @@ export const auth = betterAuth({
         defaultValue: "private",
       },
       publicId: {
-        fieldName: "public_id",
         type: "string",
         required: false,
         input: false,
