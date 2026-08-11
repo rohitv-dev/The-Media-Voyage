@@ -27,7 +27,6 @@ const registerSchema = z
     email: z.email("Please enter a valid email"),
     password: z.string().min(1, "Password is required"),
     confirmPassword: z.string().min(1, "Confirm password is required"),
-    inviteCode: z.string().min(1, "Invite code is required"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     path: ["confirmPassword"],
@@ -43,7 +42,6 @@ function RouteComponent() {
       email: "",
       password: "",
       confirmPassword: "",
-      inviteCode: "",
     },
     validate: schemaResolver(registerSchema, { sync: true }),
   });
@@ -54,9 +52,6 @@ function RouteComponent() {
         email: values.email,
         password: values.password,
         name: values.name,
-        fetchOptions: {
-          headers: { "x-invite-code": values.inviteCode },
-        },
       });
 
       if (res.error) {
@@ -109,12 +104,6 @@ function RouteComponent() {
               label="Confirm Password"
               placeholder="Confirm your password"
               {...form.getInputProps("confirmPassword")}
-            />
-
-            <TextInput
-              label="Invite Code"
-              placeholder="Ask whoever runs this instance"
-              {...form.getInputProps("inviteCode")}
             />
 
             <Button type="submit" mt="md">

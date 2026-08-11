@@ -18,7 +18,11 @@ import {
   Title,
 } from "@mantine/core";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  useLocation,
+  useNavigate,
+} from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { MediaCard } from "#/features/media/components/MediaCard";
 import { MediaCardSkeleton } from "#/features/media/components/MediaCardSkeleton";
@@ -62,10 +66,14 @@ export const Route = createFileRoute("/_authenticated/media/")({
 
 function RouteComponent() {
   const search = Route.useSearch();
+  const semanticSearchFocusRequest = useLocation({
+    select: (location) => location.state.semanticSearchFocusRequest,
+  });
   const { data: dropdowns } = useQuery(userMediaDropdownOptions);
   const { data: collections } = useQuery(collectionQueryOptions);
   const [semanticQuery, setSemanticQuery] = useState("");
   const [semanticOpen, setSemanticOpen] = useState(false);
+  const [semanticFocusRequest, setSemanticFocusRequest] = useState(0);
   const isExploring = semanticQuery.length > 0;
   const {
     data: semanticRecords,
@@ -220,6 +228,22 @@ function RouteComponent() {
     setFilters(search);
   }, [search]);
 
+  useEffect(() => {
+    if (semanticSearchFocusRequest === undefined) return;
+
+    setSemanticOpen(true);
+    setSemanticFocusRequest((request) => request + 1);
+    void navigate({
+      to: "/media",
+      search: (previous) => previous,
+      replace: true,
+      state: (previous) => ({
+        ...previous,
+        semanticSearchFocusRequest: undefined,
+      }),
+    });
+  }, [navigate, semanticSearchFocusRequest]);
+
   const clearSemanticSearch = () => {
     setSemanticQuery("");
     setSemanticOpen(false);
@@ -315,6 +339,7 @@ function RouteComponent() {
             isSearching={isSemanticFetching}
             onSearch={setSemanticQuery}
             onClear={clearSemanticSearch}
+            focusRequest={semanticFocusRequest}
           />
         )}
 

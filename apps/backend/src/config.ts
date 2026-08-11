@@ -32,7 +32,6 @@ const environmentSchema = z.object({
     .string()
     .min(1, "TMDB_API_READ_ACCESS_TOKEN is required"),
   OPEN_LIBRARY_CONTACT_EMAIL: z.email().optional(),
-  SIGNUP_INVITE_CODE: z.string().min(1).optional(),
 });
 
 const parsedEnvironment = environmentSchema.safeParse({
@@ -52,7 +51,6 @@ const parsedEnvironment = environmentSchema.safeParse({
   AUTH_COOKIE_DOMAIN: process.env.AUTH_COOKIE_DOMAIN || undefined,
   OPEN_LIBRARY_CONTACT_EMAIL:
     process.env.OPEN_LIBRARY_CONTACT_EMAIL || undefined,
-  SIGNUP_INVITE_CODE: process.env.SIGNUP_INVITE_CODE || undefined,
 });
 
 if (!parsedEnvironment.success) {
@@ -86,12 +84,6 @@ if (environment.NODE_ENV === "production") {
 
   if (mobileFrontendOrigin && !mobileFrontendOrigin.startsWith("https://")) {
     throw new Error("MOBILE_FRONTEND_URL must use HTTPS in production");
-  }
-
-  if (!environment.SIGNUP_INVITE_CODE) {
-    throw new Error(
-      "SIGNUP_INVITE_CODE is required in production to keep signup from being wide open",
-    );
   }
 }
 

@@ -119,6 +119,15 @@ function AuthenticatedShell() {
   const openProfile = () => navigate({ to: "/profile" });
   const openMedia = (userMediaId: string) =>
     navigate({ to: "/media/view/$id", params: { id: userMediaId } });
+  const openSemanticSearch = () =>
+    navigate({
+      to: "/media",
+      search: (previous) => previous,
+      state: (previous) => ({
+        ...previous,
+        semanticSearchFocusRequest: Date.now(),
+      }),
+    });
   const openFriends = () => navigate({ to: "/friends" });
 
   return (
@@ -162,6 +171,7 @@ function AuthenticatedShell() {
         onClose={closeCommandPalette}
         onNavigate={navigateSidebar}
         onOpenMedia={openMedia}
+        onOpenSemanticSearch={openSemanticSearch}
       />
     </AppShell>
   );

@@ -6,7 +6,7 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { IconSearch, IconX } from "@tabler/icons-react";
 
@@ -15,6 +15,7 @@ type SemanticSearchPanelProps = {
   isSearching: boolean;
   onSearch: (query: string) => void;
   onClear: () => void;
+  focusRequest: number;
 };
 
 export function SemanticSearchPanel({
@@ -22,11 +23,17 @@ export function SemanticSearchPanel({
   isSearching,
   onSearch,
   onClear,
+  focusRequest,
 }: SemanticSearchPanelProps) {
   const [input, setInput] = useState("");
   const [focused, setFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const isActive = query.length > 0;
+
+  useEffect(() => {
+    if (focusRequest > 0) inputRef.current?.focus();
+  }, [focusRequest]);
 
   const submitSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -48,12 +55,19 @@ export function SemanticSearchPanel({
       <form onSubmit={submitSearch}>
         <Group align="center" gap="xs" wrap="nowrap">
           <TextInput
+            ref={inputRef}
             aria-label="Describe what you're looking for"
             placeholder="Describe what you're looking for..."
             value={input}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
             onChange={(event) => setInput(event.currentTarget.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                clearSearch();
+              }
+            }}
             leftSection={<IconSearch size={16} />}
             style={{ flex: 1, minWidth: 0 }}
           />

@@ -57,6 +57,7 @@ function renderPalette(
     onClose: vi.fn(),
     onNavigate: vi.fn(),
     onOpenMedia: vi.fn(),
+    onOpenSemanticSearch: vi.fn(),
   };
   const renderElement = (
     nextProps: Partial<React.ComponentProps<typeof CommandPalette>>,
@@ -126,6 +127,21 @@ describe("CommandPalette", () => {
     expect(onClose).toHaveBeenCalledOnce();
     expect(onNavigate).toHaveBeenCalledWith("/settings");
     expect(input).toHaveProperty("value", "");
+  });
+
+  it("opens semantic search from the actions group", () => {
+    const onClose = vi.fn();
+    const onOpenSemanticSearch = vi.fn();
+    renderPalette({ onClose, onOpenSemanticSearch });
+    const input = screen.getByRole("textbox", {
+      name: "Search actions or pages",
+    });
+
+    fireEvent.change(input, { target: { value: "semantic" } });
+    fireEvent.click(screen.getByRole("option", { name: /Semantic search/ }));
+
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(onOpenSemanticSearch).toHaveBeenCalledOnce();
   });
 
   it("supports keyboard selection", async () => {

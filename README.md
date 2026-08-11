@@ -36,8 +36,6 @@ Media Voyage is a personal media-tracking app for keeping tabs on the movies, sh
 
 2. Copy `.env.example` to `.env` and fill in the required values: `DATABASE_URL`, `BETTER_AUTH_SECRET` (32+ random characters), `BETTER_AUTH_URL`, `FRONTEND_URL`, `TMDB_API_READ_ACCESS_TOKEN`, and the IGDB credentials. Open Library needs no API key; `OPEN_LIBRARY_CONTACT_EMAIL` is optional and identifies regular API traffic. Semantic embeddings run locally with MiniLM; the model is downloaded and cached on the first embedding run.
 
-   Registration is gated by `SIGNUP_INVITE_CODE` — signups must supply that code, and it is required when `NODE_ENV=production`.
-
    To refresh existing provider metadata safely, run `pnpm refresh-catalog-metadata -- --dry-run`. After reviewing the output, use `pnpm refresh-catalog-metadata -- --apply` to write changes.
 
    To preview catalog embeddings without loading the local model, run `pnpm embed-catalog-media -- --dry-run`. After reviewing the output, use `pnpm embed-catalog-media -- --apply` to download/cache MiniLM and generate missing or stale embeddings.

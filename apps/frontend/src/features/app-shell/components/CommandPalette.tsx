@@ -16,7 +16,12 @@ import {
   useCombobox,
 } from "@mantine/core";
 import { useDebouncedValue, useMediaQuery } from "@mantine/hooks";
-import { IconLibrary, IconPlus, IconSearch } from "@tabler/icons-react";
+import {
+  IconLibrary,
+  IconPlus,
+  IconSearch,
+  IconSparkles,
+} from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
@@ -25,6 +30,7 @@ type CommandPaletteProps = {
   onClose: () => void;
   onNavigate: (path: AppShellPath) => void;
   onOpenMedia: (userMediaId: string) => void;
+  onOpenSemanticSearch: () => void;
 };
 
 const actionItems = [
@@ -34,6 +40,13 @@ const actionItems = [
     icon: IconPlus,
     path: "/media/add",
     keywords: ["new", "create", "movie", "show", "game", "book"],
+  },
+  {
+    label: "Semantic search",
+    description: "Explore your library by meaning",
+    icon: IconSparkles,
+    path: "semantic-search",
+    keywords: ["explore", "vague", "meaning", "library"],
   },
 ] as const;
 
@@ -110,6 +123,7 @@ export function CommandPalette({
   onClose,
   onNavigate,
   onOpenMedia,
+  onOpenSemanticSearch,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
   const [debouncedQuery] = useDebouncedValue(query, 300);
@@ -178,6 +192,13 @@ export function CommandPalette({
   };
 
   const selectCommand = (value: string) => {
+    if (value === "semantic-search") {
+      reset();
+      onClose();
+      onOpenSemanticSearch();
+      return;
+    }
+
     if (value.startsWith("media:")) {
       const userMediaId = value.replace("media:", "");
 
