@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  mediaImageFocusSchema,
   reorderMediaCollectionItemsSchema,
   semanticSearchQuerySchema,
   userMediaFormSchema,
@@ -90,6 +91,27 @@ describe("user-media request schemas", () => {
 
     expect(createResult).not.toHaveProperty("rewatches");
     expect(patchResult).toEqual({ progress: 42 });
+  });
+
+  it("accepts only paired, normalized image-focus coordinates", () => {
+    expect(
+      mediaImageFocusSchema.parse({ imageFocusX: 0, imageFocusY: 1 }),
+    ).toEqual({ imageFocusX: 0, imageFocusY: 1 });
+    expect(
+      mediaImageFocusSchema.parse({ imageFocusX: null, imageFocusY: null }),
+    ).toEqual({ imageFocusX: null, imageFocusY: null });
+    expect(
+      mediaImageFocusSchema.safeParse({ imageFocusX: 0.5, imageFocusY: null })
+        .success,
+    ).toBe(false);
+    expect(
+      mediaImageFocusSchema.safeParse({ imageFocusX: -0.1, imageFocusY: 0.5 })
+        .success,
+    ).toBe(false);
+    expect(
+      mediaImageFocusSchema.safeParse({ imageFocusX: 0.5, imageFocusY: 1.1 })
+        .success,
+    ).toBe(false);
   });
 });
 

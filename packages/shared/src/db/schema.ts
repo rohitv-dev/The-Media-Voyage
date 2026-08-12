@@ -147,6 +147,8 @@ export const userMedia = pgTable(
     mediaId: uuid("media_id")
       .references(() => media.id, { onDelete: "cascade" })
       .notNull(),
+    imageFocusX: real("image_focus_x"),
+    imageFocusY: real("image_focus_y"),
 
     status: statusEnum("status").notNull().default("planned"),
     rating: integer("rating"),
@@ -179,6 +181,18 @@ export const userMedia = pgTable(
   },
   (table) => [
     unique("user_media_unique").on(table.userId, table.mediaId),
+    check(
+      "user_media_image_focus_x_range",
+      sql`${table.imageFocusX} is null or (${table.imageFocusX} >= 0 and ${table.imageFocusX} <= 1)`,
+    ),
+    check(
+      "user_media_image_focus_y_range",
+      sql`${table.imageFocusY} is null or (${table.imageFocusY} >= 0 and ${table.imageFocusY} <= 1)`,
+    ),
+    check(
+      "user_media_image_focus_pair",
+      sql`(${table.imageFocusX} is null) = (${table.imageFocusY} is null)`,
+    ),
   ],
 );
 

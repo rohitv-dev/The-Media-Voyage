@@ -447,7 +447,7 @@ export async function updateUserMediaQuickActions(userId: string, id: string, qu
 export async function updateUserMediaImageFocus(userId: string, id: string, input: MediaImageFocus) {
   return db.transaction(async (tx) => {
     const [entry] = await tx
-      .select({ mediaId: userMedia.mediaId })
+      .select({ id: userMedia.id })
       .from(userMedia)
       .where(ownedUserMediaCondition(userId, id))
       .for("update")
@@ -456,12 +456,12 @@ export async function updateUserMediaImageFocus(userId: string, id: string, inpu
     if (!entry) return null;
 
     await tx
-      .update(media)
+      .update(userMedia)
       .set({
         imageFocusX: input.imageFocusX,
         imageFocusY: input.imageFocusY,
       })
-      .where(eq(media.id, entry.mediaId));
+      .where(ownedUserMediaCondition(userId, entry.id));
 
     const [record] = await tx
       .select(userMediaDetailedSelect)

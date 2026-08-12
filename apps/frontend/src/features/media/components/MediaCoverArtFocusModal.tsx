@@ -79,6 +79,7 @@ export function MediaCoverArtFocusModal({
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all }),
         queryClient.invalidateQueries({ queryKey: queryKeys.friends.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.public.all }),
         queryClient.invalidateQueries({
           queryKey: queryKeys.collection.itemsAll,
         }),
@@ -88,7 +89,7 @@ export function MediaCoverArtFocusModal({
       ]);
       showSuccessNotification({
         title: "Cover crop updated",
-        message: `${title} will use this focus point everywhere`,
+        message: `${title} will use this focus point across this entry's views`,
       });
       onClose();
     },
