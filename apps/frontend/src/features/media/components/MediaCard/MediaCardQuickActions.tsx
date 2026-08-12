@@ -11,6 +11,7 @@ import {
   IconPhotoEdit,
   IconHeart,
   IconHeartFilled,
+  IconPencil,
   IconTrash,
 } from "@tabler/icons-react";
 import { getStatusColor } from "../../display";
@@ -21,6 +22,7 @@ interface MediaCardQuickActionsProps {
   isPending: boolean;
   onAction: (action: UserMediaQuickAction) => void;
   onDelete: () => void;
+  onEdit?: () => void;
   onEditCover: () => void;
 }
 
@@ -38,6 +40,7 @@ export function MediaCardQuickActions({
   isPending,
   onAction,
   onDelete,
+  onEdit,
   onEditCover,
 }: MediaCardQuickActionsProps) {
   const activeVisibility = media.visibility;
@@ -143,6 +146,16 @@ export function MediaCardQuickActions({
             ))}
           </Menu.Sub.Dropdown>
         </Menu.Sub>
+
+        {onEdit && (
+          <Menu.Item
+            leftSection={<IconPencil size={16} />}
+            disabled={isPending}
+            onClick={onEdit}
+          >
+            Edit details
+          </Menu.Item>
+        )}
 
         <Menu.Item
           leftSection={<IconPhotoEdit size={16} />}

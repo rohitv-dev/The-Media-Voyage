@@ -26,6 +26,10 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { MediaCard } from "#/features/media/components/MediaCard";
 import { MediaCardSkeleton } from "#/features/media/components/MediaCardSkeleton";
+import {
+  MobileMediaCard,
+  MobileMediaCardSkeleton,
+} from "#/features/media/components/MobileMediaCard";
 import { EmptyState } from "#/components/EmptyState";
 import type { UserMediaQuerySchema } from "@media-voyage/shared/api";
 import { userMediaQuerySchema } from "@media-voyage/shared/api";
@@ -249,10 +253,31 @@ function RouteComponent() {
     setSemanticOpen(false);
   };
 
+  const viewMedia = (id: string) =>
+    navigate({
+      to: "/media/view/$id",
+      params: { id },
+      state: (previous) => ({
+        ...previous,
+        libraryReturnDepth: 1,
+      }),
+      viewTransition: true,
+    });
+
+  const editMedia = (id: string) =>
+    navigate({
+      to: "/media/update/$id",
+      params: { id },
+      state: (previous) => ({
+        ...previous,
+        libraryReturnDepth: 1,
+      }),
+    });
+
   const isInitialLoading = isResultsPending && !hasLoadedResults;
 
   return (
-    <Container fluid pt="md" pb="md">
+    <Container fluid px={{ base: "sm", sm: "md" }} pt="md" pb="md">
       <Stack gap="md">
         <Group justify="space-between" align="flex-start" wrap="wrap" gap="sm">
           <Stack gap={2}>
@@ -385,7 +410,13 @@ function RouteComponent() {
                 }}
               >
                 {Array.from({ length: 8 }).map((_, index) => (
-                  <MediaCardSkeleton key={index} />
+                  <Box key={index}>
+                    {isMdDown ? (
+                      <MobileMediaCardSkeleton />
+                    ) : (
+                      <MediaCardSkeleton />
+                    )}
+                  </Box>
                 ))}
               </SimpleGrid>
             ) : !isResultsFetching &&
@@ -451,30 +482,19 @@ function RouteComponent() {
                       key={record.id}
                       {...gridItemMotionProps(reduceMotion)}
                     >
-                      <MediaCard
-                        media={record}
-                        onView={(id) =>
-                          navigate({
-                            to: "/media/view/$id",
-                            params: { id },
-                            state: (previous) => ({
-                              ...previous,
-                              libraryReturnDepth: 1,
-                            }),
-                            viewTransition: true,
-                          })
-                        }
-                        onEdit={(id) =>
-                          navigate({
-                            to: "/media/update/$id",
-                            params: { id },
-                            state: (previous) => ({
-                              ...previous,
-                              libraryReturnDepth: 1,
-                            }),
-                          })
-                        }
-                      />
+                      {isMdDown ? (
+                        <MobileMediaCard
+                          media={record}
+                          onView={viewMedia}
+                          onEdit={editMedia}
+                        />
+                      ) : (
+                        <MediaCard
+                          media={record}
+                          onView={viewMedia}
+                          onEdit={editMedia}
+                        />
+                      )}
                     </motion.div>
                   ))}
                 </AnimatePresence>

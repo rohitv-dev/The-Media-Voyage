@@ -1,5 +1,5 @@
 import { Box, Group, Text, UnstyledButton } from "@mantine/core";
-import { IconDots, IconPlus } from "@tabler/icons-react";
+import { IconDots, IconHome2, IconPlus, IconStar } from "@tabler/icons-react";
 import type { ComponentType } from "react";
 import { mobilePrimaryNavigationItems } from "#/features/app-shell/navigation";
 import type { AppShellPath } from "#/features/app-shell/navigation";
@@ -28,7 +28,7 @@ function MobileNavigationButton({
       aria-current={active ? "page" : undefined}
       aria-label={label}
       c={active ? "accent" : "dimmed"}
-      h={56}
+      h={64}
       onClick={onClick}
       style={{
         alignItems: "center",
@@ -40,8 +40,8 @@ function MobileNavigationButton({
         minWidth: 44,
       }}
     >
-      <Icon size={22} stroke={active ? 2.2 : 1.8} />
-      <Text component="span" c="inherit" fz={10} fw={active ? 700 : 500}>
+      <Icon size={23} stroke={active ? 2.2 : 1.8} />
+      <Text component="span" c="inherit" fz={11} fw={active ? 700 : 500}>
         {label}
       </Text>
     </UnstyledButton>
@@ -59,7 +59,7 @@ function AddMediaButton({ active, onClick }: AddMediaButtonProps) {
       aria-current={active ? "page" : undefined}
       aria-label="Add"
       c="accent"
-      h={56}
+      h={64}
       onClick={onClick}
       pos="relative"
       style={{
@@ -70,16 +70,16 @@ function AddMediaButton({ active, onClick }: AddMediaButtonProps) {
         justifyContent: "flex-end",
         minWidth: 44,
         overflow: "visible",
-        paddingBottom: 5,
+        paddingBottom: 6,
       }}
     >
       <Box
         bg="accent"
         c="white"
-        h={48}
+        h={52}
         pos="absolute"
-        top={-20}
-        w={48}
+        top={-22}
+        w={52}
         style={{
           alignItems: "center",
           border: "4px solid var(--mantine-color-default)",
@@ -89,9 +89,9 @@ function AddMediaButton({ active, onClick }: AddMediaButtonProps) {
           justifyContent: "center",
         }}
       >
-        <IconPlus size={23} stroke={2.2} />
+        <IconPlus size={26} stroke={2.1} />
       </Box>
-      <Text component="span" c="inherit" fz={10} fw={700}>
+      <Text component="span" c="inherit" fz={11} fw={700}>
         Add
       </Text>
     </UnstyledButton>
@@ -147,9 +147,9 @@ export function MobileBottomNavigation({
         zIndex: 300,
       }}
     >
-      <Group align="flex-end" gap={0} grow h={56} px={4} wrap="nowrap">
+      <Group align="flex-end" gap={0} grow h={64} px={4} wrap="nowrap">
         {mobilePrimaryNavigationItems.slice(0, 2).map((item) => {
-          const Icon = item.icon;
+          const Icon = item.path === "/dashboard" ? IconHome2 : item.icon;
           return (
             <MobileNavigationButton
               key={item.path}
@@ -167,7 +167,7 @@ export function MobileBottomNavigation({
         />
 
         {mobilePrimaryNavigationItems.slice(2).map((item) => {
-          const Icon = item.icon;
+          const Icon = item.path === "/recommendations" ? IconStar : item.icon;
           return (
             <MobileNavigationButton
               key={item.path}

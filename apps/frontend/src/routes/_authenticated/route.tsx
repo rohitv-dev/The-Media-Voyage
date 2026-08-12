@@ -177,7 +177,7 @@ function AuthenticatedShell() {
 
       <AppShell.Main
         pb={{
-          base: "calc(56px + env(safe-area-inset-bottom))",
+          base: "calc(86px + env(safe-area-inset-bottom))",
           sm: 0,
         }}
       >
