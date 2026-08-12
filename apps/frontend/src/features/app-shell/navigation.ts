@@ -102,6 +102,13 @@ export const appNavigationItems = [
 export type AppNavigationPath = (typeof appNavigationItems)[number]["path"];
 export type AppShellPath = AppNavigationPath | "/media/add";
 
+export const mobilePrimaryNavigationItems = appNavigationItems.filter(
+  (item) =>
+    item.path === "/dashboard" ||
+    item.path === "/media" ||
+    item.path === "/recommendations",
+);
+
 export const sidebarNavigationItems = appNavigationItems.filter(
   (item) => item.path !== "/collection",
 );

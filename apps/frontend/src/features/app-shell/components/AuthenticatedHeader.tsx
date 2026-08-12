@@ -118,13 +118,14 @@ export function AuthenticatedHeader({
         wrap="nowrap"
       >
         <Group gap="xs" wrap="nowrap" miw={0}>
-          <Burger
-            opened={navbarOpened}
-            onClick={onToggleNavbar}
-            hiddenFrom="md"
-            size="sm"
-            aria-label={navbarOpened ? "Close navigation" : "Open navigation"}
-          />
+          <Box visibleFrom="sm" hiddenFrom="md">
+            <Burger
+              opened={navbarOpened}
+              onClick={onToggleNavbar}
+              size="sm"
+              aria-label={navbarOpened ? "Close navigation" : "Open navigation"}
+            />
+          </Box>
 
           <Tooltip
             label={sidebarOpened ? "Collapse sidebar" : "Expand sidebar"}
@@ -225,7 +226,7 @@ export function AuthenticatedHeader({
           <Box visibleFrom="sm">
             <ThemeSwitcher />
           </Box>
-          <Box hiddenFrom="md">
+          <Box visibleFrom="sm" hiddenFrom="md">
             <Tooltip label="Add media" withArrow>
               <ActionIcon
                 variant="subtle"

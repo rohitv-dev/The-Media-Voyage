@@ -6,7 +6,12 @@ import {
   useMediaQuery,
 } from "@mantine/hooks";
 import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  redirect,
+  useLocation,
+} from "@tanstack/react-router";
 import { collectionQueryOptions } from "#/features/media-collection/queries";
 import { sessionQueryKey, sessionQueryOptions } from "#/auth/session";
 import { authClient } from "#/auth/authClient";
@@ -14,6 +19,7 @@ import { ShortcutsHelpModal } from "#/components/ShortcutsHelpModal";
 import { AuthenticatedHeader } from "#/features/app-shell/components/AuthenticatedHeader";
 import { AuthenticatedSidebar } from "#/features/app-shell/components/AuthenticatedSidebar";
 import { CommandPalette } from "#/features/app-shell/components/CommandPalette";
+import { MobileBottomNavigation } from "#/features/app-shell/components/MobileBottomNavigation";
 import type { AppShellPath } from "#/features/app-shell/navigation";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -46,6 +52,7 @@ function RouteComponent() {
 
 function AuthenticatedShell() {
   const navigate = Route.useNavigate();
+  const { pathname } = useLocation();
   const queryClient = useQueryClient();
 
   const [navbarOpened, { toggle: toggleNavbar, close: closeNavbar }] =
@@ -168,9 +175,21 @@ function AuthenticatedShell() {
         onLogout={logout}
       />
 
-      <AppShell.Main>
+      <AppShell.Main
+        pb={{
+          base: "calc(56px + env(safe-area-inset-bottom))",
+          sm: 0,
+        }}
+      >
         <Outlet />
       </AppShell.Main>
+
+      <MobileBottomNavigation
+        navbarOpened={navbarOpened}
+        pathname={pathname}
+        onNavigate={navigateSidebar}
+        onToggleMore={toggleNavbar}
+      />
 
       <ShortcutsHelpModal opened={shortcutsOpened} onClose={closeShortcuts} />
       <CommandPalette
