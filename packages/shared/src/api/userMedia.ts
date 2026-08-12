@@ -222,15 +222,25 @@ export type UserMediaPatchSchema = z.infer<typeof userMediaPatchSchema>;
 const arrayFromJson = <T extends z.ZodTypeAny>(schema: T) =>
   z.preprocess((value) => {
     if (typeof value === "string") {
-      return JSON.parse(value);
+      try {
+        return JSON.parse(value);
+      } catch {
+        return value;
+      }
     }
     return value;
   }, z.array(schema));
 
+const booleanFromString = z.preprocess((value) => {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return value;
+}, z.boolean());
+
 export const userMediaQuerySchema = z.object({
   status: arrayFromJson(z.enum(statusEnum.enumValues)).optional(),
   type: arrayFromJson(z.enum(mediaTypeEnum.enumValues)).optional(),
-  favorite: z.coerce.boolean().optional(),
+  favorite: booleanFromString.optional(),
   search: z.string().optional(),
   minRating: z.coerce.number().min(0).max(10).optional(),
   maxRating: z.coerce.number().min(0).max(10).optional(),

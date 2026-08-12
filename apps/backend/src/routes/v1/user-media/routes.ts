@@ -79,8 +79,6 @@ async function userMediaRoutes(fastify: FastifyInstance) {
       const embedding = await generateMediaEmbedding(q);
       const records = await searchUserMediaSemantically(request.userId, embedding);
 
-      request.log.info({ records: records.map((r) => r.title) }, "Semantic search results");
-
       return reply.send(records);
     } catch (error) {
       throw internalServerError("Semantic search failed", { cause: error });

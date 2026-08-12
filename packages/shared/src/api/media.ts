@@ -24,7 +24,7 @@ export const tmdbMediaParamsSchema = z.object({
 export type TmdbMediaParams = z.infer<typeof tmdbMediaParamsSchema>;
 
 export const mediaDetailsParamsSchema = z.object({
-  id: z.string().trim().min(1, "ID parameter is required"),
+  id: z.coerce.number().int().positive("IGDB ID must be a positive integer"),
 });
 
 export type MediaDetailsParams = z.infer<typeof mediaDetailsParamsSchema>;

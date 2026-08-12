@@ -20,14 +20,21 @@ import type {
 
 /**
  * Serialize a filter object into a query string (with leading `?`, or empty
- * when nothing is set). Falsy values are skipped and arrays are JSON-encoded,
- * matching what the user-media endpoints expect.
+ * when nothing is set). Blank values and empty arrays are skipped; arrays are
+ * JSON-encoded to match what the user-media endpoints expect.
  */
-function buildFilterQuery(filters: Record<string, unknown>): string {
+export function buildFilterQuery(filters: Record<string, unknown>): string {
   const params = new URLSearchParams();
 
   for (const [key, value] of Object.entries(filters)) {
-    if (!value) continue;
+    if (
+      value === undefined ||
+      value === null ||
+      value === "" ||
+      (Array.isArray(value) && value.length === 0)
+    ) {
+      continue;
+    }
 
     params.set(
       key,

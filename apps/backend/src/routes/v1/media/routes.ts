@@ -61,7 +61,7 @@ async function mediaRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       const { id } = mediaDetailsParamsSchema.parse(request.params);
-      return reply.send(await getGameDetails(id));
+      return reply.send(await getGameDetails(String(id)));
     },
   );
 }

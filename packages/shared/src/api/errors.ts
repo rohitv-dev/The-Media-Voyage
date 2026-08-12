@@ -16,6 +16,7 @@ export type ServerErrorResponse = {
     | "conflict"
     | "not_found"
     | "provider"
+    | "rate_limit"
     | "server";
   code: string;
   error: string;

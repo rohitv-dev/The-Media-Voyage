@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  mediaCollectionFormSchema,
+  mediaCollectionUpdateSchema,
+  mediaDetailsParamsSchema,
   mediaImageFocusSchema,
   reorderMediaCollectionItemsSchema,
   semanticSearchQuerySchema,
   userMediaFormSchema,
   userMediaPatchSchema,
+  userMediaQuerySchema,
 } from "@media-voyage/shared/api";
 
 describe("user-media request schemas", () => {
@@ -129,6 +133,59 @@ describe("user-media request schemas", () => {
       mediaImageFocusSchema.safeParse({ imageFocusX: 0.5, imageFocusY: 1.1 })
         .success,
     ).toBe(false);
+  });
+
+  it("parses filter booleans explicitly", () => {
+    expect(userMediaQuerySchema.parse({ favorite: "true" }).favorite).toBe(
+      true,
+    );
+    expect(userMediaQuerySchema.parse({ favorite: "false" }).favorite).toBe(
+      false,
+    );
+    expect(
+      userMediaQuerySchema.safeParse({ favorite: "not-a-boolean" }).success,
+    ).toBe(false);
+  });
+
+  it("reports malformed array filters as validation errors", () => {
+    expect(userMediaQuerySchema.safeParse({ status: "not-json" }).success).toBe(
+      false,
+    );
+    expect(
+      userMediaQuerySchema.safeParse({ status: '["planned"' }).success,
+    ).toBe(false);
+  });
+
+  it("validates IGDB IDs before provider requests", () => {
+    expect(mediaDetailsParamsSchema.parse({ id: "42" })).toEqual({ id: 42 });
+    expect(mediaDetailsParamsSchema.safeParse({ id: "0" }).success).toBe(false);
+    expect(mediaDetailsParamsSchema.safeParse({ id: "1.5" }).success).toBe(
+      false,
+    );
+    expect(mediaDetailsParamsSchema.safeParse({ id: "game" }).success).toBe(
+      false,
+    );
+  });
+});
+
+describe("collection request schemas", () => {
+  it("trims collection names", () => {
+    expect(
+      mediaCollectionFormSchema.parse({ name: "  Favorites  " }).name,
+    ).toBe("Favorites");
+    expect(
+      mediaCollectionUpdateSchema.parse({ name: "  Watch next  " }).name,
+    ).toBe("Watch next");
+  });
+
+  it("rejects blank names and empty updates", () => {
+    expect(mediaCollectionFormSchema.safeParse({ name: "   " }).success).toBe(
+      false,
+    );
+    expect(mediaCollectionUpdateSchema.safeParse({ name: "   " }).success).toBe(
+      false,
+    );
+    expect(mediaCollectionUpdateSchema.safeParse({}).success).toBe(false);
   });
 });
 

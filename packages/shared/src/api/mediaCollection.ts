@@ -72,11 +72,15 @@ export type ReorderMediaCollectionItems = z.infer<
   typeof reorderMediaCollectionItemsSchema
 >;
 
-export const mediaCollectionFormSchema = mediaCollectionInsertSchema.pick({
-  name: true,
-  description: true,
-  visibility: true,
-});
+export const mediaCollectionFormSchema = mediaCollectionInsertSchema
+  .pick({
+    name: true,
+    description: true,
+    visibility: true,
+  })
+  .extend({
+    name: z.string().trim().min(1, "Collection name is required"),
+  });
 
 export type MediaCollectionFormSchema = z.infer<
   typeof mediaCollectionFormSchema
@@ -86,6 +90,9 @@ export const mediaCollectionUpdateSchema = mediaCollectionFormSchema
   .partial()
   .extend({
     pinned: mediaCollectionSelectSchema.shape.pinned.optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one collection field is required",
   });
 
 export type MediaCollectionUpdateSchema = z.infer<
