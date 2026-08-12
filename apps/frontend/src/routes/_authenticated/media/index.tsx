@@ -266,7 +266,7 @@ function RouteComponent() {
             </Text>
           </Stack>
 
-          <Group gap="xs">
+          <Group gap="xs" w={{ base: "100%", sm: "auto" }}>
             {!isMdDown && (
               <SegmentedControl
                 size="xs"
@@ -296,36 +296,58 @@ function RouteComponent() {
                 ]}
               />
             )}
-            <Button
-              size="xs"
-              variant="light"
-              leftSection={<IconDice5 size={16} />}
-              onClick={openPicker}
+            <Box
+              flex={{ base: "1 1 calc(50% - 4px)", sm: "0 0 auto" }}
+              order={{ base: 3, sm: 1 }}
             >
-              Pick for me
-            </Button>
-            <FilterPresetsMenu
-              presets={presets}
-              onApply={updateAndApplyFilters}
-              onSave={(name) => savePreset(name, filters)}
-              onDelete={deletePreset}
-              disabled={isExploring}
-            />
-            <Button
-              size="xs"
-              variant={semanticOpen ? "filled" : "light"}
-              leftSection={<IconSearch size={16} />}
-              aria-pressed={semanticOpen}
-              onClick={() => setSemanticOpen(true)}
+              <Button
+                size="xs"
+                variant="light"
+                leftSection={<IconDice5 size={16} />}
+                onClick={openPicker}
+                w={{ base: "100%", sm: "auto" }}
+              >
+                Pick for me
+              </Button>
+            </Box>
+            <Box
+              flex={{ base: "1 1 calc(50% - 4px)", sm: "0 0 auto" }}
+              order={{ base: 4, sm: 2 }}
             >
-              Semantic search
-            </Button>
-            <Box hiddenFrom="lg">
+              <FilterPresetsMenu
+                presets={presets}
+                onApply={updateAndApplyFilters}
+                onSave={(name) => savePreset(name, filters)}
+                onDelete={deletePreset}
+                disabled={isExploring}
+              />
+            </Box>
+            <Box
+              flex={{ base: "1 1 calc(50% - 4px)", sm: "0 0 auto" }}
+              order={{ base: 2, sm: 3 }}
+            >
+              <Button
+                size="xs"
+                variant={semanticOpen ? "filled" : "light"}
+                leftSection={<IconSearch size={16} />}
+                aria-pressed={semanticOpen}
+                onClick={() => setSemanticOpen(true)}
+                w={{ base: "100%", sm: "auto" }}
+              >
+                Semantic search
+              </Button>
+            </Box>
+            <Box
+              hiddenFrom="lg"
+              flex={{ base: "1 1 calc(50% - 4px)", sm: "0 0 auto" }}
+              order={{ base: 1, sm: 4 }}
+            >
               <Button
                 size="xs"
                 leftSection={<IconFilter size={16} />}
                 onClick={open}
                 disabled={isExploring}
+                w={{ base: "100%", sm: "auto" }}
               >
                 Filters
               </Button>

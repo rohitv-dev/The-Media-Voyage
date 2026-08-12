@@ -47,6 +47,7 @@ export function FilterPresetsMenu({
             variant="light"
             leftSection={<IconBookmark size={16} />}
             disabled={disabled}
+            w={{ base: "100%", sm: "auto" }}
           >
             Presets
           </Button>
