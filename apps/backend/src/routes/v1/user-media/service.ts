@@ -6,7 +6,8 @@ import type {
   UserMediaQuickAction,
 } from "@media-voyage/shared/api";
 import { and, eq, inArray } from "drizzle-orm";
-import { conflict } from "@/errors";
+import { badRequest, conflict } from "@/errors";
+import { ensureProviderCatalogMedia } from "@/services/providerCatalog";
 import {
   ownedDeletedUserMediaCondition,
   ownedUserMediaCondition,
@@ -15,10 +16,6 @@ import { userMediaDetailedSelect, userMediaSourceName } from "./selects";
 import { db } from "@/db/db";
 
 export type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
-
-function hasMetadataValues(value: unknown): boolean {
-  return !!value && typeof value === "object" && Object.keys(value).length > 0;
-}
 
 async function syncUserMediaTags(
   tx: DbTransaction,
@@ -176,36 +173,24 @@ export async function createUserMedia(userId: string, input: UserMediaFormSchema
     source: sourceName,
   } = input;
 
-  return db.transaction(async (tx) => {
-    let mediaId = input.mediaId;
+  let canonicalMediaId = input.mediaId;
 
-    if (!mediaId && externalId && mediaSource) {
-      const [existingMedia] = await tx
-        .select({
-          id: media.id,
-          description: media.description,
-          metadata: media.metadata,
-        })
-        .from(media)
-        .where(and(eq(media.source, mediaSource), eq(media.externalId, externalId)))
-        .limit(1);
+  if (!canonicalMediaId && mediaSource && mediaSource !== "manual") {
+    const providerExternalId = externalId?.trim();
 
-      if (existingMedia) {
-        mediaId = existingMedia.id;
-
-        const metadataUpdate = metadata && !hasMetadataValues(existingMedia.metadata) ? metadata : undefined;
-
-        if ((description && !existingMedia.description) || metadataUpdate) {
-          await tx
-            .update(media)
-            .set({
-              ...(description && !existingMedia.description ? { description } : {}),
-              ...(metadataUpdate ? { metadata: metadataUpdate } : {}),
-            })
-            .where(eq(media.id, existingMedia.id));
-        }
-      }
+    if (!providerExternalId) {
+      throw badRequest("Provider-backed media requires an external ID");
     }
+
+    const canonicalMedia = await ensureProviderCatalogMedia({
+      source: mediaSource,
+      externalId: providerExternalId,
+    });
+    canonicalMediaId = canonicalMedia.id;
+  }
+
+  return db.transaction(async (tx) => {
+    let mediaId = canonicalMediaId;
 
     if (!mediaId) {
       const [createdMedia] = await tx

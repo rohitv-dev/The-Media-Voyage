@@ -12,7 +12,11 @@ vi.mock("../config", () => ({
   env: { IGDB_CLIENT_ID: "client-id" },
 }));
 
-import { getGameDetails, getGameRecommendations } from "./igdb";
+import {
+  getGameCatalogRecord,
+  getGameDetails,
+  getGameRecommendations,
+} from "./igdb";
 
 const fetchMock = vi.fn();
 
@@ -163,5 +167,38 @@ describe("getGameDetails", () => {
     fetchMock.mockResolvedValue(new Response("[]", { status: 200 }));
 
     await expect(getGameDetails("100")).resolves.toBeNull();
+  });
+
+  it("returns canonical title and cover data for provider-backed creation", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          {
+            id: 100,
+            name: "Catalog Game",
+            cover: { id: 1, image_id: "cover-id" },
+            summary: "An adventure.",
+          },
+        ]),
+        { status: 200 },
+      ),
+    );
+
+    await expect(getGameCatalogRecord("100")).resolves.toEqual({
+      record: {
+        id: "",
+        source: "igdb",
+        externalId: "100",
+        title: "Catalog Game",
+        type: "game",
+        imageUrl:
+          "https://images.igdb.com/igdb/image/upload/t_1080p/cover-id.jpg",
+      },
+      details: {
+        id: 100,
+        name: "Catalog Game",
+        summary: "An adventure.",
+      },
+    });
   });
 });

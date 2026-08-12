@@ -1,11 +1,13 @@
 import {
   mediaDetailsParamsSchema,
   mediaSearchQuerySchema,
+  providerCatalogIdentitySchema,
   tmdbMediaParamsSchema,
 } from "@media-voyage/shared/api";
 import type { FastifyContextConfig, FastifyInstance } from "fastify";
 import { getGameDetails } from "@/services/igdb";
 import { getTmdbDetails } from "@/services/tmdb";
+import { resolveProviderMediaSelection } from "@/services/providerCatalog";
 import { requireAuth } from "@/require-auth";
 import { searchMedia } from "./service";
 
@@ -27,6 +29,17 @@ async function mediaRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const query = mediaSearchQuerySchema.parse(request.query);
       return reply.send(await searchMedia(query));
+    },
+  );
+
+  fastify.post(
+    "/resolve",
+    {
+      config,
+    },
+    async (request, reply) => {
+      const identity = providerCatalogIdentitySchema.parse(request.body);
+      return reply.send(await resolveProviderMediaSelection(identity));
     },
   );
 

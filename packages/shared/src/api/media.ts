@@ -1,4 +1,5 @@
 import z from "zod";
+import type { CatalogMetadata } from "../db/schema";
 import { mediaSelectSchema } from "../schemas";
 import { mediaTypeEnumValues } from "../schemas/userMediaSchema";
 
@@ -104,8 +105,37 @@ export type TmdbSeasonSummary = {
   episodeCount: number;
 };
 
+export const providerCatalogSourceValues = [
+  "tmdb_movie",
+  "tmdb_tv",
+  "igdb",
+  "open_library",
+] as const;
+
+export const providerCatalogIdentitySchema = z.object({
+  source: z.enum(providerCatalogSourceValues),
+  externalId: z.string().trim().min(1, "External ID is required"),
+});
+
+export type ProviderCatalogIdentity = z.infer<
+  typeof providerCatalogIdentitySchema
+>;
+
+export type ResolvedCatalogMedia = {
+  id: string;
+  title: string;
+  type: SourceMediaRecord["type"];
+  imageUrl: string | null;
+  description: string | null;
+  metadata: CatalogMetadata;
+  source: ProviderCatalogIdentity["source"];
+  externalId: string;
+  seasons?: TmdbSeasonSummary[];
+};
+
 export interface TmdbMediaDetails extends SourceMediaRecord {
   source: TmdbMediaSource;
+  externalId: string;
   type: TmdbMediaType;
   description: string | null;
   genres: string[];

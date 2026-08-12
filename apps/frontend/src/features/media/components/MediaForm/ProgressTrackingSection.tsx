@@ -22,7 +22,7 @@ type ProgressTrackingSectionProps = {
   dropdowns: UserMediaDropdowns;
   catalogMetadata?: CatalogMetadata;
   numberOfPages?: number;
-  isLoadingSeasonInfo?: boolean;
+  isLoadingSeasons?: boolean;
   canSyncSeasons?: boolean;
   onSyncSeasons?: () => void;
 };
@@ -31,7 +31,7 @@ export function ProgressTrackingSection({
   dropdowns,
   catalogMetadata,
   numberOfPages,
-  isLoadingSeasonInfo = false,
+  isLoadingSeasons = false,
   canSyncSeasons = false,
   onSyncSeasons,
 }: ProgressTrackingSectionProps) {
@@ -123,7 +123,7 @@ export function ProgressTrackingSection({
 
             {isShow && (
               <SeasonsProgressField
-                isLoading={isLoadingSeasonInfo}
+                isLoading={isLoadingSeasons}
                 canSync={canSyncSeasons}
                 onSync={onSyncSeasons}
               />

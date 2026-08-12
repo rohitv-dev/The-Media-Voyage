@@ -5,11 +5,16 @@ import type {
 } from "@media-voyage/shared/api";
 import { api } from "#/lib/api";
 import type { CatalogMetadata } from "../catalogMetadata";
-import type { HydratedMedia } from "./hydrateMedia";
+
+type HydratedTmdb = {
+  description?: string;
+  metadata?: CatalogMetadata;
+  seasonsProgress?: SeasonProgressEntry[];
+};
 
 export async function hydrateTmdb(
   record: SourceMediaRecord,
-): Promise<HydratedMedia> {
+): Promise<HydratedTmdb> {
   if (
     !record.externalId ||
     (record.type !== "movie" && record.type !== "show")

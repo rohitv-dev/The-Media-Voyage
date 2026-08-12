@@ -34,6 +34,23 @@ describe("user-media request schemas", () => {
     ).toBe(true);
   });
 
+  it("accepts only known canonical media sources", () => {
+    expect(
+      userMediaFormSchema.safeParse({
+        title: "Dune",
+        type: "movie",
+        mediaSource: "tmdb_movie",
+      }).success,
+    ).toBe(true);
+    expect(
+      userMediaFormSchema.safeParse({
+        title: "Dune",
+        type: "movie",
+        mediaSource: "unknown",
+      }).success,
+    ).toBe(false);
+  });
+
   it("accepts a single tracking field for PATCH", () => {
     expect(userMediaPatchSchema.parse({ progress: 42 })).toEqual({
       progress: 42,

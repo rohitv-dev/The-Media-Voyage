@@ -64,6 +64,7 @@ type IgdbNamedRecord = {
 type IgdbGameResponse = {
   id: number;
   name: string;
+  cover?: IgdbRecord["cover"];
   summary?: string;
   genres?: { id: number; name: string }[];
   rating?: number;
@@ -72,6 +73,17 @@ type IgdbGameResponse = {
   game_modes?: IgdbNamedRecord[];
   player_perspectives?: IgdbNamedRecord[];
 };
+
+async function fetchGameById(
+  externalId: string,
+): Promise<IgdbGameResponse | null> {
+  const data = await fetchIgdb<IgdbGameResponse[]>(`
+    fields id,name,cover.image_id,summary,genres.name,rating,themes.name,keywords.name,game_modes.name,player_perspectives.name;
+    where id = ${Number(externalId)};
+  `);
+
+  return data[0] ?? null;
+}
 
 function toGameDetails(game: IgdbGameResponse): IgdbGame {
   const themes = normalizeCatalogTerms(game.themes?.map((theme) => theme.name));
@@ -115,12 +127,19 @@ export async function searchGames(query: string): Promise<SourceMediaRecord[]> {
 export async function getGameDetails(
   externalId: string,
 ): Promise<IgdbGame | null> {
-  const data = await fetchIgdb<IgdbGameResponse[]>(`
-    fields id,name,summary,genres.name,rating,themes.name,keywords.name,game_modes.name,player_perspectives.name;
-    where id = ${Number(externalId)};
-  `);
+  const game = await fetchGameById(externalId);
 
-  return data[0] ? toGameDetails(data[0]) : null;
+  return game ? toGameDetails(game) : null;
+}
+
+export async function getGameCatalogRecord(externalId: string) {
+  const game = await fetchGameById(externalId);
+  if (!game) return null;
+
+  return {
+    record: toGameRecord(game),
+    details: toGameDetails(game),
+  };
 }
 
 export async function getGameRecommendations(

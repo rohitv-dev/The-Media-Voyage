@@ -6,6 +6,7 @@ import {
 } from "../schemas/userMediaSchema";
 import { mediaInsertSchema, mediaSelectSchema } from "../schemas/mediaSchema";
 import { mediaTypeEnum, statusEnum, visibilityEnum } from "../";
+import { providerCatalogSourceValues } from "./media";
 
 export const userMediaIdParamsSchema = z.object({
   id: userMediaSelectSchema.shape.id,
@@ -202,7 +203,9 @@ export const userMediaFormSchema = userMediaTrackingFieldsSchema.extend(
     })
     .extend({
       mediaId: z.string().optional(),
-      mediaSource: z.string().optional(),
+      mediaSource: z
+        .enum(["manual", ...providerCatalogSourceValues])
+        .optional(),
     }).shape,
 );
 

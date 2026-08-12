@@ -38,6 +38,22 @@ export type OpenLibraryDetails = {
   numberOfPages?: number;
 };
 
+function toBookRecord(
+  book: OpenLibrarySearchBook,
+): SourceMediaRecord & { externalId: string } {
+  return {
+    id: "",
+    source: "open_library",
+    type: "book",
+    externalId: getOpenLibraryWorkId(book.key),
+    title: book.title,
+    imageUrl: getOpenLibraryCoverUrl(book.cover_i),
+    creators: book.author_name ?? [],
+    genres: book.subject ?? [],
+    numberOfPages: book.number_of_pages_median,
+  };
+}
+
 function openLibraryHeaders(): Record<string, string> {
   return {
     Accept: "application/json",
@@ -111,32 +127,25 @@ async function findOpenLibraryBookByWorkId(
   );
 }
 
+function fetchOpenLibraryWorkAndBook(externalId: string) {
+  return Promise.all([
+    fetchOpenLibraryWork(externalId),
+    findOpenLibraryBookByWorkId(externalId),
+  ]);
+}
+
 export async function searchOpenLibrary(
   query: string,
 ): Promise<SourceMediaRecord[]> {
   const data = await fetchOpenLibrarySearch(query);
 
-  return data.docs.map((book) => ({
-    id: "",
-    source: "open_library",
-    type: "book",
-    externalId: getOpenLibraryWorkId(book.key),
-    title: book.title,
-    imageUrl: getOpenLibraryCoverUrl(book.cover_i),
-    creators: book.author_name ?? [],
-    genres: book.subject ?? [],
-    numberOfPages: book.number_of_pages_median,
-  }));
+  return data.docs.map(toBookRecord);
 }
 
-export async function getOpenLibraryDetails(
-  externalId: string,
-): Promise<OpenLibraryDetails | null> {
-  const [work, book] = await Promise.all([
-    fetchOpenLibraryWork(externalId),
-    findOpenLibraryBookByWorkId(externalId),
-  ]);
-
+function toOpenLibraryDetails(
+  work: OpenLibraryWork | null,
+  book: OpenLibrarySearchBook | null,
+): OpenLibraryDetails | null {
   const genres = book?.subject ?? work?.subjects;
   const subjects = normalizeCatalogTerms(genres);
   const details: OpenLibraryDetails = {
@@ -149,6 +158,25 @@ export async function getOpenLibraryDetails(
   };
 
   return Object.keys(details).length > 0 ? details : null;
+}
+
+export async function getOpenLibraryDetails(
+  externalId: string,
+): Promise<OpenLibraryDetails | null> {
+  const [work, book] = await fetchOpenLibraryWorkAndBook(externalId);
+
+  return toOpenLibraryDetails(work, book);
+}
+
+export async function getOpenLibraryCatalogRecord(externalId: string) {
+  const [work, book] = await fetchOpenLibraryWorkAndBook(externalId);
+
+  if (!book) return null;
+
+  return {
+    record: toBookRecord(book),
+    details: toOpenLibraryDetails(work, book),
+  };
 }
 
 export async function getOpenLibraryRecommendations(

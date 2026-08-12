@@ -9,6 +9,7 @@ const { environmentMock } = vi.hoisted(() => ({
 vi.mock("../config", () => ({ env: environmentMock }));
 
 import {
+  getOpenLibraryCatalogRecord,
   getOpenLibraryDetails,
   getOpenLibraryRecommendations,
 } from "./openLibrary";
@@ -111,6 +112,49 @@ describe("getOpenLibraryDetails", () => {
       headers: {
         Accept: "application/json",
         "User-Agent": "Media Voyage (support@example.com)",
+      },
+    });
+  });
+
+  it("returns the exact work's canonical title and cover", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ description: "A book." }), {
+          status: 200,
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            docs: [
+              {
+                key: "/works/OL123W",
+                title: "Catalog Book",
+                cover_i: 42,
+                subject: ["Fantasy"],
+              },
+            ],
+          }),
+          { status: 200 },
+        ),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getOpenLibraryCatalogRecord("OL123W")).resolves.toEqual({
+      record: {
+        id: "",
+        source: "open_library",
+        type: "book",
+        externalId: "OL123W",
+        title: "Catalog Book",
+        imageUrl: "https://covers.openlibrary.org/b/id/42-L.jpg",
+        creators: [],
+        genres: ["Fantasy"],
+      },
+      details: {
+        description: "A book.",
+        genres: ["Fantasy"],
+        subjects: ["Fantasy"],
       },
     });
   });
