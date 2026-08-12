@@ -115,7 +115,14 @@ function AuthenticatedShell() {
     closeNavbar();
   };
 
-  const addMedia = () => navigate({ to: "/media/add" });
+  const addMedia = () => {
+    closeNavbar();
+    navigate({ to: "/media/add" });
+  };
+  const goHome = () => {
+    closeNavbar();
+    navigate({ to: "/media" });
+  };
   const openProfile = () => navigate({ to: "/profile" });
   const openMedia = (userMediaId: string) =>
     navigate({ to: "/media/view/$id", params: { id: userMediaId } });
@@ -144,7 +151,7 @@ function AuthenticatedShell() {
         sidebarOpened={sidebarOpened}
         onToggleNavbar={toggleNavbar}
         onToggleSidebar={() => setSidebarOpened((value) => !value)}
-        onGoHome={() => navigate({ to: "/media" })}
+        onGoHome={goHome}
         onOpenNotificationsPage={() => navigateSidebar("/notifications")}
         onOpenMedia={openMedia}
         onOpenFriends={openFriends}

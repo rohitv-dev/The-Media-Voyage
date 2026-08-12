@@ -627,7 +627,17 @@ export function MediaForm(props: MediaFormProps) {
     <FormProvider form={form}>
       <Container pt="sm" px={{ base: "xs", md: "sm" }}>
         <Stack gap="lg" pb="lg">
-          <form onSubmit={form.onSubmit(handleSubmit)}>
+          <form
+            onSubmit={form.onSubmit(handleSubmit, (errors) => {
+              if (errors.completedAt) {
+                showErrorNotification({
+                  title: "Completed date is required",
+                  message:
+                    "Select a completed date in Progress & Tracking before saving.",
+                });
+              }
+            })}
+          >
             <Grid gap="sm">
               <FormHeader mode={mode} />
               <MediaDetailsSection

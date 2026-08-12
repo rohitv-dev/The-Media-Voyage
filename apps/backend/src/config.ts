@@ -24,6 +24,7 @@ const environmentSchema = z.object({
   MOBILE_FRONTEND_URL: z
     .url("MOBILE_FRONTEND_URL must be a valid URL")
     .optional(),
+  DEV_TRUSTED_ORIGIN: z.url("DEV_TRUSTED_ORIGIN must be a valid URL").optional(),
   AUTH_COOKIE_SAME_SITE: z.enum(["lax", "strict", "none"]).default("lax"),
   AUTH_COOKIE_DOMAIN: z.string().min(1).optional(),
   IGDB_CLIENT_ID: z.string().min(1, "IGDB_CLIENT_ID is required"),
@@ -49,6 +50,7 @@ const parsedEnvironment = environmentSchema.safeParse({
     process.env.FRONTEND_URL ??
     (isProduction ? undefined : "http://localhost:4000"),
   AUTH_COOKIE_DOMAIN: process.env.AUTH_COOKIE_DOMAIN || undefined,
+  DEV_TRUSTED_ORIGIN: process.env.DEV_TRUSTED_ORIGIN || undefined,
   OPEN_LIBRARY_CONTACT_EMAIL:
     process.env.OPEN_LIBRARY_CONTACT_EMAIL || undefined,
 });
@@ -69,7 +71,15 @@ const frontendOrigin = new URL(environment.FRONTEND_URL).origin;
 const mobileFrontendOrigin = environment.MOBILE_FRONTEND_URL
   ? new URL(environment.MOBILE_FRONTEND_URL).origin
   : undefined;
-const trustedOrigins = [frontendOrigin, mobileFrontendOrigin].filter(
+const developmentTrustedOrigin =
+  environment.NODE_ENV === "development" && environment.DEV_TRUSTED_ORIGIN
+    ? new URL(environment.DEV_TRUSTED_ORIGIN).origin
+    : undefined;
+const trustedOrigins = [
+  frontendOrigin,
+  mobileFrontendOrigin,
+  developmentTrustedOrigin,
+].filter(
   (origin): origin is string => Boolean(origin),
 );
 

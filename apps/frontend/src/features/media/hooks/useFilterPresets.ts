@@ -14,6 +14,14 @@ const MAX_PRESETS = 20;
 
 type SaveResult = { ok: true } | { ok: false; error: string };
 
+function createPresetId() {
+  if (typeof globalThis.crypto?.randomUUID === "function") {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
 const DEFAULT_PRESETS: Array<Pick<FilterPreset, "name" | "filters">> = [
   {
     name: "In Progress",
@@ -75,7 +83,7 @@ export function useFilterPresets() {
         ...deduped,
         ...missingDefaults.map((preset) => ({
           ...preset,
-          id: crypto.randomUUID(),
+          id: createPresetId(),
           createdAt: new Date().toISOString(),
         })),
       ];
@@ -113,7 +121,7 @@ export function useFilterPresets() {
     setPresets((prev) => [
       ...prev,
       {
-        id: crypto.randomUUID(),
+        id: createPresetId(),
         name: trimmedName,
         filters,
         createdAt: new Date().toISOString(),
