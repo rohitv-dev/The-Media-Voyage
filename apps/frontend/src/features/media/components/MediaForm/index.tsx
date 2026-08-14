@@ -215,6 +215,7 @@ export function MediaForm(props: MediaFormProps) {
         },
     transformValues: (values) => ({
       ...values,
+      progress: Number(values.progress) || 0,
       timeSpent: Number(values.timeSpent) === 0 ? undefined : values.timeSpent,
       tags: normalizeTags(values.tags ?? []),
     }),
@@ -646,7 +647,10 @@ export function MediaForm(props: MediaFormProps) {
   return (
     <FormProvider form={form}>
       <Container pt="sm" px={{ base: "xs", md: "sm" }}>
-        <Stack gap="lg" pb="lg">
+        <Stack
+          gap="lg"
+          pb={{ base: "calc(80px + env(safe-area-inset-bottom))", sm: "lg" }}
+        >
           <form
             onSubmit={form.onSubmit(handleSubmit, (errors) => {
               if (errors.completedAt) {

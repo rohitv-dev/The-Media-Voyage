@@ -1,5 +1,6 @@
 import {
   ActionIcon,
+  Box,
   Button,
   Card,
   Group,
@@ -140,6 +141,7 @@ export function SeasonsProgressField({
         onClose={close}
         title={<Title order={4}>Seasons</Title>}
         size="lg"
+        zIndex={400}
       >
         <Stack gap="sm">
           <Group justify="flex-end">
@@ -263,9 +265,23 @@ export function SeasonsProgressField({
             </Card>
           ))}
 
-          <Group justify="flex-end">
-            <Button onClick={close}>Done</Button>
-          </Group>
+          <Box
+            pos="sticky"
+            bottom={0}
+            pt="sm"
+            pb="xs"
+            style={{
+              background: "var(--mantine-color-body)",
+              borderTop: "1px solid var(--mantine-color-default-border)",
+              zIndex: 1,
+            }}
+          >
+            <Group justify="flex-end">
+              <Button type="button" onClick={close}>
+                Done
+              </Button>
+            </Group>
+          </Box>
         </Stack>
       </Modal>
     </>
