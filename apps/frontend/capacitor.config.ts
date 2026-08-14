@@ -5,6 +5,7 @@ const config: CapacitorConfig = {
   appName: "Media Voyage",
   webDir: "dist",
   server: {
+    url: "https://mediavoyage.online/",
     hostname: "app.mediavoyage.local",
     androidScheme: "https",
   },
