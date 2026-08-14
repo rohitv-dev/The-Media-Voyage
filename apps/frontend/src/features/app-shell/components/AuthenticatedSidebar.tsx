@@ -11,17 +11,14 @@ import {
 } from "@mantine/core";
 import type { NavLinkProps } from "@mantine/core";
 import {
-  IconBooks,
-  IconChevronRight,
   IconLogout,
   IconPlus,
   IconSettings,
   IconUser,
 } from "@tabler/icons-react";
 import { motion } from "motion/react";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "@tanstack/react-router";
-import { collectionQueryOptions } from "#/features/media-collection/queries";
 import { friendRequestsQueryOptions } from "#/features/friends/queries";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { latestNotificationsQueryOptions } from "#/features/notifications/queries";
@@ -101,18 +98,15 @@ function SidebarNavLink({
 interface AuthenticatedSidebarProps {
   railCollapsed: boolean;
   onNavigate: (path: AppShellPath) => void;
-  onNavigateToCollection: (collectionId: string) => void;
   onLogout: () => void;
 }
 
 export function AuthenticatedSidebar({
   railCollapsed,
   onNavigate,
-  onNavigateToCollection,
   onLogout,
 }: AuthenticatedSidebarProps) {
   const { pathname } = useLocation();
-  const { data: collections } = useSuspenseQuery(collectionQueryOptions);
   const { data: friendRequests } = useQuery(friendRequestsQueryOptions);
   const { data: notificationData } = useQuery(latestNotificationsQueryOptions);
   const pendingRequests = friendRequests?.incoming.length ?? 0;
@@ -155,36 +149,6 @@ export function AuthenticatedSidebar({
               />
             );
           })}
-
-          <Divider my="md" />
-
-          {!railCollapsed && (
-            <Stack gap={4}>
-              <SidebarNavLink
-                label="Collections"
-                active={isActive("/collection", true)}
-                rightSection={<IconChevronRight size={18} />}
-                onClick={() => onNavigate("/collection")}
-              />
-
-              <Stack gap={4} pl="sm">
-                {collections.map((collection) => (
-                  <SidebarNavLink
-                    key={collection.id}
-                    label={collection.name}
-                    description={
-                      collection.description
-                        ? String(collection.description)
-                        : undefined
-                    }
-                    leftSection={<IconBooks size={16} />}
-                    active={isActive(`/collection/view/${collection.id}`)}
-                    onClick={() => onNavigateToCollection(collection.id)}
-                  />
-                ))}
-              </Stack>
-            </Stack>
-          )}
         </Stack>
 
         <Box hiddenFrom="md" mt="auto">

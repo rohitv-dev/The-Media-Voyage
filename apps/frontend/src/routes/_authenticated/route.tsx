@@ -12,7 +12,6 @@ import {
   redirect,
   useLocation,
 } from "@tanstack/react-router";
-import { collectionQueryOptions } from "#/features/media-collection/queries";
 import { sessionQueryKey, sessionQueryOptions } from "#/auth/session";
 import { authClient } from "#/auth/authClient";
 import { ShortcutsHelpModal } from "#/components/ShortcutsHelpModal";
@@ -40,9 +39,6 @@ export const Route = createFileRoute("/_authenticated")({
     // Exposed to child routes so forms can read account preferences (e.g.
     // defaultVisibility) synchronously, without a session-loading flicker.
     return { session };
-  },
-  loader: ({ context: { queryClient } }) => {
-    queryClient.ensureQueryData(collectionQueryOptions);
   },
   component: RouteComponent,
 });
@@ -119,21 +115,13 @@ function AuthenticatedShell() {
     closeNavbar();
   };
 
-  const navigateToCollection = (collectionId: string) => {
-    navigate({
-      to: "/collection/view/$id",
-      params: { id: collectionId },
-    });
-    closeNavbar();
-  };
-
   const addMedia = () => {
     closeNavbar();
     navigate({ to: "/media/add" });
   };
   const goHome = () => {
     closeNavbar();
-    navigate({ to: "/media" });
+    navigate({ to: "/dashboard" });
   };
   const openProfile = () => navigate({ to: "/profile" });
   const openMedia = (userMediaId: string) =>
@@ -186,7 +174,6 @@ function AuthenticatedShell() {
         <AuthenticatedSidebar
           railCollapsed={railCollapsed}
           onNavigate={navigateSidebar}
-          onNavigateToCollection={navigateToCollection}
           onLogout={logout}
         />
       )}

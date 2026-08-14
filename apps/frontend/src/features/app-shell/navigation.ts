@@ -109,6 +109,4 @@ export const mobilePrimaryNavigationItems = appNavigationItems.filter(
     item.path === "/recommendations",
 );
 
-export const sidebarNavigationItems = appNavigationItems.filter(
-  (item) => item.path !== "/collection",
-);
+export const sidebarNavigationItems = appNavigationItems;

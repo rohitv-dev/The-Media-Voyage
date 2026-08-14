@@ -67,7 +67,7 @@ export const Route = createFileRoute("/")({
       window.localStorage.getItem(LANDING_PAGE_VISITED_KEY) === "true";
 
     if (hasVisitedLandingPage) {
-      throw redirect({ to: "/media" });
+      throw redirect({ to: "/dashboard" });
     }
 
     window.localStorage.setItem(LANDING_PAGE_VISITED_KEY, "true");
@@ -77,7 +77,7 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const session = authClient.useSession();
-  const appRoute = session.data ? "/media" : "/auth/login";
+  const appRoute = session.data ? "/dashboard" : "/auth/login";
 
   return (
     <Box

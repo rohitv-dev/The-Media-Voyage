@@ -58,7 +58,7 @@ function RouteComponent() {
         throw new Error(res.error.message ?? "Registration failed");
       }
 
-      navigate({ to: "/media" });
+      navigate({ to: "/dashboard" });
     } catch (err) {
       showErrorNotification({
         title: "Registration Failed",

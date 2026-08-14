@@ -49,7 +49,7 @@ function RouteComponent() {
       if (res.error) {
         throw new Error(res.error.message);
       }
-      navigate({ to: "/media" });
+      navigate({ to: "/dashboard" });
     } catch (err) {
       showErrorNotification({
         title: "Authentication Failed",
@@ -131,7 +131,7 @@ function RouteComponent() {
         opened={changePasswordOpened}
         onClose={() => setChangePasswordOpened(false)}
         email={form.values.email.trim().toLowerCase()}
-        onSuccess={() => navigate({ to: "/media" })}
+        onSuccess={() => navigate({ to: "/dashboard" })}
       />
     </Center>
   );
