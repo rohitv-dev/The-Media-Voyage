@@ -12,7 +12,13 @@ import { IconChartBar } from "@tabler/icons-react";
 import { getStatusOptions } from "../../options";
 import { useFormContext } from "./context";
 
-export function StatusDetailsSection() {
+type StatusDetailsSectionProps = {
+  isCatalogPending?: boolean;
+};
+
+export function StatusDetailsSection({
+  isCatalogPending = false,
+}: StatusDetailsSectionProps) {
   const form = useFormContext();
 
   return (
@@ -30,6 +36,7 @@ export function StatusDetailsSection() {
               placeholder="Choose status"
               variant="filled"
               data={getStatusOptions(form.values.type)}
+              disabled={isCatalogPending}
               {...form.getInputProps("status")}
             />
 
@@ -55,6 +62,7 @@ export function StatusDetailsSection() {
               min={0}
               max={100}
               step={5}
+              disabled={isCatalogPending}
               {...form.getInputProps("progress")}
             />
 

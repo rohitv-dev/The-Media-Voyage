@@ -31,6 +31,7 @@ type ShowSummary = {
 
 type TimeSpentModalProps = {
   catalogMetadata?: CatalogMetadata;
+  disabled?: boolean;
 };
 
 export function getCatalogRuntimeMinutes(metadata?: CatalogMetadata) {
@@ -103,7 +104,10 @@ function numberInputValue(value: string | number) {
   return Number.isFinite(parsed) ? Math.max(0, Math.trunc(parsed)) : 0;
 }
 
-export function TimeSpentModal({ catalogMetadata }: TimeSpentModalProps) {
+export function TimeSpentModal({
+  catalogMetadata,
+  disabled = false,
+}: TimeSpentModalProps) {
   const form = useFormContext();
   const [opened, { open, close }] = useDisclosure(false);
   const [draft, setDraft] = useState<DurationParts>({
@@ -133,6 +137,7 @@ export function TimeSpentModal({ catalogMetadata }: TimeSpentModalProps) {
             ? formatDuration(Number(form.values.timeSpent))
             : "No episodes watched"
         }
+        disabled={disabled}
         readOnly
         styles={{ input: { textAlign: "center" } }}
       />
@@ -166,6 +171,7 @@ export function TimeSpentModal({ catalogMetadata }: TimeSpentModalProps) {
             ? formatDuration(Number(form.values.timeSpent))
             : "Not set"
         }
+        disabled={disabled}
         readOnly
         pointer
         onClick={openModal}

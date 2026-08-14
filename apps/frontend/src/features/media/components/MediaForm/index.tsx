@@ -13,7 +13,7 @@ import {
   useNavigate,
   useRouter,
 } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MouseEventHandler } from "react";
 import { FormProvider, useForm } from "./context";
 import { api, getApiErrorMessage } from "#/lib/api";
@@ -33,7 +33,7 @@ import { useUnsavedChangesBlocker } from "#/hooks/useUnsavedChangesBlocker";
 import { useDeleteMedia } from "../../hooks/useDeleteMedia";
 import { queryKeys } from "#/lib/queryKeys";
 import type { CatalogMetadata } from "../../catalogMetadata";
-import { FormActions } from "./FormActions";
+import { FormActions, MobileFormActions } from "./FormActions";
 import { FormHeader } from "./FormHeader";
 import { MediaDetailsSection } from "./MediaDetailsSection";
 import { PersonalNotesSection } from "./PersonalNotesSection";
@@ -50,6 +50,12 @@ import {
 } from "../../providers/resolveMedia";
 import { hydrateTmdb, mergeTmdbSeasons } from "../../providers/tmdb";
 import { getLibraryReturnDepth } from "../../libraryNavigation";
+import {
+  hasDuplicateSeasonNumbers,
+  normalizeNullableNumber,
+  normalizeProgress,
+  normalizeTimeSpent,
+} from "./formUtils";
 
 const addInitialValues: UserMediaFormSchema = {
   title: "",
@@ -170,8 +176,8 @@ export function MediaForm(props: MediaFormProps) {
   const [mediaRecord, setMediaRecord] = useState<SourceMediaRecord | null>(
     isAddMode ? (props.recommendationSelection ?? null) : null,
   );
-  const [isCatalogRequestPending, setIsCatalogRequestPending] =
-    useState(false);
+  const [isCatalogRequestPending, setIsCatalogRequestPending] = useState(false);
+  const catalogSelectionRequestRef = useRef(0);
   const router = useRouter();
   const navigate = useNavigate();
   const libraryReturnDepth = useLocation({
@@ -215,8 +221,10 @@ export function MediaForm(props: MediaFormProps) {
         },
     transformValues: (values) => ({
       ...values,
-      progress: Number(values.progress) || 0,
-      timeSpent: Number(values.timeSpent) === 0 ? undefined : values.timeSpent,
+      progress: normalizeProgress(values.progress),
+      rating: normalizeNullableNumber(values.rating),
+      timeSpent: normalizeTimeSpent(values.timeSpent),
+      pagesRead: normalizeNullableNumber(values.pagesRead),
       tags: normalizeTags(values.tags ?? []),
     }),
     validate: {
@@ -359,21 +367,32 @@ export function MediaForm(props: MediaFormProps) {
     }
   });
 
+  const invalidateCatalogSelection = () => {
+    catalogSelectionRequestRef.current += 1;
+    setIsCatalogRequestPending(false);
+  };
+
+  const clearCatalogDependentValues = () => {
+    form.setFieldValue("description", undefined);
+    form.setFieldValue("metadata", undefined);
+    form.setFieldValue("progress", 0);
+    form.setFieldValue("timeSpent", undefined);
+    form.setFieldValue("pagesRead", undefined);
+    form.setFieldValue("seasonsProgress", []);
+  };
+
   const handleTypeChange = (type: MediaType | null) => {
     if (!type) return;
 
+    invalidateCatalogSelection();
+    clearCatalogDependentValues();
     form.setFieldValue("type", type);
     if (type !== "game" && form.values.status === "playing") {
       form.setFieldValue("status", "planned");
     }
     form.setFieldValue("title", "");
-    form.setFieldValue("description", undefined);
-    form.setFieldValue("metadata", undefined);
-    form.setFieldValue("seasonsProgress", []);
-    form.setFieldValue("pagesRead", undefined);
 
     setMediaRecord(null);
-    setIsCatalogRequestPending(false);
 
     if (type === "game") {
       showNotification({
@@ -390,10 +409,8 @@ export function MediaForm(props: MediaFormProps) {
   };
 
   const clearCatalogSelection = () => {
-    form.setFieldValue("description", undefined);
-    form.setFieldValue("metadata", undefined);
-    form.setFieldValue("seasonsProgress", []);
-    form.setFieldValue("pagesRead", undefined);
+    invalidateCatalogSelection();
+    clearCatalogDependentValues();
     setMediaRecord(null);
   };
 
@@ -427,32 +444,44 @@ export function MediaForm(props: MediaFormProps) {
   };
 
   const handleTitleChange = async (record: SourceMediaRecord | null) => {
-    setIsCatalogRequestPending(
-      record !== null && parseProviderIdentity(record) !== null,
-    );
+    const requestId = ++catalogSelectionRequestRef.current;
+    const providerIdentity = record ? parseProviderIdentity(record) : null;
+
+    clearCatalogDependentValues();
     setMediaRecord(record);
-    form.setFieldValue("description", undefined);
-    form.setFieldValue("metadata", undefined);
-    form.setFieldValue("pagesRead", undefined);
 
-    form.setFieldValue("seasonsProgress", []);
+    if (!record) {
+      form.setFieldValue("title", "");
+      setIsCatalogRequestPending(false);
+      return;
+    }
 
-    if (record) {
-      form.setFieldValue("title", record.title);
-      form.setFieldValue("type", record.type);
+    setIsCatalogRequestPending(providerIdentity !== null);
+    form.setFieldValue("title", record.title);
+    form.setFieldValue("type", record.type);
 
-      try {
-        const hydrated = await resolveMediaSelection(record);
-        setMediaRecord(hydrated.record);
-        if (hydrated.description) {
-          form.setFieldValue("description", hydrated.description);
-        }
-        applyCatalogMetadata(hydrated.metadata);
+    try {
+      const hydrated = await resolveMediaSelection(record);
+      if (requestId !== catalogSelectionRequestRef.current) return;
 
-        if (hydrated.seasonsProgress?.length) {
-          form.setFieldValue("seasonsProgress", hydrated.seasonsProgress);
-        }
-      } finally {
+      setMediaRecord(hydrated.record);
+      if (hydrated.description) {
+        form.setFieldValue("description", hydrated.description);
+      }
+      applyCatalogMetadata(hydrated.metadata);
+
+      if (hydrated.seasonsProgress?.length) {
+        form.setFieldValue("seasonsProgress", hydrated.seasonsProgress);
+      }
+    } catch (error) {
+      if (requestId !== catalogSelectionRequestRef.current) return;
+
+      showErrorNotification({
+        title: "Could not load catalog details",
+        message: getApiErrorMessage(error),
+      });
+    } finally {
+      if (requestId === catalogSelectionRequestRef.current) {
         setIsCatalogRequestPending(false);
       }
     }
@@ -613,6 +642,17 @@ export function MediaForm(props: MediaFormProps) {
   });
 
   const handleSubmit = (values: UserMediaFormSchema) => {
+    if (saveMutation.isPending || isCatalogRequestPending) return;
+
+    if (hasDuplicateSeasonNumbers(values.seasonsProgress)) {
+      showErrorNotification({
+        title: "Duplicate seasons",
+        message:
+          "Use Manage Seasons to give each season a unique number before saving.",
+      });
+      return;
+    }
+
     saveMutation.mutate(values);
   };
 
@@ -647,10 +687,7 @@ export function MediaForm(props: MediaFormProps) {
   return (
     <FormProvider form={form}>
       <Container pt="sm" px={{ base: "xs", md: "sm" }}>
-        <Stack
-          gap="lg"
-          pb={{ base: "calc(80px + env(safe-area-inset-bottom))", sm: "lg" }}
-        >
+        <Stack gap="lg" pb="lg">
           <form
             onSubmit={form.onSubmit(handleSubmit, (errors) => {
               if (errors.completedAt) {
@@ -663,7 +700,20 @@ export function MediaForm(props: MediaFormProps) {
             })}
           >
             <Grid gap="sm">
-              <FormHeader mode={mode} />
+              <FormHeader
+                mode={mode}
+                mobileActions={
+                  <MobileFormActions
+                    mode={mode}
+                    onCancel={handleCancel}
+                    isPending={
+                      saveMutation.isPending || isCatalogRequestPending
+                    }
+                    onDelete={isAddMode ? undefined : handleDelete}
+                    isDeletePending={isDeletePending}
+                  />
+                }
+              />
               <MediaDetailsSection
                 mode={mode}
                 mediaRecord={mediaRecord}
@@ -672,12 +722,14 @@ export function MediaForm(props: MediaFormProps) {
                 onTitleChange={handleTitleChange}
                 onSearchChange={handleSearchChange}
               />
-              <StatusDetailsSection />
+              <StatusDetailsSection
+                isCatalogPending={isCatalogRequestPending}
+              />
               <ProgressTrackingSection
                 dropdowns={props.dropdowns}
                 catalogMetadata={catalogMetadataForTimeSpent}
                 numberOfPages={getBookPageCount(catalogMetadataForTimeSpent)}
-                isLoadingSeasons={isCatalogRequestPending}
+                isCatalogPending={isCatalogRequestPending}
                 canSyncSeasons={canSyncSeasons}
                 onSyncSeasons={handleSyncSeasons}
               />

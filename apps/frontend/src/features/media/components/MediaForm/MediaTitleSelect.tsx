@@ -198,7 +198,6 @@ export function MediaTitleSelect(props: MediaTitleSelectProps) {
               imageUrl: null,
               externalId: null,
             });
-            props.onSearchChange(search);
           } else {
             const media = data.find(
               (item) => getMediaOptionValue(item) === value,
@@ -207,7 +206,6 @@ export function MediaTitleSelect(props: MediaTitleSelectProps) {
             if (!media) return;
 
             props.onChange(media);
-            props.onSearchChange(media.title);
           }
 
           combobox.closeDropdown();

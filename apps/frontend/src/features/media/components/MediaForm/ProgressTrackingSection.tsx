@@ -22,7 +22,7 @@ type ProgressTrackingSectionProps = {
   dropdowns: UserMediaDropdowns;
   catalogMetadata?: CatalogMetadata;
   numberOfPages?: number;
-  isLoadingSeasons?: boolean;
+  isCatalogPending?: boolean;
   canSyncSeasons?: boolean;
   onSyncSeasons?: () => void;
 };
@@ -31,7 +31,7 @@ export function ProgressTrackingSection({
   dropdowns,
   catalogMetadata,
   numberOfPages,
-  isLoadingSeasons = false,
+  isCatalogPending = false,
   canSyncSeasons = false,
   onSyncSeasons,
 }: ProgressTrackingSectionProps) {
@@ -81,7 +81,10 @@ export function ProgressTrackingSection({
               cols={{ base: 1, sm: form.values.type === "book" ? 2 : 1 }}
               spacing="md"
             >
-              <TimeSpentModal catalogMetadata={catalogMetadata} />
+              <TimeSpentModal
+                catalogMetadata={catalogMetadata}
+                disabled={isCatalogPending}
+              />
 
               {form.values.type === "book" && (
                 <NumberInput
@@ -97,6 +100,7 @@ export function ProgressTrackingSection({
                       ? `Out of ${numberOfPages.toLocaleString()} pages`
                       : "Total page count unavailable"
                   }
+                  disabled={isCatalogPending}
                   {...form.getInputProps("pagesRead")}
                 />
               )}
@@ -123,7 +127,7 @@ export function ProgressTrackingSection({
 
             {isShow && (
               <SeasonsProgressField
-                isLoading={isLoadingSeasons}
+                isLoading={isCatalogPending}
                 canSync={canSyncSeasons}
                 onSync={onSyncSeasons}
               />

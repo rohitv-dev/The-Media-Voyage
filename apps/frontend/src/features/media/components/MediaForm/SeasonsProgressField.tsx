@@ -130,7 +130,13 @@ export function SeasonsProgressField({
               Sync seasons
             </Button>
           )}
-          <Button type="button" variant="light" size="xs" onClick={open}>
+          <Button
+            type="button"
+            variant="light"
+            size="xs"
+            disabled={isLoading}
+            onClick={open}
+          >
             Manage Seasons
           </Button>
         </Group>
