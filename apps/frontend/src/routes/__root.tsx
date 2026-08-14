@@ -28,9 +28,9 @@ function RootComponent() {
   return (
     <ModalsProvider modals={recommendationModals}>
       <Outlet />
-      {!frontendConfig.isProduction && (
+      {/* {!frontendConfig.isProduction && (
         <ReactQueryDevtools initialIsOpen={false} />
-      )}
+      )} */}
     </ModalsProvider>
   );
 }

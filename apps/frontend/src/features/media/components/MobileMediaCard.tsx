@@ -109,6 +109,7 @@ export function MobileMediaCard({
                   onDelete={requestDelete}
                   onEdit={onEdit ? () => onEdit(media.id) : undefined}
                   onEditCover={() => setCoverEditorOpen(true)}
+                  actionSize={44}
                 />
               </Group>
             </Group>

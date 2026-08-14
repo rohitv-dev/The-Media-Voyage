@@ -20,6 +20,7 @@ import { AuthenticatedHeader } from "#/features/app-shell/components/Authenticat
 import { AuthenticatedSidebar } from "#/features/app-shell/components/AuthenticatedSidebar";
 import { CommandPalette } from "#/features/app-shell/components/CommandPalette";
 import { MobileBottomNavigation } from "#/features/app-shell/components/MobileBottomNavigation";
+import { MobileMoreDrawer } from "#/features/app-shell/components/MobileMoreDrawer";
 import type { AppShellPath } from "#/features/app-shell/navigation";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -51,6 +52,7 @@ function RouteComponent() {
 }
 
 function AuthenticatedShell() {
+  const { session } = Route.useRouteContext();
   const navigate = Route.useNavigate();
   const { pathname } = useLocation();
   const queryClient = useQueryClient();
@@ -62,6 +64,9 @@ function AuthenticatedShell() {
     defaultValue: true,
   });
   const isDesktop = useMediaQuery("(min-width: 62em)");
+  const isPhone = useMediaQuery("(max-width: 47.99em)", undefined, {
+    getInitialValueInEffect: false,
+  });
   const railCollapsed = isDesktop && !sidebarOpened;
 
   const [shortcutsOpened, { open: openShortcuts, close: closeShortcuts }] =
@@ -168,12 +173,23 @@ function AuthenticatedShell() {
         onOpenProfile={openProfile}
       />
 
-      <AuthenticatedSidebar
-        railCollapsed={railCollapsed}
-        onNavigate={navigateSidebar}
-        onNavigateToCollection={navigateToCollection}
-        onLogout={logout}
-      />
+      {isPhone ? (
+        <MobileMoreDrawer
+          opened={navbarOpened}
+          pathname={pathname}
+          userName={session.user.name}
+          onClose={closeNavbar}
+          onNavigate={navigateSidebar}
+          onLogout={logout}
+        />
+      ) : (
+        <AuthenticatedSidebar
+          railCollapsed={railCollapsed}
+          onNavigate={navigateSidebar}
+          onNavigateToCollection={navigateToCollection}
+          onLogout={logout}
+        />
+      )}
 
       <AppShell.Main
         pb={{

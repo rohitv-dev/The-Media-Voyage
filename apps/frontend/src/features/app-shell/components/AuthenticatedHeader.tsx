@@ -20,7 +20,7 @@ import {
   IconSearch,
   IconUser,
 } from "@tabler/icons-react";
-import { useDisclosure } from "@mantine/hooks";
+import { useDisclosure, useMediaQuery } from "@mantine/hooks";
 import { useQuery } from "@tanstack/react-query";
 import { NotificationPopover } from "#/features/notifications/components/NotificationPopover";
 import { latestNotificationsQueryOptions } from "#/features/notifications/queries";
@@ -57,6 +57,9 @@ export function AuthenticatedHeader({
   onAddMedia,
   onOpenProfile,
 }: AuthenticatedHeaderProps) {
+  const isPhone = useMediaQuery("(max-width: 47.99em)", undefined, {
+    getInitialValueInEffect: false,
+  });
   const [
     notificationsOpened,
     { open: openNotifications, close: closeNotifications },
@@ -107,7 +110,10 @@ export function AuthenticatedHeader({
     <AppShell.Header
       style={{
         borderBottom: "1px solid var(--mantine-color-default-border)",
-        background: "var(--mantine-color-body)",
+        background: isPhone
+          ? "var(--mantine-color-default)"
+          : "var(--mantine-color-body)",
+        boxShadow: isPhone ? "var(--mantine-shadow-sm)" : undefined,
       }}
     >
       <Group

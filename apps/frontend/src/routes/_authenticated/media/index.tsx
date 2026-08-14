@@ -101,7 +101,9 @@ function RouteComponent() {
   );
   const navigate = useNavigate();
   const reduceMotion = useAppReducedMotion();
-  const isMdDown = useMediaQuery("(max-width: 47.99em)");
+  const isMobile = useMediaQuery("(max-width: 47.99em)", undefined, {
+    getInitialValueInEffect: false,
+  });
   const [view, setView] = useLocalStorage<ViewType>({
     key: "media-view",
     defaultValue: "grid",
@@ -186,10 +188,10 @@ function RouteComponent() {
   }, [error, isError, isSemanticError, semanticError]);
 
   useEffect(() => {
-    if (isMdDown && view !== "grid") {
+    if (isMobile && view !== "grid") {
       setView("grid");
     }
-  }, [isMdDown, view, setView]);
+  }, [isMobile, view, setView]);
 
   useEffect(() => {
     const sentinel = loadMoreRef.current;
@@ -292,7 +294,7 @@ function RouteComponent() {
           </Stack>
 
           <Group gap="xs" w={{ base: "100%", sm: "auto" }}>
-            {!isMdDown && (
+            {!isMobile && (
               <SegmentedControl
                 size="xs"
                 aria-label="Choose library view"
@@ -411,7 +413,7 @@ function RouteComponent() {
               >
                 {Array.from({ length: 8 }).map((_, index) => (
                   <Box key={index}>
-                    {isMdDown ? (
+                    {isMobile ? (
                       <MobileMediaCardSkeleton />
                     ) : (
                       <MediaCardSkeleton />
@@ -482,7 +484,7 @@ function RouteComponent() {
                       key={record.id}
                       {...gridItemMotionProps(reduceMotion)}
                     >
-                      {isMdDown ? (
+                      {isMobile ? (
                         <MobileMediaCard
                           media={record}
                           onView={viewMedia}

@@ -1,4 +1,5 @@
 import { ActionIcon, Menu } from "@mantine/core";
+import type { ActionIconProps } from "@mantine/core";
 import type {
   MediaRecord,
   UserMediaQuickAction,
@@ -24,6 +25,7 @@ interface MediaCardQuickActionsProps {
   onDelete: () => void;
   onEdit?: () => void;
   onEditCover: () => void;
+  actionSize?: ActionIconProps["size"];
 }
 
 const statuses: Array<{ value: Status; label: string }> = [
@@ -42,6 +44,7 @@ export function MediaCardQuickActions({
   onDelete,
   onEdit,
   onEditCover,
+  actionSize = "sm",
 }: MediaCardQuickActionsProps) {
   const activeVisibility = media.visibility;
 
@@ -50,7 +53,7 @@ export function MediaCardQuickActions({
       <Menu.Target>
         <ActionIcon
           variant="subtle"
-          size="sm"
+          size={actionSize}
           aria-label={`Quick actions for ${media.title}`}
           loading={isPending}
           disabled={isPending}
