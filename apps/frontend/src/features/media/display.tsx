@@ -25,6 +25,8 @@ export function getStatusColor(status: MediaRecord["status"]) {
       return "green";
     case "in_progress":
       return "blue";
+    case "playing":
+      return "teal";
     case "planned":
       return "orange";
     case "dropped":

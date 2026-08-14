@@ -1,6 +1,7 @@
 import z from "zod";
 import type { MediaType, Status } from "../schemas/userMediaSchema";
 import {
+  seasonStatusEnumValues,
   userMediaInsertSchema,
   userMediaSelectSchema,
 } from "../schemas/userMediaSchema";
@@ -68,7 +69,7 @@ export type UserMediaQuickAction = z.infer<typeof userMediaQuickActionSchema>;
 
 export const seasonProgressEntrySchema = z.object({
   season: z.number().int().min(1),
-  status: z.enum(statusEnum.enumValues),
+  status: z.enum(seasonStatusEnumValues),
   expectedEpisodeCount: z.number().int().min(0).nullable().optional(),
   episodesWatched: z.number().int().min(0).optional(),
   rating: z.number().min(0).max(10).optional(),
@@ -323,6 +324,7 @@ export type DashboardStatsResponse = {
     completed: number;
     planned: number;
     in_progress: number;
+    playing: number;
     on_hold: number;
     dropped: number;
     revisiting: number;

@@ -16,7 +16,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { IconPlus, IconRefresh, IconX } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import type { SeasonProgressEntry } from "@media-voyage/shared/api";
-import { statusEnumValues } from "@media-voyage/shared/userMediaSchema";
+import { seasonStatusEnumValues } from "@media-voyage/shared/userMediaSchema";
 import { statusOptions } from "../../options";
 import { useFormContext } from "./context";
 
@@ -65,7 +65,7 @@ export function SeasonsProgressField({
     entry: SeasonProgressEntry,
     status: string | null,
   ) => {
-    const nextStatus = statusEnumValues.find((value) => value === status);
+    const nextStatus = seasonStatusEnumValues.find((value) => value === status);
     if (!nextStatus) return;
 
     const episodeCount = entry.expectedEpisodeCount;

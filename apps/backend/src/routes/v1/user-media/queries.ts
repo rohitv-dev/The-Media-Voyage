@@ -375,6 +375,7 @@ export async function getDashboardStats(userId: string) {
       total_media: totalMedia[0]?.count ?? 0,
       completed: statusCounts.completed ?? 0,
       in_progress: statusCounts.in_progress ?? 0,
+      playing: statusCounts.playing ?? 0,
       on_hold: statusCounts.on_hold ?? 0,
       planned: statusCounts.planned ?? 0,
       dropped: statusCounts.dropped ?? 0,

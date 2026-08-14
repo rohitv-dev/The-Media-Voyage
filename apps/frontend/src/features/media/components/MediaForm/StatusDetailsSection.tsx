@@ -9,7 +9,7 @@ import {
   Progress,
 } from "@mantine/core";
 import { IconChartBar } from "@tabler/icons-react";
-import { statusOptions } from "../../options";
+import { getStatusOptions } from "../../options";
 import { useFormContext } from "./context";
 
 export function StatusDetailsSection() {
@@ -29,7 +29,7 @@ export function StatusDetailsSection() {
               label="Status"
               placeholder="Choose status"
               variant="filled"
-              data={statusOptions}
+              data={getStatusOptions(form.values.type)}
               {...form.getInputProps("status")}
             />
 
@@ -51,17 +51,14 @@ export function StatusDetailsSection() {
               variant="filled"
               label="Progress"
               inputMode="numeric"
+              placeholder="0 to 100"
               min={0}
               max={100}
               step={5}
               {...form.getInputProps("progress")}
             />
 
-            <Progress
-              value={form.values.progress ?? 0}
-              size="lg"
-              radius="xl"
-            />
+            <Progress value={form.values.progress ?? 0} size="lg" radius="xl" />
           </Stack>
         </Stack>
       </Card>

@@ -9,6 +9,7 @@ import {
   userMediaFormSchema,
   userMediaPatchSchema,
   userMediaQuerySchema,
+  seasonProgressEntrySchema,
 } from "@media-voyage/shared/api";
 
 describe("user-media request schemas", () => {
@@ -59,6 +60,23 @@ describe("user-media request schemas", () => {
     expect(userMediaPatchSchema.parse({ progress: 42 })).toEqual({
       progress: 42,
     });
+  });
+
+  it("accepts Playing as a top-level status but not as a season status", () => {
+    expect(
+      userMediaFormSchema.parse({
+        title: "Brotato",
+        type: "game",
+        status: "playing",
+      }).status,
+    ).toBe("playing");
+    expect(
+      seasonProgressEntrySchema.safeParse({
+        season: 1,
+        status: "playing",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      }).success,
+    ).toBe(false);
   });
 
   it("accepts nullable clears for tracking fields", () => {

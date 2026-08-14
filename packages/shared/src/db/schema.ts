@@ -54,6 +54,7 @@ export const mediaTypeEnum = pgEnum("media_type", ["movie", "show", "game", "boo
 export const statusEnum = pgEnum("media_status", [
   "planned",
   "in_progress",
+  "playing",
   "completed",
   "dropped",
   "on_hold",

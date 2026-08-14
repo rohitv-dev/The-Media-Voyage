@@ -91,6 +91,14 @@ function ProgressCell({ record }: { record: MediaRecord }) {
     );
   }
 
+  if (record.status === "playing") {
+    return (
+      <Text size="sm" c="dimmed">
+        Not tracked
+      </Text>
+    );
+  }
+
   if (record.status !== "in_progress" && record.status !== "on_hold") {
     return (
       <Text size="sm" c="dimmed">

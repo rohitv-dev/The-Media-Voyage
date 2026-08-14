@@ -362,6 +362,9 @@ export function MediaForm(props: MediaFormProps) {
     if (!type) return;
 
     form.setFieldValue("type", type);
+    if (type !== "game" && form.values.status === "playing") {
+      form.setFieldValue("status", "planned");
+    }
     form.setFieldValue("title", "");
     form.setFieldValue("description", undefined);
     form.setFieldValue("metadata", undefined);
@@ -370,6 +373,15 @@ export function MediaForm(props: MediaFormProps) {
 
     setMediaRecord(null);
     setIsCatalogRequestPending(false);
+
+    if (type === "game") {
+      showNotification({
+        title: "Choose a game status",
+        message:
+          "Use In Progress for campaigns or games with endings. Use Playing for open-ended games.",
+        autoClose: 10_000,
+      });
+    }
   };
 
   const handleTypeClick: MouseEventHandler<HTMLInputElement> = (event) => {

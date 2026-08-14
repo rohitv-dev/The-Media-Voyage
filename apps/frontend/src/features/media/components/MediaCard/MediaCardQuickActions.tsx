@@ -5,7 +5,6 @@ import type {
   UserMediaQuickAction,
 } from "@media-voyage/shared/api";
 import { visibilityEnumValues } from "@media-voyage/shared/userMediaSchema";
-import type { Status } from "@media-voyage/shared/userMediaSchema";
 import {
   IconCheck,
   IconDotsVertical,
@@ -16,6 +15,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { getStatusColor } from "../../display";
+import { getStatusOptions } from "../../options";
 import { capitalizeWords } from "#/utils/strings";
 
 interface MediaCardQuickActionsProps {
@@ -28,15 +28,6 @@ interface MediaCardQuickActionsProps {
   actionSize?: ActionIconProps["size"];
 }
 
-const statuses: Array<{ value: Status; label: string }> = [
-  { value: "planned", label: "Planned" },
-  { value: "in_progress", label: "In progress" },
-  { value: "completed", label: "Completed" },
-  { value: "on_hold", label: "On hold" },
-  { value: "revisiting", label: "Revisiting" },
-  { value: "dropped", label: "Dropped" },
-];
-
 export function MediaCardQuickActions({
   media,
   isPending,
@@ -47,6 +38,7 @@ export function MediaCardQuickActions({
   actionSize = "sm",
 }: MediaCardQuickActionsProps) {
   const activeVisibility = media.visibility;
+  const statuses = getStatusOptions(media.type);
 
   return (
     <Menu position="bottom-end" shadow="md" width={210} withinPortal>

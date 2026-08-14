@@ -5,6 +5,7 @@ import type {
   UserMediaPatchSchema,
   UserMediaQuickAction,
 } from "@media-voyage/shared/api";
+import type { MediaType, Status } from "@media-voyage/shared/userMediaSchema";
 import { and, eq, inArray } from "drizzle-orm";
 import { badRequest, conflict } from "@/errors";
 import { ensureProviderCatalogMedia } from "@/services/providerCatalog";
@@ -16,6 +17,19 @@ import { userMediaDetailedSelect, userMediaSourceName } from "./selects";
 import { db } from "@/db/db";
 
 export type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+function assertPlayingStatusAllowed(
+  type: MediaType | undefined,
+  status: Status | undefined,
+) {
+  if (status === "playing" && type !== "game") {
+    throw badRequest("Playing status is only available for games");
+  }
+}
+
+function isActiveTrackingStatus(status: Status | undefined) {
+  return status === "in_progress" || status === "playing";
+}
 
 async function syncUserMediaTags(
   tx: DbTransaction,
@@ -174,6 +188,7 @@ export async function createUserMedia(userId: string, input: UserMediaFormSchema
   } = input;
 
   let canonicalMediaId = input.mediaId;
+  let canonicalMediaType: MediaType | undefined;
 
   if (!canonicalMediaId && mediaSource && mediaSource !== "manual") {
     const providerExternalId = externalId?.trim();
@@ -187,6 +202,11 @@ export async function createUserMedia(userId: string, input: UserMediaFormSchema
       externalId: providerExternalId,
     });
     canonicalMediaId = canonicalMedia.id;
+    canonicalMediaType = canonicalMedia.type;
+  }
+
+  if (canonicalMediaType !== undefined) {
+    assertPlayingStatusAllowed(canonicalMediaType, input.status);
   }
 
   return db.transaction(async (tx) => {
@@ -207,7 +227,18 @@ export async function createUserMedia(userId: string, input: UserMediaFormSchema
         .returning({ id: media.id });
 
       mediaId = createdMedia.id;
+      canonicalMediaType = type;
+    } else if (input.status === "playing" && canonicalMediaType === undefined) {
+      const [canonicalMedia] = await tx
+        .select({ type: media.type })
+        .from(media)
+        .where(eq(media.id, mediaId))
+        .limit(1);
+
+      canonicalMediaType = canonicalMedia?.type;
     }
+
+    assertPlayingStatusAllowed(canonicalMediaType ?? type, input.status);
 
     const [existingUserMedia] = await tx
       .select({ id: userMedia.id, deletedAt: userMedia.deletedAt })
@@ -289,10 +320,12 @@ export async function updateUserMedia(userId: string, id: string, input: UserMed
       .select({
         progress: userMedia.progress,
         status: userMedia.status,
+        type: media.type,
         startedAt: userMedia.startedAt,
         lastProgressUpdate: userMedia.lastProgressUpdate,
       })
       .from(userMedia)
+      .innerJoin(media, eq(userMedia.mediaId, media.id))
       .where(ownedUserMediaCondition(userId, id))
       .for("update")
       .limit(1);
@@ -302,8 +335,15 @@ export async function updateUserMedia(userId: string, id: string, input: UserMed
     const sourceId = await resolveSourceId(tx, userId, sourceName);
 
     const progressChanged = updates.progress !== undefined && updates.progress !== existing.progress;
-    const startedProgress = updates.status === "in_progress" && existing.status !== "in_progress";
-    const shouldSetStartedAt = startedProgress && existing.startedAt === null && updates.startedAt === undefined;
+    assertPlayingStatusAllowed(existing.type, updates.status);
+
+    const startedTracking =
+      isActiveTrackingStatus(updates.status) &&
+      existing.status !== updates.status;
+    const shouldSetStartedAt =
+      startedTracking &&
+      existing.startedAt === null &&
+      updates.startedAt === undefined;
     const statusChanged = updates.status !== undefined && updates.status !== existing.status;
     const now = new Date();
 
@@ -313,7 +353,7 @@ export async function updateUserMedia(userId: string, id: string, input: UserMed
         ...updates,
         ...(sourceId !== undefined ? { sourceId } : {}),
         ...(shouldSetStartedAt ? { startedAt: now } : {}),
-        lastProgressUpdate: progressChanged || startedProgress ? now : existing.lastProgressUpdate,
+        lastProgressUpdate: progressChanged || startedTracking ? now : existing.lastProgressUpdate,
       })
       .where(ownedUserMediaCondition(userId, id))
       .returning({
@@ -354,9 +394,11 @@ export async function updateUserMediaQuickActions(userId: string, id: string, qu
       .select({
         status: userMedia.status,
         progress: userMedia.progress,
+        type: media.type,
         startedAt: userMedia.startedAt,
       })
       .from(userMedia)
+      .innerJoin(media, eq(userMedia.mediaId, media.id))
       .where(ownedUserMediaCondition(userId, id))
       .for("update")
       .limit(1);
@@ -366,15 +408,24 @@ export async function updateUserMediaQuickActions(userId: string, id: string, qu
     const now = new Date();
     const statusChanged = quickAction.status !== undefined && quickAction.status !== existing.status;
 
+    assertPlayingStatusAllowed(existing.type, quickAction.status);
+
     const updates: Partial<typeof userMedia.$inferInsert> = {
       ...quickAction,
     };
 
-    if (quickAction.progress !== undefined || (statusChanged && quickAction.status === "in_progress")) {
+    if (
+      quickAction.progress !== undefined ||
+      (statusChanged && isActiveTrackingStatus(quickAction.status))
+    ) {
       updates.lastProgressUpdate = now;
     }
 
-    if (statusChanged && quickAction.status === "in_progress" && existing.startedAt === null) {
+    if (
+      statusChanged &&
+      isActiveTrackingStatus(quickAction.status) &&
+      existing.startedAt === null
+    ) {
       updates.startedAt = now;
     }
 

@@ -11,6 +11,9 @@ export const userMediaUpdateSchema = createUpdateSchema(userMedia);
 
 export const mediaTypeEnumValues = mediaTypeEnum.enumValues;
 export const statusEnumValues = statusEnum.enumValues;
+export const seasonStatusEnumValues = statusEnumValues.filter(
+  (value) => value !== "playing",
+);
 export const visibilityEnumValues = visibilityEnum.enumValues;
 
 export type Status = (typeof statusEnumValues)[number];

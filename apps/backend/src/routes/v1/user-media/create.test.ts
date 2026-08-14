@@ -78,7 +78,7 @@ function createTransaction() {
   };
 
   transactionMock.mockImplementation((callback) => callback(tx));
-  return { canonicalInsert, tx };
+  return { canonicalInsert, entryInsert, tx };
 }
 
 function providerInput() {
@@ -123,6 +123,20 @@ describe("createUserMedia canonical authority", () => {
 
     await expect(createUserMedia(USER_ID, providerInput())).rejects.toThrow(
       "Provider unavailable",
+    );
+    expect(transactionMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects Playing when the provider resolves a non-game", async () => {
+    ensureProviderCatalogMediaMock.mockResolvedValue(resolvedProviderMedia);
+    const input = userMediaFormSchema.parse({
+      ...providerInput(),
+      type: "game",
+      status: "playing",
+    });
+
+    await expect(createUserMedia(USER_ID, input)).rejects.toThrow(
+      "Playing status is only available for games",
     );
     expect(transactionMock).not.toHaveBeenCalled();
   });
@@ -175,6 +189,24 @@ describe("createUserMedia canonical authority", () => {
         metadata: { genre: ["Documentary"] },
         source: "manual",
       }),
+    );
+  });
+
+  it("accepts Playing for a manually added game", async () => {
+    const { entryInsert, tx } = createTransaction();
+    const input = userMediaFormSchema.parse({
+      title: "Brotato",
+      type: "game",
+      status: "playing",
+      mediaSource: "manual",
+      visibility: "private",
+    });
+
+    await createUserMedia(USER_ID, input);
+
+    expect(tx.insert).toHaveBeenCalledWith(userMedia);
+    expect(entryInsert.values).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "playing" }),
     );
   });
 });

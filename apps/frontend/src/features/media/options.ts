@@ -1,6 +1,8 @@
 import { capitalizeWords } from "#/utils/strings";
 import {
   mediaTypeEnumValues,
+  seasonStatusEnumValues,
+  type MediaType,
   statusEnumValues,
   visibilityEnumValues,
 } from "@media-voyage/shared/userMediaSchema";
@@ -15,7 +17,12 @@ function toSelectOptions<T extends string>(values: readonly T[]) {
   return values.map((value) => ({ value, label: capitalizeWords(value) }));
 }
 
-export const statusOptions = toSelectOptions(statusEnumValues);
+export const statusOptions = toSelectOptions(seasonStatusEnumValues);
+const gameStatusOptions = toSelectOptions(statusEnumValues);
+
+export function getStatusOptions(type: MediaType) {
+  return type === "game" ? gameStatusOptions : statusOptions;
+}
 export const mediaTypeOptions = toSelectOptions(mediaTypeEnumValues);
 export const visibilityOptions = toSelectOptions(visibilityEnumValues);
 
