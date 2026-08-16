@@ -1,9 +1,23 @@
-import { friendships, userMedia, userMediaComments, userMediaReactions } from "@media-voyage/shared";
-import type { CommentFormInput, FriendRespondInput, ReactionInput, ShareLibraryInput } from "@media-voyage/shared/api";
+import {
+  friendships,
+  userMedia,
+  userMediaComments,
+  userMediaReactions,
+} from "@media-voyage/shared";
+import type {
+  CommentFormInput,
+  FriendRespondInput,
+  ReactionInput,
+  ShareLibraryInput,
+} from "@media-voyage/shared/api";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { badRequest, conflict, forbidden, notFound } from "@/errors";
 import { createNotification } from "../notifications/service";
-import { findUserByEmail, friendshipBetween, requireViewableUserMedia } from "./queries";
+import {
+  findUserByEmail,
+  friendshipBetween,
+  requireViewableUserMedia,
+} from "./queries";
 import { resolveFriendRequest } from "./policy";
 import { db } from "@/db/db";
 
@@ -58,7 +72,9 @@ export async function sendFriendRequest(userId: string, email: string) {
     case "create": {
       const friendship = await db.transaction(async (tx) => {
         if (outcome.type === "replace_existing") {
-          await tx.delete(friendships).where(eq(friendships.id, outcome.friendshipId));
+          await tx
+            .delete(friendships)
+            .where(eq(friendships.id, outcome.friendshipId));
         }
 
         const [created] = await tx
@@ -84,8 +100,16 @@ export async function sendFriendRequest(userId: string, email: string) {
   }
 }
 
-export async function respondToFriendRequest(userId: string, friendshipId: string, { action }: FriendRespondInput) {
-  const [existing] = await db.select().from(friendships).where(eq(friendships.id, friendshipId)).limit(1);
+export async function respondToFriendRequest(
+  userId: string,
+  friendshipId: string,
+  { action }: FriendRespondInput,
+) {
+  const [existing] = await db
+    .select()
+    .from(friendships)
+    .where(eq(friendships.id, friendshipId))
+    .limit(1);
 
   if (!existing) throw notFound("Friend request not found");
 
@@ -137,13 +161,22 @@ export async function removeFriendship(userId: string, otherUserId: string) {
   return { removed: true };
 }
 
-export async function setReaction(viewerId: string, userMediaId: string, { value }: ReactionInput) {
+export async function setReaction(
+  viewerId: string,
+  userMediaId: string,
+  { value }: ReactionInput,
+) {
   const entry = await requireViewableUserMedia(viewerId, userMediaId);
 
   if (value === null) {
     await db
       .delete(userMediaReactions)
-      .where(and(eq(userMediaReactions.userMediaId, userMediaId), eq(userMediaReactions.userId, viewerId)));
+      .where(
+        and(
+          eq(userMediaReactions.userMediaId, userMediaId),
+          eq(userMediaReactions.userId, viewerId),
+        ),
+      );
 
     return { value: null };
   }
@@ -152,7 +185,12 @@ export async function setReaction(viewerId: string, userMediaId: string, { value
     const [existing] = await tx
       .select({ value: userMediaReactions.value })
       .from(userMediaReactions)
-      .where(and(eq(userMediaReactions.userMediaId, userMediaId), eq(userMediaReactions.userId, viewerId)))
+      .where(
+        and(
+          eq(userMediaReactions.userMediaId, userMediaId),
+          eq(userMediaReactions.userId, viewerId),
+        ),
+      )
       .limit(1);
 
     await tx
@@ -176,11 +214,18 @@ export async function setReaction(viewerId: string, userMediaId: string, { value
   });
 }
 
-export async function addComment(viewerId: string, userMediaId: string, { body }: CommentFormInput) {
+export async function addComment(
+  viewerId: string,
+  userMediaId: string,
+  { body }: CommentFormInput,
+) {
   const entry = await requireViewableUserMedia(viewerId, userMediaId);
 
   return db.transaction(async (tx) => {
-    const [comment] = await tx.insert(userMediaComments).values({ userMediaId, userId: viewerId, body }).returning();
+    const [comment] = await tx
+      .insert(userMediaComments)
+      .values({ userMediaId, userId: viewerId, body })
+      .returning();
 
     if (entry.ownerId !== viewerId) {
       await createNotification(tx, {
@@ -220,7 +265,10 @@ export async function deleteComment(viewerId: string, commentId: string) {
 }
 
 /** One-shot bulk visibility change over the caller's own library. */
-export async function shareLibrary(userId: string, { visibility, onlyPrivate }: ShareLibraryInput) {
+export async function shareLibrary(
+  userId: string,
+  { visibility, onlyPrivate }: ShareLibraryInput,
+) {
   const updated = await db
     .update(userMedia)
     .set({ visibility })

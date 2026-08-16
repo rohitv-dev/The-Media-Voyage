@@ -1,9 +1,0 @@
-package-lock.json
-pnpm-lock.yaml
-yarn.lock
-android/**/build
-android/app/release
-android/app/src/main/assets
-dist
-coverage
-src/routeTree.gen.ts

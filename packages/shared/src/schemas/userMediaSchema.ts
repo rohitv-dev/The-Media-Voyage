@@ -1,5 +1,14 @@
-import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod";
-import { mediaTypeEnum, statusEnum, userMedia, visibilityEnum } from "../db/schema";
+import {
+  createInsertSchema,
+  createSelectSchema,
+  createUpdateSchema,
+} from "drizzle-zod";
+import {
+  mediaTypeEnum,
+  statusEnum,
+  userMedia,
+  visibilityEnum,
+} from "../db/schema";
 import { z } from "zod";
 
 export const userMediaSelectSchema = createSelectSchema(userMedia);

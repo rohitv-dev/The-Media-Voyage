@@ -90,14 +90,10 @@ async function getEmbeddingPipeline() {
   if (embeddingPipeline) return embeddingPipeline;
   if (embeddingPipelinePromise) return embeddingPipelinePromise;
 
-  embeddingPipelinePromise = pipeline(
-    "feature-extraction",
-    EMBEDDING_MODEL,
-    {
-      device: "cpu",
-      dtype: "q8",
-    },
-  )
+  embeddingPipelinePromise = pipeline("feature-extraction", EMBEDDING_MODEL, {
+    device: "cpu",
+    dtype: "q8",
+  })
     .then((loadedPipeline) => {
       embeddingPipeline = loadedPipeline;
       return loadedPipeline;
@@ -130,9 +126,7 @@ export async function generateMediaEmbeddings(texts: string[]) {
 
   if (
     embeddings.length !== texts.length ||
-    embeddings.some(
-      (embedding) => embedding.length !== EMBEDDING_DIMENSIONS,
-    )
+    embeddings.some((embedding) => embedding.length !== EMBEDDING_DIMENSIONS)
   ) {
     throw new Error(
       `Transformers.js returned an embedding with an unexpected dimension`,

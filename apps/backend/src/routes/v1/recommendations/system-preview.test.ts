@@ -460,7 +460,9 @@ describe("system recommendation preview", () => {
         externalId: "300",
       }),
     ]);
-    getTmdbRecommendationsMock.mockResolvedValue([movie(999, "Shared Candidate")]);
+    getTmdbRecommendationsMock.mockResolvedValue([
+      movie(999, "Shared Candidate"),
+    ]);
 
     const preview = await getSystemRecommendationPreview("user-1");
 
@@ -529,9 +531,7 @@ describe("system recommendation preview", () => {
       }),
     ]);
     getTmdbRecommendationsMock
-      .mockResolvedValueOnce([
-        movie(701, "Tracked Title"),
-      ])
+      .mockResolvedValueOnce([movie(701, "Tracked Title")])
       .mockResolvedValueOnce([movie(702, "Useful Candidate")]);
 
     const preview = await getSystemRecommendationPreview("user-1");

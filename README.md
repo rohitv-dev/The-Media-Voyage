@@ -85,6 +85,8 @@ Run from the repo root:
 | `pnpm dev`                                   | Run frontend and backend together       |
 | `pnpm frontend` / `pnpm backend`             | Run just one side                       |
 | `pnpm lint`                                  | Lint the frontend                       |
+| `pnpm format`                                | Format root manifests and all packages  |
+| `pnpm format:check`                          | Check formatting across all packages    |
 | `pnpm db:push`                               | Push the Drizzle schema to the database |
 | `pnpm studio`                                | Open Drizzle Studio                     |
 | `pnpm refresh-catalog-metadata -- --dry-run` | Preview provider metadata refresh       |

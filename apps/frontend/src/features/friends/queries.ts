@@ -100,7 +100,10 @@ export function removeFriend(userId: string) {
   return api(`/friends/${encodeURIComponent(userId)}`, { method: "DELETE" });
 }
 
-export function setReaction(userMediaId: string, value: ReactionInput["value"]) {
+export function setReaction(
+  userMediaId: string,
+  value: ReactionInput["value"],
+) {
   return post(`/friends/media/${userMediaId}/reaction`, { value }, "PUT");
 }
 

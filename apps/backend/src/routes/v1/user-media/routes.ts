@@ -15,7 +15,10 @@ import {
 } from "@media-voyage/shared/api";
 import { internalServerError, notFound } from "@/errors";
 import { requireAuth } from "@/require-auth";
-import { generateMediaEmbedding, ensureMediaEmbedding } from "@/services/mediaEmbeddings";
+import {
+  generateMediaEmbedding,
+  ensureMediaEmbedding,
+} from "@/services/mediaEmbeddings";
 import { toCsvRows } from "./csv";
 import {
   filterUserMedia,
@@ -58,7 +61,10 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     const record = await createUserMedia(request.userId, input);
 
     void ensureMediaEmbedding(record.mediaId).catch((error) => {
-      request.log.warn({ err: error, mediaId: record.mediaId }, "Media embedding failed after creation");
+      request.log.warn(
+        { err: error, mediaId: record.mediaId },
+        "Media embedding failed after creation",
+      );
     });
 
     return reply.status(201).send(record);
@@ -71,19 +77,26 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     return reply.send(records);
   });
 
-  fastify.get("/semantic-search", { config: semanticSearchConfig }, async (request, reply) => {
-    const { q } = semanticSearchQuerySchema.parse(request.query);
-    reply.header("Cache-Control", "no-store");
+  fastify.get(
+    "/semantic-search",
+    { config: semanticSearchConfig },
+    async (request, reply) => {
+      const { q } = semanticSearchQuerySchema.parse(request.query);
+      reply.header("Cache-Control", "no-store");
 
-    try {
-      const embedding = await generateMediaEmbedding(q);
-      const records = await searchUserMediaSemantically(request.userId, embedding);
+      try {
+        const embedding = await generateMediaEmbedding(q);
+        const records = await searchUserMediaSemantically(
+          request.userId,
+          embedding,
+        );
 
-      return reply.send(records);
-    } catch (error) {
-      throw internalServerError("Semantic search failed", { cause: error });
-    }
-  });
+        return reply.send(records);
+      } catch (error) {
+        throw internalServerError("Semantic search failed", { cause: error });
+      }
+    },
+  );
 
   fastify.get("/:id", async (request, reply) => {
     const { id } = userMediaIdParamsSchema.parse(request.params);
@@ -146,7 +159,8 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     const input = userMediaQuickActionSchema.parse(request.body);
     const record = await updateUserMediaQuickActions(request.userId, id, input);
 
-    if (!record) throw notFound("User media not found or quick actions not updated");
+    if (!record)
+      throw notFound("User media not found or quick actions not updated");
 
     return reply.send(record);
   });
@@ -156,7 +170,8 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     const input = mediaImageFocusSchema.parse(request.body);
     const record = await updateUserMediaImageFocus(request.userId, id, input);
 
-    if (!record) throw notFound("User media not found or image focus not updated");
+    if (!record)
+      throw notFound("User media not found or image focus not updated");
 
     return reply.send(record);
   });
@@ -237,7 +252,10 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     const csv = Papa.unparse(toCsvRows(records), { header: true });
 
     reply.header("Content-Type", "text/csv");
-    reply.header("Content-Disposition", `attachment; filename="user-media-${request.userId}-${Date.now()}.csv"`);
+    reply.header(
+      "Content-Disposition",
+      `attachment; filename="user-media-${request.userId}-${Date.now()}.csv"`,
+    );
 
     return reply.send(csv);
   });

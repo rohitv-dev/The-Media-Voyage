@@ -12,10 +12,7 @@ vi.mock("@/db/db", () => ({
   db: { transaction: transactionMock },
 }));
 
-import {
-  updateUserMedia,
-  updateUserMediaQuickActions,
-} from "./service";
+import { updateUserMedia, updateUserMediaQuickActions } from "./service";
 
 const USER_ID = "user-1";
 const ENTRY_ID = "22222222-2222-4222-8222-222222222222";
@@ -52,9 +49,9 @@ function createTransaction(type: "movie" | "game") {
   const updateBuilder = {
     set: vi.fn(),
     where: vi.fn(),
-    returning: vi.fn().mockResolvedValue([
-      { id: ENTRY_ID, status: "playing", progress: 0 },
-    ]),
+    returning: vi
+      .fn()
+      .mockResolvedValue([{ id: ENTRY_ID, status: "playing", progress: 0 }]),
   };
   const historyInsert = { values: vi.fn().mockResolvedValue([]) };
   updateBuilder.set.mockReturnValue(updateBuilder);

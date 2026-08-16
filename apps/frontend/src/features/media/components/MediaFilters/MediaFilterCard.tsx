@@ -24,8 +24,7 @@ import {
 } from "@media-voyage/shared/userMediaSchema";
 import { IconFilter, IconSearch, IconX } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
-import { MoreFiltersModal } from
-  "#/features/media/components/MediaFilters/MoreFiltersModal";
+import { MoreFiltersModal } from "#/features/media/components/MediaFilters/MoreFiltersModal";
 
 type MediaFilterCardsProps = {
   filters: UserMediaQuerySchema;

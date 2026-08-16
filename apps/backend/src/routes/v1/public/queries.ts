@@ -11,15 +11,7 @@ import type {
   PublicMediaDetail,
   SeasonProgressEntry,
 } from "@media-voyage/shared/api";
-import {
-  and,
-  asc,
-  count,
-  desc,
-  eq,
-  inArray,
-  isNull,
-} from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "@/db/db";
 import { notFound } from "@/errors";
 import { publicMediaDetailSelect, publicMediaSummarySelect } from "./selects";

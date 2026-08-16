@@ -10,8 +10,8 @@ import {
 } from "@mantine/core";
 import { IconCheck, IconPalette } from "@tabler/icons-react";
 import { useAppTheme } from "./ThemeProvider";
-import { THEME_ORDER, THEMES  } from "./themes";
-import type {ThemeId} from "./themes";
+import { THEME_ORDER, THEMES } from "./themes";
+import type { ThemeId } from "./themes";
 
 /** Three little colour chips previewing a theme's ground, surface and accent. */
 function Swatch({ id }: { id: ThemeId }) {

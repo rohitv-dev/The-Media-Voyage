@@ -37,7 +37,10 @@ export function listCollectionItems(collectionId: string) {
         isNull(userMedia.deletedAt),
       ),
     )
-    .orderBy(asc(mediaCollectionItems.position), asc(mediaCollectionItems.createdAt));
+    .orderBy(
+      asc(mediaCollectionItems.position),
+      asc(mediaCollectionItems.createdAt),
+    );
 }
 
 export function listCollectionItemsDetailed(collectionId: string) {
@@ -52,24 +55,44 @@ export function listCollectionItemsDetailed(collectionId: string) {
         isNull(userMedia.deletedAt),
       ),
     )
-    .orderBy(asc(mediaCollectionItems.position), asc(mediaCollectionItems.createdAt));
+    .orderBy(
+      asc(mediaCollectionItems.position),
+      asc(mediaCollectionItems.createdAt),
+    );
 }
 
-export async function findOwnedActiveUserMedia(userId: string, userMediaId: string) {
+export async function findOwnedActiveUserMedia(
+  userId: string,
+  userMediaId: string,
+) {
   const [entry] = await db
     .select(userMediaIdSelect)
     .from(userMedia)
-    .where(and(eq(userMedia.id, userMediaId), eq(userMedia.userId, userId), isNull(userMedia.deletedAt)))
+    .where(
+      and(
+        eq(userMedia.id, userMediaId),
+        eq(userMedia.userId, userId),
+        isNull(userMedia.deletedAt),
+      ),
+    )
     .limit(1);
 
   return entry ?? null;
 }
 
-export async function findCollectionItem(collectionId: string, userMediaId: string) {
+export async function findCollectionItem(
+  collectionId: string,
+  userMediaId: string,
+) {
   const [item] = await db
     .select(collectionItemIdSelect)
     .from(mediaCollectionItems)
-    .where(and(eq(mediaCollectionItems.collectionId, collectionId), eq(mediaCollectionItems.userMediaId, userMediaId)))
+    .where(
+      and(
+        eq(mediaCollectionItems.collectionId, collectionId),
+        eq(mediaCollectionItems.userMediaId, userMediaId),
+      ),
+    )
     .limit(1);
 
   return item ?? null;

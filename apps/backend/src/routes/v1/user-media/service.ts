@@ -1,4 +1,12 @@
-import { media, sources, tags, user, userMedia, userMediaStatusHistory, userMediaTags } from "@media-voyage/shared";
+import {
+  media,
+  sources,
+  tags,
+  user,
+  userMedia,
+  userMediaStatusHistory,
+  userMediaTags,
+} from "@media-voyage/shared";
 import type {
   MediaImageFocus,
   UserMediaFormSchema,
@@ -40,14 +48,20 @@ async function syncUserMediaTags(
   if (tagNames === undefined) return;
 
   if (tagNames === null) {
-    await tx.delete(userMediaTags).where(eq(userMediaTags.userMediaId, userMediaId));
+    await tx
+      .delete(userMediaTags)
+      .where(eq(userMediaTags.userMediaId, userMediaId));
     return;
   }
 
-  const cleanedNames = [...new Set(tagNames.map((name) => name.trim()).filter(Boolean))];
+  const cleanedNames = [
+    ...new Set(tagNames.map((name) => name.trim()).filter(Boolean)),
+  ];
 
   if (!cleanedNames.length) {
-    await tx.delete(userMediaTags).where(eq(userMediaTags.userMediaId, userMediaId));
+    await tx
+      .delete(userMediaTags)
+      .where(eq(userMediaTags.userMediaId, userMediaId));
     return;
   }
 
@@ -56,11 +70,20 @@ async function syncUserMediaTags(
   const existingTags = await tx
     .select()
     .from(tags)
-    .where(and(eq(tags.userId, userId), inArray(tags.normalizedName, normalizedNames)));
+    .where(
+      and(
+        eq(tags.userId, userId),
+        inArray(tags.normalizedName, normalizedNames),
+      ),
+    );
 
-  const existingByNormalized = new Map(existingTags.map((tag) => [tag.normalizedName, tag]));
+  const existingByNormalized = new Map(
+    existingTags.map((tag) => [tag.normalizedName, tag]),
+  );
 
-  const missingNames = cleanedNames.filter((name) => !existingByNormalized.has(name.toLowerCase()));
+  const missingNames = cleanedNames.filter(
+    (name) => !existingByNormalized.has(name.toLowerCase()),
+  );
 
   const createdTags = missingNames.length
     ? await tx
@@ -75,9 +98,16 @@ async function syncUserMediaTags(
         .returning()
     : [];
 
-  const tagIdByNormalized = new Map([...existingTags, ...createdTags].map((tag) => [tag.normalizedName, tag.id]));
+  const tagIdByNormalized = new Map(
+    [...existingTags, ...createdTags].map((tag) => [
+      tag.normalizedName,
+      tag.id,
+    ]),
+  );
 
-  await tx.delete(userMediaTags).where(eq(userMediaTags.userMediaId, userMediaId));
+  await tx
+    .delete(userMediaTags)
+    .where(eq(userMediaTags.userMediaId, userMediaId));
 
   await tx.insert(userMediaTags).values(
     normalizedNames.map((normalizedName) => ({
@@ -103,12 +133,20 @@ async function resolveSourceId(
   const [existing] = await tx
     .select()
     .from(sources)
-    .where(and(eq(sources.userId, userId), eq(sources.normalizedName, normalizedName)))
+    .where(
+      and(
+        eq(sources.userId, userId),
+        eq(sources.normalizedName, normalizedName),
+      ),
+    )
     .limit(1);
 
   if (existing) return existing.id;
 
-  const [created] = await tx.insert(sources).values({ userId, name: trimmed, normalizedName }).returning();
+  const [created] = await tx
+    .insert(sources)
+    .values({ userId, name: trimmed, normalizedName })
+    .returning();
 
   return created.id;
 }
@@ -146,7 +184,9 @@ export async function ensurePlannedUserMediaForMedia(
 
   if (existing) {
     if (existing.deletedAt) {
-      throw conflict("This media is in your trash. Restore it before adding it again.");
+      throw conflict(
+        "This media is in your trash. Restore it before adding it again.",
+      );
     }
 
     return { id: existing.id, created: false };
@@ -174,7 +214,10 @@ export async function ensurePlannedUserMediaForMedia(
   return { id: createdUserMedia.id, created: true };
 }
 
-export async function createUserMedia(userId: string, input: UserMediaFormSchema) {
+export async function createUserMedia(
+  userId: string,
+  input: UserMediaFormSchema,
+) {
   const {
     title,
     type,
@@ -249,7 +292,9 @@ export async function createUserMedia(userId: string, input: UserMediaFormSchema
 
     if (existingUserMedia) {
       if (existingUserMedia.deletedAt) {
-        throw conflict("This media is in your trash. Restore it before adding it again.");
+        throw conflict(
+          "This media is in your trash. Restore it before adding it again.",
+        );
       }
 
       const [record] = await tx
@@ -281,7 +326,8 @@ export async function createUserMedia(userId: string, input: UserMediaFormSchema
         timeSpent: input.timeSpent,
         pagesRead: input.pagesRead,
         sourceId: sourceId ?? null,
-        visibility: input.visibility ?? (await resolveDefaultVisibility(tx, userId)),
+        visibility:
+          input.visibility ?? (await resolveDefaultVisibility(tx, userId)),
         seasonsProgress: input.seasonsProgress,
       })
       .returning({
@@ -312,7 +358,11 @@ export async function createUserMedia(userId: string, input: UserMediaFormSchema
   });
 }
 
-export async function updateUserMedia(userId: string, id: string, input: UserMediaPatchSchema) {
+export async function updateUserMedia(
+  userId: string,
+  id: string,
+  input: UserMediaPatchSchema,
+) {
   const { tags: tagNames, source: sourceName, ...updates } = input;
 
   return db.transaction(async (tx) => {
@@ -334,7 +384,8 @@ export async function updateUserMedia(userId: string, id: string, input: UserMed
 
     const sourceId = await resolveSourceId(tx, userId, sourceName);
 
-    const progressChanged = updates.progress !== undefined && updates.progress !== existing.progress;
+    const progressChanged =
+      updates.progress !== undefined && updates.progress !== existing.progress;
     assertPlayingStatusAllowed(existing.type, updates.status);
 
     const startedTracking =
@@ -344,7 +395,8 @@ export async function updateUserMedia(userId: string, id: string, input: UserMed
       startedTracking &&
       existing.startedAt === null &&
       updates.startedAt === undefined;
-    const statusChanged = updates.status !== undefined && updates.status !== existing.status;
+    const statusChanged =
+      updates.status !== undefined && updates.status !== existing.status;
     const now = new Date();
 
     const [updated] = await tx
@@ -353,7 +405,10 @@ export async function updateUserMedia(userId: string, id: string, input: UserMed
         ...updates,
         ...(sourceId !== undefined ? { sourceId } : {}),
         ...(shouldSetStartedAt ? { startedAt: now } : {}),
-        lastProgressUpdate: progressChanged || startedTracking ? now : existing.lastProgressUpdate,
+        lastProgressUpdate:
+          progressChanged || startedTracking
+            ? now
+            : existing.lastProgressUpdate,
       })
       .where(ownedUserMediaCondition(userId, id))
       .returning({
@@ -388,7 +443,11 @@ export async function updateUserMedia(userId: string, id: string, input: UserMed
   });
 }
 
-export async function updateUserMediaQuickActions(userId: string, id: string, quickAction: UserMediaQuickAction) {
+export async function updateUserMediaQuickActions(
+  userId: string,
+  id: string,
+  quickAction: UserMediaQuickAction,
+) {
   return db.transaction(async (tx) => {
     const [existing] = await tx
       .select({
@@ -406,7 +465,9 @@ export async function updateUserMediaQuickActions(userId: string, id: string, qu
     if (!existing) return null;
 
     const now = new Date();
-    const statusChanged = quickAction.status !== undefined && quickAction.status !== existing.status;
+    const statusChanged =
+      quickAction.status !== undefined &&
+      quickAction.status !== existing.status;
 
     assertPlayingStatusAllowed(existing.type, quickAction.status);
 
@@ -480,7 +541,11 @@ export async function updateUserMediaQuickActions(userId: string, id: string, qu
   });
 }
 
-export async function updateUserMediaImageFocus(userId: string, id: string, input: MediaImageFocus) {
+export async function updateUserMediaImageFocus(
+  userId: string,
+  id: string,
+  input: MediaImageFocus,
+) {
   return db.transaction(async (tx) => {
     const [entry] = await tx
       .select({ id: userMedia.id })

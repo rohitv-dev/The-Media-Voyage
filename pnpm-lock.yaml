@@ -6,7 +6,11 @@ settings:
 
 importers:
 
-  .: {}
+  .:
+    devDependencies:
+      prettier:
+        specifier: ^3.8.1
+        version: 3.8.4
 
   apps/backend:
     dependencies:
@@ -216,9 +220,6 @@ importers:
       postcss-simple-vars:
         specifier: ^7.0.1
         version: 7.0.1(postcss@8.5.15)
-      prettier:
-        specifier: ^3.8.1
-        version: 3.8.4
       sass-embedded:
         specifier: ^1.100.0
         version: 1.100.0

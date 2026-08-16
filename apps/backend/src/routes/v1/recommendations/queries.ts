@@ -151,9 +151,7 @@ export async function getRecommendationDetail(
     );
 
   if (!sender)
-    throw internalServerError(
-      "The recommendation sender could not be loaded",
-    );
+    throw internalServerError("The recommendation sender could not be loaded");
 
   const existingRecipientUserMedia = await findActiveRecipientUserMedia(
     row.recommendation.recipientId,

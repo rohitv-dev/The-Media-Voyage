@@ -294,8 +294,8 @@ export function MediaTable({ data }: MediaTableProps) {
           }}
         >
           <Text size="xs" c="dimmed">
-            {data.length} loaded {data.length === 1 ? "entry" : "entries"} · Select a
-            row to view details
+            {data.length} loaded {data.length === 1 ? "entry" : "entries"} ·
+            Select a row to view details
           </Text>
         </Box>
       )}

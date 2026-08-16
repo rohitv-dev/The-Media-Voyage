@@ -205,7 +205,12 @@ export function MoreFiltersModal({
           </div>
 
           <Group grow>
-            <Button type="button" size="xs" variant="light" onClick={handleReset}>
+            <Button
+              type="button"
+              size="xs"
+              variant="light"
+              onClick={handleReset}
+            >
               Reset Filters
             </Button>
             <Button type="submit" size="xs">

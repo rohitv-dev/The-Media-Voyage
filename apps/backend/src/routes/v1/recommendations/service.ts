@@ -28,7 +28,10 @@ export async function createFriendRecommendation(
     throw notFound("Friend not found");
   }
 
-  const source = await findFriendRecommendationSource(senderId, input.sourceUserMediaId);
+  const source = await findFriendRecommendationSource(
+    senderId,
+    input.sourceUserMediaId,
+  );
 
   const created = await db.transaction(async (tx) => {
     const [recommendation] = await tx
@@ -46,7 +49,9 @@ export async function createFriendRecommendation(
       });
 
     if (!recommendation) {
-      throw conflict("You already have a pending recommendation for this friend");
+      throw conflict(
+        "You already have a pending recommendation for this friend",
+      );
     }
 
     await createNotification(tx, {
@@ -65,11 +70,21 @@ export async function createFriendRecommendation(
   };
 }
 
-async function findRecipientEntry(tx: DbTransaction, recipientId: string, mediaId: string) {
+async function findRecipientEntry(
+  tx: DbTransaction,
+  recipientId: string,
+  mediaId: string,
+) {
   const [entry] = await tx
     .select({ id: userMedia.id })
     .from(userMedia)
-    .where(and(eq(userMedia.userId, recipientId), eq(userMedia.mediaId, mediaId), isNull(userMedia.deletedAt)))
+    .where(
+      and(
+        eq(userMedia.userId, recipientId),
+        eq(userMedia.mediaId, mediaId),
+        isNull(userMedia.deletedAt),
+      ),
+    )
     .limit(1);
 
   return entry?.id ?? null;
@@ -89,7 +104,12 @@ export async function resolveRecommendation(
         status: mediaRecommendations.status,
       })
       .from(mediaRecommendations)
-      .where(and(eq(mediaRecommendations.id, recommendationId), eq(mediaRecommendations.recipientId, recipientId)))
+      .where(
+        and(
+          eq(mediaRecommendations.id, recommendationId),
+          eq(mediaRecommendations.recipientId, recipientId),
+        ),
+      )
       .for("update")
       .limit(1);
 
@@ -99,11 +119,19 @@ export async function resolveRecommendation(
       throw conflict("This recommendation has already been resolved");
     }
 
-    let recipientUserMediaId = await findRecipientEntry(tx, recipientId, existing.mediaId);
+    let recipientUserMediaId = await findRecipientEntry(
+      tx,
+      recipientId,
+      existing.mediaId,
+    );
     let recipientUserMediaCreated = false;
 
     if (input.outcome === "added_to_library" || input.addToLibrary) {
-      const ensured = await ensurePlannedUserMediaForMedia(tx, recipientId, existing.mediaId);
+      const ensured = await ensurePlannedUserMediaForMedia(
+        tx,
+        recipientId,
+        existing.mediaId,
+      );
       recipientUserMediaId = ensured.id;
       recipientUserMediaCreated = ensured.created;
     }
@@ -118,14 +146,20 @@ export async function resolveRecommendation(
         recipientUserMediaId,
         resolvedAt: now,
       })
-      .where(and(eq(mediaRecommendations.id, recommendationId), eq(mediaRecommendations.status, "pending")))
+      .where(
+        and(
+          eq(mediaRecommendations.id, recommendationId),
+          eq(mediaRecommendations.status, "pending"),
+        ),
+      )
       .returning({
         id: mediaRecommendations.id,
         outcome: mediaRecommendations.outcome,
         recipientUserMediaId: mediaRecommendations.recipientUserMediaId,
       });
 
-    if (!updated) throw conflict("This recommendation has already been resolved");
+    if (!updated)
+      throw conflict("This recommendation has already been resolved");
 
     await createNotification(tx, {
       recipientId: existing.senderId,

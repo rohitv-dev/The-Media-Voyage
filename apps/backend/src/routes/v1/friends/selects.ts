@@ -22,10 +22,8 @@ const {
   ...sharedDetailedSelect
 } = userMediaDetailedSelect;
 
-const {
-  visibility: _ownerOnlySummaryVisibility,
-  ...sharedSummarySelect
-} = userMediaSummarySelect;
+const { visibility: _ownerOnlySummaryVisibility, ...sharedSummarySelect } =
+  userMediaSummarySelect;
 
 const likeCount = sql<number>`(
   select count(*)::int

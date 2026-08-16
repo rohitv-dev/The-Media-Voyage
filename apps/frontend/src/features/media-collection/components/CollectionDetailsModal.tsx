@@ -23,10 +23,7 @@ type CollectionDetailsValues = {
 };
 
 type CollectionDetailsModalProps = {
-  collection: Pick<
-    MediaCollectionRecord,
-    "id" | "name" | "description"
-  >;
+  collection: Pick<MediaCollectionRecord, "id" | "name" | "description">;
   opened: boolean;
   onClose: () => void;
 };
@@ -91,9 +88,7 @@ export function CollectionDetailsModal({
       closeOnEscape={!updateMutation.isPending}
       withCloseButton={!updateMutation.isPending}
     >
-      <form
-        onSubmit={form.onSubmit((values) => updateMutation.mutate(values))}
-      >
+      <form onSubmit={form.onSubmit((values) => updateMutation.mutate(values))}>
         <Stack gap="md">
           <TextInput
             label="Name"

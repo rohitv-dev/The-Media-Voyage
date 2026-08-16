@@ -1,11 +1,21 @@
 import { mediaCollection, userMedia } from "@media-voyage/shared";
-import type { MediaCollectionFormSchema, MediaCollectionUpdateSchema } from "@media-voyage/shared/api";
+import type {
+  MediaCollectionFormSchema,
+  MediaCollectionUpdateSchema,
+} from "@media-voyage/shared/api";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { isStricterThan } from "../friends/policy";
-import { mediaCollectionSelect, requireOwnedCollection, userMediaInCollection } from "./queries";
+import {
+  mediaCollectionSelect,
+  requireOwnedCollection,
+  userMediaInCollection,
+} from "./queries";
 import { db } from "@/db/db";
 
-export async function createMediaCollection(userId: string, input: MediaCollectionFormSchema) {
+export async function createMediaCollection(
+  userId: string,
+  input: MediaCollectionFormSchema,
+) {
   const [collection] = await db
     .insert(mediaCollection)
     .values({
@@ -19,13 +29,22 @@ export async function createMediaCollection(userId: string, input: MediaCollecti
   return collection;
 }
 
-export async function updateMediaCollection(userId: string, collectionId: string, input: MediaCollectionUpdateSchema) {
+export async function updateMediaCollection(
+  userId: string,
+  collectionId: string,
+  input: MediaCollectionUpdateSchema,
+) {
   await requireOwnedCollection(userId, collectionId);
 
   const [collection] = await db
     .update(mediaCollection)
     .set(input)
-    .where(and(eq(mediaCollection.id, collectionId), eq(mediaCollection.userId, userId)))
+    .where(
+      and(
+        eq(mediaCollection.id, collectionId),
+        eq(mediaCollection.userId, userId),
+      ),
+    )
     .returning(mediaCollectionSelect);
 
   return collection;
@@ -37,7 +56,10 @@ export async function updateMediaCollection(userId: string, collectionId: string
  * explicitly confirmed — a collection's visibility never overrides an entry's
  * own on read.
  */
-export async function bumpCollectionEntryVisibility(userId: string, collectionId: string) {
+export async function bumpCollectionEntryVisibility(
+  userId: string,
+  collectionId: string,
+) {
   const collection = await requireOwnedCollection(userId, collectionId);
   const target = collection.visibility;
 
@@ -47,16 +69,30 @@ export async function bumpCollectionEntryVisibility(userId: string, collectionId
   const candidates = await db
     .select({ id: userMedia.id, visibility: userMedia.visibility })
     .from(userMedia)
-    .where(and(eq(userMedia.userId, userId), userMediaInCollection(collectionId), isNull(userMedia.deletedAt)));
+    .where(
+      and(
+        eq(userMedia.userId, userId),
+        userMediaInCollection(collectionId),
+        isNull(userMedia.deletedAt),
+      ),
+    );
 
-  const stricterIds = candidates.filter((entry) => isStricterThan(entry.visibility, target)).map((entry) => entry.id);
+  const stricterIds = candidates
+    .filter((entry) => isStricterThan(entry.visibility, target))
+    .map((entry) => entry.id);
 
   if (!stricterIds.length) return { updated: 0 };
 
   const updated = await db
     .update(userMedia)
     .set({ visibility: target })
-    .where(and(eq(userMedia.userId, userId), isNull(userMedia.deletedAt), inArray(userMedia.id, stricterIds)))
+    .where(
+      and(
+        eq(userMedia.userId, userId),
+        isNull(userMedia.deletedAt),
+        inArray(userMedia.id, stricterIds),
+      ),
+    )
     .returning({ id: userMedia.id });
 
   return { updated: updated.length };

@@ -62,7 +62,8 @@ export const reorderMediaCollectionItemsSchema = z
     if (!hasCompleteOrder) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Collection item positions must be a complete sequence starting at 1",
+        message:
+          "Collection item positions must be a complete sequence starting at 1",
         path: ["items"],
       });
     }

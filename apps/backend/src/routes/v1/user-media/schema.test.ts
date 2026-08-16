@@ -14,12 +14,12 @@ import {
 
 describe("user-media request schemas", () => {
   it("requires a bounded, meaningful semantic search query", () => {
-    expect(
-      semanticSearchQuerySchema.safeParse({ q: "four" }).success,
-    ).toBe(false);
-    expect(
-      semanticSearchQuerySchema.safeParse({ q: "space" }).success,
-    ).toBe(true);
+    expect(semanticSearchQuerySchema.safeParse({ q: "four" }).success).toBe(
+      false,
+    );
+    expect(semanticSearchQuerySchema.safeParse({ q: "space" }).success).toBe(
+      true,
+    );
     expect(
       semanticSearchQuerySchema.safeParse({ q: "a".repeat(501) }).success,
     ).toBe(false);

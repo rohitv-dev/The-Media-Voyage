@@ -51,9 +51,7 @@ export function canView(
 export function visibleEntryVisibilities(isOwner: boolean, isFriend: boolean) {
   if (isOwner) return undefined;
 
-  return isFriend
-    ? (["friends", "public"] as const)
-    : (["public"] as const);
+  return isFriend ? (["friends", "public"] as const) : (["public"] as const);
 }
 
 /**

@@ -32,7 +32,11 @@ type NamedEntityLabel = "tag" | "source";
  * library rows reference it. `usageJoinColumn` is the foreign-key column on
  * the referencing table (e.g. `userMediaTags.tagId`, `userMedia.sourceId`).
  */
-export function listNamedEntitiesWithUsage(table: NamedEntityTable, usageJoinColumn: PgColumn, userId: string) {
+export function listNamedEntitiesWithUsage(
+  table: NamedEntityTable,
+  usageJoinColumn: PgColumn,
+  userId: string,
+) {
   return db
     .select({
       id: table.id,
@@ -71,7 +75,13 @@ async function findByNormalizedName(
   const [entity] = await db
     .select()
     .from(table)
-    .where(and(eq(table.userId, userId), eq(table.normalizedName, normalizedName), ne(table.id, excludeId)))
+    .where(
+      and(
+        eq(table.userId, userId),
+        eq(table.normalizedName, normalizedName),
+        ne(table.id, excludeId),
+      ),
+    )
     .limit(1);
 
   return entity ?? null;
@@ -85,7 +95,9 @@ async function findByNormalizedNameAny(
   const [entity] = await db
     .select()
     .from(table)
-    .where(and(eq(table.userId, userId), eq(table.normalizedName, normalizedName)))
+    .where(
+      and(eq(table.userId, userId), eq(table.normalizedName, normalizedName)),
+    )
     .limit(1);
 
   return entity ?? null;
@@ -98,7 +110,11 @@ export async function createNamedEntity(
   label: NamedEntityLabel,
 ) {
   const normalizedName = input.name.trim().toLowerCase();
-  const duplicate = await findByNormalizedNameAny(table, userId, normalizedName);
+  const duplicate = await findByNormalizedNameAny(
+    table,
+    userId,
+    normalizedName,
+  );
 
   if (duplicate) {
     throw conflict(`A ${label} with that name already exists`);
@@ -134,7 +150,12 @@ export async function updateNamedEntity(
 
   if (input.name !== undefined) {
     const normalizedName = input.name.trim().toLowerCase();
-    const duplicate = await findByNormalizedName(table, userId, normalizedName, id);
+    const duplicate = await findByNormalizedName(
+      table,
+      userId,
+      normalizedName,
+      id,
+    );
 
     if (duplicate) {
       throw conflict(`A ${label} with that name already exists`);
@@ -170,5 +191,4 @@ export async function deleteNamedEntity(
   }
 
   await db.delete(table).where(and(eq(table.id, id), eq(table.userId, userId)));
-
 }

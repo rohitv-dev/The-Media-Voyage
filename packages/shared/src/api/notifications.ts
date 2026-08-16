@@ -1,17 +1,12 @@
 import z from "zod";
-import {
-  notificationTypeEnum,
-  recommendationOutcomeEnum,
-} from "../db/schema";
+import { notificationTypeEnum, recommendationOutcomeEnum } from "../db/schema";
 
 export const notificationListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
-export type NotificationListQuery = z.infer<
-  typeof notificationListQuerySchema
->;
+export type NotificationListQuery = z.infer<typeof notificationListQuerySchema>;
 
 export const notificationRecordSchema = z.object({
   id: z.uuid(),

@@ -24,7 +24,9 @@ const environmentSchema = z.object({
   MOBILE_FRONTEND_URL: z
     .url("MOBILE_FRONTEND_URL must be a valid URL")
     .optional(),
-  DEV_TRUSTED_ORIGIN: z.url("DEV_TRUSTED_ORIGIN must be a valid URL").optional(),
+  DEV_TRUSTED_ORIGIN: z
+    .url("DEV_TRUSTED_ORIGIN must be a valid URL")
+    .optional(),
   AUTH_COOKIE_SAME_SITE: z.enum(["lax", "strict", "none"]).default("lax"),
   AUTH_COOKIE_DOMAIN: z.string().min(1).optional(),
   IGDB_CLIENT_ID: z.string().min(1, "IGDB_CLIENT_ID is required"),
@@ -79,9 +81,7 @@ const trustedOrigins = [
   frontendOrigin,
   mobileFrontendOrigin,
   developmentTrustedOrigin,
-].filter(
-  (origin): origin is string => Boolean(origin),
-);
+].filter((origin): origin is string => Boolean(origin));
 
 if (environment.NODE_ENV === "production") {
   if (betterAuthUrl.protocol !== "https:") {

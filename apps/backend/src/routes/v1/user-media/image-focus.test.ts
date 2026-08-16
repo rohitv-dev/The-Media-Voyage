@@ -19,10 +19,7 @@ import {
   publicMediaDetailSelect,
   publicMediaSummarySelect,
 } from "../public/selects";
-import {
-  userMediaDetailedSelect,
-  userMediaSummarySelect,
-} from "./selects";
+import { userMediaDetailedSelect, userMediaSummarySelect } from "./selects";
 import { updateUserMediaImageFocus } from "./service";
 
 const USER_ID = "user-1";

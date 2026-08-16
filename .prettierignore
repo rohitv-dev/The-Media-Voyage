@@ -1,0 +1,16 @@
+**/.env*
+**/node_modules
+**/dist
+**/coverage
+**/.cache
+**/build
+**/.tanstack
+**/.output
+**/.wrangler
+**/.vinxi
+**/package-lock.json
+**/pnpm-lock.yaml
+**/yarn.lock
+apps/frontend/android/app/release
+apps/frontend/android/app/src/main/assets
+apps/frontend/src/routeTree.gen.ts

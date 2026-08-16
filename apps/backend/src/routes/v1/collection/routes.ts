@@ -5,7 +5,11 @@ import {
 } from "@media-voyage/shared/api";
 import type { FastifyInstance } from "fastify";
 import { findStricterEntries, listMediaCollections } from "./queries";
-import { bumpCollectionEntryVisibility, createMediaCollection, updateMediaCollection } from "./service";
+import {
+  bumpCollectionEntryVisibility,
+  createMediaCollection,
+  updateMediaCollection,
+} from "./service";
 import { requireAuth } from "@/require-auth";
 
 async function collectionRoutes(fastify: FastifyInstance) {
@@ -23,10 +27,14 @@ async function collectionRoutes(fastify: FastifyInstance) {
   });
 
   fastify.patch("/:collectionId", async (request, reply) => {
-    const { collectionId } = mediaCollectionIdParamsSchema.parse(request.params);
+    const { collectionId } = mediaCollectionIdParamsSchema.parse(
+      request.params,
+    );
     const input = mediaCollectionUpdateSchema.parse(request.body);
 
-    return reply.send(await updateMediaCollection(request.userId, collectionId, input));
+    return reply.send(
+      await updateMediaCollection(request.userId, collectionId, input),
+    );
   });
 
   /**
@@ -34,15 +42,21 @@ async function collectionRoutes(fastify: FastifyInstance) {
    * asks for this after saving a wider visibility, to offer the bump.
    */
   fastify.get("/:collectionId/visibility-mismatch", async (request, reply) => {
-    const { collectionId } = mediaCollectionIdParamsSchema.parse(request.params);
+    const { collectionId } = mediaCollectionIdParamsSchema.parse(
+      request.params,
+    );
 
     return reply.send(await findStricterEntries(request.userId, collectionId));
   });
 
   fastify.post("/:collectionId/bump-visibility", async (request, reply) => {
-    const { collectionId } = mediaCollectionIdParamsSchema.parse(request.params);
+    const { collectionId } = mediaCollectionIdParamsSchema.parse(
+      request.params,
+    );
 
-    return reply.send(await bumpCollectionEntryVisibility(request.userId, collectionId));
+    return reply.send(
+      await bumpCollectionEntryVisibility(request.userId, collectionId),
+    );
   });
 }
 

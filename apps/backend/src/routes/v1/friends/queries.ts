@@ -40,8 +40,14 @@ export async function friendshipBetween(userId: string, otherUserId: string) {
     .from(friendships)
     .where(
       or(
-        and(eq(friendships.requesterId, userId), eq(friendships.addresseeId, otherUserId)),
-        and(eq(friendships.requesterId, otherUserId), eq(friendships.addresseeId, userId)),
+        and(
+          eq(friendships.requesterId, userId),
+          eq(friendships.addresseeId, otherUserId),
+        ),
+        and(
+          eq(friendships.requesterId, otherUserId),
+          eq(friendships.addresseeId, userId),
+        ),
       ),
     )
     .limit(1);
@@ -66,18 +72,26 @@ export async function listFriendIds(userId: string) {
     .where(
       and(
         eq(friendships.status, "accepted"),
-        or(eq(friendships.requesterId, userId), eq(friendships.addresseeId, userId)),
+        or(
+          eq(friendships.requesterId, userId),
+          eq(friendships.addresseeId, userId),
+        ),
       ),
     );
 
-  return rows.map((row) => (row.requesterId === userId ? row.addresseeId : row.requesterId));
+  return rows.map((row) =>
+    row.requesterId === userId ? row.addresseeId : row.requesterId,
+  );
 }
 
 /**
  * Resolves the viewer's access to a single entry, or throws. Denied access
  * reports 404 rather than 403 so an outsider can't probe which ids exist.
  */
-export async function requireViewableUserMedia(viewerId: string, userMediaId: string) {
+export async function requireViewableUserMedia(
+  viewerId: string,
+  userMediaId: string,
+) {
   const [entry] = await db
     .select({
       id: userMedia.id,
@@ -92,7 +106,9 @@ export async function requireViewableUserMedia(viewerId: string, userMediaId: st
 
   // Only pay for the friendship lookup when the rule actually depends on it.
   const isFriend =
-    entry.ownerId !== viewerId && entry.visibility === "friends" ? await areFriends(viewerId, entry.ownerId) : false;
+    entry.ownerId !== viewerId && entry.visibility === "friends"
+      ? await areFriends(viewerId, entry.ownerId)
+      : false;
 
   if (!canView(viewerId, entry, isFriend)) {
     throw notFound("Entry not found");
@@ -131,7 +147,10 @@ export async function listFriends(userId: string): Promise<FriendRecord[]> {
     .where(
       and(
         eq(friendships.status, "accepted"),
-        or(eq(friendships.requesterId, userId), eq(friendships.addresseeId, userId)),
+        or(
+          eq(friendships.requesterId, userId),
+          eq(friendships.addresseeId, userId),
+        ),
       ),
     );
 
@@ -149,7 +168,9 @@ export async function listFriends(userId: string): Promise<FriendRecord[]> {
     countSharedEntries(friendIds),
   ]);
 
-  const profileById = new Map(profiles.map((profile) => [profile.userId, profile]));
+  const profileById = new Map(
+    profiles.map((profile) => [profile.userId, profile]),
+  );
 
   return friendIdByFriendship
     .map((row) => {
@@ -176,7 +197,9 @@ export async function getFriend(userId: string, friendId: string) {
   return friend;
 }
 
-export async function listFriendRequests(userId: string): Promise<FriendRequestsResponse> {
+export async function listFriendRequests(
+  userId: string,
+): Promise<FriendRequestsResponse> {
   const [incoming, outgoing] = await Promise.all([
     db
       .select({
@@ -186,7 +209,12 @@ export async function listFriendRequests(userId: string): Promise<FriendRequests
       })
       .from(friendships)
       .innerJoin(user, eq(user.id, friendships.requesterId))
-      .where(and(eq(friendships.addresseeId, userId), eq(friendships.status, "pending")))
+      .where(
+        and(
+          eq(friendships.addresseeId, userId),
+          eq(friendships.status, "pending"),
+        ),
+      )
       .orderBy(desc(friendships.createdAt)),
     db
       .select({
@@ -196,7 +224,12 @@ export async function listFriendRequests(userId: string): Promise<FriendRequests
       })
       .from(friendships)
       .innerJoin(user, eq(user.id, friendships.addresseeId))
-      .where(and(eq(friendships.requesterId, userId), eq(friendships.status, "pending")))
+      .where(
+        and(
+          eq(friendships.requesterId, userId),
+          eq(friendships.status, "pending"),
+        ),
+      )
       .orderBy(desc(friendships.createdAt)),
   ]);
 
@@ -268,10 +301,17 @@ export async function listFriendCollections(
       createdAt: mediaCollection.createdAt,
     })
     .from(mediaCollection)
-    .where(and(eq(mediaCollection.userId, friendId), inArray(mediaCollection.visibility, [...SHARED_VISIBILITIES])))
+    .where(
+      and(
+        eq(mediaCollection.userId, friendId),
+        inArray(mediaCollection.visibility, [...SHARED_VISIBILITIES]),
+      ),
+    )
     .orderBy(mediaCollection.name);
 
-  const counts = await countVisibleCollectionItems(collections.map((collection) => collection.id));
+  const counts = await countVisibleCollectionItems(
+    collections.map((collection) => collection.id),
+  );
 
   return collections.map((collection) => ({
     ...collection,
@@ -358,7 +398,10 @@ export async function getFriendsFeed(viewerId: string, limit = 20) {
     .limit(limit);
 }
 
-export async function getViewableUserMediaDetail(viewerId: string, userMediaId: string) {
+export async function getViewableUserMediaDetail(
+  viewerId: string,
+  userMediaId: string,
+) {
   await requireViewableUserMedia(viewerId, userMediaId);
 
   const [record] = await db

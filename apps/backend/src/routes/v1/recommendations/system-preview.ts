@@ -1,4 +1,7 @@
-import type { SourceMediaRecord, SystemRecommendationPreviewResponse } from "@media-voyage/shared/api";
+import type {
+  SourceMediaRecord,
+  SystemRecommendationPreviewResponse,
+} from "@media-voyage/shared/api";
 import { getGameRecommendations } from "@/services/igdb";
 import { getOpenLibraryRecommendations } from "@/services/openLibrary";
 import { getTmdbRecommendations } from "@/services/tmdb";
@@ -13,7 +16,8 @@ const MAX_CANDIDATES_PER_SEED = 3;
 const MAX_RECOMMENDATIONS = 10;
 
 type LibraryItem = Awaited<ReturnType<typeof findSystemPreviewLibrary>>[number];
-type PreviewMedia = SystemRecommendationPreviewResponse["recommendations"][number]["media"];
+type PreviewMedia =
+  SystemRecommendationPreviewResponse["recommendations"][number]["media"];
 type ProviderIdentity = Pick<PreviewMedia, "source" | "externalId" | "type">;
 
 type PreviewSeed = LibraryItem & {
@@ -59,7 +63,10 @@ function compareSeedPriority(left: PreviewSeed, right: PreviewSeed) {
 }
 
 export function selectPreviewSeeds(library: LibraryItem[]): PreviewSeed[] {
-  return library.filter(isPreviewSeed).sort(compareSeedPriority).slice(0, MAX_SEED_ATTEMPTS);
+  return library
+    .filter(isPreviewSeed)
+    .sort(compareSeedPriority)
+    .slice(0, MAX_SEED_ATTEMPTS);
 }
 
 function positiveInteger(value: string | null): number | null {
@@ -78,7 +85,10 @@ function mapSeedToProvider(seed: PreviewSeed) {
     return {
       mappedMedia: tmdbId
         ? {
-            source: seed.type === "movie" ? ("tmdb_movie" as const) : ("tmdb_tv" as const),
+            source:
+              seed.type === "movie"
+                ? ("tmdb_movie" as const)
+                : ("tmdb_tv" as const),
             externalId: String(tmdbId),
             type: seed.type,
           }
@@ -142,7 +152,10 @@ function toPreviewMedia(record: SourceMediaRecord): PreviewMedia | null {
   } as PreviewMedia;
 }
 
-async function getProviderRecommendations(seed: PreviewSeed, mappedMedia: ProviderIdentity) {
+async function getProviderRecommendations(
+  seed: PreviewSeed,
+  mappedMedia: ProviderIdentity,
+) {
   let candidates: SourceMediaRecord[];
 
   if (seed.type === "movie" || seed.type === "show") {
@@ -157,7 +170,9 @@ async function getProviderRecommendations(seed: PreviewSeed, mappedMedia: Provid
     return [];
   }
 
-  return candidates.map(toPreviewMedia).filter((candidate): candidate is PreviewMedia => candidate !== null);
+  return candidates
+    .map(toPreviewMedia)
+    .filter((candidate): candidate is PreviewMedia => candidate !== null);
 }
 
 async function runSeed(seed: PreviewSeed): Promise<SeedRun> {
@@ -203,7 +218,8 @@ async function collectSeedRuns(
   const runs: SeedRun[] = [];
   let productiveSeedCount = 0;
 
-  const { excludedTitles, excludedIdentities } = buildLibraryExclusions(library);
+  const { excludedTitles, excludedIdentities } =
+    buildLibraryExclusions(library);
 
   for (const seed of seeds) {
     const run = await runSeed(seed);
@@ -267,7 +283,9 @@ function buildLibraryExclusions(library: LibraryItem[]) {
     ),
     excludedIdentities: new Set(
       library.flatMap((item) =>
-        item.catalogSource && item.externalId ? [mediaIdentity(item.catalogSource, item.externalId)] : [],
+        item.catalogSource && item.externalId
+          ? [mediaIdentity(item.catalogSource, item.externalId)]
+          : [],
       ),
     ),
   };
@@ -296,7 +314,8 @@ function buildRecommendations(
   runs: SeedRun[],
   dismissedIdentities: Set<string>,
 ): SystemRecommendationPreviewResponse["recommendations"] {
-  const { excludedTitles, excludedIdentities } = buildLibraryExclusions(library);
+  const { excludedTitles, excludedIdentities } =
+    buildLibraryExclusions(library);
   const aggregates = new Map<string, CandidateAggregate>();
 
   for (const run of runs) {
@@ -321,11 +340,18 @@ function buildRecommendations(
 
       const existing = aggregates.get(identity);
       if (existing) {
-        if (!existing.seeds.some((seed) => seed.userMediaId === run.seed.userMediaId)) {
+        if (
+          !existing.seeds.some(
+            (seed) => seed.userMediaId === run.seed.userMediaId,
+          )
+        ) {
           existing.seeds.push(run.seed);
           existing.seeds.sort(compareSeedPriority);
         }
-        existing.firstProviderIndex = Math.min(existing.firstProviderIndex, providerIndex);
+        existing.firstProviderIndex = Math.min(
+          existing.firstProviderIndex,
+          providerIndex,
+        );
       } else {
         aggregates.set(identity, {
           candidate,
@@ -344,7 +370,10 @@ function buildRecommendations(
         right.seeds.length - left.seeds.length ||
         compareSeedPriority(left.seeds[0], right.seeds[0]) ||
         left.firstProviderIndex - right.firstProviderIndex ||
-        mediaIdentity(left.candidate.source, left.candidate.externalId).localeCompare(
+        mediaIdentity(
+          left.candidate.source,
+          left.candidate.externalId,
+        ).localeCompare(
           mediaIdentity(right.candidate.source, right.candidate.externalId),
         ),
     )
@@ -358,7 +387,9 @@ function buildRecommendations(
     }));
 }
 
-export async function getSystemRecommendationPreview(userId: string): Promise<SystemRecommendationPreviewResponse> {
+export async function getSystemRecommendationPreview(
+  userId: string,
+): Promise<SystemRecommendationPreviewResponse> {
   const [library, dismissed] = await Promise.all([
     findSystemPreviewLibrary(userId),
     findDismissedSystemRecommendations(userId),
@@ -372,7 +403,10 @@ export async function getSystemRecommendationPreview(userId: string): Promise<Sy
 
   const providerRuns = runs.filter((run) => run.mappedMedia !== null);
 
-  if (providerRuns.length > 0 && providerRuns.every((run) => run.mappingStatus === "provider_error")) {
+  if (
+    providerRuns.length > 0 &&
+    providerRuns.every((run) => run.mappingStatus === "provider_error")
+  ) {
     throw providerRuns[0].error;
   }
 

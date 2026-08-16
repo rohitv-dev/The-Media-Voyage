@@ -57,7 +57,12 @@ function userMediaIdsWithTags(userId: string, tagNames: string[]) {
     .select({ userMediaId: userMediaTags.userMediaId })
     .from(userMediaTags)
     .innerJoin(tags, eq(tags.id, userMediaTags.tagId))
-    .where(and(eq(tags.userId, userId), inArray(tags.normalizedName, normalizedNames)));
+    .where(
+      and(
+        eq(tags.userId, userId),
+        inArray(tags.normalizedName, normalizedNames),
+      ),
+    );
 }
 
 function sourceIdsWithNames(userId: string, sourceNames: string[]) {
@@ -66,23 +71,39 @@ function sourceIdsWithNames(userId: string, sourceNames: string[]) {
   return db
     .select({ id: sources.id })
     .from(sources)
-    .where(and(eq(sources.userId, userId), inArray(sources.normalizedName, normalizedNames)));
+    .where(
+      and(
+        eq(sources.userId, userId),
+        inArray(sources.normalizedName, normalizedNames),
+      ),
+    );
 }
 
 export function ownedUserMediaCondition(userId: string, id: string) {
-  return and(eq(userMedia.id, id), eq(userMedia.userId, userId), isNull(userMedia.deletedAt));
+  return and(
+    eq(userMedia.id, id),
+    eq(userMedia.userId, userId),
+    isNull(userMedia.deletedAt),
+  );
 }
 
 export function activeUserMediaCondition(userId: string) {
   return and(eq(userMedia.userId, userId), isNull(userMedia.deletedAt));
 }
 
-export function ownedUserMediaIncludingDeletedCondition(userId: string, id: string) {
+export function ownedUserMediaIncludingDeletedCondition(
+  userId: string,
+  id: string,
+) {
   return and(eq(userMedia.id, id), eq(userMedia.userId, userId));
 }
 
 export function ownedDeletedUserMediaCondition(userId: string, id: string) {
-  return and(eq(userMedia.id, id), eq(userMedia.userId, userId), isNotNull(userMedia.deletedAt));
+  return and(
+    eq(userMedia.id, id),
+    eq(userMedia.userId, userId),
+    isNotNull(userMedia.deletedAt),
+  );
 }
 
 export async function findUserMediaById(userId: string, id: string) {
@@ -126,10 +147,14 @@ export async function pickUserMedia(userId: string, filters: MediaPickerQuery) {
 
   if (filters.type) conditions.push(eq(media.type, filters.type));
   if (filters.source) {
-    conditions.push(inArray(userMedia.sourceId, sourceIdsWithNames(userId, [filters.source])));
+    conditions.push(
+      inArray(userMedia.sourceId, sourceIdsWithNames(userId, [filters.source])),
+    );
   }
   if (filters.tag) {
-    conditions.push(inArray(userMedia.id, userMediaIdsWithTags(userId, [filters.tag])));
+    conditions.push(
+      inArray(userMedia.id, userMediaIdsWithTags(userId, [filters.tag])),
+    );
   }
 
   if (filters.collectionId) {
@@ -146,7 +171,10 @@ export async function pickUserMedia(userId: string, filters: MediaPickerQuery) {
       )
       .innerJoin(
         mediaCollection,
-        and(eq(mediaCollectionItems.collectionId, mediaCollection.id), eq(mediaCollection.userId, userId)),
+        and(
+          eq(mediaCollectionItems.collectionId, mediaCollection.id),
+          eq(mediaCollection.userId, userId),
+        ),
       )
       .where(and(...conditions))
       .orderBy(sql`random()`)
@@ -182,7 +210,10 @@ export function searchUserMedia(userId: string, search: string) {
     .limit(20);
 }
 
-export function searchUserMediaSemantically(userId: string, embedding: number[]) {
+export function searchUserMediaSemantically(
+  userId: string,
+  embedding: number[],
+) {
   const similarity = sql<number>`1 - (${cosineDistance(media.embedding, embedding)})`;
   const minimumSimilarity = 0.35;
 
@@ -202,8 +233,14 @@ export function searchUserMediaSemantically(userId: string, embedding: number[])
     .limit(20);
 }
 
-function getUserMediaFilterConditions(userId: string, filters: UserMediaQuerySchema) {
-  const conditions: SQL[] = [eq(userMedia.userId, userId), isNull(userMedia.deletedAt)];
+function getUserMediaFilterConditions(
+  userId: string,
+  filters: UserMediaQuerySchema,
+) {
+  const conditions: SQL[] = [
+    eq(userMedia.userId, userId),
+    isNull(userMedia.deletedAt),
+  ];
 
   if (filters.status?.length) {
     conditions.push(inArray(userMedia.status, filters.status));
@@ -224,16 +261,24 @@ function getUserMediaFilterConditions(userId: string, filters: UserMediaQuerySch
     conditions.push(lte(userMedia.rating, filters.maxRating));
   }
   if (filters.createdFrom) {
-    conditions.push(sql`${userMedia.createdAt}::date >= ${filters.createdFrom}::date`);
+    conditions.push(
+      sql`${userMedia.createdAt}::date >= ${filters.createdFrom}::date`,
+    );
   }
   if (filters.createdTo) {
-    conditions.push(sql`${userMedia.createdAt}::date <= ${filters.createdTo}::date`);
+    conditions.push(
+      sql`${userMedia.createdAt}::date <= ${filters.createdTo}::date`,
+    );
   }
   if (filters.sources?.length) {
-    conditions.push(inArray(userMedia.sourceId, sourceIdsWithNames(userId, filters.sources)));
+    conditions.push(
+      inArray(userMedia.sourceId, sourceIdsWithNames(userId, filters.sources)),
+    );
   }
   if (filters.tags?.length) {
-    conditions.push(inArray(userMedia.id, userMediaIdsWithTags(userId, filters.tags)));
+    conditions.push(
+      inArray(userMedia.id, userMediaIdsWithTags(userId, filters.tags)),
+    );
   }
 
   return conditions;
@@ -248,10 +293,16 @@ function getUserMediaFilterOrder(filters: UserMediaQuerySchema) {
   };
   const sortDirection = filters.order === "asc" ? asc : desc;
 
-  return [sortDirection(sortColumns[filters.sort]), sortDirection(userMedia.id)] as const;
+  return [
+    sortDirection(sortColumns[filters.sort]),
+    sortDirection(userMedia.id),
+  ] as const;
 }
 
-export async function filterUserMedia(userId: string, filters: UserMediaQuerySchema) {
+export async function filterUserMedia(
+  userId: string,
+  filters: UserMediaQuerySchema,
+) {
   return db
     .select(userMediaSummarySelect)
     .from(userMedia)
@@ -260,7 +311,10 @@ export async function filterUserMedia(userId: string, filters: UserMediaQuerySch
     .orderBy(...getUserMediaFilterOrder(filters));
 }
 
-export async function filterUserMediaPage(userId: string, filters: UserMediaPageQuerySchema) {
+export async function filterUserMediaPage(
+  userId: string,
+  filters: UserMediaPageQuerySchema,
+) {
   const records = await db
     .select(userMediaSummarySelect)
     .from(userMedia)
@@ -297,8 +351,16 @@ export function getUserMediaCounts(userId: string) {
 
 export async function getUserMediaDropdowns(userId: string) {
   const [sourceRows, tagRows] = await Promise.all([
-    db.select({ name: sources.name }).from(sources).where(eq(sources.userId, userId)).orderBy(sources.name),
-    db.select({ name: tags.name }).from(tags).where(eq(tags.userId, userId)).orderBy(tags.name),
+    db
+      .select({ name: sources.name })
+      .from(sources)
+      .where(eq(sources.userId, userId))
+      .orderBy(sources.name),
+    db
+      .select({ name: tags.name })
+      .from(tags)
+      .where(eq(tags.userId, userId))
+      .orderBy(tags.name),
   ]);
 
   return {
@@ -317,58 +379,68 @@ export async function getDashboardStats(userId: string) {
     completionTrend,
     timeSpentByType,
   ] = await Promise.all([
-      db.select({ count: count() }).from(userMedia).where(activeUserMediaCondition(userId)),
-      db.select({ count: count() }).from(mediaCollection).where(eq(mediaCollection.userId, userId)),
-      db
-        .select({ status: userMedia.status, count: count() })
-        .from(userMedia)
-        .where(activeUserMediaCondition(userId))
-        .groupBy(userMedia.status),
-      db
-        .select({ type: media.type, count: count() })
-        .from(userMedia)
-        .innerJoin(media, eq(media.id, userMedia.mediaId))
-        .where(activeUserMediaCondition(userId))
-        .groupBy(media.type),
-      db
-        .select({ rating: userMedia.rating, count: count() })
-        .from(userMedia)
-        .where(and(activeUserMediaCondition(userId), isNotNull(userMedia.rating)))
-        .groupBy(userMedia.rating)
-        .orderBy(userMedia.rating),
-      db
-        .select({
-          month: sql<string>`to_char(date_trunc('month', ${userMedia.completedAt}), 'YYYY-MM')`,
-          count: count(),
-        })
-        .from(userMedia)
-        .where(
-          and(activeUserMediaCondition(userId), eq(userMedia.status, "completed"), isNotNull(userMedia.completedAt)),
-        )
-        .groupBy(sql`date_trunc('month', ${userMedia.completedAt})`)
-        .orderBy(sql`date_trunc('month', ${userMedia.completedAt})`),
-      db
-        .select({
-          type: media.type,
-          minutes: sql<number>`coalesce(sum(${userMedia.timeSpent}), 0)::int`,
-        })
-        .from(userMedia)
-        .innerJoin(media, eq(media.id, userMedia.mediaId))
-        .where(
-          and(activeUserMediaCondition(userId), isNotNull(userMedia.timeSpent)),
-        )
-        .groupBy(media.type)
-        .orderBy(media.type),
-    ]);
+    db
+      .select({ count: count() })
+      .from(userMedia)
+      .where(activeUserMediaCondition(userId)),
+    db
+      .select({ count: count() })
+      .from(mediaCollection)
+      .where(eq(mediaCollection.userId, userId)),
+    db
+      .select({ status: userMedia.status, count: count() })
+      .from(userMedia)
+      .where(activeUserMediaCondition(userId))
+      .groupBy(userMedia.status),
+    db
+      .select({ type: media.type, count: count() })
+      .from(userMedia)
+      .innerJoin(media, eq(media.id, userMedia.mediaId))
+      .where(activeUserMediaCondition(userId))
+      .groupBy(media.type),
+    db
+      .select({ rating: userMedia.rating, count: count() })
+      .from(userMedia)
+      .where(and(activeUserMediaCondition(userId), isNotNull(userMedia.rating)))
+      .groupBy(userMedia.rating)
+      .orderBy(userMedia.rating),
+    db
+      .select({
+        month: sql<string>`to_char(date_trunc('month', ${userMedia.completedAt}), 'YYYY-MM')`,
+        count: count(),
+      })
+      .from(userMedia)
+      .where(
+        and(
+          activeUserMediaCondition(userId),
+          eq(userMedia.status, "completed"),
+          isNotNull(userMedia.completedAt),
+        ),
+      )
+      .groupBy(sql`date_trunc('month', ${userMedia.completedAt})`)
+      .orderBy(sql`date_trunc('month', ${userMedia.completedAt})`),
+    db
+      .select({
+        type: media.type,
+        minutes: sql<number>`coalesce(sum(${userMedia.timeSpent}), 0)::int`,
+      })
+      .from(userMedia)
+      .innerJoin(media, eq(media.id, userMedia.mediaId))
+      .where(
+        and(activeUserMediaCondition(userId), isNotNull(userMedia.timeSpent)),
+      )
+      .groupBy(media.type)
+      .orderBy(media.type),
+  ]);
 
   const normalizedTimeSpentByType = timeSpentByType.map((row) => ({
     type: row.type,
     minutes: Number(row.minutes) || 0,
   }));
 
-  const statusCounts = Object.fromEntries(statusDistribution.map((row) => [row.status, row.count])) as Partial<
-    Record<Status, number>
-  >;
+  const statusCounts = Object.fromEntries(
+    statusDistribution.map((row) => [row.status, row.count]),
+  ) as Partial<Record<Status, number>>;
 
   return {
     summary: {
@@ -396,7 +468,10 @@ export async function getDashboardStats(userId: string) {
   };
 }
 
-export async function getCalendarActivity(userId: string, range: CalendarActivityQuery) {
+export async function getCalendarActivity(
+  userId: string,
+  range: CalendarActivityQuery,
+) {
   const [started, completed, statusChanges] = await Promise.all([
     db
       .select(calendarStartedSelect)
@@ -406,7 +481,11 @@ export async function getCalendarActivity(userId: string, range: CalendarActivit
         and(
           activeUserMediaCondition(userId),
           isNotNull(userMedia.startedAt),
-          between(sql`${userMedia.startedAt}::date`, sql`${range.from}::date`, sql`${range.to}::date`),
+          between(
+            sql`${userMedia.startedAt}::date`,
+            sql`${range.from}::date`,
+            sql`${range.to}::date`,
+          ),
         ),
       ),
     db
@@ -417,19 +496,33 @@ export async function getCalendarActivity(userId: string, range: CalendarActivit
         and(
           activeUserMediaCondition(userId),
           isNotNull(userMedia.completedAt),
-          between(sql`${userMedia.completedAt}::date`, sql`${range.from}::date`, sql`${range.to}::date`),
+          between(
+            sql`${userMedia.completedAt}::date`,
+            sql`${range.from}::date`,
+            sql`${range.to}::date`,
+          ),
         ),
       ),
     db
       .select(calendarStatusChangeSelect)
       .from(userMediaStatusHistory)
-      .innerJoin(userMedia, eq(userMediaStatusHistory.userMediaId, userMedia.id))
+      .innerJoin(
+        userMedia,
+        eq(userMediaStatusHistory.userMediaId, userMedia.id),
+      )
       .innerJoin(media, eq(userMedia.mediaId, media.id))
       .where(
         and(
           activeUserMediaCondition(userId),
-          between(sql`${userMediaStatusHistory.changedAt}::date`, sql`${range.from}::date`, sql`${range.to}::date`),
-          notInArray(userMediaStatusHistory.toStatus, ["in_progress", "completed"]),
+          between(
+            sql`${userMediaStatusHistory.changedAt}::date`,
+            sql`${range.from}::date`,
+            sql`${range.to}::date`,
+          ),
+          notInArray(userMediaStatusHistory.toStatus, [
+            "in_progress",
+            "completed",
+          ]),
         ),
       ),
   ]);

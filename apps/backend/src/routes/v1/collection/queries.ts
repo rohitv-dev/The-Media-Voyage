@@ -1,6 +1,11 @@
 import { db } from "@/db/db";
 import { notFound } from "@/errors";
-import { media, mediaCollection, mediaCollectionItems, userMedia } from "@media-voyage/shared";
+import {
+  media,
+  mediaCollection,
+  mediaCollectionItems,
+  userMedia,
+} from "@media-voyage/shared";
 import { and, asc, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { isStricterThan } from "../friends/policy";
 
@@ -49,7 +54,10 @@ export function listMediaCollections(userId: string) {
 }
 
 /** Base ownership-check primitive, shared with the collection-item routes. */
-export async function findOwnedCollection(userId: string, collectionId: string) {
+export async function findOwnedCollection(
+  userId: string,
+  collectionId: string,
+) {
   const [collection] = await db
     .select({
       id: mediaCollection.id,
@@ -58,13 +66,21 @@ export async function findOwnedCollection(userId: string, collectionId: string) 
       visibility: mediaCollection.visibility,
     })
     .from(mediaCollection)
-    .where(and(eq(mediaCollection.id, collectionId), eq(mediaCollection.userId, userId)))
+    .where(
+      and(
+        eq(mediaCollection.id, collectionId),
+        eq(mediaCollection.userId, userId),
+      ),
+    )
     .limit(1);
 
   return collection ?? null;
 }
 
-export async function requireOwnedCollection(userId: string, collectionId: string) {
+export async function requireOwnedCollection(
+  userId: string,
+  collectionId: string,
+) {
   const collection = await findOwnedCollection(userId, collectionId);
 
   if (!collection) throw notFound("Collection not found");
@@ -104,7 +120,9 @@ export async function findStricterEntries(
 
   return {
     collectionVisibility,
-    entries: items.filter((item) => isStricterThan(item.visibility, collectionVisibility)),
+    entries: items.filter((item) =>
+      isStricterThan(item.visibility, collectionVisibility),
+    ),
   };
 }
 

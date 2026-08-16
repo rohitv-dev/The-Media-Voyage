@@ -46,10 +46,16 @@ export type CatalogMetadataByType = {
   book: BookMetadata;
 };
 
-export type CatalogMetadata<T extends keyof CatalogMetadataByType = keyof CatalogMetadataByType> =
-  CatalogMetadataByType[T];
+export type CatalogMetadata<
+  T extends keyof CatalogMetadataByType = keyof CatalogMetadataByType,
+> = CatalogMetadataByType[T];
 
-export const mediaTypeEnum = pgEnum("media_type", ["movie", "show", "game", "book"]);
+export const mediaTypeEnum = pgEnum("media_type", [
+  "movie",
+  "show",
+  "game",
+  "book",
+]);
 
 export const statusEnum = pgEnum("media_status", [
   "planned",
@@ -61,9 +67,17 @@ export const statusEnum = pgEnum("media_status", [
   "revisiting",
 ]);
 
-export const visibilityEnum = pgEnum("visibility", ["private", "friends", "public"]);
+export const visibilityEnum = pgEnum("visibility", [
+  "private",
+  "friends",
+  "public",
+]);
 
-export const friendshipStatusEnum = pgEnum("friendship_status", ["pending", "declined", "accepted"]);
+export const friendshipStatusEnum = pgEnum("friendship_status", [
+  "pending",
+  "declined",
+  "accepted",
+]);
 
 export const notificationTypeEnum = pgEnum("notification_type", [
   "media_like",
@@ -75,7 +89,10 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "friend_recommendation_response",
 ]);
 
-export const recommendationStatusEnum = pgEnum("recommendation_status", ["pending", "resolved"]);
+export const recommendationStatusEnum = pgEnum("recommendation_status", [
+  "pending",
+  "resolved",
+]);
 
 export const recommendationOutcomeEnum = pgEnum("recommendation_outcome", [
   "added_to_library",
@@ -104,10 +121,16 @@ export const media = pgTable(
     embeddingUpdatedAt: timestamp("embedding_updated_at"),
 
     createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
   },
   (table) => [
-    unique("media_source_external_id_unique").on(table.source, table.externalId),
+    unique("media_source_external_id_unique").on(
+      table.source,
+      table.externalId,
+    ),
     check(
       "media_image_focus_x_range",
       sql`${table.imageFocusX} is null or (${table.imageFocusX} >= 0 and ${table.imageFocusX} <= 1)`,
@@ -116,7 +139,10 @@ export const media = pgTable(
       "media_image_focus_y_range",
       sql`${table.imageFocusY} is null or (${table.imageFocusY} >= 0 and ${table.imageFocusY} <= 1)`,
     ),
-    check("media_image_focus_pair", sql`(${table.imageFocusX} is null) = (${table.imageFocusY} is null)`),
+    check(
+      "media_image_focus_pair",
+      sql`(${table.imageFocusX} is null) = (${table.imageFocusY} is null)`,
+    ),
   ],
 );
 
@@ -131,9 +157,17 @@ export const sources = pgTable(
     normalizedName: text("normalized_name").notNull(),
     color: text("color"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
   },
-  (table) => [unique("sources_user_normalized_name_unique").on(table.userId, table.normalizedName)],
+  (table) => [
+    unique("sources_user_normalized_name_unique").on(
+      table.userId,
+      table.normalizedName,
+    ),
+  ],
 );
 
 // User-specific tracking (the heart)
@@ -162,7 +196,9 @@ export const userMedia = pgTable(
 
     favorite: boolean("favorite").default(false).notNull(),
 
-    lastProgressUpdate: timestamp("last_progress_update").defaultNow().notNull(),
+    lastProgressUpdate: timestamp("last_progress_update")
+      .defaultNow()
+      .notNull(),
 
     timeSpent: integer("time_spent"),
 
@@ -177,7 +213,10 @@ export const userMedia = pgTable(
     seasonsProgress: jsonb("seasons_progress").default([]).notNull(),
 
     createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
     deletedAt: timestamp("deleted_at"),
   },
   (table) => [
@@ -208,9 +247,17 @@ export const tags = pgTable(
     normalizedName: text("normalized_name").notNull(),
     color: text("color"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
   },
-  (table) => [unique("tags_user_normalized_name_unique").on(table.userId, table.normalizedName)],
+  (table) => [
+    unique("tags_user_normalized_name_unique").on(
+      table.userId,
+      table.normalizedName,
+    ),
+  ],
 );
 
 export const userMediaTags = pgTable(
@@ -244,7 +291,12 @@ export const userMediaStatusHistory = pgTable(
     source: text("source").notNull(),
     changedAt: timestamp("changed_at").defaultNow().notNull(),
   },
-  (table) => [index("user_media_status_history_entry_changed_idx").on(table.userMediaId, table.changedAt)],
+  (table) => [
+    index("user_media_status_history_entry_changed_idx").on(
+      table.userMediaId,
+      table.changedAt,
+    ),
+  ],
 );
 
 export const mediaCollection = pgTable("media_collection", {
@@ -258,7 +310,10 @@ export const mediaCollection = pgTable("media_collection", {
   visibility: visibilityEnum("visibility").default("private").notNull(),
   pinned: boolean("pinned").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
 });
 
 export const mediaCollectionItems = pgTable(
@@ -275,8 +330,14 @@ export const mediaCollectionItems = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
-    unique("media_collection_item_unique").on(table.collectionId, table.userMediaId),
-    index("media_collection_items_collection_position_idx").on(table.collectionId, table.position),
+    unique("media_collection_item_unique").on(
+      table.collectionId,
+      table.userMediaId,
+    ),
+    index("media_collection_items_collection_position_idx").on(
+      table.collectionId,
+      table.position,
+    ),
   ],
 );
 
@@ -302,8 +363,14 @@ export const friendships = pgTable(
   },
   (table) => [
     unique("friendships_pair_unique").on(table.requesterId, table.addresseeId),
-    index("friendships_addressee_status_idx").on(table.addresseeId, table.status),
-    index("friendships_requester_status_idx").on(table.requesterId, table.status),
+    index("friendships_addressee_status_idx").on(
+      table.addresseeId,
+      table.status,
+    ),
+    index("friendships_requester_status_idx").on(
+      table.requesterId,
+      table.status,
+    ),
   ],
 );
 
@@ -321,7 +388,10 @@ export const userMediaReactions = pgTable(
       .notNull(),
     value: integer("value").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
   },
   (table) => [
     unique("user_media_reactions_unique").on(table.userMediaId, table.userId),
@@ -341,9 +411,17 @@ export const userMediaComments = pgTable(
       .notNull(),
     body: text("body").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
   },
-  (table) => [index("user_media_comments_entry_created_idx").on(table.userMediaId, table.createdAt)],
+  (table) => [
+    index("user_media_comments_entry_created_idx").on(
+      table.userMediaId,
+      table.createdAt,
+    ),
+  ],
 );
 
 export const mediaRecommendations = pgTable(
@@ -361,18 +439,31 @@ export const mediaRecommendations = pgTable(
     mediaId: uuid("media_id")
       .references(() => media.id, { onDelete: "cascade" })
       .notNull(),
-    recipientUserMediaId: uuid("recipient_user_media_id").references(() => userMedia.id, { onDelete: "set null" }),
+    recipientUserMediaId: uuid("recipient_user_media_id").references(
+      () => userMedia.id,
+      { onDelete: "set null" },
+    ),
     senderNote: text("sender_note"),
     recipientNote: text("recipient_note"),
     status: recommendationStatusEnum("status").notNull().default("pending"),
     outcome: recommendationOutcomeEnum("outcome"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
     resolvedAt: timestamp("resolved_at"),
   },
   (table) => [
-    index("media_recommendations_recipient_status_created_idx").on(table.recipientId, table.status, table.createdAt),
-    index("media_recommendations_sender_created_idx").on(table.senderId, table.createdAt),
+    index("media_recommendations_recipient_status_created_idx").on(
+      table.recipientId,
+      table.status,
+      table.createdAt,
+    ),
+    index("media_recommendations_sender_created_idx").on(
+      table.senderId,
+      table.createdAt,
+    ),
     uniqueIndex("media_recommendations_friend_pending_unique")
       .on(table.senderId, table.recipientId, table.mediaId)
       .where(sql`${table.status} = 'pending'`),
@@ -411,13 +502,22 @@ export const notifications = pgTable(
     userMediaId: uuid("user_media_id").references(() => userMedia.id, {
       onDelete: "cascade",
     }),
-    recommendationId: uuid("recommendation_id").references(() => mediaRecommendations.id, { onDelete: "cascade" }),
+    recommendationId: uuid("recommendation_id").references(
+      () => mediaRecommendations.id,
+      { onDelete: "cascade" },
+    ),
     seenAt: timestamp("seen_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
-    index("notifications_recipient_created_idx").on(table.recipientId, table.createdAt),
-    index("notifications_recipient_seen_idx").on(table.recipientId, table.seenAt),
+    index("notifications_recipient_created_idx").on(
+      table.recipientId,
+      table.createdAt,
+    ),
+    index("notifications_recipient_seen_idx").on(
+      table.recipientId,
+      table.seenAt,
+    ),
   ],
 );
 
@@ -459,27 +559,33 @@ export const friendshipsRelations = relations(friendships, ({ one }) => ({
   }),
 }));
 
-export const userMediaReactionsRelations = relations(userMediaReactions, ({ one }) => ({
-  userMedia: one(userMedia, {
-    fields: [userMediaReactions.userMediaId],
-    references: [userMedia.id],
+export const userMediaReactionsRelations = relations(
+  userMediaReactions,
+  ({ one }) => ({
+    userMedia: one(userMedia, {
+      fields: [userMediaReactions.userMediaId],
+      references: [userMedia.id],
+    }),
+    user: one(user, {
+      fields: [userMediaReactions.userId],
+      references: [user.id],
+    }),
   }),
-  user: one(user, {
-    fields: [userMediaReactions.userId],
-    references: [user.id],
-  }),
-}));
+);
 
-export const userMediaCommentsRelations = relations(userMediaComments, ({ one }) => ({
-  userMedia: one(userMedia, {
-    fields: [userMediaComments.userMediaId],
-    references: [userMedia.id],
+export const userMediaCommentsRelations = relations(
+  userMediaComments,
+  ({ one }) => ({
+    userMedia: one(userMedia, {
+      fields: [userMediaComments.userMediaId],
+      references: [userMedia.id],
+    }),
+    user: one(user, {
+      fields: [userMediaComments.userId],
+      references: [user.id],
+    }),
   }),
-  user: one(user, {
-    fields: [userMediaComments.userId],
-    references: [user.id],
-  }),
-}));
+);
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
   recipient: one(user, {
@@ -502,28 +608,31 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   }),
 }));
 
-export const mediaRecommendationsRelations = relations(mediaRecommendations, ({ one, many }) => ({
-  recipient: one(user, {
-    fields: [mediaRecommendations.recipientId],
-    references: [user.id],
-    relationName: "recommendationRecipient",
+export const mediaRecommendationsRelations = relations(
+  mediaRecommendations,
+  ({ one, many }) => ({
+    recipient: one(user, {
+      fields: [mediaRecommendations.recipientId],
+      references: [user.id],
+      relationName: "recommendationRecipient",
+    }),
+    sender: one(user, {
+      fields: [mediaRecommendations.senderId],
+      references: [user.id],
+      relationName: "recommendationSender",
+    }),
+    media: one(media, {
+      fields: [mediaRecommendations.mediaId],
+      references: [media.id],
+    }),
+    recipientUserMedia: one(userMedia, {
+      fields: [mediaRecommendations.recipientUserMediaId],
+      references: [userMedia.id],
+      relationName: "recommendationRecipientMedia",
+    }),
+    notifications: many(notifications),
   }),
-  sender: one(user, {
-    fields: [mediaRecommendations.senderId],
-    references: [user.id],
-    relationName: "recommendationSender",
-  }),
-  media: one(media, {
-    fields: [mediaRecommendations.mediaId],
-    references: [media.id],
-  }),
-  recipientUserMedia: one(userMedia, {
-    fields: [mediaRecommendations.recipientUserMediaId],
-    references: [userMedia.id],
-    relationName: "recommendationRecipientMedia",
-  }),
-  notifications: many(notifications),
-}));
+);
 
 export const dismissedSystemRecommendationsRelations = relations(
   dismissedSystemRecommendations,
@@ -586,31 +695,40 @@ export const userMediaTagsRelations = relations(userMediaTags, ({ one }) => ({
   }),
 }));
 
-export const userMediaStatusHistoryRelations = relations(userMediaStatusHistory, ({ one }) => ({
-  userMedia: one(userMedia, {
-    fields: [userMediaStatusHistory.userMediaId],
-    references: [userMedia.id],
+export const userMediaStatusHistoryRelations = relations(
+  userMediaStatusHistory,
+  ({ one }) => ({
+    userMedia: one(userMedia, {
+      fields: [userMediaStatusHistory.userMediaId],
+      references: [userMedia.id],
+    }),
   }),
-}));
+);
 
-export const mediaCollectionRelations = relations(mediaCollection, ({ many, one }) => ({
-  user: one(user, {
-    fields: [mediaCollection.userId],
-    references: [user.id],
+export const mediaCollectionRelations = relations(
+  mediaCollection,
+  ({ many, one }) => ({
+    user: one(user, {
+      fields: [mediaCollection.userId],
+      references: [user.id],
+    }),
+    items: many(mediaCollectionItems),
   }),
-  items: many(mediaCollectionItems),
-}));
+);
 
-export const mediaCollectionItemsRelations = relations(mediaCollectionItems, ({ one }) => ({
-  list: one(mediaCollection, {
-    fields: [mediaCollectionItems.collectionId],
-    references: [mediaCollection.id],
+export const mediaCollectionItemsRelations = relations(
+  mediaCollectionItems,
+  ({ one }) => ({
+    list: one(mediaCollection, {
+      fields: [mediaCollectionItems.collectionId],
+      references: [mediaCollection.id],
+    }),
+    userMedia: one(userMedia, {
+      fields: [mediaCollectionItems.userMediaId],
+      references: [userMedia.id],
+    }),
   }),
-  userMedia: one(userMedia, {
-    fields: [mediaCollectionItems.userMediaId],
-    references: [userMedia.id],
-  }),
-}));
+);
 
 // Better Auth Generated Tables
 
@@ -621,7 +739,9 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
-  defaultVisibility: visibilityEnum("default_visibility").default("private").notNull(),
+  defaultVisibility: visibilityEnum("default_visibility")
+    .default("private")
+    .notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

@@ -12,19 +12,29 @@ import {
 } from "./queries";
 import { db } from "@/db/db";
 
-export async function getOwnedCollectionItems(userId: string, collectionId: string) {
+export async function getOwnedCollectionItems(
+  userId: string,
+  collectionId: string,
+) {
   await requireOwnedCollection(userId, collectionId);
 
   return listCollectionItems(collectionId);
 }
 
-export async function getOwnedCollectionItemsDetailed(userId: string, collectionId: string) {
+export async function getOwnedCollectionItemsDetailed(
+  userId: string,
+  collectionId: string,
+) {
   await requireOwnedCollection(userId, collectionId);
 
   return listCollectionItemsDetailed(collectionId);
 }
 
-export async function addCollectionItem(userId: string, collectionId: string, userMediaId: string) {
+export async function addCollectionItem(
+  userId: string,
+  collectionId: string,
+  userMediaId: string,
+) {
   await requireOwnedCollection(userId, collectionId);
 
   const userMediaEntry = await findOwnedActiveUserMedia(userId, userMediaId);
@@ -91,12 +101,21 @@ export async function reorderCollectionItems(
   });
 }
 
-export async function removeCollectionItem(userId: string, collectionId: string, itemId: string) {
+export async function removeCollectionItem(
+  userId: string,
+  collectionId: string,
+  itemId: string,
+) {
   await requireOwnedCollection(userId, collectionId);
 
   const deleted = await db
     .delete(mediaCollectionItems)
-    .where(and(eq(mediaCollectionItems.collectionId, collectionId), eq(mediaCollectionItems.id, itemId)))
+    .where(
+      and(
+        eq(mediaCollectionItems.collectionId, collectionId),
+        eq(mediaCollectionItems.id, itemId),
+      ),
+    )
     .returning();
 
   if (!deleted.length) throw notFound("Collection item not found");

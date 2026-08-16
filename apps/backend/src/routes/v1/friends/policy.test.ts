@@ -16,7 +16,14 @@
  * fiddly to set up as real database rows.
  */
 import { describe, expect, it } from "vitest";
-import { canView, isStricterThan, resolveFriendRequest, visibleEntryVisibilities, visibilityRank, type FriendshipRow } from "./policy";
+import {
+  canView,
+  isStricterThan,
+  resolveFriendRequest,
+  visibleEntryVisibilities,
+  visibilityRank,
+  type FriendshipRow,
+} from "./policy";
 
 const OWNER = "user-owner";
 const FRIEND = "user-friend";
@@ -25,11 +32,15 @@ const STRANGER = "user-stranger";
 describe("canView", () => {
   it("lets the owner see their own entry regardless of visibility", () => {
     // Private is the interesting case: everyone else is denied below.
-    expect(canView(OWNER, { ownerId: OWNER, visibility: "private" }, false)).toBe(true);
+    expect(
+      canView(OWNER, { ownerId: OWNER, visibility: "private" }, false),
+    ).toBe(true);
   });
 
   it("denies a stranger a private entry", () => {
-    expect(canView(STRANGER, { ownerId: OWNER, visibility: "private" }, false)).toBe(false);
+    expect(
+      canView(STRANGER, { ownerId: OWNER, visibility: "private" }, false),
+    ).toBe(false);
   });
 
   it("lets anyone see a public entry, friend or not", () => {
@@ -40,16 +51,22 @@ describe("canView", () => {
   });
 
   it("lets a friend see a friends-visible entry", () => {
-    expect(canView(FRIEND, { ownerId: OWNER, visibility: "friends" }, true)).toBe(true);
+    expect(
+      canView(FRIEND, { ownerId: OWNER, visibility: "friends" }, true),
+    ).toBe(true);
   });
 
   it("denies a non-friend a friends-visible entry", () => {
-    expect(canView(STRANGER, { ownerId: OWNER, visibility: "friends" }, false)).toBe(false);
+    expect(
+      canView(STRANGER, { ownerId: OWNER, visibility: "friends" }, false),
+    ).toBe(false);
   });
 
   it("denies a friend a private entry", () => {
     // Being friends is not blanket access — the entry must be shared too.
-    expect(canView(FRIEND, { ownerId: OWNER, visibility: "private" }, true)).toBe(false);
+    expect(
+      canView(FRIEND, { ownerId: OWNER, visibility: "private" }, true),
+    ).toBe(false);
   });
 
   /**
@@ -67,18 +84,40 @@ describe("canView", () => {
       { viewer: OWNER, visibility: "private", isFriend: false, expected: true },
       { viewer: OWNER, visibility: "friends", isFriend: false, expected: true },
       { viewer: OWNER, visibility: "public", isFriend: false, expected: true },
-      { viewer: FRIEND, visibility: "private", isFriend: true, expected: false },
+      {
+        viewer: FRIEND,
+        visibility: "private",
+        isFriend: true,
+        expected: false,
+      },
       { viewer: FRIEND, visibility: "friends", isFriend: true, expected: true },
       { viewer: FRIEND, visibility: "public", isFriend: true, expected: true },
-      { viewer: STRANGER, visibility: "private", isFriend: false, expected: false },
-      { viewer: STRANGER, visibility: "friends", isFriend: false, expected: false },
-      { viewer: STRANGER, visibility: "public", isFriend: false, expected: true },
+      {
+        viewer: STRANGER,
+        visibility: "private",
+        isFriend: false,
+        expected: false,
+      },
+      {
+        viewer: STRANGER,
+        visibility: "friends",
+        isFriend: false,
+        expected: false,
+      },
+      {
+        viewer: STRANGER,
+        visibility: "public",
+        isFriend: false,
+        expected: true,
+      },
     ];
 
     it.each(cases)(
       "viewer=$viewer visibility=$visibility isFriend=$isFriend -> $expected",
       ({ viewer, visibility, isFriend, expected }) => {
-        expect(canView(viewer, { ownerId: OWNER, visibility }, isFriend)).toBe(expected);
+        expect(canView(viewer, { ownerId: OWNER, visibility }, isFriend)).toBe(
+          expected,
+        );
       },
     );
   });
@@ -131,7 +170,9 @@ describe("visibility strictness", () => {
 
 describe("resolveFriendRequest", () => {
   // A tiny helper so each test states only what it cares about.
-  const friendship = (overrides: Partial<FriendshipRow> = {}): FriendshipRow => ({
+  const friendship = (
+    overrides: Partial<FriendshipRow> = {},
+  ): FriendshipRow => ({
     id: "friendship-1",
     requesterId: OWNER,
     addresseeId: FRIEND,
@@ -144,11 +185,15 @@ describe("resolveFriendRequest", () => {
   });
 
   it("reports already friends when one is accepted", () => {
-    expect(resolveFriendRequest(OWNER, friendship({ status: "accepted" }))).toEqual({ type: "already_friends" });
+    expect(
+      resolveFriendRequest(OWNER, friendship({ status: "accepted" })),
+    ).toEqual({ type: "already_friends" });
   });
 
   it("reports a duplicate when we already requested them", () => {
-    expect(resolveFriendRequest(OWNER, friendship({ requesterId: OWNER }))).toEqual({ type: "already_requested" });
+    expect(
+      resolveFriendRequest(OWNER, friendship({ requesterId: OWNER })),
+    ).toEqual({ type: "already_requested" });
   });
 
   it("accepts their pending request instead of mirroring it", () => {
@@ -163,7 +208,11 @@ describe("resolveFriendRequest", () => {
   });
 
   it("replaces a declined row so the new requester ends up as requester", () => {
-    const declined = friendship({ status: "declined", requesterId: FRIEND, addresseeId: OWNER });
+    const declined = friendship({
+      status: "declined",
+      requesterId: FRIEND,
+      addresseeId: OWNER,
+    });
 
     expect(resolveFriendRequest(OWNER, declined)).toEqual({
       type: "replace_existing",
@@ -172,7 +221,9 @@ describe("resolveFriendRequest", () => {
   });
 
   it("also replaces a declined row we ourselves sent, allowing a re-request", () => {
-    expect(resolveFriendRequest(OWNER, friendship({ status: "declined" }))).toEqual({
+    expect(
+      resolveFriendRequest(OWNER, friendship({ status: "declined" })),
+    ).toEqual({
       type: "replace_existing",
       friendshipId: "friendship-1",
     });
@@ -181,8 +232,14 @@ describe("resolveFriendRequest", () => {
   it("is unaffected by which side of the row the requester sits on", () => {
     // friendshipBetween can return the row in either direction, so the rule
     // must key off requesterId rather than assuming an ordering.
-    const accepted = friendship({ status: "accepted", requesterId: FRIEND, addresseeId: OWNER });
+    const accepted = friendship({
+      status: "accepted",
+      requesterId: FRIEND,
+      addresseeId: OWNER,
+    });
 
-    expect(resolveFriendRequest(OWNER, accepted)).toEqual({ type: "already_friends" });
+    expect(resolveFriendRequest(OWNER, accepted)).toEqual({
+      type: "already_friends",
+    });
   });
 });

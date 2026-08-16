@@ -7,14 +7,8 @@ import {
   useMemo,
   useState,
 } from "react";
-import {
-  buildMantineTheme,
-  DEFAULT_THEME,
-  neuVars,
-  THEMES
-
-} from "./themes";
-import type {ThemeId} from "./themes";
+import { buildMantineTheme, DEFAULT_THEME, neuVars, THEMES } from "./themes";
+import type { ThemeId } from "./themes";
 
 const STORAGE_KEY = "media-voyage-theme";
 

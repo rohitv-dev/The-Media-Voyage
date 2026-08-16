@@ -8,12 +8,7 @@ import {
   ThemeIcon,
 } from "@mantine/core";
 import type { RecommendationDetail } from "@media-voyage/shared/api";
-import {
-  IconBook,
-  IconCheck,
-  IconClock,
-  IconSend,
-} from "@tabler/icons-react";
+import { IconBook, IconCheck, IconClock, IconSend } from "@tabler/icons-react";
 import { MessagePanel } from "./MessagePanel";
 
 function formatOutcome(outcome: RecommendationDetail["outcome"]) {
