@@ -16,9 +16,58 @@ import {
   getGameCatalogRecord,
   getGameDetails,
   getGameRecommendations,
+  searchGames,
 } from "./igdb";
 
 const fetchMock = vi.fn();
+
+describe("searchGames", () => {
+  beforeEach(() => {
+    getAccessTokenMock.mockReset();
+    getAccessTokenMock.mockResolvedValue("access-token");
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("falls back to a case-insensitive title match when search returns nothing", async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response("[]", { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify([
+            {
+              id: 146851,
+              name: "Lost Judgment",
+              cover: { id: 1, image_id: "cover-id" },
+            },
+          ]),
+          { status: 200 },
+        ),
+      );
+
+    await expect(searchGames("Lost Ju")).resolves.toEqual([
+      {
+        id: "",
+        source: "igdb",
+        externalId: "146851",
+        title: "Lost Judgment",
+        type: "game",
+        imageUrl:
+          "https://images.igdb.com/igdb/image/upload/t_1080p/cover-id.jpg",
+      },
+    ]);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[0][1].body).toContain('search "Lost Ju";');
+
+    const fallbackRequest = fetchMock.mock.calls[1][1];
+    expect(fallbackRequest.body).toContain('where name ~ *"Lost Ju"*;');
+  });
+});
 
 describe("getGameRecommendations", () => {
   beforeEach(() => {

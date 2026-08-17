@@ -56,6 +56,14 @@ async function fetchIgdbSearch(query: string): Promise<IgdbResponse> {
   `);
 }
 
+async function fetchIgdbNameSearch(query: string): Promise<IgdbResponse> {
+  return fetchIgdb<IgdbResponse>(`
+    fields id,name,cover.image_id;
+    where name ~ *"${escapeApicalypseString(query)}"*;
+    limit 10;
+  `);
+}
+
 type IgdbNamedRecord = {
   id: number;
   name: string;
@@ -110,10 +118,15 @@ function toGameDetails(game: IgdbGameResponse): IgdbGame {
   };
 }
 
-// Occasionally returns an empty result for a query that succeeds moments
-// later on an identical retry.
+// If search returns nothing, use an explicit title substring match first so
+// incomplete titles remain searchable. Retry the similarity search only if
+// that fallback is also empty, covering occasional provider flakiness.
 export async function searchGames(query: string): Promise<SourceMediaRecord[]> {
   let data = await fetchIgdbSearch(query);
+
+  if (data.length === 0) {
+    data = await fetchIgdbNameSearch(query);
+  }
 
   if (data.length === 0) {
     data = await fetchIgdbSearch(query);
