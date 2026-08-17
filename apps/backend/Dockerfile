@@ -4,13 +4,15 @@
 # which only exists inside the pnpm workspace.
 
 FROM node:24-bookworm-slim AS base
-RUN corepack enable && corepack prepare pnpm@11.5.0 --activate
+WORKDIR /app
+COPY package.json ./
+RUN corepack enable && corepack install
 
 # Install every workspace's dependencies first, in their own layer,
 # so Docker can reuse this layer on rebuilds as long as no package.json changed.
 FROM base AS deps
 WORKDIR /app
-COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/backend/package.json apps/backend/package.json
 COPY apps/frontend/package.json apps/frontend/package.json
 COPY packages/shared/package.json packages/shared/package.json

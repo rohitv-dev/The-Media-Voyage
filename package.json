@@ -1,6 +1,7 @@
 {
   "name": "media-voyage",
   "private": true,
+  "packageManager": "pnpm@11.5.0",
   "scripts": {
     "dev": "pnpm --parallel --filter @media-voyage/frontend dev --filter @media-voyage/backend dev",
     "frontend": "pnpm --filter @media-voyage/frontend dev",
