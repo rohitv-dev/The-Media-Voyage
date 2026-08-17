@@ -208,6 +208,7 @@ export function SeasonsProgressField({
                     miw={140}
                     data={statusOptions}
                     value={entry.status}
+                    comboboxProps={{ zIndex: 500 }}
                     onChange={(value) => updateSeasonStatus(entry, value)}
                   />
 
