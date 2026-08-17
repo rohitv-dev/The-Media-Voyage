@@ -327,18 +327,15 @@ function grayTuple(def: ThemeDef): MantineColorsTuple {
  * layers of a raised element's shadow — a tight one that seats it against the
  * page and a wide diffuse one that gives it height.
  *
- * On a light ground the dark tones come from the theme's own text colour, so
- * shadows stay in the theme's hue instead of going neutral grey. On a dark one
- * they have to be black — there, the text colour *is* the light.
+ * Clay uses its text colour for dark tones, so shadows stay in the theme's hue
+ * instead of going neutral grey.
  */
 export function neuVars(def: ThemeDef): Record<string, string> {
-  const isDark = def.scheme === "dark";
-  const dark = isDark ? BLACK : def.text;
   return {
-    "--neu-shade": alpha(dark, isDark ? 0.5 : 0.2),
-    "--neu-glow": alpha(WHITE, isDark ? 0.06 : 0.65),
-    "--neu-cast": alpha(dark, isDark ? 0.45 : 0.16),
-    "--neu-cast-soft": alpha(dark, isDark ? 0.3 : 0.1),
+    "--neu-shade": alpha(def.text, 0.2),
+    "--neu-glow": alpha(WHITE, 0.65),
+    "--neu-cast": alpha(def.text, 0.16),
+    "--neu-cast-soft": alpha(def.text, 0.1),
   };
 }
 

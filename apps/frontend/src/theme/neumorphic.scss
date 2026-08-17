@@ -75,10 +75,8 @@
 
   // Rule 3. A panel inside a panel is already distinguished by having the
   // surface colour against its parent's — a second shadow just smears both.
-  .mantine-Paper-root .mantine-Paper-root,
-  .mantine-Paper-root .mantine-Card-root,
-  .mantine-Card-root .mantine-Paper-root,
-  .mantine-Card-root .mantine-Card-root {
+  :is(.mantine-Paper-root, .mantine-Card-root)
+    :is(.mantine-Paper-root, .mantine-Card-root) {
     box-shadow: none;
   }
 
@@ -152,15 +150,6 @@
     }
   }
 
-  // Buttons are objects, so they stay raised even inside a panel — rule 3
-  // applies to surfaces, not to controls.
-  .mantine-Paper-root .mantine-Button-root,
-  .mantine-Card-root .mantine-Button-root {
-    &:not([data-variant="subtle"]):not([data-variant="transparent"]) {
-      box-shadow: var(--neu-out-sm);
-    }
-  }
-
   // A keycap is the one thing in the app that is literally a raised physical
   // object, so it gets the treatment even though you can't click it.
   .mantine-Kbd-root {
@@ -187,8 +176,7 @@
     background-color: var(--app-bg);
     box-shadow: var(--neu-in-sm);
 
-    &:focus,
-    &:focus-within {
+    &:focus {
       border-color: transparent;
       // Deepen rather than outline: the field sinks further when you're in it.
       box-shadow:
