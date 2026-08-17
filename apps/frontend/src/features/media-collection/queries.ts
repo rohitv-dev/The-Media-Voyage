@@ -9,13 +9,9 @@ import type {
 } from "@media-voyage/shared/api";
 import { queryOptions } from "@tanstack/react-query";
 
-async function getCollections() {
-  return api<MediaCollectionSummaryRecord[]>("/collection");
-}
-
 export const collectionQueryOptions = queryOptions({
   queryKey: queryKeys.collection.all,
-  queryFn: getCollections,
+  queryFn: () => api<MediaCollectionSummaryRecord[]>("/collection"),
 });
 
 export const collectionItemsDetailedQueryOptions = (collectionId: string) =>

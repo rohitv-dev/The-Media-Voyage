@@ -18,6 +18,7 @@ import {
   Tooltip,
   UnstyledButton,
 } from "@mantine/core";
+import { useHover } from "@mantine/hooks";
 import {
   IconArrowLeft,
   IconCheck,
@@ -54,7 +55,7 @@ function ExpandableDescription({
   const [expanded, setExpanded] = useState(false);
   const [overflowing, setOverflowing] = useState(false);
   const [heights, setHeights] = useState({ collapsed: 0, full: 0 });
-  const [hovered, setHovered] = useState(false);
+  const { hovered, ref: hoverRef } = useHover<HTMLButtonElement>();
   const textRef = useRef<HTMLParagraphElement>(null);
 
   useLayoutEffect(() => {
@@ -86,10 +87,9 @@ function ExpandableDescription({
       </motion.div>
       {overflowing && (
         <UnstyledButton
+          ref={hoverRef}
           mt={4}
           onClick={() => setExpanded((previous) => !previous)}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
         >
           <Text size="xs" fw={hovered ? 800 : 600} c="primary">
             {expanded ? "Read less" : "Read more"}

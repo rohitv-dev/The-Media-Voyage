@@ -2,9 +2,5 @@ import { MediaCollectionForm } from "#/features/media-collection/components/Medi
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/collection/add")({
-  component: RouteComponent,
+  component: MediaCollectionForm,
 });
-
-function RouteComponent() {
-  return <MediaCollectionForm />;
-}

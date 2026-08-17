@@ -5,9 +5,5 @@ export const Route = createFileRoute("/_authenticated/media/_forms")({
   loader: ({ context: { queryClient } }) => {
     queryClient.ensureQueryData(userMediaDropdownOptions);
   },
-  component: RouteComponent,
+  component: Outlet,
 });
-
-function RouteComponent() {
-  return <Outlet />;
-}

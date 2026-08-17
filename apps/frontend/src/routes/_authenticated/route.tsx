@@ -40,12 +40,8 @@ export const Route = createFileRoute("/_authenticated")({
     // defaultVisibility) synchronously, without a session-loading flicker.
     return { session };
   },
-  component: RouteComponent,
+  component: AuthenticatedShell,
 });
-
-function RouteComponent() {
-  return <AuthenticatedShell />;
-}
 
 function AuthenticatedShell() {
   const { session } = Route.useRouteContext();

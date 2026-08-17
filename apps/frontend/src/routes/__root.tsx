@@ -7,7 +7,6 @@ import type { ErrorComponentProps } from "@tanstack/react-router";
 import type { QueryClient } from "@tanstack/react-query";
 import { Button, Center, Stack, Text, Title } from "@mantine/core";
 import { ModalsProvider } from "@mantine/modals";
-import { FullScreenLoader } from "#/components/FullScreenLoader";
 import { getApiErrorMessage } from "#/lib/api";
 import { recommendationModals } from "#/features/recommendations/components/ContextModal";
 
@@ -17,7 +16,6 @@ interface RouteContext {
 
 export const Route = createRootRouteWithContext<RouteContext>()({
   component: RootComponent,
-  pendingComponent: FullScreenLoader,
   notFoundComponent: NotFound,
   errorComponent: RouteError,
 });

@@ -48,57 +48,35 @@ export function buildFilterQuery(filters: Record<string, unknown>): string {
 
 // -- User media ---------------------------------------------------------------
 
-async function getUserMediaDetailedRecord(id: string) {
-  return api<MediaDetailedRecord & { reactions: ReactionRecord[] }>(
-    `/user-media/${id}`,
-  );
-}
-
 export function userMediaDetailedOptions(id: string) {
   return queryOptions({
     queryKey: queryKeys.userMedia.detail(id),
-    queryFn: () => getUserMediaDetailedRecord(id),
+    queryFn: () =>
+      api<MediaDetailedRecord & { reactions: ReactionRecord[] }>(
+        `/user-media/${id}`,
+      ),
   });
-}
-
-async function getUserMediaStatusHistory(id: string) {
-  return api<StatusHistoryRecord[]>(`/user-media/${id}/status-history`);
 }
 
 export function statusHistoryQueryOptions(id: string) {
   return queryOptions({
     queryKey: queryKeys.userMedia.statusHistory(id),
-    queryFn: () => getUserMediaStatusHistory(id),
+    queryFn: () =>
+      api<StatusHistoryRecord[]>(`/user-media/${id}/status-history`),
   });
-}
-
-async function getUserMediaFilterRecords(filters: UserMediaQuerySchema) {
-  return api<GetUserMediaResponse>(
-    `/user-media/filter${buildFilterQuery(filters)}`,
-  );
 }
 
 function userMediaFilterQueryOptions(filters: UserMediaQuerySchema) {
   return queryOptions({
     queryKey: queryKeys.userMedia.filtered(filters),
-    queryFn: () => getUserMediaFilterRecords(filters),
+    queryFn: () =>
+      api<GetUserMediaResponse>(
+        `/user-media/filter${buildFilterQuery(filters)}`,
+      ),
   });
 }
 
 const USER_MEDIA_PAGE_SIZE = 24;
-
-async function getUserMediaFilterPageRecords(
-  filters: UserMediaQuerySchema,
-  page: number,
-) {
-  return api<GetUserMediaPageResponse>(
-    `/user-media/filter/page${buildFilterQuery({
-      ...filters,
-      page,
-      limit: USER_MEDIA_PAGE_SIZE,
-    })}`,
-  );
-}
 
 export function userMediaFilterInfiniteQueryOptions(
   filters: UserMediaQuerySchema,
@@ -107,17 +85,17 @@ export function userMediaFilterInfiniteQueryOptions(
   return infiniteQueryOptions({
     queryKey: queryKeys.userMedia.filteredInfinite(filters),
     queryFn: ({ pageParam }) =>
-      getUserMediaFilterPageRecords(filters, pageParam),
+      api<GetUserMediaPageResponse>(
+        `/user-media/filter/page${buildFilterQuery({
+          ...filters,
+          page: pageParam,
+          limit: USER_MEDIA_PAGE_SIZE,
+        })}`,
+      ),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
     enabled,
   });
-}
-
-async function getUserMediaSearchRecords(search: string) {
-  return api<GetUserMediaSearchResponse>(
-    `/user-media/search?search=${encodeURIComponent(search)}`,
-  );
 }
 
 export function userMediaSearchQueryOptions(search: string) {
@@ -125,15 +103,12 @@ export function userMediaSearchQueryOptions(search: string) {
 
   return queryOptions({
     queryKey: queryKeys.userMedia.search(normalizedSearch),
-    queryFn: () => getUserMediaSearchRecords(normalizedSearch),
+    queryFn: () =>
+      api<GetUserMediaSearchResponse>(
+        `/user-media/search?search=${encodeURIComponent(normalizedSearch)}`,
+      ),
     enabled: normalizedSearch.length >= 2,
   });
-}
-
-async function getUserMediaSemanticSearchRecords(query: string) {
-  return api<GetSemanticSearchResponse>(
-    `/user-media/semantic-search?q=${encodeURIComponent(query)}`,
-  );
 }
 
 export function userMediaSemanticSearchQueryOptions(query: string) {
@@ -141,27 +116,22 @@ export function userMediaSemanticSearchQueryOptions(query: string) {
 
   return queryOptions({
     queryKey: queryKeys.userMedia.semanticSearch(normalizedQuery),
-    queryFn: () => getUserMediaSemanticSearchRecords(normalizedQuery),
+    queryFn: () =>
+      api<GetSemanticSearchResponse>(
+        `/user-media/semantic-search?q=${encodeURIComponent(normalizedQuery)}`,
+      ),
     enabled: normalizedQuery.length >= 5,
   });
 }
 
-async function getDeletedUserMedia() {
-  return api<GetTrashedUserMediaResponse>("/user-media/trash");
-}
-
 export const trashedUserMediaQueryOptions = queryOptions({
   queryKey: queryKeys.userMedia.trash,
-  queryFn: getDeletedUserMedia,
+  queryFn: () => api<GetTrashedUserMediaResponse>("/user-media/trash"),
 });
-
-async function getUserMediaDropdowns() {
-  return api<UserMediaDropdowns>("/user-media/dropdowns");
-}
 
 export const userMediaDropdownOptions = queryOptions({
   queryKey: queryKeys.userMedia.dropdowns,
-  queryFn: getUserMediaDropdowns,
+  queryFn: () => api<UserMediaDropdowns>("/user-media/dropdowns"),
 });
 
 export const continueMediaFilters: UserMediaQuerySchema = {
@@ -184,18 +154,15 @@ function calendarMonthRange(month: string) {
   };
 }
 
-function getCalendarActivity(month: string) {
-  const { from, to } = calendarMonthRange(month);
-
-  return api<CalendarActivityResponse>(
-    `/user-media/calendar/activity?from=${from}&to=${to}`,
-  );
-}
-
 export function calendarActivityOptions(month: string) {
   return queryOptions({
     queryKey: queryKeys.calendarActivity(month),
-    queryFn: () => getCalendarActivity(month),
+    queryFn: () => {
+      const { from, to } = calendarMonthRange(month);
+      return api<CalendarActivityResponse>(
+        `/user-media/calendar/activity?from=${from}&to=${to}`,
+      );
+    },
   });
 }
 
