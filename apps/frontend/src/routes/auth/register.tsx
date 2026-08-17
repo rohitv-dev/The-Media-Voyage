@@ -9,7 +9,6 @@ import {
   TextInput,
   PasswordInput,
   Button,
-  Divider,
   Anchor,
   Text,
 } from "@mantine/core";
@@ -111,18 +110,6 @@ function RouteComponent() {
             </Button>
           </Stack>
         </form>
-
-        <Divider my="xl" label="Or continue with" labelPosition="center" />
-
-        {/* <Group position="center" grow>
-          <Button
-            leftIcon={<IconBrandGoogle />}
-            variant="outline"
-            onClick={() => console.log("Google SSO clicked")}
-          >
-            Google
-          </Button>
-        </Group> */}
 
         <Text ta="center" mt="md">
           Already have an account?{" "}

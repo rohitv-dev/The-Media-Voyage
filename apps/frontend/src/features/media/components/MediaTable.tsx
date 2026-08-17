@@ -1,6 +1,5 @@
 import { useSourceColorMap } from "#/features/named-entities/queries";
 import { capitalizeWords } from "#/utils/strings";
-import autoAnimate from "@formkit/auto-animate";
 import {
   ActionIcon,
   Badge,
@@ -23,8 +22,6 @@ import {
 } from "@tabler/icons-react";
 import { useNavigate } from "@tanstack/react-router";
 import dayjs from "dayjs";
-import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
-import { useCallback, useRef } from "react";
 import { DataTable } from "mantine-datatable";
 import { getStatusColor, getTypeIcon } from "../display";
 import { useDeleteMedia } from "../hooks/useDeleteMedia";
@@ -124,19 +121,6 @@ function ProgressCell({ record }: { record: MediaRecord }) {
 
 export function MediaTable({ data }: MediaTableProps) {
   const navigate = useNavigate();
-  const reduceMotion = useAppReducedMotion();
-  const autoAnimateInitialized = useRef(false);
-
-  const bodyRef = useCallback(
-    (node: HTMLTableSectionElement | null) => {
-      if (node && !reduceMotion && !autoAnimateInitialized.current) {
-        autoAnimate(node, { duration: 180 });
-        autoAnimateInitialized.current = true;
-      }
-    },
-    [reduceMotion],
-  );
-
   const {
     requestDelete: requestDeleteMedia,
     isDeletePending,
@@ -149,7 +133,6 @@ export function MediaTable({ data }: MediaTableProps) {
   return (
     <Paper withBorder radius="md" style={{ overflow: "hidden" }}>
       <DataTable
-        bodyRef={bodyRef}
         records={data}
         idAccessor="id"
         minHeight={data.length === 0 ? 180 : undefined}

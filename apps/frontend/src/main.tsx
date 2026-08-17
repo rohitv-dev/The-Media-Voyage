@@ -4,7 +4,6 @@ import "@mantine/charts/styles.css";
 import "@mantine/dates/styles.css";
 import "@mantine/schedule/styles.css";
 import "@mantine/notifications/styles.css";
-import "@mantine/tiptap/styles.css";
 import "mantine-datatable/styles.css";
 import "./theme/styles.scss";
 

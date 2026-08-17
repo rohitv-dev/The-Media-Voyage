@@ -111,8 +111,6 @@ function RouteComponent() {
           </Stack>
         </form>
 
-        {/* <Divider my="xl" label="Or continue with" labelPosition="center" /> */}
-
         <Text ta="center" mt="md">
           Don't have an account?{" "}
           <Anchor

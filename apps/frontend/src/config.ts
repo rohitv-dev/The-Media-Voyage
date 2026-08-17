@@ -37,5 +37,4 @@ export const frontendConfig = {
   apiBaseUrl: apiUrl.toString().replace(/\/$/, ""),
   authBaseUrl: authUrl.origin,
   publicAppUrl: publicAppUrl.origin,
-  isProduction: import.meta.env.PROD,
 };
