@@ -8,6 +8,7 @@ import { findStricterEntries, listMediaCollections } from "./queries";
 import {
   bumpCollectionEntryVisibility,
   createMediaCollection,
+  deleteMediaCollection,
   updateMediaCollection,
 } from "./service";
 import { requireAuth } from "@/require-auth";
@@ -35,6 +36,16 @@ async function collectionRoutes(fastify: FastifyInstance) {
     return reply.send(
       await updateMediaCollection(request.userId, collectionId, input),
     );
+  });
+
+  fastify.delete("/:collectionId", async (request, reply) => {
+    const { collectionId } = mediaCollectionIdParamsSchema.parse(
+      request.params,
+    );
+
+    await deleteMediaCollection(request.userId, collectionId);
+
+    return reply.send({ success: true });
   });
 
   /**

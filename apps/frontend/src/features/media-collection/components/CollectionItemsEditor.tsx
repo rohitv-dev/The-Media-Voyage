@@ -35,7 +35,7 @@ import {
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import type { DropResult } from "@hello-pangea/dnd";
@@ -55,6 +55,7 @@ export function CollectionItemsEditor() {
   });
   const navigate = useNavigate();
   const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
+  const selectedMediaLabelRef = useRef<string | null>(null);
   const [mediaSearch, setMediaSearch] = useState("");
   const [debouncedMediaSearch] = useDebouncedValue(mediaSearch, 300);
   const [orderedItems, setOrderedItems] = useState<MediaCollectionItemRecord[]>(
@@ -94,6 +95,23 @@ export function CollectionItemsEditor() {
         label: `${entry.title} (${capitalizeWords(entry.type)})`,
       }));
   }, [collectionItems, searchResults]);
+
+  const handleMediaChange = (value: string | null) => {
+    selectedMediaLabelRef.current =
+      value === null
+        ? null
+        : (availableMediaOptions.find((option) => option.value === value)
+            ?.label ?? null);
+    setSelectedMediaId(value);
+  };
+
+  const handleMediaSearchChange = (value: string) => {
+    setMediaSearch(value);
+    if (value !== selectedMediaLabelRef.current) {
+      selectedMediaLabelRef.current = null;
+      setSelectedMediaId(null);
+    }
+  };
 
   const trimmedMediaSearch = mediaSearch.trim();
   const isMediaSearchSettled =
@@ -140,6 +158,7 @@ export function CollectionItemsEditor() {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.collection.all,
       });
+      selectedMediaLabelRef.current = null;
       setSelectedMediaId(null);
       showSuccessNotification({ message: "Added to collection" });
     },
@@ -299,13 +318,10 @@ export function CollectionItemsEditor() {
                   placeholder="Type to search your library"
                   data={availableMediaOptions}
                   value={selectedMediaId}
-                  onChange={setSelectedMediaId}
+                  onChange={handleMediaChange}
                   searchable
                   searchValue={mediaSearch}
-                  onSearchChange={(value) => {
-                    setMediaSearch(value);
-                    setSelectedMediaId(null);
-                  }}
+                  onSearchChange={handleMediaSearchChange}
                   nothingFoundMessage={searchEmptyMessage}
                   style={{ flex: 1 }}
                 />

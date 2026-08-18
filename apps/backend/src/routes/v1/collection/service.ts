@@ -11,6 +11,7 @@ import {
   userMediaInCollection,
 } from "./queries";
 import { db } from "@/db/db";
+import { notFound } from "@/errors";
 
 export async function createMediaCollection(
   userId: string,
@@ -48,6 +49,25 @@ export async function updateMediaCollection(
     .returning(mediaCollectionSelect);
 
   return collection;
+}
+
+export async function deleteMediaCollection(
+  userId: string,
+  collectionId: string,
+) {
+  const [deleted] = await db
+    .delete(mediaCollection)
+    .where(
+      and(
+        eq(mediaCollection.id, collectionId),
+        eq(mediaCollection.userId, userId),
+      ),
+    )
+    .returning({ id: mediaCollection.id });
+
+  if (!deleted) throw notFound("Collection not found");
+
+  return deleted;
 }
 
 /**

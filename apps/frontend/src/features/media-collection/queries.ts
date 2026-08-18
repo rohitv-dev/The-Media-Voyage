@@ -34,6 +34,12 @@ export function updateCollection(
   });
 }
 
+export function deleteCollection(collectionId: string) {
+  return api<{ success: boolean }>(`/collection/${collectionId}`, {
+    method: "DELETE",
+  });
+}
+
 /** Collection entries that its visibility does not reach on its own. */
 export function getVisibilityMismatch(collectionId: string) {
   return api<CollectionVisibilityMismatch>(

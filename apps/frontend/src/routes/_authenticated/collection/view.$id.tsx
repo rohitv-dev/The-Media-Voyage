@@ -6,7 +6,15 @@ import { EmptyState } from "#/components/EmptyState";
 import {
   collectionItemsDetailedQueryOptions,
   collectionQueryOptions,
+  deleteCollection,
 } from "#/features/media-collection/queries";
+import { getApiErrorMessage } from "#/lib/api";
+import { confirmDelete } from "#/lib/confirmModal";
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from "#/lib/notifications";
+import { queryKeys } from "#/lib/queryKeys";
 import {
   Badge,
   Button,
@@ -22,9 +30,14 @@ import {
   IconBooks,
   IconEdit,
   IconPencil,
+  IconTrash,
 } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
@@ -41,6 +54,7 @@ export const Route = createFileRoute("/_authenticated/collection/view/$id")({
 function RouteComponent() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const reduceMotion = useAppReducedMotion();
   const [detailsOpened, { open: openDetails, close: closeDetails }] =
     useDisclosure();
@@ -49,9 +63,44 @@ function RouteComponent() {
     collectionItemsDetailedQueryOptions(id),
   );
   const collection = collections.find((entry) => entry.id === id);
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteCollection(id),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.collection.all }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.collection.itemsAll,
+          refetchType: "none",
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.collection.itemsDetailedAll,
+          refetchType: "none",
+        }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats }),
+      ]);
+      showSuccessNotification({ message: `Deleted "${collection?.name}"` });
+      navigate({ to: "/collection" });
+    },
+    onError: (error) =>
+      showErrorNotification({
+        title: "Could not delete collection",
+        message: getApiErrorMessage(error),
+      }),
+  });
 
   const goToItems = () =>
     navigate({ to: "/collection/edit/$id", params: { id } });
+
+  const requestDelete = () => {
+    if (!collection || deleteMutation.isPending) return;
+
+    confirmDelete({
+      title: "Delete collection",
+      message: `Delete "${collection.name}"? The collection and its item order will be removed, but your media will stay in your library. This cannot be undone.`,
+      onConfirm: () => deleteMutation.mutate(),
+    });
+  };
 
   if (!collection) {
     return (
@@ -126,6 +175,16 @@ function RouteComponent() {
                 onClick={goToItems}
               >
                 Edit items
+              </Button>
+
+              <Button
+                variant="light"
+                color="red"
+                leftSection={<IconTrash size={16} />}
+                loading={deleteMutation.isPending}
+                onClick={requestDelete}
+              >
+                Delete
               </Button>
             </Group>
           </Group>
