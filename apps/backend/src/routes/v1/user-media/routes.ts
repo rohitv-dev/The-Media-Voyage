@@ -1,4 +1,4 @@
-import type { FastifyContextConfig, FastifyInstance } from "fastify";
+import type { FastifyInstance } from "fastify";
 import Papa from "papaparse";
 import {
   calendarActivityQuerySchema,
@@ -46,13 +46,6 @@ import {
   updateUserMediaQuickActions,
 } from "./service";
 
-const hybridSearchConfig: FastifyContextConfig = {
-  rateLimit: {
-    max: 10,
-    timeWindow: "1 minute",
-  },
-};
-
 async function userMediaRoutes(fastify: FastifyInstance) {
   fastify.addHook("preHandler", requireAuth);
 
@@ -79,7 +72,7 @@ async function userMediaRoutes(fastify: FastifyInstance) {
 
   fastify.get(
     "/hybrid-search",
-    { config: hybridSearchConfig },
+    { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } },
     async (request, reply) => {
       const { q } = hybridSearchQuerySchema.parse(request.query);
       reply.header("Cache-Control", "no-store");

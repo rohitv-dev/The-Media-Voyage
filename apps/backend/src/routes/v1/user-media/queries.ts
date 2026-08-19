@@ -220,7 +220,6 @@ export function searchUserMediaHybrid(
   query: string,
   embedding: number[],
 ) {
-  const normalizedQuery = query.trim();
   const lexicalQuery = sql`websearch_to_tsquery('simple'::regconfig, ${query})`;
   const lexicalRelevance = sql<number>`ts_rank_cd(
     ${media.searchVector},
@@ -274,16 +273,13 @@ export function searchUserMediaHybrid(
 
   const fuzzyTitleSimilarity = sql<number>`similarity(
     ${media.title},
-    ${normalizedQuery}
+    ${query}
   )`;
-  const fuzzyTitleDistance = sql<number>`${media.title} <-> ${normalizedQuery}`;
-  const fuzzyTitleCondition =
-    normalizedQuery.length >= FUZZY_TITLE_SEARCH_CONFIG.minimumQueryLength
-      ? sql`(
-          ${media.title} % ${normalizedQuery}
-          and ${fuzzyTitleSimilarity} > ${FUZZY_TITLE_SEARCH_CONFIG.minimumSimilarity}
-        )`
-      : sql`false`;
+  const fuzzyTitleDistance = sql<number>`${media.title} <-> ${query}`;
+  const fuzzyTitleCondition = sql`(
+    ${media.title} % ${query}
+    and ${fuzzyTitleSimilarity} > ${FUZZY_TITLE_SEARCH_CONFIG.minimumSimilarity}
+  )`;
 
   const fuzzyTitleMatches = db
     .select({
