@@ -16,7 +16,7 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { useState } from "react";
 import { useFormContext } from "./context";
-import type { CatalogMetadata } from "../../catalogMetadata";
+import type { CatalogMetadata } from "@media-voyage/shared";
 import { formatDuration } from "../../formatDuration";
 
 type DurationParts = {

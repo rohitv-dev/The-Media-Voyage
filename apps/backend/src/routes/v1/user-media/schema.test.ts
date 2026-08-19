@@ -3,7 +3,6 @@ import {
   mediaCollectionFormSchema,
   mediaCollectionUpdateSchema,
   addMediaCollectionItemsSchema,
-  mediaDetailsParamsSchema,
   mediaImageFocusSchema,
   reorderMediaCollectionItemsSchema,
   FUZZY_TITLE_SEARCH_CONFIG,
@@ -178,17 +177,6 @@ describe("user-media request schemas", () => {
     expect(
       userMediaQuerySchema.safeParse({ status: '["planned"' }).success,
     ).toBe(false);
-  });
-
-  it("validates IGDB IDs before provider requests", () => {
-    expect(mediaDetailsParamsSchema.parse({ id: "42" })).toEqual({ id: 42 });
-    expect(mediaDetailsParamsSchema.safeParse({ id: "0" }).success).toBe(false);
-    expect(mediaDetailsParamsSchema.safeParse({ id: "1.5" }).success).toBe(
-      false,
-    );
-    expect(mediaDetailsParamsSchema.safeParse({ id: "game" }).success).toBe(
-      false,
-    );
   });
 });
 

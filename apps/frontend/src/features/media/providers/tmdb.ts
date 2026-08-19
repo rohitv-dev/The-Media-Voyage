@@ -1,10 +1,10 @@
+import type { CatalogMetadata } from "@media-voyage/shared";
 import type {
   SeasonProgressEntry,
   SourceMediaRecord,
   TmdbMediaDetails,
 } from "@media-voyage/shared/api";
 import { api } from "#/lib/api";
-import type { CatalogMetadata } from "../catalogMetadata";
 
 type HydratedTmdb = {
   description?: string;

@@ -318,11 +318,6 @@ export type GetUserMediaPageResponse = z.infer<
   typeof getUserMediaPageResponseSchema
 >;
 
-export type UserMediaCounts = {
-  status: Status;
-  count: number;
-}[];
-
 export type UserMediaDropdowns = {
   sources: string[];
   tags: string[];

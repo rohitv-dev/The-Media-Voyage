@@ -23,12 +23,6 @@ export const tmdbMediaParamsSchema = z.object({
 
 export type TmdbMediaParams = z.infer<typeof tmdbMediaParamsSchema>;
 
-export const mediaDetailsParamsSchema = z.object({
-  id: z.coerce.number().int().positive("IGDB ID must be a positive integer"),
-});
-
-export type MediaDetailsParams = z.infer<typeof mediaDetailsParamsSchema>;
-
 export type IgdbRecord = {
   id: number;
   name: string;

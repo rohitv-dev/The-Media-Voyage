@@ -27,12 +27,10 @@ import {
   getCalendarActivity,
   getDashboardStats,
   getDashboardTrending,
-  getUserMediaCounts,
   getUserMediaDropdowns,
   getUserMediaForExport,
   getUserMediaStatusHistory,
   listDeletedUserMedia,
-  listUserMedia,
   pickUserMedia,
   searchUserMedia,
   searchUserMediaHybrid,
@@ -206,20 +204,6 @@ async function userMediaRoutes(fastify: FastifyInstance) {
       success: true,
       ...result,
     });
-  });
-
-  fastify.get("/", async (request, reply) => {
-    const records = await listUserMedia(request.userId);
-
-    return reply.send({
-      success: true,
-      count: records.length,
-      data: records,
-    });
-  });
-
-  fastify.get("/counts", async (request, reply) => {
-    return reply.send(await getUserMediaCounts(request.userId));
   });
 
   fastify.get("/dropdowns", async (request, reply) => {

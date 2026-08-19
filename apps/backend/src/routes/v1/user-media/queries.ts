@@ -457,23 +457,6 @@ export async function filterUserMediaPage(
   };
 }
 
-export function listUserMedia(userId: string) {
-  return db
-    .select(userMediaSummarySelect)
-    .from(userMedia)
-    .innerJoin(media, eq(userMedia.mediaId, media.id))
-    .where(activeUserMediaCondition(userId))
-    .orderBy(desc(userMedia.createdAt));
-}
-
-export function getUserMediaCounts(userId: string) {
-  return db
-    .select({ status: userMedia.status, count: count() })
-    .from(userMedia)
-    .where(activeUserMediaCondition(userId))
-    .groupBy(userMedia.status);
-}
-
 export async function getUserMediaDropdowns(userId: string) {
   const [sourceRows, tagRows] = await Promise.all([
     db

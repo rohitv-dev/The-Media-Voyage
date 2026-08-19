@@ -1,11 +1,9 @@
 import {
-  mediaDetailsParamsSchema,
   mediaSearchQuerySchema,
   providerCatalogIdentitySchema,
   tmdbMediaParamsSchema,
 } from "@media-voyage/shared/api";
 import type { FastifyContextConfig, FastifyInstance } from "fastify";
-import { getGameDetails } from "@/services/igdb";
 import { getTmdbDetails } from "@/services/tmdb";
 import { resolveProviderMediaSelection } from "@/services/providerCatalog";
 import { requireAuth } from "@/require-auth";
@@ -51,17 +49,6 @@ async function mediaRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const { type, id } = tmdbMediaParamsSchema.parse(request.params);
       return reply.send(await getTmdbDetails(type, id));
-    },
-  );
-
-  fastify.get(
-    "/igdb/:id",
-    {
-      config,
-    },
-    async (request, reply) => {
-      const { id } = mediaDetailsParamsSchema.parse(request.params);
-      return reply.send(await getGameDetails(String(id)));
     },
   );
 }

@@ -32,7 +32,7 @@ import type { MediaType } from "@media-voyage/shared/userMediaSchema";
 import { useUnsavedChangesBlocker } from "#/hooks/useUnsavedChangesBlocker";
 import { useDeleteMedia } from "../../hooks/useDeleteMedia";
 import { queryKeys } from "#/lib/queryKeys";
-import type { CatalogMetadata } from "../../catalogMetadata";
+import type { CatalogMetadata } from "@media-voyage/shared";
 import { FormActions, MobileFormActions } from "./FormActions";
 import { FormHeader } from "./FormHeader";
 import { MediaDetailsSection } from "./MediaDetailsSection";
