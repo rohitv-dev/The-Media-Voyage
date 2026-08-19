@@ -1,5 +1,6 @@
 import {
   addMediaCollectionItemSchema,
+  addMediaCollectionItemsSchema,
   mediaCollectionIdParamsSchema,
   mediaCollectionItemParamsSchema,
   reorderMediaCollectionItemsSchema,
@@ -7,6 +8,7 @@ import {
 import type { FastifyInstance } from "fastify";
 import {
   addCollectionItem,
+  addCollectionItems,
   getOwnedCollectionItems,
   getOwnedCollectionItemsDetailed,
   removeCollectionItem,
@@ -45,6 +47,20 @@ async function collectionItemRoutes(fastify: FastifyInstance) {
     );
 
     return reply.status(201).send(item);
+  });
+
+  fastify.post("/:collectionId/batch", async (request, reply) => {
+    const { collectionId } = mediaCollectionIdParamsSchema.parse(
+      request.params,
+    );
+    const { userMediaIds } = addMediaCollectionItemsSchema.parse(request.body);
+    const items = await addCollectionItems(
+      request.userId,
+      collectionId,
+      userMediaIds,
+    );
+
+    return reply.status(201).send(items);
   });
 
   fastify.patch("/:collectionId", async (request) => {

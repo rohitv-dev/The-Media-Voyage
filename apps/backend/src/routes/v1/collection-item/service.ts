@@ -1,6 +1,10 @@
-import { mediaCollectionItems } from "@media-voyage/shared";
+import {
+  mediaCollection,
+  mediaCollectionItems,
+  userMedia,
+} from "@media-voyage/shared";
 import type { ReorderMediaCollectionItems } from "@media-voyage/shared/api";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, isNull, max } from "drizzle-orm";
 import { badRequest, conflict, notFound } from "../../../errors";
 import { requireOwnedCollection } from "../collection/queries";
 import {
@@ -56,6 +60,75 @@ export async function addCollectionItem(
     .returning();
 
   return item;
+}
+
+export async function addCollectionItems(
+  userId: string,
+  collectionId: string,
+  userMediaIds: string[],
+) {
+  return db.transaction(async (tx) => {
+    const [collection] = await tx
+      .select({ id: mediaCollection.id })
+      .from(mediaCollection)
+      .where(
+        and(
+          eq(mediaCollection.id, collectionId),
+          eq(mediaCollection.userId, userId),
+        ),
+      )
+      .for("update");
+
+    if (!collection) throw notFound("Collection not found");
+
+    const ownedMedia = await tx
+      .select({ id: userMedia.id })
+      .from(userMedia)
+      .where(
+        and(
+          eq(userMedia.userId, userId),
+          isNull(userMedia.deletedAt),
+          inArray(userMedia.id, userMediaIds),
+        ),
+      );
+
+    if (ownedMedia.length !== userMediaIds.length) {
+      throw notFound("One or more selected media entries were not found");
+    }
+
+    const existingItems = await tx
+      .select({ id: mediaCollectionItems.id })
+      .from(mediaCollectionItems)
+      .where(
+        and(
+          eq(mediaCollectionItems.collectionId, collectionId),
+          inArray(mediaCollectionItems.userMediaId, userMediaIds),
+        ),
+      );
+
+    if (existingItems.length) {
+      throw conflict(
+        "One or more selected media entries are already in this collection",
+      );
+    }
+
+    const [lastItem] = await tx
+      .select({ position: max(mediaCollectionItems.position) })
+      .from(mediaCollectionItems)
+      .where(eq(mediaCollectionItems.collectionId, collectionId));
+    const lastPosition = lastItem?.position ?? 0;
+
+    return tx
+      .insert(mediaCollectionItems)
+      .values(
+        userMediaIds.map((userMediaId, index) => ({
+          collectionId,
+          userMediaId,
+          position: lastPosition + index + 1,
+        })),
+      )
+      .returning();
+  });
 }
 
 export async function reorderCollectionItems(

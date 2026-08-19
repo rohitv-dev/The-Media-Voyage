@@ -1,8 +1,8 @@
 import { api, getApiErrorMessage } from "#/lib/api";
 import { queryKeys } from "#/lib/queryKeys";
-import { userMediaSearchQueryOptions } from "#/features/media/queries";
 import { EmptyState } from "#/components/EmptyState";
 import { collectionQueryOptions } from "#/features/media-collection/queries";
+import { CollectionFindMedia } from "#/features/media-collection/components/CollectionFindMedia";
 import {
   ActionIcon,
   Badge,
@@ -10,9 +10,7 @@ import {
   Button,
   Card,
   Container,
-  Flex,
   Group,
-  Select,
   Stack,
   Text,
   Title,
@@ -25,7 +23,6 @@ import {
   IconCheck,
   IconGripVertical,
   IconList,
-  IconPlus,
   IconX,
 } from "@tabler/icons-react";
 import {
@@ -35,8 +32,7 @@ import {
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useDebouncedValue } from "@mantine/hooks";
+import { useEffect, useState } from "react";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import type { DropResult } from "@hello-pangea/dnd";
 import { confirmDelete } from "#/lib/confirmModal";
@@ -54,10 +50,6 @@ export function CollectionItemsEditor() {
     from: "/_authenticated/collection/edit/$id",
   });
   const navigate = useNavigate();
-  const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
-  const selectedMediaLabelRef = useRef<string | null>(null);
-  const [mediaSearch, setMediaSearch] = useState("");
-  const [debouncedMediaSearch] = useDebouncedValue(mediaSearch, 300);
   const [orderedItems, setOrderedItems] = useState<MediaCollectionItemRecord[]>(
     [],
   );
@@ -73,99 +65,9 @@ export function CollectionItemsEditor() {
       api<MediaCollectionItemRecord[]>(`/collectionItem/${collectionId}`),
     enabled: Boolean(collection),
   });
-  const {
-    data: searchResults = [],
-    isFetching: isSearchingMedia,
-    isError: isMediaSearchError,
-  } = useQuery(userMediaSearchQueryOptions(debouncedMediaSearch));
-
   useEffect(() => {
     setOrderedItems(collectionItems);
   }, [collectionItems]);
-
-  const availableMediaOptions = useMemo(() => {
-    const includedIds = new Set(
-      collectionItems.map((item) => item.userMediaId),
-    );
-
-    return searchResults
-      .filter((entry) => !includedIds.has(entry.id))
-      .map((entry) => ({
-        value: entry.id,
-        label: `${entry.title} (${capitalizeWords(entry.type)})`,
-      }));
-  }, [collectionItems, searchResults]);
-
-  const handleMediaChange = (value: string | null) => {
-    selectedMediaLabelRef.current =
-      value === null
-        ? null
-        : (availableMediaOptions.find((option) => option.value === value)
-            ?.label ?? null);
-    setSelectedMediaId(value);
-  };
-
-  const handleMediaSearchChange = (value: string) => {
-    setMediaSearch(value);
-    if (value !== selectedMediaLabelRef.current) {
-      selectedMediaLabelRef.current = null;
-      setSelectedMediaId(null);
-    }
-  };
-
-  const trimmedMediaSearch = mediaSearch.trim();
-  const isMediaSearchSettled =
-    debouncedMediaSearch.trim() === trimmedMediaSearch;
-  const isMediaSearchLoading =
-    trimmedMediaSearch.length >= 2 &&
-    (!isMediaSearchSettled || isSearchingMedia);
-  let searchEmptyMessage: string | undefined;
-
-  switch (true) {
-    case trimmedMediaSearch.length < 2:
-      searchEmptyMessage = "Type at least 2 characters to search";
-      break;
-    case isMediaSearchLoading:
-      searchEmptyMessage = "Searching your library...";
-      break;
-    case isMediaSearchError:
-      searchEmptyMessage = "Search failed";
-      break;
-    case searchResults.length === 0:
-      searchEmptyMessage = "No matches found";
-      break;
-    case availableMediaOptions.length === 0:
-      searchEmptyMessage = "All matching media is already included";
-      break;
-  }
-
-  const addMutation = useMutation({
-    mutationFn: async (userMediaId: string) =>
-      api(`/collectionItem/${collectionId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ userMediaId }),
-      }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.collection.items(collectionId),
-      });
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.collection.itemsDetailed(collectionId),
-      });
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.collection.all,
-      });
-      selectedMediaLabelRef.current = null;
-      setSelectedMediaId(null);
-      showSuccessNotification({ message: "Added to collection" });
-    },
-    onError: (error: Error) => {
-      showErrorNotification({ message: getApiErrorMessage(error) });
-    },
-  });
 
   const removeMutation = useMutation({
     mutationFn: async (itemId: string) =>
@@ -217,11 +119,6 @@ export function CollectionItemsEditor() {
       showErrorNotification({ message: getApiErrorMessage(error) });
     },
   });
-
-  const handleAdd = () => {
-    if (!selectedMediaId) return;
-    addMutation.mutate(selectedMediaId);
-  };
 
   const handleRemove = (item: MediaCollectionItemRecord) => {
     confirmDelete({
@@ -306,36 +203,10 @@ export function CollectionItemsEditor() {
         </motion.div>
 
         <motion.div {...fadeUpEntranceProps(reduceMotion, -15)}>
-          <Card withBorder radius="lg" p="lg">
-            <Stack gap="md">
-              <Flex
-                direction={{ base: "column", sm: "row" }}
-                align={{ base: "stretch", sm: "flex-end" }}
-                gap="sm"
-              >
-                <Select
-                  label="Add media"
-                  placeholder="Type to search your library"
-                  data={availableMediaOptions}
-                  value={selectedMediaId}
-                  onChange={handleMediaChange}
-                  searchable
-                  searchValue={mediaSearch}
-                  onSearchChange={handleMediaSearchChange}
-                  nothingFoundMessage={searchEmptyMessage}
-                  style={{ flex: 1 }}
-                />
-                <Button
-                  leftSection={<IconPlus size={16} />}
-                  onClick={handleAdd}
-                  loading={addMutation.isPending}
-                  disabled={!selectedMediaId}
-                >
-                  Add to collection
-                </Button>
-              </Flex>
-            </Stack>
-          </Card>
+          <CollectionFindMedia
+            collectionId={collectionId}
+            includedMediaIds={collectionItems.map((item) => item.userMediaId)}
+          />
         </motion.div>
 
         <Stack gap="md">

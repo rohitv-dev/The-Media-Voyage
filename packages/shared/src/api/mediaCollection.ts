@@ -33,6 +33,19 @@ export type AddMediaCollectionItem = z.infer<
   typeof addMediaCollectionItemSchema
 >;
 
+export const addMediaCollectionItemsSchema = z.object({
+  userMediaIds: z
+    .array(userMediaSelectSchema.shape.id)
+    .min(1)
+    .refine((ids) => new Set(ids).size === ids.length, {
+      message: "Collection media must be unique",
+    }),
+});
+
+export type AddMediaCollectionItems = z.infer<
+  typeof addMediaCollectionItemsSchema
+>;
+
 export const reorderMediaCollectionItemsSchema = z
   .object({
     items: z
