@@ -548,7 +548,7 @@ export async function updateUserMediaImageFocus(
 ) {
   return db.transaction(async (tx) => {
     const [entry] = await tx
-      .select({ id: userMedia.id })
+      .select({ id: userMedia.id, updatedAt: userMedia.updatedAt })
       .from(userMedia)
       .where(ownedUserMediaCondition(userId, id))
       .for("update")
@@ -561,6 +561,7 @@ export async function updateUserMediaImageFocus(
       .set({
         imageFocusX: input.imageFocusX,
         imageFocusY: input.imageFocusY,
+        updatedAt: entry.updatedAt,
       })
       .where(ownedUserMediaCondition(userId, entry.id));
 

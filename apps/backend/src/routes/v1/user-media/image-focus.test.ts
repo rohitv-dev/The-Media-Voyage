@@ -65,12 +65,13 @@ describe("user-media image focus", () => {
   });
 
   it("updates only the owned user-media row", async () => {
+    const updatedAt = new Date("2026-08-19T00:00:00.000Z");
     const updatedRecord = {
       id: ENTRY_ID,
       imageFocusX: 0.25,
       imageFocusY: 0.75,
     };
-    const lockedEntry = createSelectBuilder([{ id: ENTRY_ID }]);
+    const lockedEntry = createSelectBuilder([{ id: ENTRY_ID, updatedAt }]);
     const returnedEntry = createSelectBuilder([updatedRecord]);
     const updateBuilder = {
       set: vi.fn(),
@@ -99,6 +100,7 @@ describe("user-media image focus", () => {
     expect(updateBuilder.set).toHaveBeenCalledWith({
       imageFocusX: 0.25,
       imageFocusY: 0.75,
+      updatedAt,
     });
   });
 
