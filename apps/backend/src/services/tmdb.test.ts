@@ -10,7 +10,12 @@ vi.mock("../config", () => ({
   },
 }));
 
-import { getTmdbDetails, getTmdbRecommendations, searchTmdb } from "./tmdb";
+import {
+  getTmdbDetails,
+  getTmdbRecommendations,
+  getTmdbTrending,
+  searchTmdb,
+} from "./tmdb";
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status });
@@ -110,6 +115,81 @@ describe("TMDB service", () => {
 
     expect(new URL(String(fetchMock.mock.calls[0][0])).pathname).toBe(
       "/3/search/tv",
+    );
+  });
+
+  it("returns four non-adult trending movies and shows from the daily cache", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse({
+          results: [
+            {
+              id: 1,
+              title: "Movie 1",
+              poster_path: null,
+              release_date: "2026-01-01",
+              vote_average: 7.2,
+            },
+            { id: 2, title: "Movie 2", poster_path: null },
+            { id: 3, title: "Movie 3", poster_path: null },
+            { id: 4, title: "Movie 4", poster_path: null },
+            { id: 5, title: "Movie 5", poster_path: null },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          results: [
+            {
+              id: 11,
+              name: "Show 1",
+              poster_path: null,
+              first_air_date: "2020-02-02",
+              vote_average: 8.4,
+            },
+            { id: 12, name: "Show 2", poster_path: null },
+            { id: 13, name: "Show 3", poster_path: null },
+            { id: 14, name: "Show 4", poster_path: null },
+            { id: 15, name: "Adult Show", adult: true, poster_path: null },
+          ],
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getTmdbTrending()).resolves.toEqual({
+      movies: [1, 2, 3, 4].map((id) => ({
+        media: {
+          id: "",
+          source: "tmdb_movie",
+          externalId: String(id),
+          title: `Movie ${id}`,
+          type: "movie",
+          imageUrl: null,
+        },
+        releaseYear: id === 1 ? 2026 : null,
+        catalogRating: id === 1 ? 7.2 : null,
+      })),
+      shows: [11, 12, 13, 14].map((id) => ({
+        media: {
+          id: "",
+          source: "tmdb_tv",
+          externalId: String(id),
+          title: `Show ${id - 10}`,
+          type: "show",
+          imageUrl: null,
+        },
+        releaseYear: id === 11 ? 2020 : null,
+        catalogRating: id === 11 ? 8.4 : null,
+      })),
+    });
+    await getTmdbTrending();
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(new URL(String(fetchMock.mock.calls[0][0])).pathname).toBe(
+      "/3/trending/movie/week",
+    );
+    expect(new URL(String(fetchMock.mock.calls[1][0])).pathname).toBe(
+      "/3/trending/tv/week",
     );
   });
 

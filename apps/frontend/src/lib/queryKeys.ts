@@ -23,6 +23,7 @@ export const queryKeys = {
     dropdowns: ["user-media", "dropdowns"] as const,
   },
   dashboardStats: ["dashboard-stats"] as const,
+  dashboardTrending: ["dashboard-trending"] as const,
   calendarActivity: (month: string) => ["calendar-activity", month] as const,
   mediaSearch: (type: string, search: string) =>
     ["media-search", type, search] as const,

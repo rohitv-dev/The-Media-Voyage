@@ -26,6 +26,7 @@ import {
   findUserMediaById,
   getCalendarActivity,
   getDashboardStats,
+  getDashboardTrending,
   getUserMediaCounts,
   getUserMediaDropdowns,
   getUserMediaForExport,
@@ -227,6 +228,10 @@ async function userMediaRoutes(fastify: FastifyInstance) {
 
   fastify.get("/dashboard/stats", async (request, reply) => {
     return reply.send(await getDashboardStats(request.userId));
+  });
+
+  fastify.get("/dashboard/trending", async (request, reply) => {
+    return reply.send(await getDashboardTrending(request.userId));
   });
 
   fastify.get("/calendar/activity", async (request, reply) => {

@@ -13,6 +13,7 @@ import type {
   CalendarActivityEvent,
   CalendarActivityQuery,
   MediaPickerQuery,
+  TmdbTrendingResponse,
   UserMediaPageQuerySchema,
   UserMediaQuerySchema,
 } from "@media-voyage/shared/api";
@@ -39,6 +40,7 @@ import {
   type SQL,
 } from "drizzle-orm";
 import { db } from "@/db/db";
+import { getTmdbTrending } from "@/services/tmdb";
 import { listReactions } from "../friends/queries";
 import {
   calendarCompletedSelect,
@@ -588,6 +590,48 @@ export async function getDashboardStats(userId: string) {
       ),
       byType: normalizedTimeSpentByType,
     },
+  };
+}
+
+export async function getDashboardTrending(
+  userId: string,
+): Promise<TmdbTrendingResponse> {
+  const trending = await getTmdbTrending();
+  const records = [...trending.movies, ...trending.shows];
+  if (!records.length) {
+    return { movies: [], shows: [] };
+  }
+
+  const existing = await db
+    .select({ source: media.source, externalId: media.externalId })
+    .from(userMedia)
+    .innerJoin(media, eq(media.id, userMedia.mediaId))
+    .where(
+      and(
+        activeUserMediaCondition(userId),
+        or(
+          ...records.map((record) =>
+            and(
+              eq(media.source, record.media.source),
+              eq(media.externalId, record.media.externalId),
+            ),
+          ),
+        ),
+      ),
+    );
+  const existingKeys = new Set(
+    existing.map((record) => `${record.source}:${record.externalId}`),
+  );
+  const toItem = (record: (typeof records)[number]) => ({
+    ...record,
+    inLibrary: existingKeys.has(
+      `${record.media.source}:${record.media.externalId}`,
+    ),
+  });
+
+  return {
+    movies: trending.movies.map(toItem),
+    shows: trending.shows.map(toItem),
   };
 }
 
