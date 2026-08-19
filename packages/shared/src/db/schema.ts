@@ -164,6 +164,10 @@ export const media = pgTable(
       table.externalId,
     ),
     index("media_search_vector_idx").using("gin", table.searchVector),
+    index("media_title_trgm_idx").using(
+      "gist",
+      sql`${table.title} gist_trgm_ops`,
+    ),
     check(
       "media_image_focus_x_range",
       sql`${table.imageFocusX} is null or (${table.imageFocusX} >= 0 and ${table.imageFocusX} <= 1)`,

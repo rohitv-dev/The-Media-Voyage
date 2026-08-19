@@ -17,6 +17,7 @@ import type {
   MediaPickerQuery,
   MediaPickerRecord,
 } from "@media-voyage/shared/api";
+import { FUZZY_TITLE_SEARCH_CONFIG } from "@media-voyage/shared/api";
 
 /**
  * Serialize a filter object into a query string (with leading `?`, or empty
@@ -120,7 +121,8 @@ export function userMediaHybridSearchQueryOptions(query: string) {
       api<GetHybridSearchResponse>(
         `/user-media/hybrid-search?q=${encodeURIComponent(normalizedQuery)}`,
       ),
-    enabled: normalizedQuery.length >= 5,
+    enabled:
+      normalizedQuery.length >= FUZZY_TITLE_SEARCH_CONFIG.minimumQueryLength,
   });
 }
 

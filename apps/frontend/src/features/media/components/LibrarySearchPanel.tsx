@@ -9,6 +9,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { IconSearch, IconX } from "@tabler/icons-react";
+import { FUZZY_TITLE_SEARCH_CONFIG } from "@media-voyage/shared/api";
 
 type LibrarySearchPanelProps = {
   query: string;
@@ -38,7 +39,9 @@ export function LibrarySearchPanel({
     event.preventDefault();
     const normalizedQuery = input.trim();
 
-    if (normalizedQuery.length >= 5) {
+    if (
+      normalizedQuery.length >= FUZZY_TITLE_SEARCH_CONFIG.minimumQueryLength
+    ) {
       onSearch(normalizedQuery);
     }
   };
@@ -71,7 +74,9 @@ export function LibrarySearchPanel({
             type="submit"
             size="xs"
             loading={isSearching}
-            disabled={input.trim().length < 5}
+            disabled={
+              input.trim().length < FUZZY_TITLE_SEARCH_CONFIG.minimumQueryLength
+            }
           >
             Explore
           </Button>

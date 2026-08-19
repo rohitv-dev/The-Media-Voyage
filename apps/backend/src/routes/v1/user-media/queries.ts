@@ -16,6 +16,7 @@ import type {
   UserMediaPageQuerySchema,
   UserMediaQuerySchema,
 } from "@media-voyage/shared/api";
+import { FUZZY_TITLE_SEARCH_CONFIG } from "@media-voyage/shared/api";
 import type { Status } from "@media-voyage/shared/userMediaSchema";
 import {
   and,
@@ -204,9 +205,7 @@ export function searchUserMedia(userId: string, search: string) {
     })
     .from(userMedia)
     .innerJoin(media, eq(userMedia.mediaId, media.id))
-    .where(
-      and(activeUserMediaCondition(userId), ilike(media.title, `%${search}%`)),
-    )
+    .where(and(activeUserMediaCondition(userId), titleSearchCondition(search)))
     .orderBy(asc(media.title), asc(userMedia.id))
     .limit(20);
 }
@@ -221,6 +220,7 @@ export function searchUserMediaHybrid(
   query: string,
   embedding: number[],
 ) {
+  const normalizedQuery = query.trim();
   const lexicalQuery = sql`websearch_to_tsquery('simple'::regconfig, ${query})`;
   const lexicalRelevance = sql<number>`ts_rank_cd(
     ${media.searchVector},
@@ -272,6 +272,33 @@ export function searchUserMediaHybrid(
     .limit(HYBRID_SEARCH_CANDIDATE_LIMIT)
     .as("semantic_matches");
 
+  const fuzzyTitleSimilarity = sql<number>`similarity(
+    ${media.title},
+    ${normalizedQuery}
+  )`;
+  const fuzzyTitleDistance = sql<number>`${media.title} <-> ${normalizedQuery}`;
+  const fuzzyTitleCondition =
+    normalizedQuery.length >= FUZZY_TITLE_SEARCH_CONFIG.minimumQueryLength
+      ? sql`(
+          ${media.title} % ${normalizedQuery}
+          and ${fuzzyTitleSimilarity} > ${FUZZY_TITLE_SEARCH_CONFIG.minimumSimilarity}
+        )`
+      : sql`false`;
+
+  const fuzzyTitleMatches = db
+    .select({
+      userMediaId: userMedia.id,
+      fuzzyTitleRank: sql<number>`row_number() over (
+        order by ${fuzzyTitleDistance} asc, ${media.title} asc, ${userMedia.id} asc
+      )`.as("fuzzy_title_rank"),
+    })
+    .from(userMedia)
+    .innerJoin(media, eq(userMedia.mediaId, media.id))
+    .where(and(activeUserMediaCondition(userId), fuzzyTitleCondition))
+    .orderBy(asc(fuzzyTitleDistance), asc(media.title), asc(userMedia.id))
+    .limit(HYBRID_SEARCH_CANDIDATE_LIMIT)
+    .as("fuzzy_title_matches");
+
   const fusedScore = sql<number>`
     coalesce(
       1.0 / (${HYBRID_SEARCH_RRF_K} + ${lexicalMatches.lexicalRank}),
@@ -279,6 +306,10 @@ export function searchUserMediaHybrid(
     ) +
     coalesce(
       1.0 / (${HYBRID_SEARCH_RRF_K} + ${semanticMatches.semanticRank}),
+      0
+    ) +
+    coalesce(
+      1.0 / (${HYBRID_SEARCH_RRF_K} + ${fuzzyTitleMatches.fuzzyTitleRank}),
       0
     )
   `;
@@ -289,12 +320,17 @@ export function searchUserMediaHybrid(
     .innerJoin(media, eq(userMedia.mediaId, media.id))
     .leftJoin(lexicalMatches, eq(lexicalMatches.userMediaId, userMedia.id))
     .leftJoin(semanticMatches, eq(semanticMatches.userMediaId, userMedia.id))
+    .leftJoin(
+      fuzzyTitleMatches,
+      eq(fuzzyTitleMatches.userMediaId, userMedia.id),
+    )
     .where(
       and(
         activeUserMediaCondition(userId),
         or(
           isNotNull(lexicalMatches.userMediaId),
           isNotNull(semanticMatches.userMediaId),
+          isNotNull(fuzzyTitleMatches.userMediaId),
         ),
       ),
     )
@@ -321,7 +357,7 @@ function getUserMediaFilterConditions(
     conditions.push(inArray(media.type, filters.type));
   }
   if (filters.search) {
-    conditions.push(ilike(media.title, `%${filters.search}%`));
+    conditions.push(titleSearchCondition(filters.search));
   }
   if (filters.minRating !== undefined) {
     conditions.push(gte(userMedia.rating, filters.minRating));
@@ -351,6 +387,28 @@ function getUserMediaFilterConditions(
   }
 
   return conditions;
+}
+
+function titleSearchCondition(search: string): SQL {
+  const normalizedSearch = search.trim();
+  const exactMatch = ilike(media.title, `%${search}%`);
+
+  if (normalizedSearch.length < FUZZY_TITLE_SEARCH_CONFIG.minimumQueryLength) {
+    return exactMatch;
+  }
+
+  const fuzzySimilarity = sql<number>`similarity(
+    ${media.title},
+    ${normalizedSearch}
+  )`;
+
+  return sql`(
+    ${exactMatch}
+    or (
+      ${media.title} % ${normalizedSearch}
+      and ${fuzzySimilarity} > ${FUZZY_TITLE_SEARCH_CONFIG.minimumSimilarity}
+    )
+  )`;
 }
 
 function getUserMediaFilterOrder(filters: UserMediaQuerySchema) {

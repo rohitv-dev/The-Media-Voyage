@@ -5,6 +5,7 @@ import {
   mediaDetailsParamsSchema,
   mediaImageFocusSchema,
   reorderMediaCollectionItemsSchema,
+  FUZZY_TITLE_SEARCH_CONFIG,
   hybridSearchQuerySchema,
   userMediaFormSchema,
   userMediaPatchSchema,
@@ -14,12 +15,16 @@ import {
 
 describe("user-media request schemas", () => {
   it("requires a bounded, meaningful hybrid search query", () => {
-    expect(hybridSearchQuerySchema.safeParse({ q: "four" }).success).toBe(
-      false,
-    );
-    expect(hybridSearchQuerySchema.safeParse({ q: "space" }).success).toBe(
-      true,
-    );
+    expect(
+      hybridSearchQuerySchema.safeParse({
+        q: "a".repeat(FUZZY_TITLE_SEARCH_CONFIG.minimumQueryLength - 1),
+      }).success,
+    ).toBe(false);
+    expect(
+      hybridSearchQuerySchema.safeParse({
+        q: "a".repeat(FUZZY_TITLE_SEARCH_CONFIG.minimumQueryLength),
+      }).success,
+    ).toBe(true);
     expect(
       hybridSearchQuerySchema.safeParse({ q: "a".repeat(501) }).success,
     ).toBe(false);

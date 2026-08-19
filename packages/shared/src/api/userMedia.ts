@@ -279,8 +279,18 @@ export type GetUserMediaSearchResponse = z.infer<
   typeof getUserMediaSearchResponseSchema
 >;
 
+export const FUZZY_TITLE_SEARCH_CONFIG = {
+  minimumQueryLength: 5,
+  // Keep pg_trgm.similarity_threshold at or below this value when tuning it downward.
+  minimumSimilarity: 0.3,
+} as const;
+
 export const hybridSearchQuerySchema = z.object({
-  q: z.string().trim().min(5).max(500),
+  q: z
+    .string()
+    .trim()
+    .min(FUZZY_TITLE_SEARCH_CONFIG.minimumQueryLength)
+    .max(500),
 });
 
 export type HybridSearchQuery = z.infer<typeof hybridSearchQuerySchema>;
