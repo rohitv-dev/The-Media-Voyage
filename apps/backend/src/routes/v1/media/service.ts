@@ -14,6 +14,7 @@ const mediaSearchSelect = {
   title: media.title,
   imageUrl: media.imageUrl,
   type: media.type,
+  source: media.source,
   externalId: media.externalId,
 };
 
@@ -31,7 +32,7 @@ export async function searchMedia(
   const localResults = await searchLocalMedia(query);
   const localRecords: SourceMediaRecord[] = localResults.map((record) => ({
     id: record.id,
-    source: "db",
+    source: record.source ?? "db",
     title: record.title,
     imageUrl: record.imageUrl,
     type: record.type,
