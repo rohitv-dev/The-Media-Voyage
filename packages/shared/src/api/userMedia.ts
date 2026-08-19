@@ -279,16 +279,16 @@ export type GetUserMediaSearchResponse = z.infer<
   typeof getUserMediaSearchResponseSchema
 >;
 
-export const semanticSearchQuerySchema = z.object({
+export const hybridSearchQuerySchema = z.object({
   q: z.string().trim().min(5).max(500),
 });
 
-export type SemanticSearchQuery = z.infer<typeof semanticSearchQuerySchema>;
+export type HybridSearchQuery = z.infer<typeof hybridSearchQuerySchema>;
 
-export const getSemanticSearchResponseSchema = z.array(mediaRecordSchema);
+export const getHybridSearchResponseSchema = z.array(mediaRecordSchema);
 
-export type GetSemanticSearchResponse = z.infer<
-  typeof getSemanticSearchResponseSchema
+export type GetHybridSearchResponse = z.infer<
+  typeof getHybridSearchResponseSchema
 >;
 
 export const userMediaPageQuerySchema = userMediaQuerySchema.extend({

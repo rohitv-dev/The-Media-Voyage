@@ -57,7 +57,7 @@ function renderPalette(
     onClose: vi.fn(),
     onNavigate: vi.fn(),
     onOpenMedia: vi.fn(),
-    onOpenSemanticSearch: vi.fn(),
+    onOpenLibrarySearch: vi.fn(),
   };
   const renderElement = (
     nextProps: Partial<React.ComponentProps<typeof CommandPalette>>,
@@ -131,8 +131,8 @@ describe("CommandPalette", () => {
 
   it("opens described library search from the actions group", () => {
     const onClose = vi.fn();
-    const onOpenSemanticSearch = vi.fn();
-    renderPalette({ onClose, onOpenSemanticSearch });
+    const onOpenLibrarySearch = vi.fn();
+    renderPalette({ onClose, onOpenLibrarySearch });
     const input = screen.getByRole("textbox", {
       name: "Search actions or pages",
     });
@@ -143,7 +143,7 @@ describe("CommandPalette", () => {
     );
 
     expect(onClose).toHaveBeenCalledOnce();
-    expect(onOpenSemanticSearch).toHaveBeenCalledOnce();
+    expect(onOpenLibrarySearch).toHaveBeenCalledOnce();
   });
 
   it("supports keyboard selection", async () => {

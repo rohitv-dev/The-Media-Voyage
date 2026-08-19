@@ -11,7 +11,7 @@ import {
   userMediaQuerySchema,
   userMediaQuickActionSchema,
   userMediaSearchQuerySchema,
-  semanticSearchQuerySchema,
+  hybridSearchQuerySchema,
 } from "@media-voyage/shared/api";
 import { internalServerError, notFound } from "@/errors";
 import { requireAuth } from "@/require-auth";
@@ -46,7 +46,7 @@ import {
   updateUserMediaQuickActions,
 } from "./service";
 
-const semanticSearchConfig: FastifyContextConfig = {
+const hybridSearchConfig: FastifyContextConfig = {
   rateLimit: {
     max: 10,
     timeWindow: "1 minute",
@@ -78,10 +78,10 @@ async function userMediaRoutes(fastify: FastifyInstance) {
   });
 
   fastify.get(
-    "/semantic-search",
-    { config: semanticSearchConfig },
+    "/hybrid-search",
+    { config: hybridSearchConfig },
     async (request, reply) => {
-      const { q } = semanticSearchQuerySchema.parse(request.query);
+      const { q } = hybridSearchQuerySchema.parse(request.query);
       reply.header("Cache-Control", "no-store");
 
       try {

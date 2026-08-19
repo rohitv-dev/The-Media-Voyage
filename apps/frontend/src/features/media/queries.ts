@@ -8,7 +8,7 @@ import type {
   GetUserMediaResponse,
   GetUserMediaPageResponse,
   GetUserMediaSearchResponse,
-  GetSemanticSearchResponse,
+  GetHybridSearchResponse,
   MediaDetailedRecord,
   ReactionRecord,
   StatusHistoryRecord,
@@ -111,14 +111,14 @@ export function userMediaSearchQueryOptions(search: string) {
   });
 }
 
-export function userMediaSemanticSearchQueryOptions(query: string) {
+export function userMediaHybridSearchQueryOptions(query: string) {
   const normalizedQuery = query.trim();
 
   return queryOptions({
-    queryKey: queryKeys.userMedia.semanticSearch(normalizedQuery),
+    queryKey: queryKeys.userMedia.hybridSearch(normalizedQuery),
     queryFn: () =>
-      api<GetSemanticSearchResponse>(
-        `/user-media/semantic-search?q=${encodeURIComponent(normalizedQuery)}`,
+      api<GetHybridSearchResponse>(
+        `/user-media/hybrid-search?q=${encodeURIComponent(normalizedQuery)}`,
       ),
     enabled: normalizedQuery.length >= 5,
   });

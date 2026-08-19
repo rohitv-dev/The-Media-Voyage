@@ -3,7 +3,7 @@
 import { MantineProvider } from "@mantine/core";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { SemanticSearchPanel } from "./SemanticSearchPanel";
+import { LibrarySearchPanel } from "./LibrarySearchPanel";
 
 beforeEach(() => {
   Object.defineProperty(window, "matchMedia", {
@@ -28,7 +28,7 @@ function renderPanel(onClear = vi.fn()) {
     onClear,
     ...render(
       <MantineProvider>
-        <SemanticSearchPanel
+        <LibrarySearchPanel
           query=""
           isSearching={false}
           onSearch={vi.fn()}
@@ -40,7 +40,7 @@ function renderPanel(onClear = vi.fn()) {
   };
 }
 
-describe("SemanticSearchPanel", () => {
+describe("LibrarySearchPanel", () => {
   it("focuses the input for a focus request", () => {
     renderPanel();
 
@@ -49,6 +49,14 @@ describe("SemanticSearchPanel", () => {
         name: "Describe what you're looking for",
       }),
     );
+  });
+
+  it("explains the supported web-style search syntax", () => {
+    renderPanel();
+
+    expect(
+      screen.getByText(/Web-style syntax is supported:.*quotes.*-word.*OR/),
+    ).toBeTruthy();
   });
 
   it("uses the same clear action when Escape is pressed", () => {

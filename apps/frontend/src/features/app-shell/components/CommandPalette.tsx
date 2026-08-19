@@ -30,7 +30,7 @@ type CommandPaletteProps = {
   onClose: () => void;
   onNavigate: (path: AppShellPath) => void;
   onOpenMedia: (userMediaId: string) => void;
-  onOpenSemanticSearch: () => void;
+  onOpenLibrarySearch: () => void;
 };
 
 const actionItems = [
@@ -43,9 +43,10 @@ const actionItems = [
   },
   {
     label: "Describe what you want",
-    description: "Search your library by title, metadata, and meaning",
+    description:
+      "Search titles, metadata, and meaning; supports quotes, -exclude, and OR",
     icon: IconSparkles,
-    path: "semantic-search",
+    path: "hybrid-search",
     keywords: ["explore", "vague", "meaning", "library"],
   },
 ] as const;
@@ -123,7 +124,7 @@ export function CommandPalette({
   onClose,
   onNavigate,
   onOpenMedia,
-  onOpenSemanticSearch,
+  onOpenLibrarySearch,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
   const [debouncedQuery] = useDebouncedValue(query, 300);
@@ -192,10 +193,10 @@ export function CommandPalette({
   };
 
   const selectCommand = (value: string) => {
-    if (value === "semantic-search") {
+    if (value === "hybrid-search") {
       reset();
       onClose();
-      onOpenSemanticSearch();
+      onOpenLibrarySearch();
       return;
     }
 

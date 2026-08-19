@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { IconSearch, IconX } from "@tabler/icons-react";
 
-type SemanticSearchPanelProps = {
+type LibrarySearchPanelProps = {
   query: string;
   isSearching: boolean;
   onSearch: (query: string) => void;
@@ -18,15 +18,14 @@ type SemanticSearchPanelProps = {
   focusRequest: number;
 };
 
-export function SemanticSearchPanel({
+export function LibrarySearchPanel({
   query,
   isSearching,
   onSearch,
   onClear,
   focusRequest,
-}: SemanticSearchPanelProps) {
+}: LibrarySearchPanelProps) {
   const [input, setInput] = useState("");
-  const [focused, setFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const isActive = query.length > 0;
@@ -46,7 +45,6 @@ export function SemanticSearchPanel({
 
   const clearSearch = () => {
     setInput("");
-    setFocused(false);
     onClear();
   };
 
@@ -59,8 +57,6 @@ export function SemanticSearchPanel({
             aria-label="Describe what you're looking for"
             placeholder="Describe what you're looking for..."
             value={input}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
             onChange={(event) => setInput(event.currentTarget.value)}
             onKeyDown={(event) => {
               if (event.key === "Escape") {
@@ -91,9 +87,11 @@ export function SemanticSearchPanel({
           </ActionIcon>
         </Group>
       </form>
-      {!isActive && focused && (
+      {!isActive && (
         <Text size="xs" c="dimmed" mt={4}>
-          Try: "dark psychological horror" or "space exploration games"
+          Web-style syntax is supported: use &quot;quotes&quot; for phrases,
+          -word to exclude a term, or OR between alternatives. Try: &quot;dark
+          psychological horror&quot; or &quot;space exploration games&quot;.
         </Text>
       )}
       {isActive && (

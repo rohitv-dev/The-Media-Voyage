@@ -5,7 +5,7 @@ import {
   mediaDetailsParamsSchema,
   mediaImageFocusSchema,
   reorderMediaCollectionItemsSchema,
-  semanticSearchQuerySchema,
+  hybridSearchQuerySchema,
   userMediaFormSchema,
   userMediaPatchSchema,
   userMediaQuerySchema,
@@ -13,18 +13,18 @@ import {
 } from "@media-voyage/shared/api";
 
 describe("user-media request schemas", () => {
-  it("requires a bounded, meaningful semantic search query", () => {
-    expect(semanticSearchQuerySchema.safeParse({ q: "four" }).success).toBe(
+  it("requires a bounded, meaningful hybrid search query", () => {
+    expect(hybridSearchQuerySchema.safeParse({ q: "four" }).success).toBe(
       false,
     );
-    expect(semanticSearchQuerySchema.safeParse({ q: "space" }).success).toBe(
+    expect(hybridSearchQuerySchema.safeParse({ q: "space" }).success).toBe(
       true,
     );
     expect(
-      semanticSearchQuerySchema.safeParse({ q: "a".repeat(501) }).success,
+      hybridSearchQuerySchema.safeParse({ q: "a".repeat(501) }).success,
     ).toBe(false);
     expect(
-      semanticSearchQuerySchema.safeParse({
+      hybridSearchQuerySchema.safeParse({
         q: "  atmospheric space horror  ",
       }),
     ).toMatchObject({ success: true, data: { q: "atmospheric space horror" } });

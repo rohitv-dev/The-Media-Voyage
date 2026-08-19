@@ -1,7 +1,7 @@
 import {
   userMediaDropdownOptions,
   userMediaFilterInfiniteQueryOptions,
-  userMediaSemanticSearchQueryOptions,
+  userMediaHybridSearchQueryOptions,
 } from "#/features/media/queries";
 import {
   Box,
@@ -41,7 +41,7 @@ import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { gridItemMotionProps } from "#/theme/motion";
 import { MediaFilterCard } from "#/features/media/components/MediaFilters/MediaFilterCard";
 import { MediaPickerModal } from "#/features/media/components/MediaPickerModal";
-import { SemanticSearchPanel } from "#/features/media/components/SemanticSearchPanel";
+import { LibrarySearchPanel } from "#/features/media/components/LibrarySearchPanel";
 import { collectionQueryOptions } from "#/features/media-collection/queries";
 import {
   IconDice5,
@@ -70,22 +70,22 @@ export const Route = createFileRoute("/_authenticated/media/")({
 
 function RouteComponent() {
   const search = Route.useSearch();
-  const semanticSearchFocusRequest = useLocation({
-    select: (location) => location.state.semanticSearchFocusRequest,
+  const librarySearchOpenRequest = useLocation({
+    select: (location) => location.state.librarySearchFocusRequest,
   });
   const { data: dropdowns } = useQuery(userMediaDropdownOptions);
   const { data: collections } = useQuery(collectionQueryOptions);
-  const [semanticQuery, setSemanticQuery] = useState("");
-  const [semanticOpen, setSemanticOpen] = useState(false);
-  const [semanticFocusRequest, setSemanticFocusRequest] = useState(0);
-  const isExploring = semanticQuery.length > 0;
+  const [librarySearchQuery, setLibrarySearchQuery] = useState("");
+  const [librarySearchOpen, setLibrarySearchOpen] = useState(false);
+  const [librarySearchFocusRequest, setLibrarySearchFocusRequest] = useState(0);
+  const isExploring = librarySearchQuery.length > 0;
   const {
-    data: semanticRecords,
-    isPending: isSemanticPending,
-    isFetching: isSemanticFetching,
-    isError: isSemanticError,
-    error: semanticError,
-  } = useQuery(userMediaSemanticSearchQueryOptions(semanticQuery));
+    data: librarySearchRecords,
+    isPending: isLibrarySearchPending,
+    isFetching: isLibrarySearchFetching,
+    isError: isLibrarySearchError,
+    error: librarySearchError,
+  } = useQuery(userMediaHybridSearchQueryOptions(librarySearchQuery));
   const {
     data,
     isFetching,
@@ -118,11 +118,11 @@ function RouteComponent() {
   const skipNextSearchSyncRef = useRef(false);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const normalRecords = data?.pages.flatMap((page) => page.data) ?? [];
-  const records = isExploring ? (semanticRecords ?? []) : normalRecords;
-  const isResultsFetching = isExploring ? isSemanticFetching : isFetching;
-  const isResultsPending = isExploring ? isSemanticPending : isPending;
+  const records = isExploring ? (librarySearchRecords ?? []) : normalRecords;
+  const isResultsFetching = isExploring ? isLibrarySearchFetching : isFetching;
+  const isResultsPending = isExploring ? isLibrarySearchPending : isPending;
   const hasLoadedResults = isExploring
-    ? semanticRecords !== undefined
+    ? librarySearchRecords !== undefined
     : data !== undefined;
 
   const hasAppliedFilters = Boolean(
@@ -176,16 +176,18 @@ function RouteComponent() {
   };
 
   useEffect(() => {
-    if (isError || isSemanticError) {
+    if (isError || isLibrarySearchError) {
       showErrorNotification({
         message: getApiErrorMessage(
-          isSemanticError ? semanticError : error,
-          isSemanticError ? "Library search failed" : "Failed to load data",
+          isLibrarySearchError ? librarySearchError : error,
+          isLibrarySearchError
+            ? "Library search failed"
+            : "Failed to load data",
         ),
         title: "Please try again later",
       });
     }
-  }, [error, isError, isSemanticError, semanticError]);
+  }, [error, isError, isLibrarySearchError, librarySearchError]);
 
   useEffect(() => {
     if (isMobile && view !== "grid") {
@@ -235,24 +237,24 @@ function RouteComponent() {
   }, [search]);
 
   useEffect(() => {
-    if (semanticSearchFocusRequest === undefined) return;
+    if (librarySearchOpenRequest === undefined) return;
 
-    setSemanticOpen(true);
-    setSemanticFocusRequest((request) => request + 1);
+    setLibrarySearchOpen(true);
+    setLibrarySearchFocusRequest((request) => request + 1);
     void navigate({
       to: "/media",
       search: (previous) => previous,
       replace: true,
       state: (previous) => ({
         ...previous,
-        semanticSearchFocusRequest: undefined,
+        librarySearchFocusRequest: undefined,
       }),
     });
-  }, [navigate, semanticSearchFocusRequest]);
+  }, [librarySearchOpenRequest, navigate]);
 
-  const clearSemanticSearch = () => {
-    setSemanticQuery("");
-    setSemanticOpen(false);
+  const clearLibrarySearch = () => {
+    setLibrarySearchQuery("");
+    setLibrarySearchOpen(false);
   };
 
   const viewMedia = (id: string) =>
@@ -355,10 +357,10 @@ function RouteComponent() {
             >
               <Button
                 size="xs"
-                variant={semanticOpen ? "filled" : "light"}
+                variant={librarySearchOpen ? "filled" : "light"}
                 leftSection={<IconSearch size={16} />}
-                aria-pressed={semanticOpen}
-                onClick={() => setSemanticOpen(true)}
+                aria-pressed={librarySearchOpen}
+                onClick={() => setLibrarySearchOpen(true)}
                 w={{ base: "100%", sm: "auto" }}
               >
                 Describe what you want
@@ -382,13 +384,13 @@ function RouteComponent() {
           </Group>
         </Group>
 
-        {semanticOpen && (
-          <SemanticSearchPanel
-            query={semanticQuery}
-            isSearching={isSemanticFetching}
-            onSearch={setSemanticQuery}
-            onClear={clearSemanticSearch}
-            focusRequest={semanticFocusRequest}
+        {librarySearchOpen && (
+          <LibrarySearchPanel
+            query={librarySearchQuery}
+            isSearching={isLibrarySearchFetching}
+            onSearch={setLibrarySearchQuery}
+            onClear={clearLibrarySearch}
+            focusRequest={librarySearchFocusRequest}
           />
         )}
 
@@ -453,7 +455,7 @@ function RouteComponent() {
                   }
                   onClick={() =>
                     isExploring
-                      ? clearSemanticSearch()
+                      ? clearLibrarySearch()
                       : hasAppliedFilters
                         ? resetFilters()
                         : navigate({ to: "/media/add" })
