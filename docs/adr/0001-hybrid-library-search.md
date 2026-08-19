@@ -1,0 +1,3 @@
+# Hybrid library search
+
+Media Voyage's natural-language library search combines PostgreSQL lexical full-text ranking with the existing pgvector semantic ranking. The searchable document is shared catalog content, with title ranked above provider metadata and description; personal tags, notes, reviews, ratings, and progress remain outside the shared search document. PostgreSQL maintains the stored lexical vector automatically, and reciprocal-rank fusion merges the top 50 candidates from each signal into the existing 20-record response while retaining the current semantic endpoint and best-effort embedding behavior.

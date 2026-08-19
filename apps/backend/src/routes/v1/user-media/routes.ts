@@ -34,7 +34,7 @@ import {
   listUserMedia,
   pickUserMedia,
   searchUserMedia,
-  searchUserMediaSemantically,
+  searchUserMediaHybrid,
 } from "./queries";
 import {
   createUserMedia,
@@ -86,14 +86,15 @@ async function userMediaRoutes(fastify: FastifyInstance) {
 
       try {
         const embedding = await generateMediaEmbedding(q);
-        const records = await searchUserMediaSemantically(
+        const records = await searchUserMediaHybrid(
           request.userId,
+          q,
           embedding,
         );
 
         return reply.send(records);
       } catch (error) {
-        throw internalServerError("Semantic search failed", { cause: error });
+        throw internalServerError("Library search failed", { cause: error });
       }
     },
   );

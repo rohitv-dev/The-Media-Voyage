@@ -129,7 +129,7 @@ describe("CommandPalette", () => {
     expect(input).toHaveProperty("value", "");
   });
 
-  it("opens semantic search from the actions group", () => {
+  it("opens described library search from the actions group", () => {
     const onClose = vi.fn();
     const onOpenSemanticSearch = vi.fn();
     renderPalette({ onClose, onOpenSemanticSearch });
@@ -137,8 +137,10 @@ describe("CommandPalette", () => {
       name: "Search actions or pages",
     });
 
-    fireEvent.change(input, { target: { value: "semantic" } });
-    fireEvent.click(screen.getByRole("option", { name: /Semantic search/ }));
+    fireEvent.change(input, { target: { value: "describe" } });
+    fireEvent.click(
+      screen.getByRole("option", { name: /Describe what you want/ }),
+    );
 
     expect(onClose).toHaveBeenCalledOnce();
     expect(onOpenSemanticSearch).toHaveBeenCalledOnce();

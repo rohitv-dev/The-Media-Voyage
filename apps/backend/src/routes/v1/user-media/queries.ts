@@ -33,6 +33,7 @@ import {
   isNull,
   lte,
   notInArray,
+  or,
   sql,
   type SQL,
 } from "drizzle-orm";
@@ -210,15 +211,53 @@ export function searchUserMedia(userId: string, search: string) {
     .limit(20);
 }
 
-export function searchUserMediaSemantically(
+const HYBRID_SEARCH_CANDIDATE_LIMIT = 50;
+const HYBRID_SEARCH_RESULT_LIMIT = 20;
+const HYBRID_SEARCH_RRF_K = 60;
+const MINIMUM_SEMANTIC_SIMILARITY = 0.35;
+
+export function searchUserMediaHybrid(
   userId: string,
+  query: string,
   embedding: number[],
 ) {
-  const similarity = sql<number>`1 - (${cosineDistance(media.embedding, embedding)})`;
-  const minimumSimilarity = 0.35;
+  const lexicalQuery = sql`websearch_to_tsquery('simple'::regconfig, ${query})`;
+  const lexicalRelevance = sql<number>`ts_rank_cd(
+    ${media.searchVector},
+    ${lexicalQuery},
+    32
+  )`;
+  const semanticSimilarity = sql<number>`1 - (${cosineDistance(
+    media.embedding,
+    embedding,
+  )})`;
 
-  return db
-    .select(userMediaSummarySelect)
+  const lexicalMatches = db
+    .select({
+      userMediaId: userMedia.id,
+      lexicalRank: sql<number>`row_number() over (
+        order by ${lexicalRelevance} desc, ${media.title} asc, ${userMedia.id} asc
+      )`.as("lexical_rank"),
+    })
+    .from(userMedia)
+    .innerJoin(media, eq(userMedia.mediaId, media.id))
+    .where(
+      and(
+        activeUserMediaCondition(userId),
+        sql`${media.searchVector} @@ ${lexicalQuery}`,
+      ),
+    )
+    .orderBy(desc(lexicalRelevance), asc(media.title), asc(userMedia.id))
+    .limit(HYBRID_SEARCH_CANDIDATE_LIMIT)
+    .as("lexical_matches");
+
+  const semanticMatches = db
+    .select({
+      userMediaId: userMedia.id,
+      semanticRank: sql<number>`row_number() over (
+        order by ${semanticSimilarity} desc, ${media.title} asc, ${userMedia.id} asc
+      )`.as("semantic_rank"),
+    })
     .from(userMedia)
     .innerJoin(media, eq(userMedia.mediaId, media.id))
     .where(
@@ -226,11 +265,41 @@ export function searchUserMediaSemantically(
         activeUserMediaCondition(userId),
         isNotNull(media.embedding),
         eq(media.embeddingModel, EMBEDDING_MODEL),
-        gt(similarity, minimumSimilarity),
+        gt(semanticSimilarity, MINIMUM_SEMANTIC_SIMILARITY),
       ),
     )
-    .orderBy(desc(similarity), asc(media.title), asc(userMedia.id))
-    .limit(20);
+    .orderBy(desc(semanticSimilarity), asc(media.title), asc(userMedia.id))
+    .limit(HYBRID_SEARCH_CANDIDATE_LIMIT)
+    .as("semantic_matches");
+
+  const fusedScore = sql<number>`
+    coalesce(
+      1.0 / (${HYBRID_SEARCH_RRF_K} + ${lexicalMatches.lexicalRank}),
+      0
+    ) +
+    coalesce(
+      1.0 / (${HYBRID_SEARCH_RRF_K} + ${semanticMatches.semanticRank}),
+      0
+    )
+  `;
+
+  return db
+    .select(userMediaSummarySelect)
+    .from(userMedia)
+    .innerJoin(media, eq(userMedia.mediaId, media.id))
+    .leftJoin(lexicalMatches, eq(lexicalMatches.userMediaId, userMedia.id))
+    .leftJoin(semanticMatches, eq(semanticMatches.userMediaId, userMedia.id))
+    .where(
+      and(
+        activeUserMediaCondition(userId),
+        or(
+          isNotNull(lexicalMatches.userMediaId),
+          isNotNull(semanticMatches.userMediaId),
+        ),
+      ),
+    )
+    .orderBy(desc(fusedScore), asc(media.title), asc(userMedia.id))
+    .limit(HYBRID_SEARCH_RESULT_LIMIT);
 }
 
 function getUserMediaFilterConditions(

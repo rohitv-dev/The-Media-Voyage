@@ -14,8 +14,13 @@ import {
   real,
   check,
   vector,
+  customType,
 } from "drizzle-orm/pg-core";
 import { EMBEDDING_DIMENSIONS } from "../embedding";
+
+const tsvector = customType<{ data: string; notNull: true }>({
+  dataType: () => "tsvector",
+});
 
 type MovieOrShowMetadata = {
   genre?: string[];
@@ -116,6 +121,33 @@ export const media = pgTable(
     externalId: text("external_id"),
 
     metadata: jsonb("metadata").$type<CatalogMetadata>().default({}).notNull(),
+    searchVector: tsvector("search_vector").generatedAlwaysAs(sql`
+      setweight(
+        to_tsvector('simple'::regconfig, coalesce("title", '')),
+        'A'
+      ) ||
+      setweight(
+        to_tsvector(
+          'simple'::regconfig,
+          coalesce("metadata"->>'genre', '') ||
+          ' ' ||
+          coalesce("metadata"->>'keywords', '') ||
+          ' ' ||
+          coalesce("metadata"->>'themes', '') ||
+          ' ' ||
+          coalesce("metadata"->>'gameModes', '') ||
+          ' ' ||
+          coalesce("metadata"->>'playerPerspectives', '') ||
+          ' ' ||
+          coalesce("metadata"->>'subjects', '')
+        ),
+        'B'
+      ) ||
+      setweight(
+        to_tsvector('simple'::regconfig, coalesce("description", '')),
+        'C'
+      )
+    `),
     embedding: vector("embedding", { dimensions: EMBEDDING_DIMENSIONS }),
     embeddingModel: text("embedding_model"),
     embeddingUpdatedAt: timestamp("embedding_updated_at"),
@@ -131,6 +163,7 @@ export const media = pgTable(
       table.source,
       table.externalId,
     ),
+    index("media_search_vector_idx").using("gin", table.searchVector),
     check(
       "media_image_focus_x_range",
       sql`${table.imageFocusX} is null or (${table.imageFocusX} >= 0 and ${table.imageFocusX} <= 1)`,

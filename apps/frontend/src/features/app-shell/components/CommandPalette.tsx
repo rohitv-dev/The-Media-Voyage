@@ -42,8 +42,8 @@ const actionItems = [
     keywords: ["new", "create", "movie", "show", "game", "book"],
   },
   {
-    label: "Semantic search",
-    description: "Explore your library by meaning",
+    label: "Describe what you want",
+    description: "Search your library by title, metadata, and meaning",
     icon: IconSparkles,
     path: "semantic-search",
     keywords: ["explore", "vague", "meaning", "library"],

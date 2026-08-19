@@ -180,7 +180,7 @@ function RouteComponent() {
       showErrorNotification({
         message: getApiErrorMessage(
           isSemanticError ? semanticError : error,
-          isSemanticError ? "Explore search failed" : "Failed to load data",
+          isSemanticError ? "Library search failed" : "Failed to load data",
         ),
         title: "Please try again later",
       });
@@ -361,7 +361,7 @@ function RouteComponent() {
                 onClick={() => setSemanticOpen(true)}
                 w={{ base: "100%", sm: "auto" }}
               >
-                Semantic search
+                Describe what you want
               </Button>
             </Box>
             <Box
@@ -428,7 +428,7 @@ function RouteComponent() {
                 icon={<IconMovie size={36} />}
                 title={
                   isExploring
-                    ? "No semantic matches found"
+                    ? "No matches found"
                     : hasAppliedFilters
                       ? "No media match these filters"
                       : "Your library is empty"
@@ -460,7 +460,7 @@ function RouteComponent() {
                   }
                 >
                   {isExploring
-                    ? "Clear explore search"
+                    ? "Clear search"
                     : hasAppliedFilters
                       ? "Clear filters"
                       : "Add media"}
@@ -538,7 +538,7 @@ function RouteComponent() {
               disabled={isExploring}
               aria-label={
                 isExploring
-                  ? "Library filters are paused during semantic search"
+                  ? "Library filters are paused during this search"
                   : undefined
               }
               style={{
@@ -568,7 +568,7 @@ function RouteComponent() {
           disabled={isExploring}
           aria-label={
             isExploring
-              ? "Library filters are paused during semantic search"
+              ? "Library filters are paused during this search"
               : undefined
           }
           style={{

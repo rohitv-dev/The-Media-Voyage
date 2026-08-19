@@ -84,7 +84,7 @@ export function SemanticSearchPanel({
             size="sm"
             variant="subtle"
             color="gray"
-            aria-label="Close semantic search"
+            aria-label="Close library search"
             onClick={clearSearch}
           >
             <IconX size={16} />
@@ -100,7 +100,7 @@ export function SemanticSearchPanel({
         <Group justify="space-between" align="center" gap="xs" mt={4}>
           <Group gap={4} wrap="nowrap" style={{ minWidth: 0 }}>
             <Text size="xs" c="dimmed" style={{ flexShrink: 0 }}>
-              Semantic results for:
+              Matches for:
             </Text>
             <Text size="sm" fw={600} truncate>
               &quot;{query}&quot;
