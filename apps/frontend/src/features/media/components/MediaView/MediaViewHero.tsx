@@ -10,6 +10,7 @@ import {
   Image,
   Loader,
   Menu,
+  Modal,
   Progress,
   Stack,
   Text,
@@ -133,6 +134,7 @@ export function MediaViewHero({
 }: MediaViewHeroProps) {
   const navigate = useNavigate();
   const [coverEditorOpen, setCoverEditorOpen] = useState(false);
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [coverArtSize] = useCoverArtSizePreference();
   const reducedMotion = useAppReducedMotion();
   const tagColorMap = useTagColorMap();
@@ -144,6 +146,22 @@ export function MediaViewHero({
     (!readOnly && Boolean(onCopyPublicLink)) ||
     (!readOnly && Boolean(onQuickAction));
   const activeVisibility = data.visibility ?? "private";
+  const coverImage = (
+    <Image
+      src={data.imageUrl}
+      alt={data.title}
+      radius="sm"
+      fit="cover"
+      fallbackSrc="https://placehold.co/336x504?text=No+Image"
+      style={{
+        width: "100%",
+        aspectRatio: "2 / 3",
+        objectPosition: getImageObjectPosition("full", data),
+        boxShadow:
+          "light-dark(0 14px 26px rgba(31, 41, 55, 0.16), 0 18px 34px rgba(0, 0, 0, 0.42))",
+      }}
+    />
+  );
 
   return (
     <>
@@ -178,20 +196,23 @@ export function MediaViewHero({
             pos="relative"
           >
             <Grid.Col span={{ base: 4, xs: 3, sm: 3 }}>
-              <Image
-                src={data.imageUrl}
-                alt={data.title}
-                radius="sm"
-                fit="cover"
-                fallbackSrc="https://placehold.co/336x504?text=No+Image"
-                style={{
-                  width: "100%",
-                  aspectRatio: "2 / 3",
-                  objectPosition: getImageObjectPosition("full", data),
-                  boxShadow:
-                    "light-dark(0 14px 26px rgba(31, 41, 55, 0.16), 0 18px 34px rgba(0, 0, 0, 0.42))",
-                }}
-              />
+              {data.imageUrl ? (
+                <UnstyledButton
+                  type="button"
+                  aria-label={`Enlarge ${data.title} image`}
+                  onClick={() => setImageViewerOpen(true)}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    cursor: "zoom-in",
+                    lineHeight: 0,
+                  }}
+                >
+                  {coverImage}
+                </UnstyledButton>
+              ) : (
+                coverImage
+              )}
             </Grid.Col>
 
             <Grid.Col span={{ base: 8, xs: 9, sm: 9 }}>
@@ -419,6 +440,37 @@ export function MediaViewHero({
           </Grid>
         </Card>
       </motion.div>
+
+      {data.imageUrl && (
+        <Modal
+          opened={imageViewerOpen}
+          onClose={() => setImageViewerOpen(false)}
+          centered
+          size="auto"
+          withCloseButton={false}
+          padding={0}
+          styles={{
+            content: {
+              background: "transparent",
+              boxShadow: "none",
+            },
+            body: { padding: 0 },
+          }}
+        >
+          <Image
+            src={data.imageUrl}
+            alt={data.title}
+            fit="contain"
+            style={{
+              display: "block",
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+              width: "auto",
+              height: "auto",
+            }}
+          />
+        </Modal>
+      )}
 
       {!readOnly && data.imageUrl && (
         <MediaCoverArtFocusModal

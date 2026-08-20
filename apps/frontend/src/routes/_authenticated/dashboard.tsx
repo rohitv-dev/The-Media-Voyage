@@ -125,6 +125,7 @@ function RouteComponent() {
               <DashboardTrending
                 movies={trendingData.movies}
                 shows={trendingData.shows}
+                reduceMotion={reduceMotion}
                 onAdd={(recommendationSelection) =>
                   navigate({
                     to: "/media/add",

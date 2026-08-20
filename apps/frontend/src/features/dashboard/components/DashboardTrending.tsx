@@ -16,7 +16,9 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import { AnimatePresence, motion } from "motion/react";
 import { IconPhotoOff, IconPlus } from "@tabler/icons-react";
+import { gridItemMotionProps } from "#/theme/motion";
 
 function TrendingCard({
   item,
@@ -115,23 +117,28 @@ function TrendingCard({
 function TrendingSection({
   title,
   items,
+  reduceMotion,
   onAdd,
 }: {
   title: string;
   items: TmdbTrendingItem[];
+  reduceMotion: boolean;
   onAdd: (media: SourceMediaRecord) => void;
 }) {
   return (
     <Stack gap="sm">
       <Title order={4}>{title}</Title>
       <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }} spacing="sm">
-        {items.map((item) => (
-          <TrendingCard
-            key={`${item.media.source}:${item.media.externalId}`}
-            item={item}
-            onAdd={onAdd}
-          />
-        ))}
+        <AnimatePresence mode="popLayout">
+          {items.map((item) => (
+            <motion.div
+              key={`${item.media.source}:${item.media.externalId}`}
+              {...gridItemMotionProps(reduceMotion)}
+            >
+              <TrendingCard item={item} onAdd={onAdd} />
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </SimpleGrid>
     </Stack>
   );
@@ -140,17 +147,29 @@ function TrendingSection({
 export function DashboardTrending({
   movies,
   shows,
+  reduceMotion,
   onAdd,
 }: {
   movies: TmdbTrendingItem[];
   shows: TmdbTrendingItem[];
+  reduceMotion: boolean;
   onAdd: (media: SourceMediaRecord) => void;
 }) {
   return (
     <Stack gap="md">
       <Title order={3}>Trending this week</Title>
-      <TrendingSection title="Movies" items={movies} onAdd={onAdd} />
-      <TrendingSection title="Shows" items={shows} onAdd={onAdd} />
+      <TrendingSection
+        title="Movies"
+        items={movies}
+        reduceMotion={reduceMotion}
+        onAdd={onAdd}
+      />
+      <TrendingSection
+        title="Shows"
+        items={shows}
+        reduceMotion={reduceMotion}
+        onAdd={onAdd}
+      />
     </Stack>
   );
 }
