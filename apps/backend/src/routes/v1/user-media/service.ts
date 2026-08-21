@@ -526,10 +526,7 @@ export async function updateUserMediaQuickActions(
       ...quickAction,
     };
 
-    if (
-      quickAction.progress !== undefined ||
-      (statusChanged && isActiveTrackingStatus(quickAction.status))
-    ) {
+    if (statusChanged && isActiveTrackingStatus(quickAction.status)) {
       updates.lastProgressUpdate = now;
     }
 

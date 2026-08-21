@@ -9,6 +9,7 @@ import {
   hybridSearchQuerySchema,
   userMediaFormSchema,
   userMediaPatchSchema,
+  userMediaQuickActionSchema,
   userMediaQuerySchema,
   seasonProgressEntrySchema,
 } from "@media-voyage/shared/api";
@@ -65,6 +66,12 @@ describe("user-media request schemas", () => {
     expect(userMediaPatchSchema.parse({ progress: 42 })).toEqual({
       progress: 42,
     });
+  });
+
+  it("does not accept progress as a quick action", () => {
+    expect(userMediaQuickActionSchema.safeParse({ progress: 42 }).success).toBe(
+      false,
+    );
   });
 
   it("accepts Playing as a top-level status but not as a season status", () => {

@@ -118,30 +118,6 @@ export function MediaCardQuickActions({
           </Menu.Sub.Dropdown>
         </Menu.Sub>
 
-        <Menu.Sub>
-          <Menu.Sub.Target>
-            <Menu.Sub.Item disabled={isPending}>
-              Progress · {media.progress}%
-            </Menu.Sub.Item>
-          </Menu.Sub.Target>
-          <Menu.Sub.Dropdown>
-            {[0, 25, 50, 75, 100].map((progress) => (
-              <Menu.Item
-                key={progress}
-                rightSection={
-                  media.progress === progress ? (
-                    <IconCheck size={15} />
-                  ) : undefined
-                }
-                onClick={() => onAction({ progress })}
-                disabled={isPending}
-              >
-                Set to {progress}%
-              </Menu.Item>
-            ))}
-          </Menu.Sub.Dropdown>
-        </Menu.Sub>
-
         {onEdit && (
           <Menu.Item
             leftSection={<IconPencil size={16} />}

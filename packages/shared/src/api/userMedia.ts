@@ -58,7 +58,6 @@ export const userMediaQuickActionSchema = z
   .object({
     favorite: z.boolean().optional(),
     status: userMediaSelectSchema.shape.status.optional(),
-    progress: z.number().int().min(0).max(100).optional(),
     visibility: z.enum(visibilityEnum.enumValues).optional(),
   })
   .refine((data) => Object.values(data).some((value) => value !== undefined), {
