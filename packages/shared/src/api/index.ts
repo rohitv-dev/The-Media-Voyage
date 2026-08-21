@@ -6,5 +6,6 @@ export * from "./tags";
 export * from "./sources";
 export * from "./friends";
 export * from "./notifications";
+export * from "./activity";
 export * from "./recommendations";
 export * from "./public";

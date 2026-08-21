@@ -32,6 +32,7 @@ export function useDeleteMedia() {
         queryClient.invalidateQueries({
           queryKey: queryKeys.collection.itemsDetailedAll,
         }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.activity.all }),
       ]),
     onError: (error) =>
       showErrorNotification({

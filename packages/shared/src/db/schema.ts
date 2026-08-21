@@ -94,6 +94,13 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "friend_recommendation_response",
 ]);
 
+export const activityActionEnum = pgEnum("activity_action", [
+  "media_added",
+  "media_updated",
+  "media_trashed",
+  "media_restored",
+]);
+
 export const recommendationStatusEnum = pgEnum("recommendation_status", [
   "pending",
   "resolved",
@@ -375,6 +382,28 @@ export const mediaCollectionItems = pgTable(
       table.collectionId,
       table.position,
     ),
+  ],
+);
+
+export const activityEvents = pgTable(
+  "activity_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .references(() => user.id, { onDelete: "cascade" })
+      .notNull(),
+    type: activityActionEnum("type").notNull(),
+    userMediaId: uuid("user_media_id").references(() => userMedia.id, {
+      onDelete: "cascade",
+    }),
+    details: jsonb("details")
+      .$type<Record<string, unknown>>()
+      .default({})
+      .notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("activity_events_user_created_idx").on(table.userId, table.createdAt),
   ],
 );
 
@@ -703,6 +732,7 @@ export const userMediaRelations = relations(userMedia, ({ one, many }) => ({
   reactions: many(userMediaReactions),
   comments: many(userMediaComments),
   notifications: many(notifications),
+  activityEvents: many(activityEvents),
 }));
 
 export const sourcesRelations = relations(sources, ({ one, many }) => ({
@@ -766,6 +796,17 @@ export const mediaCollectionItemsRelations = relations(
     }),
   }),
 );
+
+export const activityEventsRelations = relations(activityEvents, ({ one }) => ({
+  user: one(user, {
+    fields: [activityEvents.userId],
+    references: [user.id],
+  }),
+  userMedia: one(userMedia, {
+    fields: [activityEvents.userMediaId],
+    references: [userMedia.id],
+  }),
+}));
 
 // Better Auth Generated Tables
 
@@ -869,6 +910,7 @@ export const userRelations = relations(user, ({ many }) => ({
     relationName: "recommendationRecipient",
   }),
   dismissedSystemRecommendations: many(dismissedSystemRecommendations),
+  activityEvents: many(activityEvents),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({

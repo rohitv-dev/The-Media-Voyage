@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { media, userMedia, userMediaStatusHistory } from "@media-voyage/shared";
+import {
+  activityEvents,
+  media,
+  userMedia,
+  userMediaStatusHistory,
+} from "@media-voyage/shared";
 import { userMediaFormSchema } from "@media-voyage/shared/api";
 
 const { ensureProviderCatalogMediaMock, transactionMock } = vi.hoisted(() => ({
@@ -66,6 +71,7 @@ function createTransaction() {
     { id: ENTRY_ID, status: "planned", progress: 0 },
   ]);
   const historyInsert = { values: vi.fn().mockResolvedValue([]) };
+  const activityInsert = { values: vi.fn().mockResolvedValue([]) };
   const selectResults = [[], [{ id: ENTRY_ID, mediaId: CANONICAL_ID }]];
   const tx = {
     select: vi.fn(() => createSelectBuilder(selectResults.shift() ?? [])),
@@ -73,6 +79,7 @@ function createTransaction() {
       if (table === media) return canonicalInsert;
       if (table === userMedia) return entryInsert;
       if (table === userMediaStatusHistory) return historyInsert;
+      if (table === activityEvents) return activityInsert;
       throw new Error("Unexpected insert target");
     }),
   };

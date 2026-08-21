@@ -78,6 +78,7 @@ export function MediaPickerModal({
       void queryClient.invalidateQueries({
         queryKey: queryKeys.dashboardStats,
       });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.activity.all });
       showSuccessNotification({
         title: "Journey started",
         message: `${record.title} is now in progress.`,

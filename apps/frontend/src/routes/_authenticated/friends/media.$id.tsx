@@ -55,6 +55,7 @@ function RouteComponent() {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.userMedia.all,
       });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.activity.all });
       navigate({ to: "/media/update/$id", params: { id: record.id } });
     },
     onError: (error: Error) => {

@@ -1,4 +1,4 @@
-import { mediaRecommendations, userMedia } from "@media-voyage/shared";
+import { media, mediaRecommendations, userMedia } from "@media-voyage/shared";
 import type {
   CreateFriendRecommendationInput,
   CreateRecommendationResponse,
@@ -11,6 +11,7 @@ import { badRequest, conflict, notFound } from "@/errors";
 import { ensurePlannedUserMediaForMedia } from "../user-media/service";
 import type { DbTransaction } from "../user-media/service";
 import { createNotification } from "../notifications/service";
+import { recordActivity } from "../activity/service";
 import { areFriends } from "../friends/queries";
 import { findFriendRecommendationSource } from "./queries";
 
@@ -134,6 +135,24 @@ export async function resolveRecommendation(
       );
       recipientUserMediaId = ensured.id;
       recipientUserMediaCreated = ensured.created;
+
+      if (ensured.created) {
+        const [mediaRecord] = await tx
+          .select({ title: media.title })
+          .from(media)
+          .where(eq(media.id, existing.mediaId))
+          .limit(1);
+
+        await recordActivity(tx, {
+          userId: recipientId,
+          type: "media_added",
+          userMediaId: ensured.id,
+          details: {
+            mediaTitle: mediaRecord?.title ?? "Media",
+            source: "recommendation",
+          },
+        });
+      }
     }
 
     const now = new Date();

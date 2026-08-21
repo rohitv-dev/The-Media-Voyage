@@ -18,13 +18,33 @@ import { and, eq, inArray } from "drizzle-orm";
 import { badRequest, conflict } from "@/errors";
 import { ensureProviderCatalogMedia } from "@/services/providerCatalog";
 import {
+  getActivityChanges,
+  pickInitialActivityValues,
+} from "../activity/details";
+import { recordActivity } from "../activity/service";
+import {
   ownedDeletedUserMediaCondition,
   ownedUserMediaCondition,
 } from "./queries";
-import { userMediaDetailedSelect, userMediaSourceName } from "./selects";
+import { userMediaDetailedSelect } from "./selects";
 import { db } from "@/db/db";
 
 export type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+const MEDIA_ACTIVITY_FIELDS = [
+  "status",
+  "rating",
+  "review",
+  "notes",
+  "progress",
+  "favorite",
+  "timeSpent",
+  "pagesRead",
+  "source",
+  "tags",
+  "visibility",
+  "seasonsProgress",
+] as const;
 
 function assertPlayingStatusAllowed(
   type: MediaType | undefined,
@@ -354,6 +374,31 @@ export async function createUserMedia(
       .where(eq(userMedia.id, createdUserMedia.id))
       .limit(1);
 
+    if (!record) throw new Error("Created media entry could not be loaded");
+
+    await recordActivity(tx, {
+      userId,
+      type: "media_added",
+      userMediaId: record.id,
+      details: {
+        mediaTitle: record.title,
+        initialValues: pickInitialActivityValues({
+          status: record.status,
+          rating: record.rating,
+          review: record.review,
+          notes: record.notes,
+          progress: record.progress,
+          favorite: record.favorite,
+          timeSpent: record.timeSpent,
+          pagesRead: record.pagesRead,
+          source: record.source,
+          tags: record.tags,
+          visibility: record.visibility,
+          seasonsProgress: record.seasonsProgress,
+        }),
+      },
+    });
+
     return record;
   });
 }
@@ -367,13 +412,7 @@ export async function updateUserMedia(
 
   return db.transaction(async (tx) => {
     const [existing] = await tx
-      .select({
-        progress: userMedia.progress,
-        status: userMedia.status,
-        type: media.type,
-        startedAt: userMedia.startedAt,
-        lastProgressUpdate: userMedia.lastProgressUpdate,
-      })
+      .select(userMediaDetailedSelect)
       .from(userMedia)
       .innerJoin(media, eq(userMedia.mediaId, media.id))
       .where(ownedUserMediaCondition(userId, id))
@@ -439,7 +478,24 @@ export async function updateUserMedia(
       .where(ownedUserMediaCondition(userId, updated.id))
       .limit(1);
 
-    return record ?? null;
+    if (!record) return null;
+
+    const changes = getActivityChanges(
+      { ...existing },
+      { ...record },
+      MEDIA_ACTIVITY_FIELDS,
+    );
+
+    if (Object.keys(changes).length) {
+      await recordActivity(tx, {
+        userId,
+        type: "media_updated",
+        userMediaId: record.id,
+        details: { mediaTitle: record.title, changes },
+      });
+    }
+
+    return record;
   });
 }
 
@@ -450,12 +506,7 @@ export async function updateUserMediaQuickActions(
 ) {
   return db.transaction(async (tx) => {
     const [existing] = await tx
-      .select({
-        status: userMedia.status,
-        progress: userMedia.progress,
-        type: media.type,
-        startedAt: userMedia.startedAt,
-      })
+      .select(userMediaDetailedSelect)
       .from(userMedia)
       .innerJoin(media, eq(userMedia.mediaId, media.id))
       .where(ownedUserMediaCondition(userId, id))
@@ -508,13 +559,6 @@ export async function updateUserMediaQuickActions(
         id: userMedia.id,
         status: userMedia.status,
         progress: userMedia.progress,
-        rating: userMedia.rating,
-        favorite: userMedia.favorite,
-        visibility: userMedia.visibility,
-        source: userMediaSourceName,
-        lastProgressUpdate: userMedia.lastProgressUpdate,
-        createdAt: userMedia.createdAt,
-        updatedAt: userMedia.updatedAt,
       });
 
     if (!updated) return null;
@@ -530,14 +574,44 @@ export async function updateUserMediaQuickActions(
       });
     }
 
-    const [catalogRecord] = await tx
-      .select({ title: media.title, type: media.type })
+    const [record] = await tx
+      .select(userMediaDetailedSelect)
       .from(userMedia)
       .innerJoin(media, eq(userMedia.mediaId, media.id))
       .where(ownedUserMediaCondition(userId, id))
       .limit(1);
 
-    return { ...updated, ...catalogRecord };
+    if (!record) return null;
+
+    const changes = getActivityChanges(
+      { ...existing },
+      { ...record },
+      MEDIA_ACTIVITY_FIELDS,
+    );
+
+    if (Object.keys(changes).length) {
+      await recordActivity(tx, {
+        userId,
+        type: "media_updated",
+        userMediaId: record.id,
+        details: { mediaTitle: record.title, changes },
+      });
+    }
+
+    return {
+      id: record.id,
+      status: record.status,
+      progress: record.progress,
+      rating: record.rating,
+      favorite: record.favorite,
+      visibility: record.visibility,
+      source: record.source,
+      lastProgressUpdate: record.lastProgressUpdate,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+      title: record.title,
+      type: record.type,
+    };
   });
 }
 
@@ -577,24 +651,65 @@ export async function updateUserMediaImageFocus(
 }
 
 export async function deleteUserMedia(userId: string, id: string) {
-  const now = new Date();
-  const [deleted] = await db
-    .update(userMedia)
-    .set({ deletedAt: now })
-    .where(ownedUserMediaCondition(userId, id))
-    .returning({ id: userMedia.id });
+  return db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({ id: userMedia.id, title: media.title })
+      .from(userMedia)
+      .innerJoin(media, eq(userMedia.mediaId, media.id))
+      .where(ownedUserMediaCondition(userId, id))
+      .for("update")
+      .limit(1);
 
-  return deleted ?? null;
+    if (!existing) return null;
+
+    const [deleted] = await tx
+      .update(userMedia)
+      .set({ deletedAt: new Date() })
+      .where(ownedUserMediaCondition(userId, id))
+      .returning({ id: userMedia.id });
+
+    if (!deleted) return null;
+
+    await recordActivity(tx, {
+      userId,
+      type: "media_trashed",
+      userMediaId: deleted.id,
+      details: { mediaTitle: existing.title },
+    });
+
+    return deleted;
+  });
 }
 
 export async function restoreUserMedia(userId: string, id: string) {
-  const [restored] = await db
-    .update(userMedia)
-    .set({ deletedAt: null })
-    .where(ownedDeletedUserMediaCondition(userId, id))
-    .returning({ id: userMedia.id });
+  return db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({ id: userMedia.id, title: media.title })
+      .from(userMedia)
+      .innerJoin(media, eq(userMedia.mediaId, media.id))
+      .where(ownedDeletedUserMediaCondition(userId, id))
+      .for("update")
+      .limit(1);
 
-  return restored ?? null;
+    if (!existing) return null;
+
+    const [restored] = await tx
+      .update(userMedia)
+      .set({ deletedAt: null })
+      .where(ownedDeletedUserMediaCondition(userId, id))
+      .returning({ id: userMedia.id });
+
+    if (!restored) return null;
+
+    await recordActivity(tx, {
+      userId,
+      type: "media_restored",
+      userMediaId: restored.id,
+      details: { mediaTitle: existing.title },
+    });
+
+    return restored;
+  });
 }
 
 export async function permanentlyDeleteUserMedia(userId: string, id: string) {

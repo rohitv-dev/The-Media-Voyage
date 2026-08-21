@@ -61,6 +61,11 @@ export const queryKeys = {
     list: (page: number, limit: number) =>
       ["notifications", { page, limit }] as const,
   },
+  activity: {
+    all: ["activity"] as const,
+    list: (page: number, limit: number) =>
+      ["activity", { page, limit }] as const,
+  },
   recommendations: {
     all: ["recommendations"] as const,
     preview: ["recommendations", "system-preview"] as const,

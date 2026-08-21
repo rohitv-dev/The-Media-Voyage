@@ -50,6 +50,7 @@ function ContextModal({
     onSuccess: async (result, input) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.activity.all }),
         queryClient.invalidateQueries({
           queryKey: queryKeys.notifications.all,
         }),

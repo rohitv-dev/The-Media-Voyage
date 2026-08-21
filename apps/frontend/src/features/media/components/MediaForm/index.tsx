@@ -599,6 +599,7 @@ export function MediaForm(props: MediaFormProps) {
         }),
         queryClient.invalidateQueries({ queryKey: queryKeys.tags.all }),
         queryClient.invalidateQueries({ queryKey: queryKeys.sources.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.activity.all }),
         ...(!isAddMode
           ? [queryClient.invalidateQueries(userMediaDetailedOptions(data.id))]
           : []),

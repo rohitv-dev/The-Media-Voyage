@@ -3,6 +3,7 @@ import {
   IconBooks,
   IconCalendar,
   IconDeviceTv,
+  IconHistory,
   IconSettings,
   IconSparkles,
   IconTags,
@@ -40,6 +41,13 @@ export const appNavigationItems = [
     icon: IconCalendar,
     path: "/calendar",
     keywords: ["history", "completed", "started"],
+  },
+  {
+    label: "Personal Activity",
+    description: "See your meaningful library changes",
+    icon: IconHistory,
+    path: "/activity",
+    keywords: ["history", "timeline", "changes"],
   },
   {
     label: "Collections",

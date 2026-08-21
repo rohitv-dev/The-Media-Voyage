@@ -37,6 +37,7 @@ export function useMediaCardActions(media: Pick<MediaRecord, "id" | "title">) {
       Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all }),
         queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.activity.all }),
       ]),
   });
 

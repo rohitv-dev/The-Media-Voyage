@@ -63,6 +63,10 @@ fastify.register(import("./routes/v1/notifications/routes"), {
   prefix: "/api/v1/notifications",
 });
 
+fastify.register(import("./routes/v1/activity/routes"), {
+  prefix: "/api/v1/activity",
+});
+
 fastify.register(import("./routes/v1/recommendations/routes"), {
   prefix: "/api/v1/recommendations",
 });
