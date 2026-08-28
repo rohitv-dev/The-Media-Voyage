@@ -21,18 +21,18 @@ import {
 
 const fetchMock = vi.fn();
 
+beforeEach(() => {
+  getAccessTokenMock.mockReset();
+  getAccessTokenMock.mockResolvedValue("access-token");
+  fetchMock.mockReset();
+  vi.stubGlobal("fetch", fetchMock);
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 describe("searchGames", () => {
-  beforeEach(() => {
-    getAccessTokenMock.mockReset();
-    getAccessTokenMock.mockResolvedValue("access-token");
-    fetchMock.mockReset();
-    vi.stubGlobal("fetch", fetchMock);
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("falls back to a case-insensitive title match when search returns nothing", async () => {
     fetchMock
       .mockResolvedValueOnce(new Response("[]", { status: 200 }))
@@ -70,17 +70,6 @@ describe("searchGames", () => {
 });
 
 describe("getGameRecommendations", () => {
-  beforeEach(() => {
-    getAccessTokenMock.mockReset();
-    getAccessTokenMock.mockResolvedValue("access-token");
-    fetchMock.mockReset();
-    vi.stubGlobal("fetch", fetchMock);
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("fetches and normalizes the seed's similar games", async () => {
     fetchMock.mockResolvedValue(
       new Response(
@@ -158,17 +147,6 @@ describe("getGameRecommendations", () => {
 });
 
 describe("getGameDetails", () => {
-  beforeEach(() => {
-    getAccessTokenMock.mockReset();
-    getAccessTokenMock.mockResolvedValue("access-token");
-    fetchMock.mockReset();
-    vi.stubGlobal("fetch", fetchMock);
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("maps semantic game metadata and normalizes its terms", async () => {
     fetchMock.mockResolvedValue(
       new Response(

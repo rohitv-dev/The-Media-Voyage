@@ -1,20 +1,3 @@
-/**
- * Tests for the friends access rules.
- *
- * Vitest picks up any `*.test.ts` file. Run them with `pnpm test` from
- * apps/backend, or `pnpm test:watch` to re-run on save.
- *
- * The vocabulary:
- *   describe(...)  groups related tests, purely for readable output
- *   it(...)        one test — the name should read as a sentence
- *   expect(x).toBe(y)     strict equality (===), good for booleans/strings
- *   expect(x).toEqual(y)  deep equality, for comparing objects/arrays
- *
- * Nothing here touches Postgres. That's the point of keeping these rules in
- * policy.ts as pure functions: the tests construct plain objects and assert on
- * the answer, so they run in milliseconds and can cover cases that would be
- * fiddly to set up as real database rows.
- */
 import { describe, expect, it } from "vitest";
 import {
   canView,
@@ -30,97 +13,51 @@ const FRIEND = "user-friend";
 const STRANGER = "user-stranger";
 
 describe("canView", () => {
-  it("lets the owner see their own entry regardless of visibility", () => {
-    // Private is the interesting case: everyone else is denied below.
-    expect(
-      canView(OWNER, { ownerId: OWNER, visibility: "private" }, false),
-    ).toBe(true);
-  });
+  const cases: Array<{
+    viewer: string;
+    visibility: "private" | "friends" | "public";
+    isFriend: boolean;
+    expected: boolean;
+  }> = [
+    { viewer: OWNER, visibility: "private", isFriend: false, expected: true },
+    { viewer: OWNER, visibility: "friends", isFriend: false, expected: true },
+    { viewer: OWNER, visibility: "public", isFriend: false, expected: true },
+    {
+      viewer: FRIEND,
+      visibility: "private",
+      isFriend: true,
+      expected: false,
+    },
+    { viewer: FRIEND, visibility: "friends", isFriend: true, expected: true },
+    { viewer: FRIEND, visibility: "public", isFriend: true, expected: true },
+    {
+      viewer: STRANGER,
+      visibility: "private",
+      isFriend: false,
+      expected: false,
+    },
+    {
+      viewer: STRANGER,
+      visibility: "friends",
+      isFriend: false,
+      expected: false,
+    },
+    {
+      viewer: STRANGER,
+      visibility: "public",
+      isFriend: false,
+      expected: true,
+    },
+  ];
 
-  it("denies a stranger a private entry", () => {
-    expect(
-      canView(STRANGER, { ownerId: OWNER, visibility: "private" }, false),
-    ).toBe(false);
-  });
-
-  it("lets anyone see a public entry, friend or not", () => {
-    const entry = { ownerId: OWNER, visibility: "public" as const };
-
-    expect(canView(FRIEND, entry, true)).toBe(true);
-    expect(canView(STRANGER, entry, false)).toBe(true);
-  });
-
-  it("lets a friend see a friends-visible entry", () => {
-    expect(
-      canView(FRIEND, { ownerId: OWNER, visibility: "friends" }, true),
-    ).toBe(true);
-  });
-
-  it("denies a non-friend a friends-visible entry", () => {
-    expect(
-      canView(STRANGER, { ownerId: OWNER, visibility: "friends" }, false),
-    ).toBe(false);
-  });
-
-  it("denies a friend a private entry", () => {
-    // Being friends is not blanket access — the entry must be shared too.
-    expect(
-      canView(FRIEND, { ownerId: OWNER, visibility: "private" }, true),
-    ).toBe(false);
-  });
-
-  /**
-   * The same expectations as above, written as a table. When a rule has many
-   * combinations this is easier to scan than one `it` per case — each row
-   * becomes its own named test, so a failure still points at one line.
-   */
-  describe("full matrix", () => {
-    const cases: Array<{
-      viewer: string;
-      visibility: "private" | "friends" | "public";
-      isFriend: boolean;
-      expected: boolean;
-    }> = [
-      { viewer: OWNER, visibility: "private", isFriend: false, expected: true },
-      { viewer: OWNER, visibility: "friends", isFriend: false, expected: true },
-      { viewer: OWNER, visibility: "public", isFriend: false, expected: true },
-      {
-        viewer: FRIEND,
-        visibility: "private",
-        isFriend: true,
-        expected: false,
-      },
-      { viewer: FRIEND, visibility: "friends", isFriend: true, expected: true },
-      { viewer: FRIEND, visibility: "public", isFriend: true, expected: true },
-      {
-        viewer: STRANGER,
-        visibility: "private",
-        isFriend: false,
-        expected: false,
-      },
-      {
-        viewer: STRANGER,
-        visibility: "friends",
-        isFriend: false,
-        expected: false,
-      },
-      {
-        viewer: STRANGER,
-        visibility: "public",
-        isFriend: false,
-        expected: true,
-      },
-    ];
-
-    it.each(cases)(
-      "viewer=$viewer visibility=$visibility isFriend=$isFriend -> $expected",
-      ({ viewer, visibility, isFriend, expected }) => {
-        expect(canView(viewer, { ownerId: OWNER, visibility }, isFriend)).toBe(
-          expected,
-        );
-      },
-    );
-  });
+  it.each(cases)(
+    "viewer=$viewer visibility=$visibility isFriend=$isFriend -> $expected",
+    ({ viewer, visibility, isFriend, expected }) => {
+      expect(canView(viewer, { ownerId: OWNER, visibility }, isFriend)).toBe(
+        expected,
+      );
+    },
+  );
 });
 
 describe("visibleEntryVisibilities", () => {

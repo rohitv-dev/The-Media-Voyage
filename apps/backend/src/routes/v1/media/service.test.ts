@@ -17,18 +17,6 @@ vi.mock("@/services/tmdb", () => ({ searchTmdb: searchTmdbMock }));
 
 import { searchMedia } from "./service";
 
-function createSelectBuilder(result: unknown[]) {
-  const builder = {
-    from: vi.fn(),
-    where: vi.fn(),
-    limit: vi.fn().mockResolvedValue(result),
-  };
-
-  builder.from.mockReturnValue(builder);
-  builder.where.mockReturnValue(builder);
-  return builder;
-}
-
 describe("media search", () => {
   beforeEach(() => {
     dbSelectMock.mockReset();
@@ -40,16 +28,20 @@ describe("media search", () => {
 
   it("preserves the provider identity for a local TMDB show", async () => {
     dbSelectMock.mockReturnValue(
-      createSelectBuilder([
-        {
-          id: "media-1",
-          title: "Example Show",
-          imageUrl: null,
-          type: "show",
-          externalId: "100",
-          source: "tmdb_tv",
-        },
-      ]),
+      {
+        from: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockResolvedValue([
+          {
+            id: "media-1",
+            title: "Example Show",
+            imageUrl: null,
+            type: "show",
+            externalId: "100",
+            source: "tmdb_tv",
+          },
+        ]),
+      },
     );
 
     await expect(searchMedia({ q: "Example", type: "show" })).resolves.toEqual([

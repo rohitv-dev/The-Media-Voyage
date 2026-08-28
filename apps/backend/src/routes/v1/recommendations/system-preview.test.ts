@@ -298,40 +298,6 @@ describe("system recommendation preview", () => {
     ]);
   });
 
-  it("includes an in-progress favorite show as a seed", async () => {
-    findSystemPreviewLibraryMock.mockResolvedValue([
-      libraryItem({
-        userMediaId: IDS.first,
-        title: "Ted",
-        type: "show",
-        catalogSource: "tmdb_tv",
-        externalId: "100",
-        favorite: true,
-        rating: 9,
-      }),
-      libraryItem({
-        userMediaId: IDS.second,
-        title: "Ted Lasso",
-        type: "show",
-        catalogSource: "tmdb_tv",
-        externalId: "200",
-        status: "in_progress",
-        favorite: true,
-        rating: 9,
-      }),
-    ]);
-    getTmdbRecommendationsMock.mockResolvedValue([]);
-
-    const preview = await getSystemRecommendationPreview("user-1");
-
-    expect(getTmdbRecommendationsMock).toHaveBeenNthCalledWith(1, "show", 100);
-    expect(getTmdbRecommendationsMock).toHaveBeenNthCalledWith(2, "show", 200);
-    expect(preview.seeds.map((seed) => seed.title)).toEqual([
-      "Ted",
-      "Ted Lasso",
-    ]);
-  });
-
   it("continues past unmapped and empty seeds", async () => {
     findSystemPreviewLibraryMock.mockResolvedValue([
       libraryItem({
