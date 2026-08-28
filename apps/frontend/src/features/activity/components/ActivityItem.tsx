@@ -47,9 +47,88 @@ function getChanges(details: Record<string, unknown>) {
   });
 }
 
-function formatValue(value: unknown) {
+function formatSeasonProgress(value: readonly unknown[]) {
+  return (
+    value
+      .flatMap((entry) => {
+        if (!isRecord(entry) || typeof entry.season !== "number") return [];
+
+        const watched =
+          typeof entry.episodesWatched === "number"
+            ? entry.episodesWatched
+            : undefined;
+        const expected =
+          typeof entry.expectedEpisodeCount === "number"
+            ? entry.expectedEpisodeCount
+            : undefined;
+        const episodes =
+          watched !== undefined
+            ? `${watched}${expected !== undefined ? `/${expected}` : ""} episodes`
+            : expected !== undefined
+              ? `${expected} episodes`
+              : "not started";
+
+        return [`Season ${entry.season}: ${episodes}`];
+      })
+      .join(", ") || "none"
+  );
+}
+
+function getSeasonProgressMap(value: unknown) {
+  if (!Array.isArray(value)) return null;
+
+  return new Map(
+    value.flatMap((entry) => {
+      if (!isRecord(entry) || typeof entry.season !== "number") return [];
+      return [[entry.season, entry] as const];
+    }),
+  );
+}
+
+function formatSeasonProgressChange(from: unknown, to: unknown) {
+  const fromBySeason = getSeasonProgressMap(from);
+  const toBySeason = getSeasonProgressMap(to);
+
+  if (!fromBySeason || !toBySeason) {
+    return `${formatValue(from, "seasonsProgress")} → ${formatValue(to, "seasonsProgress")}`;
+  }
+
+  const seasons = [
+    ...new Set([...fromBySeason.keys(), ...toBySeason.keys()]),
+  ].sort((a, b) => a - b);
+
+  return (
+    seasons
+      .flatMap((season) => {
+        const before = fromBySeason.get(season);
+        const after = toBySeason.get(season);
+        const beforeComparable = before
+          ? { ...before, updatedAt: undefined }
+          : null;
+        const afterComparable = after
+          ? { ...after, updatedAt: undefined }
+          : null;
+
+        if (
+          JSON.stringify(beforeComparable) === JSON.stringify(afterComparable)
+        ) {
+          return [];
+        }
+
+        return [
+          `${before ? formatSeasonProgress([before]) : "none"} → ${after ? formatSeasonProgress([after]) : "none"}`,
+        ];
+      })
+      .join(", ") || "none"
+  );
+}
+
+function formatValue(value: unknown, field?: string) {
   if (value === null || value === undefined || value === "") return "empty";
   if (typeof value === "boolean") return value ? "yes" : "no";
+  if (field === "seasonsProgress" && Array.isArray(value)) {
+    return formatSeasonProgress(value);
+  }
   if (Array.isArray(value)) {
     return value.length
       ? value
@@ -98,7 +177,7 @@ export function ActivityItem({ activity, onClick }: ActivityItemProps) {
       </ThemeIcon>
 
       <Stack gap={4} style={{ minWidth: 0, flex: 1 }}>
-        <Text size="sm" lh={1.35}>
+        <Text size="sm" fw={500} lh={1.35}>
           {getSummary(activity)}.
         </Text>
 
@@ -108,7 +187,7 @@ export function ActivityItem({ activity, onClick }: ActivityItemProps) {
             {initialValues
               .map(
                 ([field, value]) =>
-                  `${formatField(field)}: ${formatValue(value)}`,
+                  `${formatField(field)}: ${formatValue(value, field)}`,
               )
               .join(", ")}
           </Text>
@@ -118,8 +197,10 @@ export function ActivityItem({ activity, onClick }: ActivityItemProps) {
           <Stack gap={1}>
             {changes.map(([field, change]) => (
               <Text key={field} size="xs" c="dimmed">
-                {formatField(field)}: {formatValue(change.from)} →{" "}
-                {formatValue(change.to)}
+                {formatField(field)}:{" "}
+                {field === "seasonsProgress"
+                  ? formatSeasonProgressChange(change.from, change.to)
+                  : `${formatValue(change.from, field)} → ${formatValue(change.to, field)}`}
               </Text>
             ))}
           </Stack>
