@@ -340,7 +340,10 @@ export async function createUserMedia(
         review: input.review,
         notes: input.notes,
         startedAt: input.startedAt,
-        completedAt: input.completedAt,
+        completedAt:
+          input.status === "completed" && !input.completedAt
+            ? changedAt
+            : input.completedAt,
         progress: input.progress,
         favorite: input.favorite,
         timeSpent: input.timeSpent,
@@ -437,6 +440,17 @@ export async function updateUserMedia(
     const statusChanged =
       updates.status !== undefined && updates.status !== existing.status;
     const now = new Date();
+    const nextStatus = updates.status ?? existing.status;
+
+    if (statusChanged && nextStatus !== "completed") {
+      updates.completedAt = null;
+    } else if (
+      nextStatus === "completed" &&
+      (updates.completedAt === null ||
+        (updates.completedAt === undefined && existing.completedAt === null))
+    ) {
+      updates.completedAt = now;
+    }
 
     const [updated] = await tx
       .update(userMedia)

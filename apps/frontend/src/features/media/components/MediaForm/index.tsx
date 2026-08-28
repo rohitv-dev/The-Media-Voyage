@@ -230,10 +230,6 @@ export function MediaForm(props: MediaFormProps) {
     validate: {
       title: (value) =>
         isAddMode && !value.trim() ? "Title is required" : undefined,
-      completedAt: (value, values) =>
-        values.status === "completed" && !value
-          ? "Completed date is required"
-          : undefined,
     },
   });
 
@@ -243,6 +239,10 @@ export function MediaForm(props: MediaFormProps) {
 
   form.watch("status", ({ value, previousValue }) => {
     if (value === "completed") {
+      if (!form.values.completedAt) {
+        form.setFieldValue("completedAt", new Date());
+      }
+
       form.setFieldValue("progress", 100);
       if (form.values.type === "book") {
         const numberOfPages = getBookPageCount(catalogMetadataForTimeSpent);
@@ -657,7 +657,13 @@ export function MediaForm(props: MediaFormProps) {
       return;
     }
 
-    saveMutation.mutate(values);
+    saveMutation.mutate({
+      ...values,
+      completedAt:
+        values.status === "completed" && !values.completedAt
+          ? new Date()
+          : values.completedAt,
+    });
   };
 
   const { requestDelete: requestDeleteMedia, isDeletePending } =
@@ -692,17 +698,7 @@ export function MediaForm(props: MediaFormProps) {
     <FormProvider form={form}>
       <Container pt="sm" px={{ base: "xs", md: "sm" }}>
         <Stack gap="lg" pb="lg">
-          <form
-            onSubmit={form.onSubmit(handleSubmit, (errors) => {
-              if (errors.completedAt) {
-                showErrorNotification({
-                  title: "Completed date is required",
-                  message:
-                    "Select a completed date in Progress & Tracking before saving.",
-                });
-              }
-            })}
-          >
+          <form onSubmit={form.onSubmit(handleSubmit)}>
             <Grid gap="sm">
               <FormHeader
                 mode={mode}

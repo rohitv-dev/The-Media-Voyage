@@ -56,7 +56,8 @@ Media Voyage is a personal media-tracking app for keeping tabs on the movies, sh
 
 ## TMDB Provider Cutover
 
-OMDb and TVMaze catalog records are not compatible with TMDB identities. During
+This one-time migration is only for databases that still contain legacy TVMaze
+catalog records. That identity is not compatible with TMDB. During
 the provider cutover, stop application writes, review the target database, and
 clear the catalog in a transaction:
 
