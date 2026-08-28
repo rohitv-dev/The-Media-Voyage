@@ -39,6 +39,7 @@ const browseItems = [
   getNavigationItem("/collection"),
   getNavigationItem("/friends"),
   getNavigationItem("/calendar"),
+  getNavigationItem("/activity"),
   getNavigationItem("/notifications"),
 ];
 

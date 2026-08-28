@@ -2,6 +2,7 @@ import {
   Outlet,
   Link,
   createRootRouteWithContext,
+  useRouter,
 } from "@tanstack/react-router";
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import type { QueryClient } from "@tanstack/react-query";
@@ -42,7 +43,9 @@ function NotFound() {
   );
 }
 
-function RouteError({ error, reset }: ErrorComponentProps) {
+export function RouteError({ error }: ErrorComponentProps) {
+  const router = useRouter();
+
   return (
     <Center w="100%" mih="60vh" p={{ base: "md", sm: "xl" }}>
       <Stack align="center" gap="xs">
@@ -50,7 +53,7 @@ function RouteError({ error, reset }: ErrorComponentProps) {
         <Text c="dimmed" ta="center" maw={420}>
           {getApiErrorMessage(error, "Please try again.")}
         </Text>
-        <Button mt="md" onClick={reset}>
+        <Button mt="md" onClick={() => void router.invalidate()}>
           Try again
         </Button>
       </Stack>

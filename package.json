@@ -15,6 +15,7 @@
     "format:check": "prettier --check package.json pnpm-workspace.yaml prettier.config.cjs README.md apps/frontend apps/backend packages/shared",
     "studio": "pnpm --filter @media-voyage/shared studio",
     "db:push": "pnpm --filter @media-voyage/shared db:push",
+    "db:generate": "pnpm --filter @media-voyage/shared db:generate",
     "backend:build": "pnpm --filter @media-voyage/backend build",
     "refresh-catalog-metadata": "pnpm backend:build && node apps/backend/dist/refresh-catalog-metadata.cjs",
     "embed-catalog-media": "pnpm backend:build && node apps/backend/dist/embed-catalog-media.cjs",

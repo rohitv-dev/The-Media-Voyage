@@ -88,9 +88,11 @@ describe("MobileMoreDrawer", () => {
     ).toBe("page");
 
     fireEvent.click(screen.getByRole("button", { name: "Collections" }));
+    fireEvent.click(screen.getByRole("button", { name: "Personal Activity" }));
     fireEvent.click(screen.getByRole("button", { name: "Log out" }));
 
     expect(onNavigate).toHaveBeenCalledWith("/collection");
+    expect(onNavigate).toHaveBeenCalledWith("/activity");
     expect(onLogout).toHaveBeenCalledOnce();
 
     queryClient.clear();
