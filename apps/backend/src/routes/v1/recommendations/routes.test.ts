@@ -4,13 +4,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { unauthorized } from "@/errors";
 
 const {
+  createFriendRecommendationMock,
   dismissSystemRecommendationMock,
   getSystemRecommendationPreviewMock,
   requireAuthMock,
+  sendFriendRecommendationNotificationMock,
 } = vi.hoisted(() => ({
+  createFriendRecommendationMock: vi.fn(),
   dismissSystemRecommendationMock: vi.fn(),
   getSystemRecommendationPreviewMock: vi.fn(),
   requireAuthMock: vi.fn(),
+  sendFriendRecommendationNotificationMock: vi.fn(),
 }));
 
 vi.mock("@/require-auth", () => ({
@@ -28,8 +32,13 @@ vi.mock("./queries", () => ({
 }));
 
 vi.mock("./service", () => ({
-  createFriendRecommendation: vi.fn(),
+  createFriendRecommendation: createFriendRecommendationMock,
   resolveRecommendation: vi.fn(),
+}));
+
+vi.mock("@/services/pushNotifications", () => ({
+  sendFriendRecommendationNotification:
+    sendFriendRecommendationNotificationMock,
 }));
 
 import recommendationRoutes from "./routes";
@@ -51,7 +60,7 @@ async function buildApp() {
   return app;
 }
 
-describe("system recommendation preview route", () => {
+describe("recommendation routes", () => {
   beforeEach(() => {
     requireAuthMock.mockReset();
     requireAuthMock.mockImplementation(async (request: { userId: string }) => {
@@ -61,6 +70,36 @@ describe("system recommendation preview route", () => {
     getSystemRecommendationPreviewMock.mockResolvedValue(preview);
     dismissSystemRecommendationMock.mockReset();
     dismissSystemRecommendationMock.mockResolvedValue(undefined);
+    createFriendRecommendationMock.mockReset();
+    sendFriendRecommendationNotificationMock.mockReset();
+    sendFriendRecommendationNotificationMock.mockResolvedValue(undefined);
+  });
+
+  it("sends a push after creating a friend recommendation", async () => {
+    createFriendRecommendationMock.mockResolvedValue({
+      id: "recommendation-1",
+      status: "pending",
+    });
+    const app = await buildApp();
+
+    try {
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/v1/recommendations",
+        payload: {
+          recipientId: "friend-1",
+          sourceUserMediaId: "123e4567-e89b-12d3-a456-426614174000",
+        },
+      });
+
+      expect(response.statusCode).toBe(201);
+      expect(sendFriendRecommendationNotificationMock).toHaveBeenCalledWith(
+        "friend-1",
+        "recommendation-1",
+      );
+    } finally {
+      await app.close();
+    }
   });
 
   it("registers the static authenticated route with no-store caching", async () => {

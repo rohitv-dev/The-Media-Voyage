@@ -820,6 +820,8 @@ export const user = pgTable("user", {
   defaultVisibility: visibilityEnum("default_visibility")
     .default("private")
     .notNull(),
+  // ponytail: one token per user; use a push_devices table for multi-device delivery.
+  deviceToken: text("device_token"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

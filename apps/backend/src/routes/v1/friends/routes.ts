@@ -12,6 +12,7 @@ import {
 } from "@media-voyage/shared/api";
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "@/require-auth";
+import { sendFriendRequestNotification } from "@/services/pushNotifications";
 import {
   getFriendCollection,
   getFriendsFeed,
@@ -48,6 +49,18 @@ async function friendsRoutes(fastify: FastifyInstance) {
   fastify.post("/requests", async (request, reply) => {
     const input = friendRequestSchema.parse(request.body);
     const result = await sendFriendRequest(request.userId, input.email);
+
+    if (!result.autoAccepted) {
+      void sendFriendRequestNotification(
+        result.friendship.addresseeId,
+        result.friendship.id,
+      ).catch((error) => {
+        request.log.warn(
+          { err: error, friendshipId: result.friendship.id },
+          "Friend request push failed",
+        );
+      });
+    }
 
     return reply.status(201).send(result);
   });

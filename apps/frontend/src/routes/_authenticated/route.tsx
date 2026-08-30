@@ -20,7 +20,14 @@ import { AuthenticatedSidebar } from "#/features/app-shell/components/Authentica
 import { CommandPalette } from "#/features/app-shell/components/CommandPalette";
 import { MobileBottomNavigation } from "#/features/app-shell/components/MobileBottomNavigation";
 import { MobileMoreDrawer } from "#/features/app-shell/components/MobileMoreDrawer";
+import {
+  clearPushNotificationToken,
+  usePushNotifications,
+} from "#/features/notifications/hooks/usePushNotifications";
+import type { PushNotificationData } from "#/features/notifications/hooks/usePushNotifications";
+import { openRecommendationModal } from "#/features/recommendations/components/ContextModal";
 import type { AppShellPath } from "#/features/app-shell/navigation";
+import { useCallback } from "react";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ context: { queryClient } }) => {
@@ -48,6 +55,24 @@ function AuthenticatedShell() {
   const navigate = Route.useNavigate();
   const { pathname } = useLocation();
   const queryClient = useQueryClient();
+  const openNotifications = useCallback(
+    (data: PushNotificationData) => {
+      if (data.type === "friend_recommendation" && data.recommendationId) {
+        openRecommendationModal(data.recommendationId);
+        return;
+      }
+
+      if (data.type === "friend_request") {
+        navigate({ to: "/friends" });
+        return;
+      }
+
+      navigate({ to: "/notifications" });
+    },
+    [navigate],
+  );
+
+  usePushNotifications(session.user.id, openNotifications);
 
   const [navbarOpened, { toggle: toggleNavbar, close: closeNavbar }] =
     useDisclosure();
@@ -101,6 +126,7 @@ function AuthenticatedShell() {
   ]);
 
   const logout = async () => {
+    await clearPushNotificationToken();
     await authClient.signOut();
     await queryClient.invalidateQueries({ queryKey: sessionQueryKey });
     navigate({ to: "/auth/login" });

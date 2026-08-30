@@ -33,6 +33,11 @@ export const auth = betterAuth({
         input: false,
         returned: true,
       },
+      deviceToken: {
+        type: "string",
+        required: false,
+        returned: false,
+      },
     },
   },
   baseURL: env.BETTER_AUTH_URL,

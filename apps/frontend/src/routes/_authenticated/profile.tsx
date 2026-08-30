@@ -1,6 +1,7 @@
 import { authClient } from "#/auth/authClient";
 import { getApiErrorMessage } from "#/lib/api";
 import { CopyPublicLinkButton } from "#/features/public/components/CopyPublicLinkButton";
+import { clearPushNotificationToken } from "#/features/notifications/hooks/usePushNotifications";
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -54,6 +55,7 @@ function RouteComponent() {
   };
 
   const logout = async () => {
+    await clearPushNotificationToken();
     await authClient.signOut();
     await queryClient.invalidateQueries({ queryKey: sessionQueryKey });
     navigate({ to: "/auth/login" });
