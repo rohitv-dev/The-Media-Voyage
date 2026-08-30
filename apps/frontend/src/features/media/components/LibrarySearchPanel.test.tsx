@@ -59,6 +59,19 @@ describe("LibrarySearchPanel", () => {
     ).toBeTruthy();
   });
 
+  it("explains the minimum query length while typing", () => {
+    renderPanel();
+    const input = screen.getByRole("textbox", {
+      name: "Describe what you're looking for",
+    });
+
+    fireEvent.change(input, { target: { value: "spa" } });
+
+    expect(
+      screen.getByText("Enter at least 5 characters to explore."),
+    ).toBeTruthy();
+  });
+
   it("uses the same clear action when Escape is pressed", () => {
     const { onClear } = renderPanel();
     const input = screen.getByRole("textbox", {

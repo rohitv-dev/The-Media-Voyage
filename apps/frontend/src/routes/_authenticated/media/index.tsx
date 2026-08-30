@@ -4,6 +4,7 @@ import {
   userMediaHybridSearchQueryOptions,
 } from "#/features/media/queries";
 import {
+  Alert,
   Box,
   Button,
   Container,
@@ -46,6 +47,7 @@ import { collectionQueryOptions } from "#/features/media-collection/queries";
 import {
   IconDice5,
   IconFilter,
+  IconInfoCircle,
   IconLayoutGrid,
   IconMovie,
   IconPlus,
@@ -392,6 +394,17 @@ function RouteComponent() {
             onClear={clearLibrarySearch}
             focusRequest={librarySearchFocusRequest}
           />
+        )}
+
+        {isExploring && (
+          <Alert
+            color="accent"
+            variant="light"
+            icon={<IconInfoCircle size={16} />}
+            py="xs"
+          >
+            Exploring your library — filters are paused.
+          </Alert>
         )}
 
         {!isExploring && (

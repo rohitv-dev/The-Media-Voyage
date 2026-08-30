@@ -38,9 +38,6 @@ interface MediaCardPresentationProps extends MediaCardBaseProps {
   media: Omit<MediaRecord, "visibility">;
   onEdit?: (id: string) => void;
   quickActions?: ReactNode;
-  isActionPending?: boolean;
-  isDeletePending?: boolean;
-  onDelete?: () => void;
   coverEditorOpen?: boolean;
   coverArtSize: CoverArtSize;
 }
@@ -51,9 +48,6 @@ function MediaCardPresentation({
   onEdit,
   footerRight,
   quickActions,
-  isActionPending,
-  isDeletePending,
-  onDelete,
   coverEditorOpen,
   coverArtSize,
 }: MediaCardPresentationProps) {
@@ -124,9 +118,6 @@ function MediaCardPresentation({
           media={media}
           onEdit={onEdit}
           footerRight={footerRight}
-          isActionPending={isActionPending}
-          isDeletePending={isDeletePending}
-          onDelete={onDelete}
         />
       </Stack>
     </Card>
@@ -145,7 +136,7 @@ function EditableMediaCard({
   coverArtSize: CoverArtSize;
 }) {
   const [coverEditorOpen, setCoverEditorOpen] = useState(false);
-  const { isActionPending, isDeletePending, requestDelete, runQuickAction } =
+  const { isActionPending, requestDelete, runQuickAction } =
     useMediaCardActions(media);
 
   return (
@@ -164,9 +155,6 @@ function EditableMediaCard({
             onEditCover={() => setCoverEditorOpen(true)}
           />
         }
-        isActionPending={isActionPending}
-        isDeletePending={isDeletePending}
-        onDelete={requestDelete}
         coverEditorOpen={coverEditorOpen}
         coverArtSize={coverArtSize}
       />

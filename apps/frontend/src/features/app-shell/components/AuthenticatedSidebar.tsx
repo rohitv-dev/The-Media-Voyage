@@ -19,6 +19,7 @@ import {
 import { motion } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "@tanstack/react-router";
+import { Fragment } from "react";
 import { friendRequestsQueryOptions } from "#/features/friends/queries";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { latestNotificationsQueryOptions } from "#/features/notifications/queries";
@@ -138,15 +139,17 @@ export function AuthenticatedSidebar({
               ) : undefined;
 
             return (
-              <SidebarNavLink
-                key={path}
-                label={label}
-                leftSection={<Icon size={19} />}
-                rightSection={rightSection}
-                active={isActive(path)}
-                onClick={() => onNavigate(path)}
-                collapsed={railCollapsed}
-              />
+              <Fragment key={path}>
+                {path === "/tags" && <Divider my="sm" />}
+                <SidebarNavLink
+                  label={label}
+                  leftSection={<Icon size={19} />}
+                  rightSection={rightSection}
+                  active={isActive(path)}
+                  onClick={() => onNavigate(path)}
+                  collapsed={railCollapsed}
+                />
+              </Fragment>
             );
           })}
         </Stack>

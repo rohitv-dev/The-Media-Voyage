@@ -30,6 +30,10 @@ export function LibrarySearchPanel({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const isActive = query.length > 0;
+  const normalizedInput = input.trim();
+  const isBelowMinimum =
+    normalizedInput.length > 0 &&
+    normalizedInput.length < FUZZY_TITLE_SEARCH_CONFIG.minimumQueryLength;
 
   useEffect(() => {
     if (focusRequest > 0) inputRef.current?.focus();
@@ -37,12 +41,9 @@ export function LibrarySearchPanel({
 
   const submitSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const normalizedQuery = input.trim();
 
-    if (
-      normalizedQuery.length >= FUZZY_TITLE_SEARCH_CONFIG.minimumQueryLength
-    ) {
-      onSearch(normalizedQuery);
+    if (!isBelowMinimum && normalizedInput.length > 0) {
+      onSearch(normalizedInput);
     }
   };
 
@@ -74,9 +75,7 @@ export function LibrarySearchPanel({
             type="submit"
             size="xs"
             loading={isSearching}
-            disabled={
-              input.trim().length < FUZZY_TITLE_SEARCH_CONFIG.minimumQueryLength
-            }
+            disabled={isBelowMinimum || normalizedInput.length === 0}
           >
             Explore
           </Button>
@@ -92,11 +91,17 @@ export function LibrarySearchPanel({
           </ActionIcon>
         </Group>
       </form>
-      {!isActive && (
+      {!isActive && !isBelowMinimum && (
         <Text size="xs" c="dimmed" mt={4}>
           Web-style syntax is supported: use &quot;quotes&quot; for phrases,
           -word to exclude a term, or OR between alternatives. Try: &quot;dark
           psychological horror&quot; or &quot;space exploration games&quot;.
+        </Text>
+      )}
+      {isBelowMinimum && (
+        <Text size="xs" c="dimmed" mt={4}>
+          Enter at least {FUZZY_TITLE_SEARCH_CONFIG.minimumQueryLength}{" "}
+          characters to explore.
         </Text>
       )}
       {isActive && (
