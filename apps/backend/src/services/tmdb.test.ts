@@ -36,6 +36,7 @@ describe("TMDB service", () => {
             title: "Star Voyage",
             adult: false,
             poster_path: "/star.jpg",
+            release_date: "1999-07-16",
           },
           {
             id: 12,
@@ -62,6 +63,7 @@ describe("TMDB service", () => {
         title: "Star Voyage",
         type: "movie",
         imageUrl: "https://image.tmdb.org/t/p/w500/star.jpg",
+        releaseYear: 1999,
       },
       {
         id: "",
@@ -70,6 +72,7 @@ describe("TMDB service", () => {
         title: "No Poster",
         type: "movie",
         imageUrl: null,
+        releaseYear: null,
       },
     ]);
 
@@ -96,6 +99,7 @@ describe("TMDB service", () => {
             name: "The Long Watch",
             adult: false,
             poster_path: "/watch.jpg",
+            first_air_date: "2020-02-02",
           },
         ],
       }),
@@ -110,6 +114,7 @@ describe("TMDB service", () => {
         title: "The Long Watch",
         type: "show",
         imageUrl: "https://image.tmdb.org/t/p/w500/watch.jpg",
+        releaseYear: 2020,
       },
     ]);
 
@@ -165,6 +170,7 @@ describe("TMDB service", () => {
           title: `Movie ${id}`,
           type: "movie",
           imageUrl: null,
+          releaseYear: id === 1 ? 2026 : null,
         },
         releaseYear: id === 1 ? 2026 : null,
         catalogRating: id === 1 ? 7.2 : null,
@@ -177,6 +183,7 @@ describe("TMDB service", () => {
           title: `Show ${id - 10}`,
           type: "show",
           imageUrl: null,
+          releaseYear: id === 11 ? 2020 : null,
         },
         releaseYear: id === 11 ? 2020 : null,
         catalogRating: id === 11 ? 8.4 : null,
@@ -222,6 +229,7 @@ describe("TMDB service", () => {
       title: "A Detailed Movie",
       type: "movie",
       imageUrl: "https://image.tmdb.org/t/p/w500/movie.jpg",
+      releaseYear: null,
       description: "A useful description.",
       genres: ["Drama", "Mystery"],
       keywords: ["space travel", "wormhole"],
@@ -276,6 +284,7 @@ describe("TMDB service", () => {
       title: "A Detailed Show",
       type: "show",
       imageUrl: null,
+      releaseYear: null,
       description: null,
       genres: ["Comedy"],
       keywords: ["found family"],
@@ -447,6 +456,7 @@ describe("TMDB service", () => {
         title: "Recommended Movie",
         type: "movie",
         imageUrl: "https://image.tmdb.org/t/p/w500/recommended.jpg",
+        releaseYear: null,
       },
     ]);
 

@@ -131,6 +131,7 @@ function movieRecord(
     title: result.title,
     type: "movie",
     imageUrl: posterUrl(result.poster_path),
+    releaseYear: releaseYear(result.release_date),
   };
 }
 
@@ -144,6 +145,7 @@ function showRecord(
     title: result.name,
     type: "show",
     imageUrl: posterUrl(result.poster_path),
+    releaseYear: releaseYear(result.first_air_date),
   };
 }
 

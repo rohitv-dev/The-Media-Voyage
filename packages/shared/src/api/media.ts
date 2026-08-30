@@ -71,6 +71,7 @@ export const mediaResponseSchema = z.object({
   type: mediaSelectSchema.shape.type,
   externalId: mediaSelectSchema.shape.externalId,
   imageUrl: mediaSelectSchema.shape.imageUrl,
+  releaseYear: z.number().int().nullable().optional(),
 
   creators: z.array(z.string()).optional(),
   genres: z.array(z.string()).optional(),

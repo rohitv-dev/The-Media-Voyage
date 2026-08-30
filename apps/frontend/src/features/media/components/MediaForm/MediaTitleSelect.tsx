@@ -63,6 +63,9 @@ function MediaOption({ media }: { media: SourceMediaRecord }) {
 
         <Text size="xs" c="dimmed">
           {media.type}
+          {media.releaseYear !== null && media.releaseYear !== undefined
+            ? ` · ${media.releaseYear}`
+            : ""}
         </Text>
       </Stack>
 
