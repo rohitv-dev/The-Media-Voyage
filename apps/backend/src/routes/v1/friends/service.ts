@@ -236,7 +236,7 @@ export async function addComment(
       });
     }
 
-    return comment;
+    return { comment, recipientId: entry.ownerId };
   });
 }
 

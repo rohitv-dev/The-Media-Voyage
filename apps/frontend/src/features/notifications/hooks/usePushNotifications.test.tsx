@@ -5,6 +5,7 @@ import {
   clearPushNotificationToken,
   usePushNotifications,
 } from "./usePushNotifications";
+import type { PushNotificationData } from "./usePushNotifications";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
@@ -65,7 +66,7 @@ afterEach(() => {
 });
 
 describe("usePushNotifications", () => {
-  it("registers the device token and routes recommendation taps", async () => {
+  it("registers the device token", async () => {
     const onNotificationTap = vi.fn();
 
     renderHook(() => usePushNotifications("user-1", onNotificationTap), {
@@ -74,9 +75,9 @@ describe("usePushNotifications", () => {
 
     await waitFor(() => expect(registerMock).toHaveBeenCalledOnce());
 
-    const registrationListener = addListenerMock.mock.calls[0]?.[1] as
-      | ((event: { value: string }) => void)
-      | undefined;
+    const registrationListener = addListenerMock.mock.calls.find(
+      ([event]) => event === "registration",
+    )?.[1] as ((event: { value: string }) => void) | undefined;
     registrationListener?.({ value: "device-token" });
 
     await waitFor(() =>
@@ -84,27 +85,49 @@ describe("usePushNotifications", () => {
         deviceToken: "device-token",
       }),
     );
+  });
 
-    const actionListener = addListenerMock.mock.calls[2]?.[1] as
+  it("forwards supported notification taps", async () => {
+    const onNotificationTap = vi.fn();
+
+    renderHook(() => usePushNotifications("user-1", onNotificationTap), {
+      wrapper,
+    });
+
+    await waitFor(() => expect(registerMock).toHaveBeenCalledOnce());
+
+    const actionListener = addListenerMock.mock.calls.find(
+      ([event]) => event === "pushNotificationActionPerformed",
+    )?.[1] as
       | ((event: {
           notification: {
-            data: { type: string; recommendationId: string };
+            data: PushNotificationData;
           };
         }) => void)
       | undefined;
-    actionListener?.({
-      notification: {
-        data: {
-          type: "friend_recommendation",
-          recommendationId: "recommendation-1",
-        },
-      },
-    });
 
-    expect(onNotificationTap).toHaveBeenCalledWith({
-      type: "friend_recommendation",
-      recommendationId: "recommendation-1",
-    });
+    const notifications = [
+      {
+        type: "friend_recommendation",
+        recommendationId: "recommendation-1",
+      },
+      { type: "friend_request", friendshipId: "friendship-1" },
+      { type: "friend_request_accepted", friendshipId: "friendship-2" },
+      {
+        type: "friend_recommendation_response",
+        recommendationId: "recommendation-2",
+      },
+      { type: "media_comment", userMediaId: "media-1" },
+    ] satisfies PushNotificationData[];
+
+    for (const data of notifications) {
+      actionListener?.({ notification: { data } });
+    }
+
+    expect(onNotificationTap).toHaveBeenCalledTimes(notifications.length);
+    for (const data of notifications) {
+      expect(onNotificationTap).toHaveBeenCalledWith(data);
+    }
   });
 
   it("clears the token during native logout", async () => {

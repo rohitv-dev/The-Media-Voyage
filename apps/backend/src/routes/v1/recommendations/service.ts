@@ -95,7 +95,10 @@ export async function resolveRecommendation(
   recipientId: string,
   recommendationId: string,
   input: ResolveRecommendationInput,
-): Promise<RecommendationResolutionResponse> {
+): Promise<{
+  recipientId: string;
+  response: RecommendationResolutionResponse;
+}> {
   return db.transaction(async (tx) => {
     const [existing] = await tx
       .select({
@@ -188,11 +191,14 @@ export async function resolveRecommendation(
     });
 
     return {
-      id: updated.id,
-      status: "resolved",
-      outcome: updated.outcome!,
-      recipientUserMediaId: updated.recipientUserMediaId,
-      recipientUserMediaCreated,
+      recipientId: existing.senderId,
+      response: {
+        id: updated.id,
+        status: "resolved",
+        outcome: updated.outcome!,
+        recipientUserMediaId: updated.recipientUserMediaId,
+        recipientUserMediaCreated,
+      },
     };
   });
 }

@@ -12,6 +12,7 @@ export type PushNotificationData = {
   type?: string;
   recommendationId?: string;
   friendshipId?: string;
+  userMediaId?: string;
 };
 
 async function saveDeviceToken(token: string) {
@@ -79,7 +80,10 @@ export function usePushNotifications(
 
             if (
               data?.type === "friend_recommendation" ||
-              data?.type === "friend_request"
+              data?.type === "friend_recommendation_response" ||
+              data?.type === "friend_request" ||
+              data?.type === "friend_request_accepted" ||
+              data?.type === "media_comment"
             ) {
               onNotificationTap(data);
             }

@@ -57,13 +57,28 @@ function AuthenticatedShell() {
   const queryClient = useQueryClient();
   const openNotifications = useCallback(
     (data: PushNotificationData) => {
-      if (data.type === "friend_recommendation" && data.recommendationId) {
+      if (
+        (data.type === "friend_recommendation" ||
+          data.type === "friend_recommendation_response") &&
+        data.recommendationId
+      ) {
         openRecommendationModal(data.recommendationId);
         return;
       }
 
-      if (data.type === "friend_request") {
+      if (
+        data.type === "friend_request" ||
+        data.type === "friend_request_accepted"
+      ) {
         navigate({ to: "/friends" });
+        return;
+      }
+
+      if (data.type === "media_comment" && data.userMediaId) {
+        navigate({
+          to: "/media/view/$id",
+          params: { id: data.userMediaId },
+        });
         return;
       }
 

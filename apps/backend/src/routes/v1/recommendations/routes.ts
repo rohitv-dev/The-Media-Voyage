@@ -6,7 +6,10 @@ import {
 } from "@media-voyage/shared/api";
 import type { FastifyContextConfig, FastifyInstance } from "fastify";
 import { requireAuth } from "@/require-auth";
-import { sendFriendRecommendationNotification } from "@/services/pushNotifications";
+import {
+  sendFriendRecommendationNotification,
+  sendFriendRecommendationResponseNotification,
+} from "@/services/pushNotifications";
 import {
   dismissSystemRecommendation,
   getRecommendationDetail,
@@ -73,8 +76,20 @@ async function recommendationRoutes(fastify: FastifyInstance) {
   fastify.patch("/:id/resolve", async (request, reply) => {
     const { id } = recommendationIdParamsSchema.parse(request.params);
     const input = resolveRecommendationSchema.parse(request.body);
+    const result = await resolveRecommendation(request.userId, id, input);
 
-    return reply.send(await resolveRecommendation(request.userId, id, input));
+    void sendFriendRecommendationResponseNotification(
+      result.recipientId,
+      result.response.id,
+      result.response.outcome,
+    ).catch((error) => {
+      request.log.warn(
+        { err: error, recommendationId: result.response.id },
+        "Friend recommendation response push failed",
+      );
+    });
+
+    return reply.send(result.response);
   });
 }
 

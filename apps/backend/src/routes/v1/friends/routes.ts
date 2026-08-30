@@ -12,7 +12,11 @@ import {
 } from "@media-voyage/shared/api";
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "@/require-auth";
-import { sendFriendRequestNotification } from "@/services/pushNotifications";
+import {
+  sendFriendRequestAcceptedNotification,
+  sendFriendRequestNotification,
+  sendMediaCommentNotification,
+} from "@/services/pushNotifications";
 import {
   getFriendCollection,
   getFriendsFeed,
@@ -50,7 +54,17 @@ async function friendsRoutes(fastify: FastifyInstance) {
     const input = friendRequestSchema.parse(request.body);
     const result = await sendFriendRequest(request.userId, input.email);
 
-    if (!result.autoAccepted) {
+    if (result.autoAccepted) {
+      void sendFriendRequestAcceptedNotification(
+        result.friendship.requesterId,
+        result.friendship.id,
+      ).catch((error) => {
+        request.log.warn(
+          { err: error, friendshipId: result.friendship.id },
+          "Friend request acceptance push failed",
+        );
+      });
+    } else {
       void sendFriendRequestNotification(
         result.friendship.addresseeId,
         result.friendship.id,
@@ -68,10 +82,25 @@ async function friendsRoutes(fastify: FastifyInstance) {
   fastify.patch("/requests/:friendshipId", async (request, reply) => {
     const { friendshipId } = friendshipIdParamsSchema.parse(request.params);
     const input = friendRespondSchema.parse(request.body);
-
-    return reply.send(
-      await respondToFriendRequest(request.userId, friendshipId, input),
+    const friendship = await respondToFriendRequest(
+      request.userId,
+      friendshipId,
+      input,
     );
+
+    if (input.action === "accept") {
+      void sendFriendRequestAcceptedNotification(
+        friendship.requesterId,
+        friendship.id,
+      ).catch((error) => {
+        request.log.warn(
+          { err: error, friendshipId: friendship.id },
+          "Friend request acceptance push failed",
+        );
+      });
+    }
+
+    return reply.send(friendship);
   });
 
   fastify.delete("/:userId", async (request, reply) => {
@@ -136,8 +165,21 @@ async function friendsRoutes(fastify: FastifyInstance) {
   fastify.post("/media/:id/comments", async (request, reply) => {
     const { id } = userMediaIdParamsSchema.parse(request.params);
     const input = commentFormSchema.parse(request.body);
+    const result = await addComment(request.userId, id, input);
 
-    return reply.status(201).send(await addComment(request.userId, id, input));
+    if (result.recipientId !== request.userId) {
+      void sendMediaCommentNotification(
+        result.recipientId,
+        result.comment.userMediaId,
+      ).catch((error) => {
+        request.log.warn(
+          { err: error, userMediaId: result.comment.userMediaId },
+          "Media comment push failed",
+        );
+      });
+    }
+
+    return reply.status(201).send(result.comment);
   });
 
   fastify.delete("/comments/:commentId", async (request, reply) => {

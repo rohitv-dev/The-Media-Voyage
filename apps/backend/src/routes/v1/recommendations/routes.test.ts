@@ -9,12 +9,16 @@ const {
   getSystemRecommendationPreviewMock,
   requireAuthMock,
   sendFriendRecommendationNotificationMock,
+  sendFriendRecommendationResponseNotificationMock,
+  resolveRecommendationMock,
 } = vi.hoisted(() => ({
   createFriendRecommendationMock: vi.fn(),
   dismissSystemRecommendationMock: vi.fn(),
   getSystemRecommendationPreviewMock: vi.fn(),
   requireAuthMock: vi.fn(),
   sendFriendRecommendationNotificationMock: vi.fn(),
+  sendFriendRecommendationResponseNotificationMock: vi.fn(),
+  resolveRecommendationMock: vi.fn(),
 }));
 
 vi.mock("@/require-auth", () => ({
@@ -33,12 +37,14 @@ vi.mock("./queries", () => ({
 
 vi.mock("./service", () => ({
   createFriendRecommendation: createFriendRecommendationMock,
-  resolveRecommendation: vi.fn(),
+  resolveRecommendation: resolveRecommendationMock,
 }));
 
 vi.mock("@/services/pushNotifications", () => ({
   sendFriendRecommendationNotification:
     sendFriendRecommendationNotificationMock,
+  sendFriendRecommendationResponseNotification:
+    sendFriendRecommendationResponseNotificationMock,
 }));
 
 import recommendationRoutes from "./routes";
@@ -71,8 +77,45 @@ describe("recommendation routes", () => {
     dismissSystemRecommendationMock.mockReset();
     dismissSystemRecommendationMock.mockResolvedValue(undefined);
     createFriendRecommendationMock.mockReset();
+    resolveRecommendationMock.mockReset();
     sendFriendRecommendationNotificationMock.mockReset();
+    sendFriendRecommendationResponseNotificationMock.mockReset();
     sendFriendRecommendationNotificationMock.mockResolvedValue(undefined);
+    sendFriendRecommendationResponseNotificationMock.mockResolvedValue(
+      undefined,
+    );
+  });
+
+  it("sends a push after resolving a friend recommendation", async () => {
+    const recommendationId = "123e4567-e89b-12d3-a456-426614174001";
+    const responseBody = {
+      id: recommendationId,
+      status: "resolved",
+      outcome: "added_to_library",
+      recipientUserMediaId: null,
+      recipientUserMediaCreated: false,
+    };
+    resolveRecommendationMock.mockResolvedValue({
+      response: responseBody,
+      recipientId: "sender-1",
+    });
+    const app = await buildApp();
+
+    try {
+      const response = await app.inject({
+        method: "PATCH",
+        url: `/api/v1/recommendations/${recommendationId}/resolve`,
+        payload: { outcome: "added_to_library" },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual(responseBody);
+      expect(
+        sendFriendRecommendationResponseNotificationMock,
+      ).toHaveBeenCalledWith("sender-1", recommendationId, "added_to_library");
+    } finally {
+      await app.close();
+    }
   });
 
   it("sends a push after creating a friend recommendation", async () => {

@@ -1,4 +1,4 @@
-import { user } from "@media-voyage/shared";
+import { recommendationOutcomeEnum, user } from "@media-voyage/shared";
 import { getApps, applicationDefault, initializeApp } from "firebase-admin/app";
 import { getMessaging } from "firebase-admin/messaging";
 import { and, eq } from "drizzle-orm";
@@ -33,6 +33,15 @@ type PushMessage = {
   title: string;
   body: string;
   data: Record<string, string>;
+};
+
+type RecommendationOutcome =
+  (typeof recommendationOutcomeEnum.enumValues)[number];
+
+const recommendationResponseMessages: Record<RecommendationOutcome, string> = {
+  added_to_library: "Your friend added your recommendation to their library.",
+  already_completed: "Your friend already completed your recommendation.",
+  not_interested: "Your friend wasn't interested in your recommendation.",
 };
 
 async function sendPushNotification(recipientId: string, message: PushMessage) {
@@ -88,6 +97,49 @@ export function sendFriendRequestNotification(
     data: {
       type: "friend_request",
       friendshipId,
+    },
+  });
+}
+
+export function sendFriendRequestAcceptedNotification(
+  recipientId: string,
+  friendshipId: string,
+) {
+  return sendPushNotification(recipientId, {
+    title: "Friend request accepted",
+    body: "Your friend request was accepted.",
+    data: {
+      type: "friend_request_accepted",
+      friendshipId,
+    },
+  });
+}
+
+export function sendFriendRecommendationResponseNotification(
+  recipientId: string,
+  recommendationId: string,
+  outcome: RecommendationOutcome,
+) {
+  return sendPushNotification(recipientId, {
+    title: "Recommendation update",
+    body: recommendationResponseMessages[outcome],
+    data: {
+      type: "friend_recommendation_response",
+      recommendationId,
+    },
+  });
+}
+
+export function sendMediaCommentNotification(
+  recipientId: string,
+  userMediaId: string,
+) {
+  return sendPushNotification(recipientId, {
+    title: "New comment",
+    body: "Someone commented on your media.",
+    data: {
+      type: "media_comment",
+      userMediaId,
     },
   });
 }
