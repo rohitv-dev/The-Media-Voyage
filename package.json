@@ -24,6 +24,6 @@
     "frontend:cap:open": "pnpm --filter @media-voyage/frontend exec cap open android"
   },
   "devDependencies": {
-    "prettier": "^3.8.1"
+    "prettier": "^3.9.6"
   }
 }
