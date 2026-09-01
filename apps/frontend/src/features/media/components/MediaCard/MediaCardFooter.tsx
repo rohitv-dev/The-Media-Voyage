@@ -27,6 +27,7 @@ export function MediaCardFooter({
           <Button
             size="xs"
             onClick={(event) => {
+              event.preventDefault();
               event.stopPropagation();
               onEdit(media.id);
             }}

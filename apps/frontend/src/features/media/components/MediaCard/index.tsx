@@ -6,7 +6,7 @@ import { Card, Stack } from "@mantine/core";
 import type { MediaRecord } from "@media-voyage/shared/api";
 import { motion } from "motion/react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
-import type { KeyboardEvent, ReactNode } from "react";
+import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 import { useState } from "react";
 import { MediaCoverArtFocusModal } from "../MediaCoverArtFocusModal";
 import { MediaCardContent } from "./MediaCardContent";
@@ -16,6 +16,7 @@ import { MediaCardQuickActions } from "./MediaCardQuickActions";
 
 interface MediaCardBaseProps {
   onView?: (id: string) => void;
+  viewHref?: string;
   /** Replaces the Edit button — used for social counts on friends' entries. */
   footerRight?: ReactNode;
 }
@@ -47,37 +48,61 @@ function MediaCardPresentation({
   onView,
   onEdit,
   footerRight,
+  viewHref,
   quickActions,
   coverEditorOpen,
   coverArtSize,
 }: MediaCardPresentationProps) {
   const reduceMotion = useAppReducedMotion();
   const [showCoverArt] = useCoverArtPreference();
+  const href = viewHref ?? (onView ? `/media/view/${media.id}` : undefined);
 
   const openMedia = () => {
     if (coverEditorOpen) return;
     onView?.(media.id);
   };
 
-  const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+  const handleCardKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (event.target !== event.currentTarget) return;
 
-    if (event.key === "Enter" || event.key === " ") {
+    if (event.key === " " || (!href && event.key === "Enter")) {
       event.preventDefault();
       openMedia();
     }
   };
 
+  const handleCardClick = (event: MouseEvent<HTMLElement>) => {
+    if (!href) {
+      openMedia();
+      return;
+    }
+
+    if (
+      !onView ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    openMedia();
+  };
+
   return (
     <Card
-      component={motion.div}
+      component={motion.a}
       className="media-card"
       withBorder
       h="100%"
       initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }}
       animate={reduceMotion ? undefined : { opacity: 1, scale: 1 }}
-      role={onView ? "link" : undefined}
-      tabIndex={onView ? 0 : undefined}
+      href={href}
+      role={!href && onView ? "link" : undefined}
+      tabIndex={!href && onView ? 0 : undefined}
       whileHover={
         reduceMotion
           ? undefined
@@ -88,12 +113,14 @@ function MediaCardPresentation({
             }
       }
       transition={{ type: "spring", stiffness: 350, damping: 25 }}
-      onClick={openMedia}
+      onClick={handleCardClick}
       onKeyDown={handleCardKeyDown}
       p={{ base: "sm", sm: "md" }}
       style={{
         cursor: onView ? "pointer" : undefined,
+        color: href ? "inherit" : undefined,
         position: "relative",
+        textDecoration: href ? "none" : undefined,
       }}
     >
       {showCoverArt && (
@@ -129,6 +156,7 @@ function EditableMediaCard({
   onView,
   onEdit,
   footerRight,
+  viewHref,
   coverArtSize,
 }: MediaCardBaseProps & {
   media: MediaRecord;
@@ -146,6 +174,7 @@ function EditableMediaCard({
         onView={onView}
         onEdit={onEdit}
         footerRight={footerRight}
+        viewHref={viewHref}
         quickActions={
           <MediaCardQuickActions
             media={media}
@@ -182,6 +211,7 @@ export function MediaCard(props: MediaCardProps) {
         media={props.media}
         onView={props.onView}
         footerRight={props.footerRight}
+        viewHref={props.viewHref}
         coverArtSize={coverArtSize}
       />
     );

@@ -14,7 +14,7 @@ import {
 } from "@mantine/core";
 import type { MediaRecord } from "@media-voyage/shared/api";
 import { IconHeartFilled } from "@tabler/icons-react";
-import type { KeyboardEvent } from "react";
+import type { KeyboardEvent, MouseEvent } from "react";
 import { useState } from "react";
 import { getStatusColor, getTypeIcon } from "../display";
 import { MediaCoverArtFocusModal } from "./MediaCoverArtFocusModal";
@@ -41,31 +41,49 @@ export function MobileMediaCard({
     if (!coverEditorOpen) onView?.(media.id);
   };
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+  const handleKeyDown = (event: KeyboardEvent<HTMLAnchorElement>) => {
     if (event.target !== event.currentTarget) return;
 
-    if (event.key === "Enter" || event.key === " ") {
+    if (event.key === " ") {
       event.preventDefault();
       openMedia();
     }
   };
 
+  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (
+      !onView ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    openMedia();
+  };
+
   return (
     <>
       <Card
+        component="a"
         className="media-card"
         withBorder
         radius="lg"
         h={136}
         p="sm"
-        role={onView ? "link" : undefined}
-        tabIndex={onView ? 0 : undefined}
-        onClick={openMedia}
+        href={`/media/view/${media.id}`}
+        onClick={handleClick}
         onKeyDown={handleKeyDown}
         style={{
           cursor: onView ? "pointer" : undefined,
+          color: "inherit",
           overflow: "hidden",
           position: "relative",
+          textDecoration: "none",
         }}
       >
         <Flex h="100%" gap="md" wrap="nowrap">

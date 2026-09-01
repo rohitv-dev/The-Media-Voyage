@@ -11,7 +11,7 @@ import {
 import type { MediaRecord } from "@media-voyage/shared/api";
 import { IconPhotoOff } from "@tabler/icons-react";
 import { motion } from "motion/react";
-import type { KeyboardEvent } from "react";
+import type { KeyboardEvent, MouseEvent } from "react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { useCoverArtPreference } from "#/features/media/hooks/useCoverArtPreference";
 import { getStatusColor, getTypeIcon } from "../display";
@@ -28,22 +28,37 @@ export function ContinueMediaCard({ media, onView }: ContinueMediaCardProps) {
   const hasImage = !!media.imageUrl;
   const progress = media.progress;
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+  const handleKeyDown = (event: KeyboardEvent<HTMLAnchorElement>) => {
     if (event.target !== event.currentTarget) return;
 
-    if (event.key === "Enter" || event.key === " ") {
+    if (event.key === " ") {
       event.preventDefault();
       onView(media.id);
     }
   };
 
+  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    onView(media.id);
+  };
+
   return (
     <Card
-      component={motion.div}
+      component={motion.a}
+      className="continue-media-card"
       withBorder
       p="xs"
-      role="link"
-      tabIndex={0}
+      href={`/media/view/${media.id}`}
       aria-label={`Resume ${media.title}`}
       whileHover={
         reduceMotion
@@ -51,9 +66,13 @@ export function ContinueMediaCard({ media, onView }: ContinueMediaCardProps) {
           : { y: -3, boxShadow: "0 10px 24px rgba(0,0,0,0.12)" }
       }
       transition={{ type: "spring", stiffness: 350, damping: 25 }}
-      onClick={() => onView(media.id)}
+      onClick={handleClick}
       onKeyDown={handleKeyDown}
-      style={{ cursor: "pointer" }}
+      style={{
+        color: "inherit",
+        cursor: "pointer",
+        textDecoration: "none",
+      }}
     >
       <Group gap="sm" wrap="nowrap" align="stretch">
         {showCoverArt && (

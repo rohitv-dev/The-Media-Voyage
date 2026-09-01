@@ -63,6 +63,7 @@ export function FriendMediaGrid({
               media={record}
               readOnly
               footerRight={<SocialCounts record={record} />}
+              viewHref={`/friends/media/${record.id}`}
               onView={(id) =>
                 navigate({
                   to: "/friends/media/$id",

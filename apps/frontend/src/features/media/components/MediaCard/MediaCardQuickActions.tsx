@@ -49,7 +49,10 @@ export function MediaCardQuickActions({
           aria-label={`Quick actions for ${media.title}`}
           loading={isPending}
           disabled={isPending}
-          onClick={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          }}
         >
           <IconDotsVertical size={17} />
         </ActionIcon>
