@@ -41,7 +41,7 @@ import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { useCoverArtSizePreference } from "#/features/media/hooks/useCoverArtSizePreference";
 import { useTagColorMap } from "#/features/named-entities/queries";
 import { MediaCoverArtFocusModal } from "../MediaCoverArtFocusModal";
-import { accentText, defaultBorder } from "./constants";
+import { accentText } from "./constants";
 import type { MediaViewData } from "./index";
 import { getProgress } from "./utils";
 import { getImageObjectPosition } from "../../imageFocus";
@@ -187,7 +187,6 @@ export function MediaViewHero({
           style={{
             position: "relative",
             overflow: "hidden",
-            borderColor: defaultBorder,
           }}
         >
           <Grid

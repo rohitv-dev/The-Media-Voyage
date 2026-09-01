@@ -10,7 +10,6 @@ import { IconNotebook, IconQuote } from "@tabler/icons-react";
 import { motion } from "motion/react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import type { ReactNode } from "react";
-import { defaultBorder } from "./constants";
 import type { MediaViewData } from "./index";
 
 function ReadingPanel({
@@ -32,12 +31,7 @@ function ReadingPanel({
       transition={{ duration: 0.25, delay: 0.12 }}
       style={{ height: "100%" }}
     >
-      <Paper
-        withBorder
-        p={{ base: "md", sm: "lg" }}
-        h="100%"
-        style={{ borderColor: defaultBorder }}
-      >
+      <Paper withBorder p={{ base: "md", sm: "lg" }} h="100%">
         <Group gap="xs" mb="md">
           <ThemeIcon variant="light" c="primary" size={30} radius="sm">
             {icon}

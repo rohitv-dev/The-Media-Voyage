@@ -39,6 +39,8 @@ interface ThemeDef {
   surface: string;
   /** Primary text colour. */
   text: string;
+  /** Optional dimmed text colour when the page ground needs extra contrast. */
+  dimmed?: string;
   /** Font stack for headings + body. Web-safe stacks: zero downloads. */
   fontHeading: string;
   fontBody: string;
@@ -110,6 +112,7 @@ export const THEMES: Record<ThemeId, ThemeDef> = {
     bg: "#f4efe3",
     surface: "#fbf8f1",
     text: "#2c2620",
+    dimmed: "#6b6763",
     fontHeading: BOOK_SERIF,
     fontBody: BOOK_SERIF,
     fontMono: MONO,
@@ -170,6 +173,7 @@ export const THEMES: Record<ThemeId, ThemeDef> = {
     bg: "#e8eaed",
     surface: "#ffffff",
     text: "#23262b",
+    dimmed: "#65676b",
     fontHeading: SANS,
     fontBody: SANS,
     fontMono: MONO,
@@ -305,7 +309,7 @@ function grayTuple(def: ThemeDef): MantineColorsTuple {
     mix(WHITE, text, 0.24),
     mix(WHITE, text, 0.38),
     mix(WHITE, text, 0.52),
-    mix(WHITE, text, 0.66),
+    def.dimmed ?? mix(WHITE, text, 0.66), // 6 — dimmed text against the ground
     mix(WHITE, text, 0.78),
     mix(WHITE, text, 0.88),
     text,

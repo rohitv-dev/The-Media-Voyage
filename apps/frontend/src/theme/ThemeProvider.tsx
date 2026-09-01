@@ -3,7 +3,7 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
 } from "react";
@@ -22,8 +22,14 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 /** Read the saved theme once, synchronously, so the first paint is correct. */
 function readInitialTheme(): ThemeId {
   if (typeof window === "undefined") return DEFAULT_THEME;
-  const saved = window.localStorage.getItem(STORAGE_KEY);
-  return saved && saved in THEMES ? (saved as ThemeId) : DEFAULT_THEME;
+  try {
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    return saved && Object.prototype.hasOwnProperty.call(THEMES, saved)
+      ? (saved as ThemeId)
+      : DEFAULT_THEME;
+  } catch {
+    return DEFAULT_THEME;
+  }
 }
 
 export function AppThemeProvider({ children }: { children: React.ReactNode }) {
@@ -43,7 +49,7 @@ export function AppThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Keep the raw page background in sync with the active theme so there's no
   // mismatch behind the app shell (and no flash on route transitions).
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = document.documentElement;
     root.style.setProperty("--app-bg", def.bg);
     root.style.colorScheme = def.scheme;

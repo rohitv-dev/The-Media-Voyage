@@ -2,7 +2,7 @@ import { Button, Group, Paper, Text, ThemeIcon } from "@mantine/core";
 import { IconHistory } from "@tabler/icons-react";
 import { useState } from "react";
 import { StatusHistoryModal } from "../StatusHistoryModal";
-import { accentText, defaultBorder } from "./constants";
+import { accentText } from "./constants";
 
 type MediaViewStatusHistoryProps = {
   mediaId: string;
@@ -19,7 +19,7 @@ export function MediaViewStatusHistory({
 
   return (
     <>
-      <Paper withBorder p="sm" style={{ borderColor: defaultBorder }}>
+      <Paper withBorder p="sm">
         <Group justify="space-between" gap="md" wrap="wrap">
           <Group gap="xs">
             <ThemeIcon variant="light" c="primary" size={30} radius="sm">

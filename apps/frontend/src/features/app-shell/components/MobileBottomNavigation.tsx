@@ -132,6 +132,7 @@ export function MobileBottomNavigation({
     <Box
       component="nav"
       aria-label="Primary navigation"
+      className="mobile-bottom-navigation"
       hiddenFrom="sm"
       pos="fixed"
       bg="var(--mantine-color-default)"

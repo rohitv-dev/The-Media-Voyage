@@ -106,7 +106,7 @@
   .mantine-AppShell-header {
     box-shadow:
       0 1px 3px var(--neu-cast),
-      0 5px 16px var(--neu-cast-soft);
+      0 5px 16px var(--neu-cast-soft) !important;
   }
 
   // The sidebar paints above the header (Mantine gives it the higher z-index),
@@ -118,6 +118,34 @@
     box-shadow:
       2px 2px 3px -1px var(--neu-cast),
       5px 6px 14px -4px var(--neu-cast-soft);
+  }
+
+  // The phone dock is outside Mantine's AppShell, so give it the same
+  // theme-aware cast instead of its generic inline shadow.
+  .mobile-bottom-navigation {
+    border-top-color: transparent !important;
+    box-shadow:
+      0 -1px 3px var(--neu-cast),
+      0 -6px 16px var(--neu-cast-soft) !important;
+  }
+
+  // These cards animate an inline hover shadow; keep Clay's relief language
+  // when motion raises them instead of falling back to opaque black shadows.
+  .media-card:hover {
+    box-shadow:
+      1px 2px 4px var(--neu-cast),
+      3px 8px 18px var(--neu-cast-soft) !important;
+  }
+
+  .continue-media-card:hover {
+    box-shadow: var(--neu-out) !important;
+  }
+
+  // The mobile drawer sets its shadow inline to preserve the other themes.
+  .mantine-Drawer-content {
+    box-shadow:
+      var(--neu-out-sm),
+      0 14px 34px rgb(0 0 0 / 16%) !important;
   }
 
   // The selected nav item is pressed into the sidebar rather than tinted on top

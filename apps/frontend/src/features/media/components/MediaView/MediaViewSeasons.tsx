@@ -18,7 +18,6 @@ export function MediaViewSeasons({ data }: { data: MediaViewData }) {
       p="xs"
       style={{
         overflow: "hidden",
-        borderColor: defaultBorder,
       }}
     >
       <Group justify="space-between" px="md" py="sm">

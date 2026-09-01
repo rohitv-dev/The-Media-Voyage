@@ -35,8 +35,6 @@ import {
   setReaction,
 } from "../queries";
 
-const defaultBorder = "var(--mantine-color-default-border)";
-
 /** Comma-joined names, with the viewer rendered as "You" and listed first. */
 function reactorNames(reactions: ReactionRecord[], viewerId?: string) {
   return reactions
@@ -130,11 +128,7 @@ export function SocialPanel({
     authorId === viewerId || ownerId === viewerId;
 
   return (
-    <Paper
-      withBorder
-      p={{ base: "md", sm: "lg" }}
-      style={{ borderColor: defaultBorder }}
-    >
+    <Paper withBorder p={{ base: "md", sm: "lg" }}>
       <Stack gap="lg">
         <Stack gap="sm">
           <Group gap="xs">
