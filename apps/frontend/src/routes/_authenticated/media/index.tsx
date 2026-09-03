@@ -58,6 +58,8 @@ import { MediaAppliedFilters } from "#/features/media/components/MediaFilters/Me
 import { MediaTable } from "#/features/media/components/MediaTable";
 import { useFilterPresets } from "#/features/media/hooks/useFilterPresets";
 import { FilterPresetsMenu } from "#/features/media/components/MediaFilters/FilterPresetsMenu";
+import { useTutorial } from "#/features/tutorials/useTutorial";
+import { TutorialTrigger } from "#/features/tutorials/components/TutorialTrigger";
 
 type ViewType = "grid" | "table";
 
@@ -72,6 +74,7 @@ export const Route = createFileRoute("/_authenticated/media/")({
 
 function RouteComponent() {
   const search = Route.useSearch();
+  const libraryTutorial = useTutorial("library");
   const librarySearchOpenRequest = useLocation({
     select: (location) => location.state.librarySearchFocusRequest,
   });
@@ -289,6 +292,10 @@ function RouteComponent() {
           <Stack gap={2}>
             <Group gap="xs">
               <Title order={2}>Library</Title>
+              <TutorialTrigger
+                label="Start Library tutorial"
+                onClick={libraryTutorial.start}
+              />
               {isResultsFetching && !isFetchingNextPage && <Loader size="xs" />}
             </Group>
             <Text c="dimmed" size="sm">
@@ -297,7 +304,11 @@ function RouteComponent() {
             </Text>
           </Stack>
 
-          <Group gap="xs" w={{ base: "100%", sm: "auto" }}>
+          <Group
+            gap="xs"
+            w={{ base: "100%", sm: "auto" }}
+            data-tutorial="library-core-controls"
+          >
             {!isMobile && (
               <SegmentedControl
                 size="xs"
@@ -330,6 +341,7 @@ function RouteComponent() {
             <Box
               flex={{ base: "1 1 calc(50% - 4px)", sm: "0 0 auto" }}
               order={{ base: 3, sm: 1 }}
+              data-tutorial="library-pick-for-me"
             >
               <Button
                 size="xs"
@@ -344,6 +356,7 @@ function RouteComponent() {
             <Box
               flex={{ base: "1 1 calc(50% - 4px)", sm: "0 0 auto" }}
               order={{ base: 4, sm: 2 }}
+              data-tutorial="library-presets"
             >
               <FilterPresetsMenu
                 presets={presets}
@@ -356,6 +369,7 @@ function RouteComponent() {
             <Box
               flex={{ base: "1 1 calc(50% - 4px)", sm: "0 0 auto" }}
               order={{ base: 2, sm: 3 }}
+              data-tutorial="library-describe"
             >
               <Button
                 size="xs"

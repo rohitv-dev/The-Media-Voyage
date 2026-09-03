@@ -187,7 +187,7 @@ export function MediaTitleSelect(props: MediaTitleSelectProps) {
   ));
 
   return (
-    <Stack gap={4}>
+    <Stack gap={4} data-tutorial="media-title-selector">
       <Combobox
         store={combobox}
         withinPortal

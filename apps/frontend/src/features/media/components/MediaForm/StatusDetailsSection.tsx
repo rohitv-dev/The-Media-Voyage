@@ -23,7 +23,13 @@ export function StatusDetailsSection({
 
   return (
     <Grid.Col span={{ xs: 12, md: 5 }}>
-      <Card withBorder shadow="sm" p={{ base: "md", md: "lg" }} h="100%">
+      <Card
+        withBorder
+        shadow="sm"
+        p={{ base: "md", md: "lg" }}
+        h="100%"
+        data-tutorial="media-progress-status"
+      >
         <Stack gap="md">
           <SectionHeading
             icon={<IconChartBar size={20} stroke={2} />}

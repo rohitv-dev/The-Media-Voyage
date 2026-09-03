@@ -51,6 +51,7 @@ export function MediaDetailsSection({
               placeholder="Select media type"
               variant="filled"
               data={mediaTypeOptions}
+              data-tutorial="media-type-selector"
               readOnly={!isAddMode}
               rightSection={
                 !isAddMode ? (

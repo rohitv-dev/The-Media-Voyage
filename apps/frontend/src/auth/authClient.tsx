@@ -13,6 +13,7 @@ export const authClient = createAuthClient({
         defaultVisibility: { type: "string", required: false },
         publicId: { type: "string", required: false },
         deviceToken: { type: "string", required: false },
+        tutorialProgress: { type: "json", required: false },
       },
     }),
   ],

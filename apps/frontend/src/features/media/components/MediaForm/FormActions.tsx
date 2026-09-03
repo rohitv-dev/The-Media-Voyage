@@ -59,6 +59,7 @@ export function MobileFormActions({
           size="sm"
           leftSection={<IconCheck size={17} />}
           loading={isPending}
+          data-tutorial="media-save-mobile"
         >
           {mode === "add" ? "Save Media" : "Update Media"}
         </Button>
@@ -111,6 +112,7 @@ export function FormActions({
             type="submit"
             leftSection={<IconCheck size={18} />}
             loading={isPending}
+            data-tutorial="media-save-desktop"
           >
             {mode === "add" ? "Save Media" : "Update Media"}
           </Button>

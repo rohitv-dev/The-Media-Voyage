@@ -37,6 +37,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
 });
 
 function RouteComponent() {
+  const navigate = Route.useNavigate();
   const { data } = authClient.useSession();
   const [showCoverArt, setShowCoverArt] = useCoverArtPreference();
   const [coverArtSize, setCoverArtSize] = useCoverArtSizePreference();
@@ -208,6 +209,31 @@ function RouteComponent() {
               onChange={(event) => setReduceMotion(event.currentTarget.checked)}
               aria-label="Reduce motion"
             />
+          </SettingRow>
+        </SettingsSection>
+
+        <SettingsSection
+          title="Tutorials"
+          description="Replay the orientation for the main parts of the app."
+        >
+          <SettingRow
+            title="Replay app tour"
+            description="Open Dashboard and replay the initial orientation."
+          >
+            <Button
+              variant="light"
+              onClick={() =>
+                void navigate({
+                  to: "/dashboard",
+                  state: (previous) => ({
+                    ...previous,
+                    tutorialReplayRequest: { tutorialId: "app-orientation" },
+                  }),
+                })
+              }
+            >
+              Replay app tour
+            </Button>
           </SettingRow>
         </SettingsSection>
 

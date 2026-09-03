@@ -1,15 +1,21 @@
 import type { ReactNode } from "react";
-import { Box, Card, Checkbox, Flex, Grid, Stack } from "@mantine/core";
+import { Box, Card, Checkbox, Flex, Grid, Group, Stack } from "@mantine/core";
 import { IconMovie } from "@tabler/icons-react";
 import { useFormContext } from "./context";
 import { SectionHeading } from "#/components/SectionHeading";
+import { TutorialTrigger } from "#/features/tutorials/components/TutorialTrigger";
 
 type FormHeaderProps = {
   mode: "add" | "update";
   mobileActions?: ReactNode;
+  onStartTutorial?: () => void;
 };
 
-export function FormHeader({ mode, mobileActions }: FormHeaderProps) {
+export function FormHeader({
+  mode,
+  mobileActions,
+  onStartTutorial,
+}: FormHeaderProps) {
   const form = useFormContext();
   const isAddMode = mode === "add";
 
@@ -23,19 +29,27 @@ export function FormHeader({ mode, mobileActions }: FormHeaderProps) {
             justify="space-between"
             gap={{ base: "md", sm: "lg" }}
           >
-            <SectionHeading
-              icon={<IconMovie size={24} stroke={2} />}
-              title={
-                isAddMode
-                  ? "Add Media to Your Collection"
-                  : "Update Media Details"
-              }
-              description={
-                isAddMode
-                  ? "Track movies, shows, books, and games and keep notes on your journey"
-                  : "Update your media entry and keep your collection current"
-              }
-            />
+            <Group gap="xs" wrap="nowrap">
+              <SectionHeading
+                icon={<IconMovie size={24} stroke={2} />}
+                title={
+                  isAddMode
+                    ? "Add Media to Your Collection"
+                    : "Update Media Details"
+                }
+                description={
+                  isAddMode
+                    ? "Track movies, shows, books, and games and keep notes on your journey"
+                    : "Update your media entry and keep your collection current"
+                }
+              />
+              {onStartTutorial && (
+                <TutorialTrigger
+                  label="Start media form tutorial"
+                  onClick={onStartTutorial}
+                />
+              )}
+            </Group>
 
             <Checkbox
               label="Mark as Favorite ⭐"

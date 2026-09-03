@@ -181,7 +181,7 @@ export function AuthenticatedHeader({
         </Group>
 
         <Group gap="xs" wrap="nowrap" style={{ flexShrink: 0 }}>
-          <Box visibleFrom="lg">
+          <Box visibleFrom="lg" data-tutorial="dashboard-search-wide">
             <Button
               variant="default"
               size="sm"
@@ -192,7 +192,7 @@ export function AuthenticatedHeader({
               Search or jump
             </Button>
           </Box>
-          <Box hiddenFrom="lg">
+          <Box hiddenFrom="lg" data-tutorial="dashboard-search-compact">
             <Tooltip label="Search or jump" withArrow>
               <ActionIcon
                 variant="subtle"
@@ -232,7 +232,11 @@ export function AuthenticatedHeader({
           <Box visibleFrom="sm">
             <ThemeSwitcher />
           </Box>
-          <Box visibleFrom="sm" hiddenFrom="md">
+          <Box
+            visibleFrom="sm"
+            hiddenFrom="md"
+            data-tutorial="dashboard-add-media-compact"
+          >
             <Tooltip label="Add media" withArrow>
               <ActionIcon
                 variant="subtle"
@@ -250,6 +254,7 @@ export function AuthenticatedHeader({
             size="sm"
             leftSection={<IconPlus size={16} />}
             onClick={onAddMedia}
+            data-tutorial="dashboard-add-media-wide"
           >
             Add Media
           </Button>

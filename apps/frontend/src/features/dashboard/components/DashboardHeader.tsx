@@ -2,16 +2,33 @@ import { Button, Group, Text, Title } from "@mantine/core";
 import { motion } from "motion/react";
 import { fadeUpVariants } from "#/theme/motion";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
+import { TutorialTrigger } from "#/features/tutorials/components/TutorialTrigger";
 
-export function DashboardHeader() {
+export function DashboardHeader({
+  onStartTutorial,
+}: {
+  onStartTutorial?: () => void;
+}) {
   const reduceMotion = useAppReducedMotion();
 
   return (
     <>
       <motion.div variants={fadeUpVariants(reduceMotion)}>
-        <Title order={2} fz={{ base: "h3", sm: "h1" }}>
-          Dashboard
-        </Title>
+        <Group gap="xs" align="center">
+          <Title
+            order={2}
+            fz={{ base: "h3", sm: "h1" }}
+            data-tutorial="dashboard-overview"
+          >
+            Dashboard
+          </Title>
+          {onStartTutorial && (
+            <TutorialTrigger
+              label="Start Dashboard tutorial"
+              onClick={onStartTutorial}
+            />
+          )}
+        </Group>
       </motion.div>
 
       <motion.div variants={fadeUpVariants(reduceMotion)}>

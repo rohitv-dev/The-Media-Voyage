@@ -826,6 +826,10 @@ export const user = pgTable("user", {
     .notNull(),
   // ponytail: one token per user; use a push_devices table for multi-device delivery.
   deviceToken: text("device_token"),
+  tutorialProgress: jsonb("tutorial_progress")
+    .$type<Record<string, number>>()
+    .default({})
+    .notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

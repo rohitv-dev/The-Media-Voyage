@@ -126,6 +126,7 @@ export function SeasonsProgressField({
               leftSection={<IconRefresh size={14} />}
               loading={isLoading}
               onClick={onSync}
+              data-tutorial="show-sync-seasons"
             >
               Sync seasons
             </Button>
@@ -136,6 +137,7 @@ export function SeasonsProgressField({
             size="xs"
             disabled={isLoading}
             onClick={open}
+            data-tutorial="show-manage-seasons"
           >
             Manage Seasons
           </Button>

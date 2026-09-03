@@ -1,4 +1,8 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  useLocation,
+  useNavigate,
+} from "@tanstack/react-router";
 import { Container, Stack } from "@mantine/core";
 import { motion } from "motion/react";
 import { useMediaQuery } from "@mantine/hooks";
@@ -20,6 +24,8 @@ import { DashboardOverview } from "#/features/dashboard/components/DashboardOver
 import { DashboardTrending } from "#/features/dashboard/components/DashboardTrending";
 import type { UserMediaQuerySchema } from "@media-voyage/shared/api";
 import type { MediaType, Status } from "@media-voyage/shared/userMediaSchema";
+import { useTutorial } from "#/features/tutorials/useTutorial";
+import { useEffect, useRef } from "react";
 
 function statusFilters(status: Status): UserMediaQuerySchema {
   return { status: [status], sort: "updatedAt", order: "desc" };
@@ -48,6 +54,16 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function RouteComponent() {
   const navigate = useNavigate();
+  const replayRequest = useLocation({
+    select: (location) => location.state.tutorialReplayRequest,
+  });
+  const replayRequestedRef = useRef(
+    replayRequest?.tutorialId === "app-orientation",
+  );
+  const replayHandledRef = useRef(false);
+  const { start: startAppTutorial } = useTutorial("app-orientation", {
+    enabled: !replayRequestedRef.current,
+  });
   const { data } = useSuspenseQuery(dashboardStatOptions);
   const { data: continueData } = useSuspenseQuery(continueMediaQueryOptions);
   const { data: trendingData } = useQuery(dashboardTrendingOptions);
@@ -57,6 +73,27 @@ function RouteComponent() {
   const barChartHeight = isMobile ? 220 : 320;
   const sectionScrollMargin =
     "calc(var(--app-shell-header-height) + var(--mantine-spacing-md))";
+
+  useEffect(() => {
+    if (
+      !replayRequestedRef.current ||
+      replayHandledRef.current ||
+      replayRequest?.tutorialId !== "app-orientation"
+    ) {
+      return;
+    }
+
+    replayHandledRef.current = true;
+    void navigate({
+      to: "/dashboard",
+      replace: true,
+      state: (previous) => ({
+        ...previous,
+        tutorialReplayRequest: undefined,
+      }),
+    });
+    startAppTutorial();
+  }, [navigate, replayRequest, startAppTutorial]);
 
   const goToLibrary = (search?: UserMediaQuerySchema) =>
     navigate({ to: "/media", search });
@@ -82,7 +119,7 @@ function RouteComponent() {
         animate="visible"
       >
         <Stack gap="md">
-          <DashboardHeader />
+          <DashboardHeader onStartTutorial={startAppTutorial} />
 
           <motion.div
             id="overview"

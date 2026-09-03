@@ -56,6 +56,7 @@ import {
   normalizeProgress,
   normalizeTimeSpent,
 } from "./formUtils";
+import { useTutorial } from "#/features/tutorials/useTutorial";
 
 const addInitialValues: UserMediaFormSchema = {
   title: "",
@@ -234,6 +235,17 @@ export function MediaForm(props: MediaFormProps) {
   });
 
   const catalogMetadataForTimeSpent = form.values.metadata ?? undefined;
+  const canSyncSeasons =
+    !isAddMode &&
+    props.catalogSource === "tmdb_tv" &&
+    props.catalogExternalId !== null;
+  const addMediaTutorial = useTutorial("add-media", {
+    enabled: isAddMode,
+  });
+  const showSeasonsTutorial = useTutorial("show-seasons", {
+    enabled: form.values.type === "show",
+    canSync: canSyncSeasons,
+  });
 
   useUnsavedChangesBlocker(() => form.isDirty());
 
@@ -499,11 +511,6 @@ export function MediaForm(props: MediaFormProps) {
     }
   };
 
-  const canSyncSeasons =
-    !isAddMode &&
-    props.catalogSource === "tmdb_tv" &&
-    props.catalogExternalId !== null;
-
   const handleSyncSeasons = async () => {
     if (
       isAddMode ||
@@ -702,6 +709,11 @@ export function MediaForm(props: MediaFormProps) {
             <Grid gap="sm">
               <FormHeader
                 mode={mode}
+                onStartTutorial={() =>
+                  form.values.type === "show"
+                    ? showSeasonsTutorial.start()
+                    : addMediaTutorial.start()
+                }
                 mobileActions={
                   <MobileFormActions
                     mode={mode}

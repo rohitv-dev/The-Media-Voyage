@@ -118,6 +118,7 @@ export function AuthenticatedSidebar({
   return (
     <AppShell.Navbar
       p={0}
+      data-tutorial="dashboard-navigation-desktop"
       style={{
         borderRight: "1px solid var(--mantine-color-default-border)",
         background: "var(--mantine-color-body)",

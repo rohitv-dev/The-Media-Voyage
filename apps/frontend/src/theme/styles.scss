@@ -16,3 +16,62 @@ body {
   // fallback matches the default "Almanac" theme for the initial paint.
   background-color: var(--app-bg, #f4efe3);
 }
+
+.driver-popover {
+  --driver-popover-font-family: var(--mantine-font-family);
+  color: var(--mantine-color-text);
+  background-color: var(--mantine-color-body);
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-md);
+  box-shadow: var(--mantine-shadow-lg);
+}
+
+.driver-popover-title {
+  color: var(--mantine-color-text);
+  font-size: var(--mantine-font-size-md);
+}
+
+.driver-popover-description,
+.driver-popover-progress-text {
+  color: var(--mantine-color-dimmed);
+}
+
+.driver-popover-close-btn {
+  color: var(--mantine-color-dimmed);
+}
+
+.driver-popover-close-btn:hover,
+.driver-popover-close-btn:focus {
+  color: var(--mantine-color-text);
+}
+
+.driver-popover-footer-btn {
+  color: var(--mantine-primary-color-filled);
+  background-color: var(--mantine-color-body);
+  border-color: var(--mantine-color-default-border);
+}
+
+.driver-popover-footer-btn:hover,
+.driver-popover-footer-btn:focus {
+  background-color: var(--mantine-color-default-hover);
+}
+
+.driver-popover-arrow {
+  border-color: var(--mantine-color-body);
+}
+
+.driver-popover-arrow-side-left {
+  border-right-color: transparent;
+}
+
+.driver-popover-arrow-side-right {
+  border-left-color: transparent;
+}
+
+.driver-popover-arrow-side-top {
+  border-bottom-color: transparent;
+}
+
+.driver-popover-arrow-side-bottom {
+  border-top-color: transparent;
+}

@@ -5,6 +5,7 @@ import "@mantine/dates/styles.css";
 import "@mantine/schedule/styles.css";
 import "@mantine/notifications/styles.css";
 import "mantine-datatable/styles.css";
+import "driver.js/dist/driver.css";
 import "./theme/styles.scss";
 
 import ReactDOM from "react-dom/client";
@@ -52,6 +53,8 @@ declare module "@tanstack/react-router" {
 
   interface HistoryState {
     recommendationSelection?: SourceMediaRecord;
+    librarySearchFocusRequest?: number;
+    tutorialReplayRequest?: { tutorialId: "app-orientation" };
   }
 }
 

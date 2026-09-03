@@ -11,6 +11,8 @@ Media Voyage is a personal media-tracking app for keeping tabs on the movies, sh
 - Dashboard with library stats and quick actions
 - Activity calendar to see consumption history over time
 - Friends: follow other users, browse their libraries and collections, and copy items into your own library
+- Recommendations generated from your library, plus friend-to-friend recommendations with response tracking
+- In-app notifications for likes, comments, friend requests, and recommendation activity
 - Per-entry visibility with a configurable default, plus public read-only links for libraries, collections, and entries
 - Trash with restore or permanent deletion for soft-deleted entries
 - Tag and source management
@@ -18,6 +20,7 @@ Media Voyage is a personal media-tracking app for keeping tabs on the movies, sh
 - CSV export of your whole library
 - Semantic library search using catalog descriptions and provider terms
 - Appearance settings: multiple selectable themes, cover art toggle and size, reduced motion
+- Optional Android app via Capacitor with FCM integration for social activity
 
 ## Tech Stack
 
@@ -41,6 +44,8 @@ Media Voyage is a personal media-tracking app for keeping tabs on the movies, sh
    To preview catalog embeddings without loading the local model, run `pnpm embed-catalog-media -- --dry-run`. After reviewing the output, use `pnpm embed-catalog-media -- --apply` to download/cache MiniLM and generate missing or stale embeddings.
 
    When upgrading an existing semantic-search database, apply `packages/shared/drizzle/migrate_media_embeddings_to_minilm.sql` once before deploying the MiniLM backend. It clears only the old derived vectors, changes the column to 384 dimensions, and guarantees no 1536-dimensional vector remains. The backend Docker cache is `/app/.cache/transformers`; keep that path on persistent storage in Dokploy and ensure it is writable by UID/GID `1000:1000`.
+
+   To configure native Android push notifications, place the Firebase Android config at `apps/frontend/android/app/google-services.json` and set `GOOGLE_APPLICATION_CREDENTIALS` on the backend to the Firebase Admin service-account JSON path. Both JSON files are sensitive and must stay out of Git. FCM delivery is best-effort and should be verified on a real device after deployment.
 
 3. Push the database schema:
 

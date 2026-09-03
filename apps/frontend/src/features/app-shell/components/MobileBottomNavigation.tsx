@@ -58,6 +58,7 @@ function AddMediaButton({ active, onClick }: AddMediaButtonProps) {
     <UnstyledButton
       aria-current={active ? "page" : undefined}
       aria-label="Add"
+      data-tutorial="dashboard-add-media-mobile"
       c="accent"
       h={64}
       onClick={onClick}
@@ -133,6 +134,7 @@ export function MobileBottomNavigation({
       component="nav"
       aria-label="Primary navigation"
       className="mobile-bottom-navigation"
+      data-tutorial="dashboard-navigation-mobile"
       hiddenFrom="sm"
       pos="fixed"
       bg="var(--mantine-color-default)"

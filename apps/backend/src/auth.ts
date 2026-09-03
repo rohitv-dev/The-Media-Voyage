@@ -38,6 +38,11 @@ export const auth = betterAuth({
         required: false,
         returned: false,
       },
+      tutorialProgress: {
+        type: "json",
+        required: false,
+        defaultValue: {},
+      },
     },
   },
   baseURL: env.BETTER_AUTH_URL,
