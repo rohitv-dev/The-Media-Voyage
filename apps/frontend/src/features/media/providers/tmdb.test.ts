@@ -32,6 +32,7 @@ describe("TMDB frontend hydration", () => {
         source: "tmdb_movie",
         type: "movie",
         title: "Example Movie",
+        releaseDate: "2024-10-22",
         keywords: ["space travel", "wormhole"],
         seasons: [],
       }),
@@ -53,6 +54,7 @@ describe("TMDB frontend hydration", () => {
         keywords: ["space travel", "wormhole"],
         runtime: 45,
         catalogRating: 8.2,
+        releaseDate: "2024-10-22",
       },
     });
     expect(apiMock).toHaveBeenCalledWith("/media/tmdb/movie/100");

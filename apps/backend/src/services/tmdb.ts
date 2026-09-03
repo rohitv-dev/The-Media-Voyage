@@ -121,6 +121,10 @@ function releaseYear(date: string | null): number | null {
   return year && /^\d{4}$/.test(year) ? Number(year) : null;
 }
 
+function releaseDate(date: string | null): string | null {
+  return date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : null;
+}
+
 function movieRecord(
   result: z.infer<typeof tmdbMovieResultSchema>,
 ): TmdbMovieRecord {
@@ -361,9 +365,11 @@ export async function getTmdbDetails(
     if (parsed.data.adult) throw notFound("TMDB media not found");
 
     const keywords = keywordNames(parsed.data.keywords);
+    const normalizedReleaseDate = releaseDate(parsed.data.release_date);
 
     return {
       ...movieRecord(parsed.data),
+      ...(normalizedReleaseDate ? { releaseDate: normalizedReleaseDate } : {}),
       description: parsed.data.overview?.trim() || null,
       genres: parsed.data.genres.map((genre) => genre.name),
       ...(keywords ? { keywords } : {}),
@@ -381,6 +387,7 @@ export async function getTmdbDetails(
   if (parsed.data.adult) throw notFound("TMDB media not found");
 
   const keywords = keywordNames(parsed.data.keywords);
+  const normalizedReleaseDate = releaseDate(parsed.data.first_air_date);
 
   const seasons = parsed.data.seasons
     .filter((season) => season.season_number > 0 && season.episode_count > 0)
@@ -402,6 +409,7 @@ export async function getTmdbDetails(
 
   return {
     ...showRecord(parsed.data),
+    ...(normalizedReleaseDate ? { releaseDate: normalizedReleaseDate } : {}),
     description: parsed.data.overview?.trim() || null,
     genres: parsed.data.genres.map((genre) => genre.name),
     ...(keywords ? { keywords } : {}),

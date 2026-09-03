@@ -70,6 +70,7 @@ describe("getOpenLibraryDetails", () => {
               {
                 key: "/works/OL123W",
                 subject: ["Fantasy"],
+                first_publish_year: 1997,
                 number_of_pages_median: 412,
               },
             ],
@@ -80,11 +81,15 @@ describe("getOpenLibraryDetails", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(getOpenLibraryDetails("OL123W")).resolves.toEqual({
+      releaseDate: "1997-01-01",
       genres: ["Fantasy"],
       subjects: ["Fantasy"],
       numberOfPages: 412,
     });
 
+    expect(
+      new URL(String(fetchMock.mock.calls[1][0])).searchParams.get("fields"),
+    ).toContain("first_publish_year");
     expect(fetchMock.mock.calls[0][1]).toEqual({
       headers: { Accept: "application/json" },
     });

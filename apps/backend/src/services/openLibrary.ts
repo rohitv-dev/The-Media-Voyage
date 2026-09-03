@@ -14,6 +14,7 @@ const OPEN_LIBRARY_COVERS_URL = "https://covers.openlibrary.org";
 const SEARCH_FIELDS = [
   "key",
   "title",
+  "first_publish_year",
   "author_name",
   "cover_i",
   "number_of_pages_median",
@@ -31,8 +32,23 @@ const getOpenLibraryCoverUrl = (coverId: number | undefined): string | null => {
 const getOpenLibraryWorkId = (key: string): string =>
   key.replace(/^\/works\//, "");
 
+function formatReleaseDate(year: number | undefined): string | undefined {
+  if (
+    typeof year !== "number" ||
+    !Number.isInteger(year) ||
+    year < 1000 ||
+    year > 9999
+  ) {
+    return undefined;
+  }
+
+  // ponytail: Open Library supplies only a year; add precision metadata if exact dates matter.
+  return `${year}-01-01`;
+}
+
 export type OpenLibraryDetails = {
   description?: string;
+  releaseDate?: string;
   genres?: string[];
   subjects?: string[];
   numberOfPages?: number;
@@ -148,8 +164,10 @@ function toOpenLibraryDetails(
 ): OpenLibraryDetails | null {
   const genres = book?.subject ?? work?.subjects;
   const subjects = normalizeCatalogTerms(genres);
+  const releaseDate = formatReleaseDate(book?.first_publish_year);
   const details: OpenLibraryDetails = {
     description: getWorkDescription(work),
+    ...(releaseDate ? { releaseDate } : {}),
     ...(genres?.length ? { genres } : {}),
     ...(subjects ? { subjects } : {}),
     ...(book?.number_of_pages_median

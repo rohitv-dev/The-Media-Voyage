@@ -72,6 +72,7 @@ type IgdbNamedRecord = {
 type IgdbGameResponse = {
   id: number;
   name: string;
+  first_release_date?: number;
   cover?: IgdbRecord["cover"];
   summary?: string;
   genres?: { id: number; name: string }[];
@@ -82,11 +83,23 @@ type IgdbGameResponse = {
   player_perspectives?: IgdbNamedRecord[];
 };
 
+function formatReleaseDate(timestamp: number | undefined): string | undefined {
+  if (
+    timestamp === undefined ||
+    !Number.isFinite(timestamp) ||
+    timestamp <= 0
+  ) {
+    return undefined;
+  }
+
+  return new Date(timestamp * 1000).toISOString().slice(0, 10);
+}
+
 async function fetchGameById(
   externalId: string,
 ): Promise<IgdbGameResponse | null> {
   const data = await fetchIgdb<IgdbGameResponse[]>(`
-    fields id,name,cover.image_id,summary,genres.name,rating,themes.name,keywords.name,game_modes.name,player_perspectives.name;
+    fields id,name,first_release_date,cover.image_id,summary,genres.name,rating,themes.name,keywords.name,game_modes.name,player_perspectives.name;
     where id = ${Number(externalId)};
   `);
 
@@ -94,6 +107,7 @@ async function fetchGameById(
 }
 
 function toGameDetails(game: IgdbGameResponse): IgdbGame {
+  const releaseDate = formatReleaseDate(game.first_release_date);
   const themes = normalizeCatalogTerms(game.themes?.map((theme) => theme.name));
   const keywords = normalizeCatalogTerms(
     game.keywords?.map((keyword) => keyword.name),
@@ -108,6 +122,7 @@ function toGameDetails(game: IgdbGameResponse): IgdbGame {
   return {
     id: game.id,
     name: game.name,
+    ...(releaseDate ? { releaseDate } : {}),
     ...(game.summary !== undefined ? { summary: game.summary } : {}),
     ...(game.genres ? { genres: game.genres } : {}),
     ...(game.rating !== undefined ? { rating: game.rating } : {}),

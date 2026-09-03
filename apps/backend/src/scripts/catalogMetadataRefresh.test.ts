@@ -17,6 +17,7 @@ describe("catalog metadata refresh mappings", () => {
         title: "Dune",
         type: "movie",
         imageUrl: null,
+        releaseDate: "2024-10-22",
         description: "A desert epic.",
         genres: ["Adventure", "Drama"],
         keywords: ["space travel", "politics"],
@@ -31,6 +32,7 @@ describe("catalog metadata refresh mappings", () => {
         keywords: ["space travel", "politics"],
         runtime: 155,
         catalogRating: 8,
+        releaseDate: "2024-10-22",
       },
     });
   });
@@ -42,6 +44,7 @@ describe("catalog metadata refresh mappings", () => {
         name: "Game",
         summary: "An adventure.",
         genres: [{ id: 2, name: "RPG" }],
+        releaseDate: "2024-01-01",
         themes: ["Dark fantasy"],
         keywords: ["boss battles", "medieval"],
         gameModes: ["Single player"],
@@ -57,6 +60,7 @@ describe("catalog metadata refresh mappings", () => {
         gameModes: ["Single player"],
         playerPerspectives: ["Third person"],
         catalogRating: 8.9,
+        releaseDate: "2024-01-01",
       },
     });
   });
@@ -90,6 +94,7 @@ describe("catalog metadata refresh mappings", () => {
     expect(
       refreshOpenLibrary({
         description: "A book description.",
+        releaseDate: "1997-01-01",
         genres: ["Fantasy", "Adventure", "Magic", "Epic", "Fiction", "Ignored"],
         subjects: [
           "Fantasy",
@@ -114,6 +119,7 @@ describe("catalog metadata refresh mappings", () => {
           "Space opera",
         ],
         numberOfPages: 412,
+        releaseDate: "1997-01-01",
       },
     });
   });

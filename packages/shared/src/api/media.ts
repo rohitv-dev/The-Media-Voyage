@@ -37,6 +37,7 @@ export type IgdbResponse = IgdbRecord[];
 export type IgdbGame = {
   id: number;
   name: string;
+  releaseDate?: string;
   summary?: string;
   genres?: { id: number; name: string }[];
   themes?: string[];
@@ -53,6 +54,7 @@ export type OpenLibrarySearchResponse = {
 export type OpenLibrarySearchBook = {
   key: string;
   title: string;
+  first_publish_year?: number;
   author_name?: string[];
   cover_i?: number;
   number_of_pages_median?: number;
@@ -144,6 +146,7 @@ export interface TmdbMediaDetails extends SourceMediaRecord {
   source: TmdbMediaSource;
   externalId: string;
   type: TmdbMediaType;
+  releaseDate?: string | null;
   description: string | null;
   genres: string[];
   keywords?: string[];

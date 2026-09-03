@@ -154,6 +154,7 @@ describe("getGameDetails", () => {
           {
             id: 100,
             name: "Semantic Game",
+            first_release_date: 1704067200,
             summary: "An adventure.",
             genres: [{ id: 2, name: "RPG" }],
             rating: 89.4,
@@ -174,6 +175,7 @@ describe("getGameDetails", () => {
     await expect(getGameDetails("100")).resolves.toEqual({
       id: 100,
       name: "Semantic Game",
+      releaseDate: "2024-01-01",
       summary: "An adventure.",
       genres: [{ id: 2, name: "RPG" }],
       rating: 89.4,
@@ -188,6 +190,7 @@ describe("getGameDetails", () => {
     expect(request.body).toContain("keywords.name");
     expect(request.body).toContain("game_modes.name");
     expect(request.body).toContain("player_perspectives.name");
+    expect(request.body).toContain("first_release_date");
   });
 
   it("returns null when IGDB has no matching game", async () => {

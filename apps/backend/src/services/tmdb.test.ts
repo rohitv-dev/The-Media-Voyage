@@ -207,6 +207,7 @@ describe("TMDB service", () => {
         title: "A Detailed Movie",
         adult: false,
         poster_path: "/movie.jpg",
+        release_date: "2024-10-22",
         overview: "  A useful description.  ",
         genres: [{ name: "Drama" }, { name: "Mystery" }],
         keywords: {
@@ -229,7 +230,8 @@ describe("TMDB service", () => {
       title: "A Detailed Movie",
       type: "movie",
       imageUrl: "https://image.tmdb.org/t/p/w500/movie.jpg",
-      releaseYear: null,
+      releaseYear: 2024,
+      releaseDate: "2024-10-22",
       description: "A useful description.",
       genres: ["Drama", "Mystery"],
       keywords: ["space travel", "wormhole"],

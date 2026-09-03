@@ -35,6 +35,7 @@ export async function hydrateTmdb(
   if (details.catalogRating !== null) {
     metadata.catalogRating = details.catalogRating;
   }
+  if (details.releaseDate) metadata.releaseDate = details.releaseDate;
 
   const now = new Date().toISOString();
   const seasonsProgress: SeasonProgressEntry[] = details.seasons.map(

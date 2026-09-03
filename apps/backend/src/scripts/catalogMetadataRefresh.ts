@@ -41,6 +41,7 @@ export function refreshIgdb(details: IgdbGame | null): CatalogRefresh {
   if (details?.playerPerspectives?.length) {
     metadata.playerPerspectives = details.playerPerspectives;
   }
+  if (details?.releaseDate) metadata.releaseDate = details.releaseDate;
 
   return {
     description: nonEmpty(details?.summary),
@@ -59,6 +60,7 @@ export function refreshTmdb(details: TmdbMediaDetails | null): CatalogRefresh {
   if (details?.catalogRating !== null && details?.catalogRating !== undefined) {
     metadata.catalogRating = details.catalogRating;
   }
+  if (details?.releaseDate) metadata.releaseDate = details.releaseDate;
 
   return {
     description: nonEmpty(details?.description),
@@ -74,6 +76,7 @@ export function refreshOpenLibrary(
   if (details?.genres?.length) metadata.genre = details.genres.slice(0, 5);
   if (details?.subjects?.length) metadata.subjects = details.subjects;
   if (details?.numberOfPages) metadata.numberOfPages = details.numberOfPages;
+  if (details?.releaseDate) metadata.releaseDate = details.releaseDate;
 
   return {
     description: nonEmpty(details?.description),

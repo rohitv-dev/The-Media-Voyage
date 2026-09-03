@@ -22,14 +22,18 @@ const tsvector = customType<{ data: string; notNull: true }>({
   dataType: () => "tsvector",
 });
 
-type MovieOrShowMetadata = {
+type CatalogMetadataBase = {
+  releaseDate?: string;
+};
+
+type MovieOrShowMetadata = CatalogMetadataBase & {
   genre?: string[];
   keywords?: string[];
   runtime?: number;
   catalogRating?: number;
 };
 
-type GameMetadata = {
+type GameMetadata = CatalogMetadataBase & {
   genre?: string[];
   themes?: string[];
   keywords?: string[];
@@ -38,7 +42,7 @@ type GameMetadata = {
   catalogRating?: number;
 };
 
-type BookMetadata = {
+type BookMetadata = CatalogMetadataBase & {
   genre?: string[];
   subjects?: string[];
   numberOfPages?: number;

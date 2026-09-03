@@ -1,6 +1,7 @@
 import { capitalizeWords } from "#/utils/strings";
 import { Badge, Box, Group, Paper, SimpleGrid, Text } from "@mantine/core";
 import type { ReactNode } from "react";
+import dayjs from "dayjs";
 import { useSourceColorMap } from "#/features/named-entities/queries";
 import { accentText, defaultBorder } from "./constants";
 import type { MediaViewData } from "./index";
@@ -37,6 +38,14 @@ export function MediaViewDetails({ data }: { data: MediaViewData }) {
   const metaItems = [
     { label: "Status", value: capitalizeWords(data.status) },
     { label: "Rating", value: formatValue(data.rating?.toFixed(1)) },
+    ...(catalogMetadata.releaseDate
+      ? [
+          {
+            label: "Release Year",
+            value: dayjs(catalogMetadata.releaseDate).format("YYYY"),
+          },
+        ]
+      : []),
     {
       label: "Source",
       value: data.source ? (
