@@ -119,4 +119,13 @@ describe("RecommendFriendModal", () => {
     expect(screen.getByText("Could not load friends")).toBeTruthy();
     expect(screen.getByText("This recommendation already exists")).toBeTruthy();
   });
+
+  it("stays open while sending when Escape is pressed", () => {
+    const onClose = vi.fn();
+    renderModal({ pending: true, onClose });
+
+    fireEvent.keyDown(window, { key: "Escape" });
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
 });

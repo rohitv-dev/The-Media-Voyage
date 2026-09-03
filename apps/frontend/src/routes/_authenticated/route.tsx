@@ -15,6 +15,7 @@ import {
 import { sessionQueryKey, sessionQueryOptions } from "#/auth/session";
 import { authClient } from "#/auth/authClient";
 import { ShortcutsHelpModal } from "#/components/ShortcutsHelpModal";
+import { useAndroidBackButton } from "#/hooks/useAndroidBackButton";
 import { AuthenticatedHeader } from "#/features/app-shell/components/AuthenticatedHeader";
 import { AuthenticatedSidebar } from "#/features/app-shell/components/AuthenticatedSidebar";
 import { CommandPalette } from "#/features/app-shell/components/CommandPalette";
@@ -91,6 +92,7 @@ function AuthenticatedShell() {
 
   const [navbarOpened, { toggle: toggleNavbar, close: closeNavbar }] =
     useDisclosure();
+  useAndroidBackButton(navbarOpened, closeNavbar);
   const [sidebarOpened, setSidebarOpened] = useLocalStorage<boolean>({
     key: "media-voyage-sidebar-opened",
     defaultValue: true,

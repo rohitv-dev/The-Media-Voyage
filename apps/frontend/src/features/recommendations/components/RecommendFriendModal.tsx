@@ -75,6 +75,7 @@ export function RecommendFriendModal({
       opened={opened}
       onClose={onClose}
       centered
+      closeOnEscape={!pending}
       title={
         <Group gap="xs">
           <IconSend size={18} />
