@@ -97,18 +97,6 @@ export type TmdbMediaRecord =
       type: "show";
     });
 
-export type TmdbTrendingItem = {
-  media: TmdbMediaRecord;
-  inLibrary: boolean;
-  releaseYear: number | null;
-  catalogRating: number | null;
-};
-
-export type TmdbTrendingResponse = {
-  movies: TmdbTrendingItem[];
-  shows: TmdbTrendingItem[];
-};
-
 export type TmdbSeasonSummary = {
   seasonNumber: number;
   episodeCount: number;

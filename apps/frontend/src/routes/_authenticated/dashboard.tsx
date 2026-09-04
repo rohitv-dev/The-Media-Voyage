@@ -12,16 +12,12 @@ import {
   continueMediaFilters,
   continueMediaQueryOptions,
 } from "#/features/media/queries";
-import {
-  dashboardStatOptions,
-  dashboardTrendingOptions,
-} from "#/features/dashboard/queries";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { dashboardStatOptions } from "#/features/dashboard/queries";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { DashboardContinue } from "#/features/dashboard/components/DashboardContinue";
 import { DashboardHeader } from "#/features/dashboard/components/DashboardHeader";
 import { DashboardInsights } from "#/features/dashboard/components/DashboardInsights";
 import { DashboardOverview } from "#/features/dashboard/components/DashboardOverview";
-import { DashboardTrending } from "#/features/dashboard/components/DashboardTrending";
 import type { UserMediaQuerySchema } from "@media-voyage/shared/api";
 import type { MediaType, Status } from "@media-voyage/shared/userMediaSchema";
 import { useTutorial } from "#/features/tutorials/useTutorial";
@@ -66,7 +62,6 @@ function RouteComponent() {
   });
   const { data } = useSuspenseQuery(dashboardStatOptions);
   const { data: continueData } = useSuspenseQuery(continueMediaQueryOptions);
-  const { data: trendingData } = useQuery(dashboardTrendingOptions);
   const continueItems = continueData.data.slice(0, 6);
   const reduceMotion = useAppReducedMotion();
   const isMobile = useMediaQuery("(max-width: 36em)");
@@ -152,29 +147,6 @@ function RouteComponent() {
               }
             />
           </motion.div>
-
-          {trendingData && (
-            <motion.div
-              id="trending"
-              variants={fadeUpVariants(reduceMotion)}
-              style={{ scrollMarginTop: sectionScrollMargin }}
-            >
-              <DashboardTrending
-                movies={trendingData.movies}
-                shows={trendingData.shows}
-                reduceMotion={reduceMotion}
-                onAdd={(recommendationSelection) =>
-                  navigate({
-                    to: "/media/add",
-                    state: (previous) => ({
-                      ...previous,
-                      recommendationSelection,
-                    }),
-                  })
-                }
-              />
-            </motion.div>
-          )}
 
           <motion.div
             id="insights"

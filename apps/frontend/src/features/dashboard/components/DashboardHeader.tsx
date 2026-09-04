@@ -69,17 +69,6 @@ export function DashboardHeader({
           </Text>
           <Button
             component="a"
-            href="#trending"
-            variant="subtle"
-            size="compact-sm"
-          >
-            Trending
-          </Button>
-          <Text c="dimmed" size="xs">
-            /
-          </Text>
-          <Button
-            component="a"
             href="#insights"
             variant="subtle"
             size="compact-sm"

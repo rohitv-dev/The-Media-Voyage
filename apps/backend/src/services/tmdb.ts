@@ -13,23 +13,9 @@ const TMDB_POSTER_URL = "https://image.tmdb.org/t/p/w500";
 const TMDB_LANGUAGE = "en-US";
 const TMDB_NETWORK_RETRY_DELAY_MS = 200;
 const TMDB_APPEND_LIMIT = 20;
-const TMDB_TRENDING_LIMIT = 4;
-const TMDB_TRENDING_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 type TmdbMovieRecord = Extract<TmdbMediaRecord, { source: "tmdb_movie" }>;
 type TmdbShowRecord = Extract<TmdbMediaRecord, { source: "tmdb_tv" }>;
-type TmdbTrendingRecord<T extends TmdbMediaRecord> = {
-  media: T;
-  releaseYear: number | null;
-  catalogRating: number | null;
-};
-
-type TmdbTrending = {
-  movies: TmdbTrendingRecord<TmdbMovieRecord>[];
-  shows: TmdbTrendingRecord<TmdbShowRecord>[];
-};
-
-let trendingCache: { value: TmdbTrending; expiresAt: number } | null = null;
 
 const tmdbResultBaseSchema = z.object({
   id: z.number().int().positive(),
@@ -245,45 +231,6 @@ function parseResults(type: TmdbMediaType, data: unknown): TmdbMediaRecord[] {
   return parsed.data.results.filter((result) => !result.adult).map(showRecord);
 }
 
-function parseTrendingResults(
-  type: "movie",
-  data: unknown,
-): TmdbTrendingRecord<TmdbMovieRecord>[];
-function parseTrendingResults(
-  type: "show",
-  data: unknown,
-): TmdbTrendingRecord<TmdbShowRecord>[];
-function parseTrendingResults(
-  type: TmdbMediaType,
-  data: unknown,
-): TmdbTrendingRecord<TmdbMediaRecord>[] {
-  if (type === "movie") {
-    const parsed = tmdbMovieResultsSchema.safeParse(data);
-    if (!parsed.success) return invalidResponse(parsed.error);
-
-    return parsed.data.results
-      .filter((result) => !result.adult)
-      .slice(0, TMDB_TRENDING_LIMIT)
-      .map((result) => ({
-        media: movieRecord(result),
-        releaseYear: releaseYear(result.release_date),
-        catalogRating: result.vote_average,
-      }));
-  }
-
-  const parsed = tmdbShowResultsSchema.safeParse(data);
-  if (!parsed.success) return invalidResponse(parsed.error);
-
-  return parsed.data.results
-    .filter((result) => !result.adult)
-    .slice(0, TMDB_TRENDING_LIMIT)
-    .map((result) => ({
-      media: showRecord(result),
-      releaseYear: releaseYear(result.first_air_date),
-      catalogRating: result.vote_average,
-    }));
-}
-
 async function getAverageEpisodeRuntime(
   showId: number,
   seasonNumbers: number[],
@@ -436,28 +383,4 @@ export async function getTmdbRecommendations(
   );
 
   return parseResults(type, data);
-}
-
-export async function getTmdbTrending(): Promise<TmdbTrending> {
-  if (trendingCache && trendingCache.expiresAt > Date.now()) {
-    return trendingCache.value;
-  }
-
-  const [movies, shows] = await Promise.all([
-    fetchTmdb("trending/movie/week", { language: TMDB_LANGUAGE }),
-    fetchTmdb("trending/tv/week", { language: TMDB_LANGUAGE }),
-  ]);
-  const value = {
-    movies: parseTrendingResults("movie", movies),
-    shows: parseTrendingResults("show", shows),
-  };
-
-  // ponytail: process-local cache; use a shared cache if multi-instance
-  // duplicate TMDB requests become material.
-  trendingCache = {
-    value,
-    expiresAt: Date.now() + TMDB_TRENDING_CACHE_TTL_MS,
-  };
-
-  return value;
 }

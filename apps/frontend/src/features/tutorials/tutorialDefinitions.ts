@@ -141,12 +141,6 @@ export const tutorialDefinitions: Record<TutorialId, TutorialDefinition> = {
         "Filter your library and switch between grid and table views when the table is available",
       ),
       tutorialStep(
-        "library-presets",
-        '[data-tutorial="library-presets"]',
-        "Filter presets",
-        "Save the current filter combination and reapply it later",
-      ),
-      tutorialStep(
         "library-pick-for-me",
         '[data-tutorial="library-pick-for-me"]',
         "Pick for me",

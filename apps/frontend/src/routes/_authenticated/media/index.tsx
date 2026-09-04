@@ -56,8 +56,6 @@ import {
 } from "@tabler/icons-react";
 import { MediaAppliedFilters } from "#/features/media/components/MediaFilters/MediaAppliedFilters";
 import { MediaTable } from "#/features/media/components/MediaTable";
-import { useFilterPresets } from "#/features/media/hooks/useFilterPresets";
-import { FilterPresetsMenu } from "#/features/media/components/MediaFilters/FilterPresetsMenu";
 import { useTutorial } from "#/features/tutorials/useTutorial";
 import { TutorialTrigger } from "#/features/tutorials/components/TutorialTrigger";
 
@@ -119,7 +117,6 @@ function RouteComponent() {
     useDisclosure();
 
   const [filters, setFilters] = useState<UserMediaQuerySchema>(search);
-  const { presets, savePreset, deletePreset } = useFilterPresets();
   const skipNextSearchSyncRef = useRef(false);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const normalRecords = data?.pages.flatMap((page) => page.data) ?? [];
@@ -355,20 +352,7 @@ function RouteComponent() {
             </Box>
             <Box
               flex={{ base: "1 1 calc(50% - 4px)", sm: "0 0 auto" }}
-              order={{ base: 4, sm: 2 }}
-              data-tutorial="library-presets"
-            >
-              <FilterPresetsMenu
-                presets={presets}
-                onApply={updateAndApplyFilters}
-                onSave={(name) => savePreset(name, filters)}
-                onDelete={deletePreset}
-                disabled={isExploring}
-              />
-            </Box>
-            <Box
-              flex={{ base: "1 1 calc(50% - 4px)", sm: "0 0 auto" }}
-              order={{ base: 2, sm: 3 }}
+              order={{ base: 2, sm: 2 }}
               data-tutorial="library-describe"
             >
               <Button
