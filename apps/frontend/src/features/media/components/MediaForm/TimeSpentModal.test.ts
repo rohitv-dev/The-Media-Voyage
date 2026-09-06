@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getCatalogRuntimeMinutes,
   getEstimatedTimeSpentMinutes,
-} from "./TimeSpentModal";
+} from "./formUtils";
 
 describe("show time spent calculation", () => {
   it("derives time from watched episodes and average runtime", () => {

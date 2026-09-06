@@ -1,13 +1,9 @@
 import { capitalizeWords } from "#/utils/strings";
 import { Badge, Box, Group, Paper, Stack, Text } from "@mantine/core";
-import type { SeasonProgressEntry } from "@media-voyage/shared/api";
 import { getStatusColor } from "#/features/media/display";
 import { defaultBorder, accentText } from "./constants";
 import type { MediaViewData } from "./index";
 import { formatDate } from "./utils";
-
-const getSeasonEpisodeTotal = (entry: SeasonProgressEntry) =>
-  entry.expectedEpisodeCount;
 
 export function MediaViewSeasons({ data }: { data: MediaViewData }) {
   if (data.type !== "show") return null;
@@ -58,15 +54,15 @@ export function MediaViewSeasons({ data }: { data: MediaViewData }) {
                       {capitalizeWords(entry.status)}
                     </Badge>
                     {(entry.episodesWatched !== undefined ||
-                      getSeasonEpisodeTotal(entry) !== undefined) && (
+                      entry.expectedEpisodeCount !== undefined) && (
                       <Text size="xs" c="dimmed">
                         {entry.episodesWatched !== undefined
                           ? `${entry.episodesWatched}${
-                              getSeasonEpisodeTotal(entry) !== undefined
-                                ? `/${getSeasonEpisodeTotal(entry)}`
+                              entry.expectedEpisodeCount !== undefined
+                                ? `/${entry.expectedEpisodeCount}`
                                 : ""
                             } episodes watched`
-                          : `${getSeasonEpisodeTotal(entry)} episodes`}
+                          : `${entry.expectedEpisodeCount} episodes`}
                       </Text>
                     )}
                     {entry.rating !== undefined && (

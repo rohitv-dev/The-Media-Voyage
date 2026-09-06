@@ -40,34 +40,20 @@ export const userMediaSummarySelect = {
 };
 
 export const userMediaDetailedSelect = {
-  id: userMedia.id,
+  ...userMediaSummarySelect,
   mediaId: userMedia.mediaId,
-  title: media.title,
-  type: media.type,
   description: media.description,
-  imageUrl: media.imageUrl,
-  imageFocusX: userMedia.imageFocusX,
-  imageFocusY: userMedia.imageFocusY,
   catalogSource: media.source,
   catalogExternalId: media.externalId,
   catalogMetadata: media.metadata,
-  status: userMedia.status,
-  rating: userMedia.rating,
   review: userMedia.review,
   notes: userMedia.notes,
-  progress: userMedia.progress,
-  favorite: userMedia.favorite,
   timeSpent: userMedia.timeSpent,
   pagesRead: userMedia.pagesRead,
-  source: userMediaSourceName,
   tags: userMediaTagNames,
-  visibility: userMedia.visibility,
   seasonsProgress: userMedia.seasonsProgress,
   startedAt: userMedia.startedAt,
   completedAt: userMedia.completedAt,
-  lastProgressUpdate: userMedia.lastProgressUpdate,
-  createdAt: userMedia.createdAt,
-  updatedAt: userMedia.updatedAt,
 };
 
 export const trashedUserMediaSelect = {

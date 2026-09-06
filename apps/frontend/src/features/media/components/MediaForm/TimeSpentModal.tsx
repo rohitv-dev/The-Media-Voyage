@@ -1,7 +1,4 @@
-import type {
-  SeasonProgressEntry,
-  UserMediaFormSchema,
-} from "@media-voyage/shared/api";
+import type { SeasonProgressEntry } from "@media-voyage/shared/api";
 import {
   Button,
   Card,
@@ -16,7 +13,10 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { useState } from "react";
 import { useFormContext } from "./context";
-import type { CatalogMetadata } from "@media-voyage/shared";
+import {
+  getCatalogRuntimeMinutes,
+  getEstimatedTimeSpentMinutes,
+} from "./formUtils";
 import { formatDuration } from "../../formatDuration";
 
 type DurationParts = {
@@ -30,16 +30,8 @@ type ShowSummary = {
 };
 
 type TimeSpentModalProps = {
-  catalogMetadata?: CatalogMetadata;
   disabled?: boolean;
 };
-
-export function getCatalogRuntimeMinutes(metadata?: CatalogMetadata) {
-  if (!metadata || !("runtime" in metadata)) return undefined;
-  return metadata.runtime && metadata.runtime > 0
-    ? metadata.runtime
-    : undefined;
-}
 
 function getShowSummary(seasonsProgress?: SeasonProgressEntry[]): ShowSummary {
   let totalEpisodeCount = 0;
@@ -55,33 +47,6 @@ function getShowSummary(seasonsProgress?: SeasonProgressEntry[]): ShowSummary {
     totalEpisodeCount,
     watchedEpisodeCount,
   };
-}
-
-export function getEstimatedTimeSpentMinutes(
-  type: UserMediaFormSchema["type"],
-  metadata?: CatalogMetadata,
-  seasonsProgress: SeasonProgressEntry[] = [],
-) {
-  const runtimeMinutes = getCatalogRuntimeMinutes(metadata);
-
-  if (type === "movie") {
-    return runtimeMinutes;
-  }
-
-  if (type !== "show" || !runtimeMinutes) {
-    return undefined;
-  }
-
-  const totalEpisodesWatched = seasonsProgress.reduce(
-    (total, season) => total + (season.episodesWatched ?? 0),
-    0,
-  );
-
-  if (totalEpisodesWatched === 0) {
-    return undefined;
-  }
-
-  return Math.round(totalEpisodesWatched * runtimeMinutes);
 }
 
 function minutesToDurationParts(totalMinutes: number): DurationParts {
@@ -104,11 +69,9 @@ function numberInputValue(value: string | number) {
   return Number.isFinite(parsed) ? Math.max(0, Math.trunc(parsed)) : 0;
 }
 
-export function TimeSpentModal({
-  catalogMetadata,
-  disabled = false,
-}: TimeSpentModalProps) {
+export function TimeSpentModal({ disabled = false }: TimeSpentModalProps) {
   const form = useFormContext();
+  const catalogMetadata = form.values.metadata ?? undefined;
   const [opened, { open, close }] = useDisclosure(false);
   const [draft, setDraft] = useState<DurationParts>({
     hours: 0,

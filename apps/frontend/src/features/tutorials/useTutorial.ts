@@ -11,7 +11,6 @@ import {
   getNextTutorialProgress,
   isTutorialSeen,
   normalizeTutorialProgress,
-  shouldStartTutorial,
 } from "./tutorialDefinitions";
 import type { TutorialId, TutorialProgress } from "./tutorialDefinitions";
 
@@ -182,7 +181,7 @@ export function useTutorial(
       !enabled ||
       !session ||
       !progressReady ||
-      !shouldStartTutorial(id, progress, false) ||
+      isTutorialSeen(id, progress) ||
       autoStartedRef.current
     ) {
       return;

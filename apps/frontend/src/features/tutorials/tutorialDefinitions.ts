@@ -237,14 +237,6 @@ export function isTutorialSeen(id: TutorialId, progress: unknown) {
   );
 }
 
-export function shouldStartTutorial(
-  id: TutorialId,
-  progress: unknown,
-  forced = false,
-) {
-  return forced || !isTutorialSeen(id, progress);
-}
-
 export function getNextTutorialProgress(
   progress: unknown,
   id: TutorialId,

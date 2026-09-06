@@ -33,6 +33,7 @@ type MediaFilterCardsProps = {
   resetFilters: () => void;
   dropdowns: UserMediaDropdowns;
   compact?: boolean;
+  disabled?: boolean;
 };
 
 export function MediaFilterCard({
@@ -42,6 +43,7 @@ export function MediaFilterCard({
   resetFilters,
   dropdowns,
   compact = false,
+  disabled = false,
 }: MediaFilterCardsProps) {
   const updateSort = (sort: UserMediaQuerySchema["sort"] | null) => {
     if (sort === null) return;
@@ -84,13 +86,22 @@ export function MediaFilterCard({
 
   return (
     <Card
+      component="fieldset"
       withBorder
       w={compact ? 288 : "100%"}
       miw={0}
       p={compact ? 0 : undefined}
       mah={compact ? "calc(100dvh - 100px)" : undefined}
-      style={
-        compact
+      disabled={disabled}
+      aria-label={
+        disabled ? "Library filters are paused during this search" : undefined
+      }
+      style={{
+        margin: 0,
+        minWidth: 0,
+        opacity: disabled ? 0.5 : 1,
+        transition: "opacity 150ms ease",
+        ...(compact
           ? {
               position: "sticky",
               top: 84,
@@ -98,8 +109,8 @@ export function MediaFilterCard({
               flexDirection: "column",
               overflow: "hidden",
             }
-          : undefined
-      }
+          : {}),
+      }}
     >
       <form
         onSubmit={(event) => {

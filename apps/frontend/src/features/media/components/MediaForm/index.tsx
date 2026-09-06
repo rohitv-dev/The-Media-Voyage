@@ -24,10 +24,6 @@ import {
   showErrorNotification,
   showSuccessNotification,
 } from "#/lib/notifications";
-import {
-  userMediaDropdownOptions,
-  userMediaDetailedOptions,
-} from "../../queries";
 import type { MediaType } from "@media-voyage/shared/userMediaSchema";
 import { useUnsavedChangesBlocker } from "#/hooks/useUnsavedChangesBlocker";
 import { useDeleteMedia } from "../../hooks/useDeleteMedia";
@@ -39,18 +35,17 @@ import { MediaDetailsSection } from "./MediaDetailsSection";
 import { PersonalNotesSection } from "./PersonalNotesSection";
 import { ProgressTrackingSection } from "./ProgressTrackingSection";
 import { StatusDetailsSection } from "./StatusDetailsSection";
-import {
-  getCatalogRuntimeMinutes,
-  getEstimatedTimeSpentMinutes,
-} from "./TimeSpentModal";
 import { formatDuration } from "../../formatDuration";
 import {
   parseProviderIdentity,
   resolveMediaSelection,
 } from "../../providers/resolveMedia";
-import { hydrateTmdb, mergeTmdbSeasons } from "../../providers/tmdb";
+import { hydrateTmdbShow, mergeTmdbSeasons } from "../../providers/tmdb";
 import { getLibraryReturnDepth } from "../../libraryNavigation";
 import {
+  getBookPageCount,
+  getCatalogRuntimeMinutes,
+  getEstimatedTimeSpentMinutes,
   hasDuplicateSeasonNumbers,
   normalizeNullableNumber,
   normalizeProgress,
@@ -131,15 +126,6 @@ function calculateMovieProgress(
   const timeSpentMinutes = Math.max(0, Number(timeSpent) || 0);
 
   return Math.min(100, Math.round((timeSpentMinutes / runtimeMinutes) * 100));
-}
-
-function getBookPageCount(catalogMetadata?: CatalogMetadata<"book">) {
-  if (!catalogMetadata) return undefined;
-
-  const { numberOfPages } = catalogMetadata;
-  return typeof numberOfPages === "number" && numberOfPages > 0
-    ? numberOfPages
-    : undefined;
 }
 
 function calculateBookProgress(
@@ -523,14 +509,7 @@ export function MediaForm(props: MediaFormProps) {
     setIsCatalogRequestPending(true);
 
     try {
-      const hydrated = await hydrateTmdb({
-        id: "",
-        source: "tmdb_tv",
-        externalId: props.catalogExternalId,
-        title: form.values.title,
-        type: "show",
-        imageUrl: null,
-      });
+      const hydrated = await hydrateTmdbShow(props.catalogExternalId);
 
       applyCatalogMetadata(hydrated.metadata);
       form.setFieldValue(
@@ -597,16 +576,12 @@ export function MediaForm(props: MediaFormProps) {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all }),
         queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats }),
-        queryClient.invalidateQueries(userMediaDropdownOptions),
         queryClient.invalidateQueries({
           queryKey: queryKeys.userMedia.statusHistory(data.id),
         }),
         queryClient.invalidateQueries({ queryKey: queryKeys.tags.all }),
         queryClient.invalidateQueries({ queryKey: queryKeys.sources.all }),
         queryClient.invalidateQueries({ queryKey: queryKeys.activity.all }),
-        ...(!isAddMode
-          ? [queryClient.invalidateQueries(userMediaDetailedOptions(data.id))]
-          : []),
       ]);
 
       if (isAddMode) {
@@ -736,8 +711,6 @@ export function MediaForm(props: MediaFormProps) {
               />
               <ProgressTrackingSection
                 dropdowns={props.dropdowns}
-                catalogMetadata={catalogMetadataForTimeSpent}
-                numberOfPages={getBookPageCount(catalogMetadataForTimeSpent)}
                 isCatalogPending={isCatalogRequestPending}
                 canSyncSeasons={canSyncSeasons}
                 onSyncSeasons={handleSyncSeasons}

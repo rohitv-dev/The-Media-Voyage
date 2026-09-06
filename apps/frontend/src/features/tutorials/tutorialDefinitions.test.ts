@@ -2,7 +2,6 @@ import {
   getNextTutorialProgress,
   getTutorialSteps,
   isTutorialSeen,
-  shouldStartTutorial,
 } from "./tutorialDefinitions";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -18,19 +17,13 @@ function stubViewport(phone: boolean, tablet = false) {
 
 describe("tutorial version guards", () => {
   it("starts when the stored version is absent or older", () => {
-    expect(shouldStartTutorial("library", {})).toBe(true);
-    expect(shouldStartTutorial("library", { library: 0 })).toBe(true);
+    expect(isTutorialSeen("library", {})).toBe(false);
     expect(isTutorialSeen("library", { library: 0 })).toBe(false);
   });
 
   it("does not start for the current or a newer stored version", () => {
-    expect(shouldStartTutorial("library", { library: 1 })).toBe(false);
-    expect(shouldStartTutorial("library", { library: 2 })).toBe(false);
+    expect(isTutorialSeen("library", { library: 1 })).toBe(true);
     expect(isTutorialSeen("library", { library: 2 })).toBe(true);
-  });
-
-  it("always starts a forced replay", () => {
-    expect(shouldStartTutorial("library", { library: 1 }, true)).toBe(true);
   });
 
   it("uses the matching navigation and add-media copy", () => {

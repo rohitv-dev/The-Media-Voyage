@@ -547,60 +547,28 @@ function RouteComponent() {
           </Box>
 
           <Box visibleFrom="lg" w={288} flex="0 0 288px">
-            <fieldset
+            <MediaFilterCard
+              filters={filters}
+              applyFilters={applyFilters}
+              resetFilters={resetFilters}
+              updateFilters={updateFilters}
+              dropdowns={dropdowns ?? { sources: [], tags: [] }}
+              compact
               disabled={isExploring}
-              aria-label={
-                isExploring
-                  ? "Library filters are paused during this search"
-                  : undefined
-              }
-              style={{
-                border: 0,
-                margin: 0,
-                minWidth: 0,
-                opacity: isExploring ? 0.5 : 1,
-                padding: 0,
-                transition: "opacity 150ms ease",
-              }}
-            >
-              <MediaFilterCard
-                filters={filters}
-                applyFilters={applyFilters}
-                resetFilters={resetFilters}
-                updateFilters={updateFilters}
-                dropdowns={dropdowns ?? { sources: [], tags: [] }}
-                compact
-              />
-            </fieldset>
+            />
           </Box>
         </Flex>
       </Stack>
 
       <Drawer opened={opened} onClose={close}>
-        <fieldset
+        <MediaFilterCard
+          filters={filters}
+          applyFilters={applyFilters}
+          resetFilters={resetFilters}
+          updateFilters={updateFilters}
+          dropdowns={dropdowns ?? { sources: [], tags: [] }}
           disabled={isExploring}
-          aria-label={
-            isExploring
-              ? "Library filters are paused during this search"
-              : undefined
-          }
-          style={{
-            border: 0,
-            margin: 0,
-            minWidth: 0,
-            opacity: isExploring ? 0.5 : 1,
-            padding: 0,
-            transition: "opacity 150ms ease",
-          }}
-        >
-          <MediaFilterCard
-            filters={filters}
-            applyFilters={applyFilters}
-            resetFilters={resetFilters}
-            updateFilters={updateFilters}
-            dropdowns={dropdowns ?? { sources: [], tags: [] }}
-          />
-        </fieldset>
+        />
       </Drawer>
 
       <MediaPickerModal

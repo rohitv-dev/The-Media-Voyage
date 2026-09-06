@@ -9,85 +9,59 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthRegisterRouteImport } from './routes/auth/register'
-import { Route as AuthLoginRouteImport } from './routes/auth/login'
-import { Route as AuthenticatedTrashRouteImport } from './routes/_authenticated/trash'
-import { Route as AuthenticatedTagsRouteImport } from './routes/_authenticated/tags'
-import { Route as AuthenticatedSourcesRouteImport } from './routes/_authenticated/sources'
-import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedRecommendationsRouteImport } from './routes/_authenticated/recommendations'
-import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
-import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedActivityRouteImport } from './routes/_authenticated/activity'
-import { Route as AuthenticatedMediaIndexRouteImport } from './routes/_authenticated/media/index'
-import { Route as AuthenticatedFriendsIndexRouteImport } from './routes/_authenticated/friends/index'
+import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedRecommendationsRouteImport } from './routes/_authenticated/recommendations'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedSourcesRouteImport } from './routes/_authenticated/sources'
+import { Route as AuthenticatedTagsRouteImport } from './routes/_authenticated/tags'
+import { Route as AuthenticatedTrashRouteImport } from './routes/_authenticated/trash'
+import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthenticatedCollectionIndexRouteImport } from './routes/_authenticated/collection/index'
-import { Route as PublicMediaPublicIdRouteImport } from './routes/public/media.$publicId'
-import { Route as PublicLibraryPublicIdRouteImport } from './routes/public/library.$publicId'
-import { Route as PublicCollectionsPublicIdRouteImport } from './routes/public/collections.$publicId'
-import { Route as AuthenticatedFriendsUserIdRouteImport } from './routes/_authenticated/friends/$userId'
 import { Route as AuthenticatedCollectionAddRouteImport } from './routes/_authenticated/collection/add'
+import { Route as AuthenticatedFriendsIndexRouteImport } from './routes/_authenticated/friends/index'
+import { Route as AuthenticatedFriendsUserIdRouteImport } from './routes/_authenticated/friends/$userId'
+import { Route as AuthenticatedMediaIndexRouteImport } from './routes/_authenticated/media/index'
 import { Route as AuthenticatedMediaFormsRouteRouteImport } from './routes/_authenticated/media/_forms/route'
-import { Route as AuthenticatedMediaViewIdRouteImport } from './routes/_authenticated/media/view.$id'
-import { Route as AuthenticatedMediaFormsAddRouteImport } from './routes/_authenticated/media/_forms/add'
-import { Route as AuthenticatedFriendsMediaIdRouteImport } from './routes/_authenticated/friends/media.$id'
-import { Route as AuthenticatedFriendsCollectionsCollectionIdRouteImport } from './routes/_authenticated/friends/collections.$collectionId'
-import { Route as AuthenticatedCollectionViewIdRouteImport } from './routes/_authenticated/collection/view.$id'
+import { Route as PublicCollectionsPublicIdRouteImport } from './routes/public/collections.$publicId'
+import { Route as PublicLibraryPublicIdRouteImport } from './routes/public/library.$publicId'
+import { Route as PublicMediaPublicIdRouteImport } from './routes/public/media.$publicId'
 import { Route as AuthenticatedCollectionEditIdRouteImport } from './routes/_authenticated/collection/edit.$id'
+import { Route as AuthenticatedCollectionViewIdRouteImport } from './routes/_authenticated/collection/view.$id'
+import { Route as AuthenticatedFriendsCollectionsCollectionIdRouteImport } from './routes/_authenticated/friends/collections.$collectionId'
+import { Route as AuthenticatedFriendsMediaIdRouteImport } from './routes/_authenticated/friends/media.$id'
+import { Route as AuthenticatedMediaFormsAddRouteImport } from './routes/_authenticated/media/_forms/add'
+import { Route as AuthenticatedMediaViewIdRouteImport } from './routes/_authenticated/media/view.$id'
 import { Route as AuthenticatedMediaFormsUpdateIdRouteImport } from './routes/_authenticated/media/_forms/update.$id'
 
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRegisterRoute = AuthRegisterRouteImport.update({
-  id: '/auth/register',
-  path: '/auth/register',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthLoginRoute = AuthLoginRouteImport.update({
-  id: '/auth/login',
-  path: '/auth/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedTrashRoute = AuthenticatedTrashRouteImport.update({
-  id: '/trash',
-  path: '/trash',
+const AuthenticatedActivityRoute = AuthenticatedActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedTagsRoute = AuthenticatedTagsRouteImport.update({
-  id: '/tags',
-  path: '/tags',
+const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedSourcesRoute = AuthenticatedSourcesRouteImport.update({
-  id: '/sources',
-  path: '/sources',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedRecommendationsRoute =
-  AuthenticatedRecommendationsRouteImport.update({
-    id: '/recommendations',
-    path: '/recommendations',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedNotificationsRoute =
@@ -96,58 +70,51 @@ const AuthenticatedNotificationsRoute =
     path: '/notifications',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
-  id: '/calendar',
-  path: '/calendar',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedActivityRoute = AuthenticatedActivityRouteImport.update({
-  id: '/activity',
-  path: '/activity',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedMediaIndexRoute = AuthenticatedMediaIndexRouteImport.update({
-  id: '/media/',
-  path: '/media/',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedFriendsIndexRoute =
-  AuthenticatedFriendsIndexRouteImport.update({
-    id: '/friends/',
-    path: '/friends/',
+const AuthenticatedRecommendationsRoute =
+  AuthenticatedRecommendationsRouteImport.update({
+    id: '/recommendations',
+    path: '/recommendations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSourcesRoute = AuthenticatedSourcesRouteImport.update({
+  id: '/sources',
+  path: '/sources',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTagsRoute = AuthenticatedTagsRouteImport.update({
+  id: '/tags',
+  path: '/tags',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTrashRoute = AuthenticatedTrashRouteImport.update({
+  id: '/trash',
+  path: '/trash',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/auth/login',
+  path: '/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRegisterRoute = AuthRegisterRouteImport.update({
+  id: '/auth/register',
+  path: '/auth/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedCollectionIndexRoute =
   AuthenticatedCollectionIndexRouteImport.update({
     id: '/collection/',
     path: '/collection/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const PublicMediaPublicIdRoute = PublicMediaPublicIdRouteImport.update({
-  id: '/public/media/$publicId',
-  path: '/public/media/$publicId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PublicLibraryPublicIdRoute = PublicLibraryPublicIdRouteImport.update({
-  id: '/public/library/$publicId',
-  path: '/public/library/$publicId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PublicCollectionsPublicIdRoute =
-  PublicCollectionsPublicIdRouteImport.update({
-    id: '/public/collections/$publicId',
-    path: '/public/collections/$publicId',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AuthenticatedFriendsUserIdRoute =
-  AuthenticatedFriendsUserIdRouteImport.update({
-    id: '/friends/$userId',
-    path: '/friends/$userId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedCollectionAddRoute =
@@ -156,34 +123,49 @@ const AuthenticatedCollectionAddRoute =
     path: '/collection/add',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedFriendsIndexRoute =
+  AuthenticatedFriendsIndexRouteImport.update({
+    id: '/friends/',
+    path: '/friends/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFriendsUserIdRoute =
+  AuthenticatedFriendsUserIdRouteImport.update({
+    id: '/friends/$userId',
+    path: '/friends/$userId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedMediaIndexRoute = AuthenticatedMediaIndexRouteImport.update({
+  id: '/media/',
+  path: '/media/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMediaFormsRouteRoute =
   AuthenticatedMediaFormsRouteRouteImport.update({
     id: '/media/_forms',
     path: '/media',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedMediaViewIdRoute =
-  AuthenticatedMediaViewIdRouteImport.update({
-    id: '/media/view/$id',
-    path: '/media/view/$id',
-    getParentRoute: () => AuthenticatedRouteRoute,
+const PublicCollectionsPublicIdRoute =
+  PublicCollectionsPublicIdRouteImport.update({
+    id: '/public/collections/$publicId',
+    path: '/public/collections/$publicId',
+    getParentRoute: () => rootRouteImport,
   } as any)
-const AuthenticatedMediaFormsAddRoute =
-  AuthenticatedMediaFormsAddRouteImport.update({
-    id: '/add',
-    path: '/add',
-    getParentRoute: () => AuthenticatedMediaFormsRouteRoute,
-  } as any)
-const AuthenticatedFriendsMediaIdRoute =
-  AuthenticatedFriendsMediaIdRouteImport.update({
-    id: '/friends/media/$id',
-    path: '/friends/media/$id',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedFriendsCollectionsCollectionIdRoute =
-  AuthenticatedFriendsCollectionsCollectionIdRouteImport.update({
-    id: '/friends/collections/$collectionId',
-    path: '/friends/collections/$collectionId',
+const PublicLibraryPublicIdRoute = PublicLibraryPublicIdRouteImport.update({
+  id: '/public/library/$publicId',
+  path: '/public/library/$publicId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicMediaPublicIdRoute = PublicMediaPublicIdRouteImport.update({
+  id: '/public/media/$publicId',
+  path: '/public/media/$publicId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedCollectionEditIdRoute =
+  AuthenticatedCollectionEditIdRouteImport.update({
+    id: '/collection/edit/$id',
+    path: '/collection/edit/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedCollectionViewIdRoute =
@@ -192,10 +174,28 @@ const AuthenticatedCollectionViewIdRoute =
     path: '/collection/view/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedCollectionEditIdRoute =
-  AuthenticatedCollectionEditIdRouteImport.update({
-    id: '/collection/edit/$id',
-    path: '/collection/edit/$id',
+const AuthenticatedFriendsCollectionsCollectionIdRoute =
+  AuthenticatedFriendsCollectionsCollectionIdRouteImport.update({
+    id: '/friends/collections/$collectionId',
+    path: '/friends/collections/$collectionId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFriendsMediaIdRoute =
+  AuthenticatedFriendsMediaIdRouteImport.update({
+    id: '/friends/media/$id',
+    path: '/friends/media/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedMediaFormsAddRoute =
+  AuthenticatedMediaFormsAddRouteImport.update({
+    id: '/add',
+    path: '/add',
+    getParentRoute: () => AuthenticatedMediaFormsRouteRoute,
+  } as any)
+const AuthenticatedMediaViewIdRoute =
+  AuthenticatedMediaViewIdRouteImport.update({
+    id: '/media/view/$id',
+    path: '/media/view/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedMediaFormsUpdateIdRoute =
@@ -407,13 +407,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -421,74 +414,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/register': {
-      id: '/auth/register'
-      path: '/auth/register'
-      fullPath: '/auth/register'
-      preLoaderRoute: typeof AuthRegisterRouteImport
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/login': {
-      id: '/auth/login'
-      path: '/auth/login'
-      fullPath: '/auth/login'
-      preLoaderRoute: typeof AuthLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/trash': {
-      id: '/_authenticated/trash'
-      path: '/trash'
-      fullPath: '/trash'
-      preLoaderRoute: typeof AuthenticatedTrashRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/tags': {
-      id: '/_authenticated/tags'
-      path: '/tags'
-      fullPath: '/tags'
-      preLoaderRoute: typeof AuthenticatedTagsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/sources': {
-      id: '/_authenticated/sources'
-      path: '/sources'
-      fullPath: '/sources'
-      preLoaderRoute: typeof AuthenticatedSourcesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings': {
-      id: '/_authenticated/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/recommendations': {
-      id: '/_authenticated/recommendations'
-      path: '/recommendations'
-      fullPath: '/recommendations'
-      preLoaderRoute: typeof AuthenticatedRecommendationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/profile': {
-      id: '/_authenticated/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof AuthenticatedProfileRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/notifications': {
-      id: '/_authenticated/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+    '/_authenticated/activity': {
+      id: '/_authenticated/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof AuthenticatedActivityRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/calendar': {
@@ -498,60 +435,81 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCalendarRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/activity': {
-      id: '/_authenticated/activity'
-      path: '/activity'
-      fullPath: '/activity'
-      preLoaderRoute: typeof AuthenticatedActivityRouteImport
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/media/': {
-      id: '/_authenticated/media/'
-      path: '/media'
-      fullPath: '/media/'
-      preLoaderRoute: typeof AuthenticatedMediaIndexRouteImport
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/friends/': {
-      id: '/_authenticated/friends/'
-      path: '/friends'
-      fullPath: '/friends/'
-      preLoaderRoute: typeof AuthenticatedFriendsIndexRouteImport
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/recommendations': {
+      id: '/_authenticated/recommendations'
+      path: '/recommendations'
+      fullPath: '/recommendations'
+      preLoaderRoute: typeof AuthenticatedRecommendationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sources': {
+      id: '/_authenticated/sources'
+      path: '/sources'
+      fullPath: '/sources'
+      preLoaderRoute: typeof AuthenticatedSourcesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tags': {
+      id: '/_authenticated/tags'
+      path: '/tags'
+      fullPath: '/tags'
+      preLoaderRoute: typeof AuthenticatedTagsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/trash': {
+      id: '/_authenticated/trash'
+      path: '/trash'
+      fullPath: '/trash'
+      preLoaderRoute: typeof AuthenticatedTrashRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/auth/login': {
+      id: '/auth/login'
+      path: '/auth/login'
+      fullPath: '/auth/login'
+      preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/register': {
+      id: '/auth/register'
+      path: '/auth/register'
+      fullPath: '/auth/register'
+      preLoaderRoute: typeof AuthRegisterRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/collection/': {
       id: '/_authenticated/collection/'
       path: '/collection'
       fullPath: '/collection/'
       preLoaderRoute: typeof AuthenticatedCollectionIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/public/media/$publicId': {
-      id: '/public/media/$publicId'
-      path: '/public/media/$publicId'
-      fullPath: '/public/media/$publicId'
-      preLoaderRoute: typeof PublicMediaPublicIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/public/library/$publicId': {
-      id: '/public/library/$publicId'
-      path: '/public/library/$publicId'
-      fullPath: '/public/library/$publicId'
-      preLoaderRoute: typeof PublicLibraryPublicIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/public/collections/$publicId': {
-      id: '/public/collections/$publicId'
-      path: '/public/collections/$publicId'
-      fullPath: '/public/collections/$publicId'
-      preLoaderRoute: typeof PublicCollectionsPublicIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/friends/$userId': {
-      id: '/_authenticated/friends/$userId'
-      path: '/friends/$userId'
-      fullPath: '/friends/$userId'
-      preLoaderRoute: typeof AuthenticatedFriendsUserIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/collection/add': {
@@ -561,6 +519,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCollectionAddRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/friends/': {
+      id: '/_authenticated/friends/'
+      path: '/friends'
+      fullPath: '/friends/'
+      preLoaderRoute: typeof AuthenticatedFriendsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/friends/$userId': {
+      id: '/_authenticated/friends/$userId'
+      path: '/friends/$userId'
+      fullPath: '/friends/$userId'
+      preLoaderRoute: typeof AuthenticatedFriendsUserIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/media/': {
+      id: '/_authenticated/media/'
+      path: '/media'
+      fullPath: '/media/'
+      preLoaderRoute: typeof AuthenticatedMediaIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/media/_forms': {
       id: '/_authenticated/media/_forms'
       path: '/media'
@@ -568,32 +547,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMediaFormsRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/media/view/$id': {
-      id: '/_authenticated/media/view/$id'
-      path: '/media/view/$id'
-      fullPath: '/media/view/$id'
-      preLoaderRoute: typeof AuthenticatedMediaViewIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/public/collections/$publicId': {
+      id: '/public/collections/$publicId'
+      path: '/public/collections/$publicId'
+      fullPath: '/public/collections/$publicId'
+      preLoaderRoute: typeof PublicCollectionsPublicIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/media/_forms/add': {
-      id: '/_authenticated/media/_forms/add'
-      path: '/add'
-      fullPath: '/media/add'
-      preLoaderRoute: typeof AuthenticatedMediaFormsAddRouteImport
-      parentRoute: typeof AuthenticatedMediaFormsRouteRoute
+    '/public/library/$publicId': {
+      id: '/public/library/$publicId'
+      path: '/public/library/$publicId'
+      fullPath: '/public/library/$publicId'
+      preLoaderRoute: typeof PublicLibraryPublicIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/friends/media/$id': {
-      id: '/_authenticated/friends/media/$id'
-      path: '/friends/media/$id'
-      fullPath: '/friends/media/$id'
-      preLoaderRoute: typeof AuthenticatedFriendsMediaIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/public/media/$publicId': {
+      id: '/public/media/$publicId'
+      path: '/public/media/$publicId'
+      fullPath: '/public/media/$publicId'
+      preLoaderRoute: typeof PublicMediaPublicIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/friends/collections/$collectionId': {
-      id: '/_authenticated/friends/collections/$collectionId'
-      path: '/friends/collections/$collectionId'
-      fullPath: '/friends/collections/$collectionId'
-      preLoaderRoute: typeof AuthenticatedFriendsCollectionsCollectionIdRouteImport
+    '/_authenticated/collection/edit/$id': {
+      id: '/_authenticated/collection/edit/$id'
+      path: '/collection/edit/$id'
+      fullPath: '/collection/edit/$id'
+      preLoaderRoute: typeof AuthenticatedCollectionEditIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/collection/view/$id': {
@@ -603,11 +582,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCollectionViewIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/collection/edit/$id': {
-      id: '/_authenticated/collection/edit/$id'
-      path: '/collection/edit/$id'
-      fullPath: '/collection/edit/$id'
-      preLoaderRoute: typeof AuthenticatedCollectionEditIdRouteImport
+    '/_authenticated/friends/collections/$collectionId': {
+      id: '/_authenticated/friends/collections/$collectionId'
+      path: '/friends/collections/$collectionId'
+      fullPath: '/friends/collections/$collectionId'
+      preLoaderRoute: typeof AuthenticatedFriendsCollectionsCollectionIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/friends/media/$id': {
+      id: '/_authenticated/friends/media/$id'
+      path: '/friends/media/$id'
+      fullPath: '/friends/media/$id'
+      preLoaderRoute: typeof AuthenticatedFriendsMediaIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/media/_forms/add': {
+      id: '/_authenticated/media/_forms/add'
+      path: '/add'
+      fullPath: '/media/add'
+      preLoaderRoute: typeof AuthenticatedMediaFormsAddRouteImport
+      parentRoute: typeof AuthenticatedMediaFormsRouteRoute
+    }
+    '/_authenticated/media/view/$id': {
+      id: '/_authenticated/media/view/$id'
+      path: '/media/view/$id'
+      fullPath: '/media/view/$id'
+      preLoaderRoute: typeof AuthenticatedMediaViewIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/media/_forms/update/$id': {

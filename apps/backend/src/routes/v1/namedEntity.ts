@@ -70,7 +70,7 @@ async function findByNormalizedName(
   table: NamedEntityTable,
   userId: string,
   normalizedName: string,
-  excludeId: string,
+  excludeId?: string,
 ): Promise<NamedEntityRow | null> {
   const [entity] = await db
     .select()
@@ -79,24 +79,8 @@ async function findByNormalizedName(
       and(
         eq(table.userId, userId),
         eq(table.normalizedName, normalizedName),
-        ne(table.id, excludeId),
+        excludeId !== undefined ? ne(table.id, excludeId) : undefined,
       ),
-    )
-    .limit(1);
-
-  return entity ?? null;
-}
-
-async function findByNormalizedNameAny(
-  table: NamedEntityTable,
-  userId: string,
-  normalizedName: string,
-): Promise<NamedEntityRow | null> {
-  const [entity] = await db
-    .select()
-    .from(table)
-    .where(
-      and(eq(table.userId, userId), eq(table.normalizedName, normalizedName)),
     )
     .limit(1);
 
@@ -110,11 +94,7 @@ export async function createNamedEntity(
   label: NamedEntityLabel,
 ) {
   const normalizedName = input.name.trim().toLowerCase();
-  const duplicate = await findByNormalizedNameAny(
-    table,
-    userId,
-    normalizedName,
-  );
+  const duplicate = await findByNormalizedName(table, userId, normalizedName);
 
   if (duplicate) {
     throw conflict(`A ${label} with that name already exists`);

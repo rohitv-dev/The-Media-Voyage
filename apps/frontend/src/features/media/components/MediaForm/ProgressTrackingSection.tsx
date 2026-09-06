@@ -16,12 +16,10 @@ import { useFormContext } from "./context";
 import { useDisclosure, useMediaQuery } from "@mantine/hooks";
 import { SeasonsProgressField } from "./SeasonsProgressField";
 import { TimeSpentModal } from "./TimeSpentModal";
-import type { CatalogMetadata } from "@media-voyage/shared";
+import { getBookPageCount } from "./formUtils";
 
 type ProgressTrackingSectionProps = {
   dropdowns: UserMediaDropdowns;
-  catalogMetadata?: CatalogMetadata;
-  numberOfPages?: number;
   isCatalogPending?: boolean;
   canSyncSeasons?: boolean;
   onSyncSeasons?: () => void;
@@ -29,8 +27,6 @@ type ProgressTrackingSectionProps = {
 
 export function ProgressTrackingSection({
   dropdowns,
-  catalogMetadata,
-  numberOfPages,
   isCatalogPending = false,
   canSyncSeasons = false,
   onSyncSeasons,
@@ -39,6 +35,7 @@ export function ProgressTrackingSection({
   const isMobile = useMediaQuery("(max-width: 47.99em)");
   const isCompleted = form.values.status === "completed";
   const isShow = form.values.type === "show";
+  const numberOfPages = getBookPageCount(form.values.metadata ?? undefined);
   const [opened, { toggle }] = useDisclosure(false);
 
   return (
@@ -81,10 +78,7 @@ export function ProgressTrackingSection({
               cols={{ base: 1, sm: form.values.type === "book" ? 2 : 1 }}
               spacing="md"
             >
-              <TimeSpentModal
-                catalogMetadata={catalogMetadata}
-                disabled={isCatalogPending}
-              />
+              <TimeSpentModal disabled={isCatalogPending} />
 
               {form.values.type === "book" && (
                 <NumberInput

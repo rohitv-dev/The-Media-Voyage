@@ -8,9 +8,6 @@ import { and, eq, inArray, isNull, max } from "drizzle-orm";
 import { badRequest, conflict, notFound } from "../../../errors";
 import { requireOwnedCollection } from "../collection/queries";
 import {
-  findCollectionItem,
-  findOwnedActiveUserMedia,
-  getLastCollectionItemPosition,
   listCollectionItems,
   listCollectionItemsDetailed,
 } from "./queries";
@@ -34,39 +31,14 @@ export async function getOwnedCollectionItemsDetailed(
   return listCollectionItemsDetailed(collectionId);
 }
 
-export async function addCollectionItem(
+async function insertCollectionItems(
   userId: string,
   collectionId: string,
-  userMediaId: string,
+  userMediaIds: string | string[],
 ) {
-  await requireOwnedCollection(userId, collectionId);
+  const isSingle = typeof userMediaIds === "string";
+  const ids = isSingle ? [userMediaIds] : userMediaIds;
 
-  const userMediaEntry = await findOwnedActiveUserMedia(userId, userMediaId);
-
-  if (!userMediaEntry) throw notFound("Selected media entry not found");
-
-  const existing = await findCollectionItem(collectionId, userMediaId);
-
-  if (existing) throw conflict("Media is already in this collection");
-
-  const lastPosition = await getLastCollectionItemPosition(collectionId);
-  const [item] = await db
-    .insert(mediaCollectionItems)
-    .values({
-      collectionId,
-      userMediaId,
-      position: lastPosition + 1,
-    })
-    .returning();
-
-  return item;
-}
-
-export async function addCollectionItems(
-  userId: string,
-  collectionId: string,
-  userMediaIds: string[],
-) {
   return db.transaction(async (tx) => {
     const [collection] = await tx
       .select({ id: mediaCollection.id })
@@ -88,12 +60,16 @@ export async function addCollectionItems(
         and(
           eq(userMedia.userId, userId),
           isNull(userMedia.deletedAt),
-          inArray(userMedia.id, userMediaIds),
+          inArray(userMedia.id, ids),
         ),
       );
 
-    if (ownedMedia.length !== userMediaIds.length) {
-      throw notFound("One or more selected media entries were not found");
+    if (ownedMedia.length !== ids.length) {
+      throw notFound(
+        isSingle
+          ? "Selected media entry not found"
+          : "One or more selected media entries were not found",
+      );
     }
 
     const existingItems = await tx
@@ -102,13 +78,15 @@ export async function addCollectionItems(
       .where(
         and(
           eq(mediaCollectionItems.collectionId, collectionId),
-          inArray(mediaCollectionItems.userMediaId, userMediaIds),
+          inArray(mediaCollectionItems.userMediaId, ids),
         ),
       );
 
     if (existingItems.length) {
       throw conflict(
-        "One or more selected media entries are already in this collection",
+        isSingle
+          ? "Media is already in this collection"
+          : "One or more selected media entries are already in this collection",
       );
     }
 
@@ -121,7 +99,7 @@ export async function addCollectionItems(
     return tx
       .insert(mediaCollectionItems)
       .values(
-        userMediaIds.map((userMediaId, index) => ({
+        ids.map((userMediaId, index) => ({
           collectionId,
           userMediaId,
           position: lastPosition + index + 1,
@@ -129,6 +107,27 @@ export async function addCollectionItems(
       )
       .returning();
   });
+}
+
+export async function addCollectionItem(
+  userId: string,
+  collectionId: string,
+  userMediaId: string,
+) {
+  const [item] = await insertCollectionItems(
+    userId,
+    collectionId,
+    userMediaId,
+  );
+  return item;
+}
+
+export async function addCollectionItems(
+  userId: string,
+  collectionId: string,
+  userMediaIds: string[],
+) {
+  return insertCollectionItems(userId, collectionId, userMediaIds);
 }
 
 export async function reorderCollectionItems(

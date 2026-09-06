@@ -1,31 +1,22 @@
 import type { CatalogMetadata } from "@media-voyage/shared";
 import type {
   SeasonProgressEntry,
-  SourceMediaRecord,
   TmdbMediaDetails,
 } from "@media-voyage/shared/api";
 import { api } from "#/lib/api";
 
-type HydratedTmdb = {
-  description?: string;
-  metadata?: CatalogMetadata;
-  seasonsProgress?: SeasonProgressEntry[];
+type HydratedTmdbShow = {
+  metadata?: CatalogMetadata<"show">;
+  seasonsProgress: SeasonProgressEntry[];
 };
 
-export async function hydrateTmdb(
-  record: SourceMediaRecord,
-): Promise<HydratedTmdb> {
-  if (
-    !record.externalId ||
-    (record.type !== "movie" && record.type !== "show")
-  ) {
-    return {};
-  }
-
+export async function hydrateTmdbShow(
+  externalId: string,
+): Promise<HydratedTmdbShow> {
   const details = await api<TmdbMediaDetails>(
-    `/media/tmdb/${record.type}/${encodeURIComponent(record.externalId)}`,
+    `/media/tmdb/show/${encodeURIComponent(externalId)}`,
   );
-  const metadata: CatalogMetadata<"movie" | "show"> = {};
+  const metadata: CatalogMetadata<"show"> = {};
 
   if (details.genres.length) metadata.genre = details.genres;
   if (details.keywords?.length) metadata.keywords = details.keywords;
@@ -49,9 +40,8 @@ export async function hydrateTmdb(
   );
 
   return {
-    description: details.description ?? undefined,
     metadata: Object.keys(metadata).length ? metadata : undefined,
-    ...(record.type === "show" ? { seasonsProgress } : {}),
+    seasonsProgress,
   };
 }
 

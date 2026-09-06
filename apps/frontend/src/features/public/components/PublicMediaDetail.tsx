@@ -102,7 +102,15 @@ export function PublicMediaDetail({ data }: { data: PublicMediaDetailData }) {
   return (
     <Stack gap="lg" py={{ base: "md", sm: "xl" }} maw={980} mx="auto">
       <Box>
-        <ButtonBack onClick={() => router.history.back()} />
+        <Button
+          variant="subtle"
+          leftSection={<IconArrowLeft size={16} />}
+          px={0}
+          fw={600}
+          onClick={() => router.history.back()}
+        >
+          Back
+        </Button>
       </Box>
 
       <motion.div
@@ -268,19 +276,5 @@ export function PublicMediaDetail({ data }: { data: PublicMediaDetailData }) {
         </Text>
       </Paper>
     </Stack>
-  );
-}
-
-function ButtonBack({ onClick }: { onClick: () => void }) {
-  return (
-    <Button
-      variant="subtle"
-      leftSection={<IconArrowLeft size={16} />}
-      px={0}
-      fw={600}
-      onClick={onClick}
-    >
-      Back
-    </Button>
   );
 }

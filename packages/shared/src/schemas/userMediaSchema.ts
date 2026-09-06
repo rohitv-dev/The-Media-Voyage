@@ -1,8 +1,4 @@
-import {
-  createInsertSchema,
-  createSelectSchema,
-  createUpdateSchema,
-} from "drizzle-zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import {
   mediaTypeEnum,
   statusEnum,
@@ -16,7 +12,6 @@ export const userMediaInsertSchema = createInsertSchema(userMedia, {
   startedAt: z.coerce.date().nullable().optional(),
   completedAt: z.coerce.date().nullable().optional(),
 });
-export const userMediaUpdateSchema = createUpdateSchema(userMedia);
 
 export const mediaTypeEnumValues = mediaTypeEnum.enumValues;
 export const statusEnumValues = statusEnum.enumValues;

@@ -1,6 +1,6 @@
 import type { TmdbMediaDetails } from "@media-voyage/shared/api";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { hydrateTmdb, mergeTmdbSeasons } from "./tmdb";
+import { hydrateTmdbShow, mergeTmdbSeasons } from "./tmdb";
 
 const apiMock = vi.hoisted(() => vi.fn());
 
@@ -26,40 +26,6 @@ function details(overrides: Partial<TmdbMediaDetails> = {}): TmdbMediaDetails {
 describe("TMDB frontend hydration", () => {
   beforeEach(() => apiMock.mockReset());
 
-  it("hydrates movie metadata without season progress", async () => {
-    apiMock.mockResolvedValue(
-      details({
-        source: "tmdb_movie",
-        type: "movie",
-        title: "Example Movie",
-        releaseDate: "2024-10-22",
-        keywords: ["space travel", "wormhole"],
-        seasons: [],
-      }),
-    );
-
-    await expect(
-      hydrateTmdb({
-        id: "",
-        source: "tmdb_movie",
-        externalId: "100",
-        title: "Example Movie",
-        type: "movie",
-        imageUrl: null,
-      }),
-    ).resolves.toEqual({
-      description: "A show description.",
-      metadata: {
-        genre: ["Drama", "Mystery"],
-        keywords: ["space travel", "wormhole"],
-        runtime: 45,
-        catalogRating: 8.2,
-        releaseDate: "2024-10-22",
-      },
-    });
-    expect(apiMock).toHaveBeenCalledWith("/media/tmdb/movie/100");
-  });
-
   it("hydrates show metadata and season episode counts", async () => {
     apiMock.mockResolvedValue(
       details({
@@ -70,14 +36,7 @@ describe("TMDB frontend hydration", () => {
       }),
     );
 
-    const hydrated = await hydrateTmdb({
-      id: "",
-      source: "tmdb_tv",
-      externalId: "100",
-      title: "Example Show",
-      type: "show",
-      imageUrl: null,
-    });
+    const hydrated = await hydrateTmdbShow("100");
 
     expect(hydrated.seasonsProgress).toMatchObject([
       { season: 1, expectedEpisodeCount: 10, episodesWatched: 0 },
@@ -97,16 +56,9 @@ describe("TMDB frontend hydration", () => {
       }),
     );
 
-    await expect(
-      hydrateTmdb({
-        id: "",
-        source: "tmdb_tv",
-        externalId: "100",
-        title: "Example Show",
-        type: "show",
-        imageUrl: null,
-      }),
-    ).resolves.toEqual({ seasonsProgress: [] });
+    await expect(hydrateTmdbShow("100")).resolves.toEqual({
+      seasonsProgress: [],
+    });
   });
 });
 
