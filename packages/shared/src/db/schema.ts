@@ -84,7 +84,6 @@ export const visibilityEnum = pgEnum("visibility", [
 
 export const friendshipStatusEnum = pgEnum("friendship_status", [
   "pending",
-  "declined",
   "accepted",
 ]);
 

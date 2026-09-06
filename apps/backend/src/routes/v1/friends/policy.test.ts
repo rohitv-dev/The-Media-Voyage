@@ -144,28 +144,6 @@ describe("resolveFriendRequest", () => {
     });
   });
 
-  it("replaces a declined row so the new requester ends up as requester", () => {
-    const declined = friendship({
-      status: "declined",
-      requesterId: FRIEND,
-      addresseeId: OWNER,
-    });
-
-    expect(resolveFriendRequest(OWNER, declined)).toEqual({
-      type: "replace_existing",
-      friendshipId: "friendship-1",
-    });
-  });
-
-  it("also replaces a declined row we ourselves sent, allowing a re-request", () => {
-    expect(
-      resolveFriendRequest(OWNER, friendship({ status: "declined" })),
-    ).toEqual({
-      type: "replace_existing",
-      friendshipId: "friendship-1",
-    });
-  });
-
   it("is unaffected by which side of the row the requester sits on", () => {
     // friendshipBetween can return the row in either direction, so the rule
     // must key off requesterId rather than assuming an ordering.

@@ -1,5 +1,7 @@
+import { visibilityOptions } from "#/features/media/options";
 import { queryKeys } from "#/lib/queryKeys";
 import { getApiErrorMessage } from "#/lib/api";
+import { capitalizeWords } from "#/utils/strings";
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -15,12 +17,6 @@ import {
 } from "../queries";
 
 type Visibility = NonNullable<MediaCollectionRecord["visibility"]>;
-
-const VISIBILITY_LABEL: Record<Visibility, string> = {
-  private: "Private",
-  friends: "Friends",
-  public: "Public",
-};
 
 /**
  * Sets a collection's visibility, then — if the collection now reaches further
@@ -63,7 +59,7 @@ export function CollectionVisibilityControl({
 
     if (!entries.length) return;
 
-    const label = VISIBILITY_LABEL[visibility].toLowerCase();
+    const label = capitalizeWords(visibility).toLowerCase();
 
     modals.openConfirmModal({
       title: "Some entries are still more private",
@@ -109,7 +105,7 @@ export function CollectionVisibilityControl({
       updateCollection(collection.id, { visibility }),
     onSuccess: async (_result, visibility) => {
       showSuccessNotification({
-        message: `Collection is now ${VISIBILITY_LABEL[visibility].toLowerCase()}.`,
+        message: `Collection is now ${capitalizeWords(visibility).toLowerCase()}.`,
         autoClose: 1500,
       });
 
@@ -143,11 +139,7 @@ export function CollectionVisibilityControl({
           visibilityMutation.mutate(value);
         }}
         aria-label="Collection visibility"
-        data={[
-          { value: "private", label: "Private" },
-          { value: "friends", label: "Friends" },
-          { value: "public", label: "Public" },
-        ]}
+        data={visibilityOptions}
       />
     </Group>
   );

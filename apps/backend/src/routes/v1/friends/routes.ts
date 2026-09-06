@@ -82,23 +82,31 @@ async function friendsRoutes(fastify: FastifyInstance) {
   fastify.patch("/requests/:friendshipId", async (request, reply) => {
     const { friendshipId } = friendshipIdParamsSchema.parse(request.params);
     const input = friendRespondSchema.parse(request.body);
+    if (input.action === "decline") {
+      return reply.send(
+        await respondToFriendRequest(request.userId, friendshipId, {
+          action: "decline",
+        }),
+      );
+    }
+
     const friendship = await respondToFriendRequest(
       request.userId,
       friendshipId,
-      input,
+      {
+        action: "accept",
+      },
     );
 
-    if (input.action === "accept") {
-      void sendFriendRequestAcceptedNotification(
-        friendship.requesterId,
-        friendship.id,
-      ).catch((error) => {
-        request.log.warn(
-          { err: error, friendshipId: friendship.id },
-          "Friend request acceptance push failed",
-        );
-      });
-    }
+    void sendFriendRequestAcceptedNotification(
+      friendship.requesterId,
+      friendship.id,
+    ).catch((error) => {
+      request.log.warn(
+        { err: error, friendshipId: friendship.id },
+        "Friend request acceptance push failed",
+      );
+    });
 
     return reply.send(friendship);
   });

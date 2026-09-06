@@ -50,8 +50,6 @@ const friends: FriendRecord[] = [
     name: "Ada Lovelace",
     email: "ada@example.com",
     image: null,
-    friendshipId: "11111111-1111-4111-8111-111111111111",
-    since: null,
     sharedCount: 3,
   },
 ];

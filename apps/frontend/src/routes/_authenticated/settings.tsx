@@ -129,10 +129,7 @@ function RouteComponent() {
         setSharing(true);
 
         try {
-          const { updated } = await shareLibrary({
-            visibility,
-            onlyPrivate: true,
-          });
+          const { updated } = await shareLibrary({ visibility });
 
           showSuccessNotification({
             message: updated

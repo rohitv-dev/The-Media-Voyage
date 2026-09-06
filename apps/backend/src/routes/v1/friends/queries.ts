@@ -138,10 +138,8 @@ async function countSharedEntries(friendIds: string[]) {
 export async function listFriends(userId: string): Promise<FriendRecord[]> {
   const rows = await db
     .select({
-      friendshipId: friendships.id,
       requesterId: friendships.requesterId,
       addresseeId: friendships.addresseeId,
-      since: friendships.respondedAt,
     })
     .from(friendships)
     .where(
@@ -156,12 +154,9 @@ export async function listFriends(userId: string): Promise<FriendRecord[]> {
 
   if (!rows.length) return [];
 
-  const friendIdByFriendship = rows.map((row) => ({
-    ...row,
-    friendId: row.requesterId === userId ? row.addresseeId : row.requesterId,
-  }));
-
-  const friendIds = friendIdByFriendship.map((row) => row.friendId);
+  const friendIds = rows.map((row) =>
+    row.requesterId === userId ? row.addresseeId : row.requesterId,
+  );
 
   const [profiles, sharedCounts] = await Promise.all([
     db.select(friendUserSelect).from(user).where(inArray(user.id, friendIds)),
@@ -172,16 +167,14 @@ export async function listFriends(userId: string): Promise<FriendRecord[]> {
     profiles.map((profile) => [profile.userId, profile]),
   );
 
-  return friendIdByFriendship
-    .map((row) => {
-      const profile = profileById.get(row.friendId);
+  return friendIds
+    .map((friendId) => {
+      const profile = profileById.get(friendId);
       if (!profile) return null;
 
       return {
         ...profile,
-        friendshipId: row.friendshipId,
-        since: row.since,
-        sharedCount: sharedCounts.get(row.friendId) ?? 0,
+        sharedCount: sharedCounts.get(friendId) ?? 0,
       };
     })
     .filter((row): row is FriendRecord => row !== null)
@@ -205,7 +198,6 @@ export async function listFriendRequests(
       .select({
         ...friendUserSelect,
         friendshipId: friendships.id,
-        createdAt: friendships.createdAt,
       })
       .from(friendships)
       .innerJoin(user, eq(user.id, friendships.requesterId))
@@ -220,7 +212,6 @@ export async function listFriendRequests(
       .select({
         ...friendUserSelect,
         friendshipId: friendships.id,
-        createdAt: friendships.createdAt,
       })
       .from(friendships)
       .innerJoin(user, eq(user.id, friendships.addresseeId))

@@ -1,6 +1,5 @@
 import z from "zod";
 import { mediaDetailedRecordSchema, mediaRecordSchema } from "./userMedia";
-import { visibilityEnum } from "../";
 import { mediaCollectionSelectSchema } from "../schemas/mediaCollection";
 
 export const friendRequestSchema = z.object({
@@ -31,8 +30,6 @@ const friendUserSchema = z.object({
 });
 
 export const friendRecordSchema = friendUserSchema.extend({
-  friendshipId: z.uuid(),
-  since: z.coerce.date().nullable(),
   /** How many of their entries this viewer is allowed to see. */
   sharedCount: z.number(),
 });
@@ -41,7 +38,6 @@ export type FriendRecord = z.infer<typeof friendRecordSchema>;
 
 export const friendRequestRecordSchema = friendUserSchema.extend({
   friendshipId: z.uuid(),
-  createdAt: z.coerce.date(),
 });
 
 export type FriendRequestRecord = z.infer<typeof friendRequestRecordSchema>;
@@ -52,9 +48,7 @@ export type FriendRequestsResponse = {
 };
 
 export const shareLibrarySchema = z.object({
-  visibility: z.enum(visibilityEnum.enumValues),
-  /** Only rewrite entries that are still at the default `private`. */
-  onlyPrivate: z.boolean().default(true),
+  visibility: z.enum(["friends", "public"]),
 });
 
 export type ShareLibraryInput = z.infer<typeof shareLibrarySchema>;

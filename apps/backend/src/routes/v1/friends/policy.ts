@@ -23,7 +23,7 @@ export type FriendshipRow = {
   id: string;
   requesterId: string;
   addresseeId: string;
-  status: "pending" | "declined" | "accepted";
+  status: "pending" | "accepted";
 };
 
 /**
@@ -87,8 +87,6 @@ export type FriendRequestOutcome =
   | { type: "already_requested" }
   /** They requested us first — accept theirs instead of mirroring it. */
   | { type: "accept_existing"; friendshipId: string }
-  /** A declined row is replaced so the new requester ends up on the requester side. */
-  | { type: "replace_existing"; friendshipId: string }
   | { type: "create" };
 
 /**
@@ -103,11 +101,7 @@ export function resolveFriendRequest(
 
   if (existing.status === "accepted") return { type: "already_friends" };
 
-  if (existing.status === "pending") {
-    return existing.requesterId === requesterId
-      ? { type: "already_requested" }
-      : { type: "accept_existing", friendshipId: existing.id };
-  }
-
-  return { type: "replace_existing", friendshipId: existing.id };
+  return existing.requesterId === requesterId
+    ? { type: "already_requested" }
+    : { type: "accept_existing", friendshipId: existing.id };
 }

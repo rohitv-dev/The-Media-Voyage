@@ -165,6 +165,25 @@ describe("friend routes", () => {
     }
   });
 
+  it("does not send a push when a friend request is declined", async () => {
+    const friendshipId = "123e4567-e89b-12d3-a456-426614174004";
+    respondToFriendRequestMock.mockResolvedValue({ removed: true });
+    const app = await buildApp();
+
+    try {
+      const response = await app.inject({
+        method: "PATCH",
+        url: `/api/v1/friends/requests/${friendshipId}`,
+        payload: { action: "decline" },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(sendFriendRequestAcceptedNotificationMock).not.toHaveBeenCalled();
+    } finally {
+      await app.close();
+    }
+  });
+
   it("sends a push after adding a comment to a friend's media", async () => {
     const userMediaId = "123e4567-e89b-12d3-a456-426614174002";
     addCommentMock.mockResolvedValue({

@@ -67,16 +67,6 @@ export function statusHistoryQueryOptions(id: string) {
   });
 }
 
-function userMediaFilterQueryOptions(filters: UserMediaQuerySchema) {
-  return queryOptions({
-    queryKey: queryKeys.userMedia.filtered(filters),
-    queryFn: () =>
-      api<GetUserMediaResponse>(
-        `/user-media/filter${buildFilterQuery(filters)}`,
-      ),
-  });
-}
-
 const USER_MEDIA_PAGE_SIZE = 24;
 
 export function userMediaFilterInfiniteQueryOptions(
@@ -142,8 +132,13 @@ export const continueMediaFilters: UserMediaQuerySchema = {
   order: "desc",
 };
 
-export const continueMediaQueryOptions =
-  userMediaFilterQueryOptions(continueMediaFilters);
+export const continueMediaQueryOptions = queryOptions({
+  queryKey: queryKeys.userMedia.filtered(continueMediaFilters),
+  queryFn: () =>
+    api<GetUserMediaResponse>(
+      `/user-media/filter${buildFilterQuery(continueMediaFilters)}`,
+    ),
+});
 
 // -- Calendar -----------------------------------------------------------------
 

@@ -10,7 +10,7 @@ import type {
   ReactionInput,
   ShareLibraryInput,
 } from "@media-voyage/shared/api";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { badRequest, conflict, forbidden, notFound } from "@/errors";
 import { createNotification } from "../notifications/service";
 import {
@@ -66,17 +66,8 @@ export async function sendFriendRequest(userId: string, email: string) {
       return { friendship: accepted, autoAccepted: true };
     }
 
-    // A previously declined pair is replaced outright, so the new request is
-    // always stored with the current requester on the requester side.
-    case "replace_existing":
     case "create": {
       const friendship = await db.transaction(async (tx) => {
-        if (outcome.type === "replace_existing") {
-          await tx
-            .delete(friendships)
-            .where(eq(friendships.id, outcome.friendshipId));
-        }
-
         const [created] = await tx
           .insert(friendships)
           .values({
@@ -103,6 +94,16 @@ export async function sendFriendRequest(userId: string, email: string) {
 export async function respondToFriendRequest(
   userId: string,
   friendshipId: string,
+  input: { action: "accept" },
+): Promise<typeof friendships.$inferSelect>;
+export async function respondToFriendRequest(
+  userId: string,
+  friendshipId: string,
+  input: { action: "decline" },
+): Promise<{ removed: true }>;
+export async function respondToFriendRequest(
+  userId: string,
+  friendshipId: string,
   { action }: FriendRespondInput,
 ) {
   const [existing] = await db
@@ -122,23 +123,27 @@ export async function respondToFriendRequest(
     throw conflict("That request has already been answered");
   }
 
+  if (action === "decline") {
+    await db.delete(friendships).where(eq(friendships.id, friendshipId));
+
+    return { removed: true };
+  }
+
   const updated = await db.transaction(async (tx) => {
     const [friendship] = await tx
       .update(friendships)
       .set({
-        status: action === "accept" ? "accepted" : "declined",
+        status: "accepted",
         respondedAt: new Date(),
       })
       .where(eq(friendships.id, friendshipId))
       .returning();
 
-    if (action === "accept") {
-      await createNotification(tx, {
-        recipientId: existing.requesterId,
-        actorId: userId,
-        type: "friend_request_accepted",
-      });
-    }
+    await createNotification(tx, {
+      recipientId: existing.requesterId,
+      actorId: userId,
+      type: "friend_request_accepted",
+    });
 
     return friendship;
   });
@@ -148,8 +153,8 @@ export async function respondToFriendRequest(
 
 /**
  * Removes the friendship row in either direction — used for unfriending,
- * cancelling an outgoing request, and clearing a declined one. Reactions and
- * comments are intentionally left untouched.
+ * cancelling an outgoing request. Reactions and comments are intentionally
+ * left untouched.
  */
 export async function removeFriendship(userId: string, otherUserId: string) {
   const existing = await friendshipBetween(userId, otherUserId);
@@ -267,7 +272,7 @@ export async function deleteComment(viewerId: string, commentId: string) {
 /** One-shot bulk visibility change over the caller's own library. */
 export async function shareLibrary(
   userId: string,
-  { visibility, onlyPrivate }: ShareLibraryInput,
+  { visibility }: ShareLibraryInput,
 ) {
   const updated = await db
     .update(userMedia)
@@ -276,7 +281,7 @@ export async function shareLibrary(
       and(
         eq(userMedia.userId, userId),
         isNull(userMedia.deletedAt),
-        ...(onlyPrivate ? [inArray(userMedia.visibility, ["private"])] : []),
+        eq(userMedia.visibility, "private"),
       ),
     )
     .returning({ id: userMedia.id });
