@@ -9,6 +9,7 @@ import { MediaViewHero } from "./MediaViewHero";
 import { MediaViewReadingPanels } from "./MediaViewReadingPanels";
 import { MediaViewSeasons } from "./MediaViewSeasons";
 import { MediaViewStatusHistory } from "./MediaViewStatusHistory";
+import { MediaViewWatchProviders } from "./MediaViewWatchProviders";
 
 export type MediaViewData = Omit<MediaDetailedRecord, "notes" | "visibility"> &
   Partial<Pick<MediaDetailedRecord, "notes" | "visibility">>;
@@ -31,6 +32,14 @@ type MediaViewProps = {
 };
 
 export function MediaView(props: MediaViewProps) {
+  const tmdbType =
+    props.data.type === "movie" && props.data.catalogSource === "tmdb_movie"
+      ? "movie"
+      : props.data.type === "show" && props.data.catalogSource === "tmdb_tv"
+        ? "show"
+        : null;
+  const tmdbId = Number(props.data.catalogExternalId);
+
   return (
     <Container size="md" py={{ base: "sm", sm: "xl" }}>
       <Stack gap="md">
@@ -50,6 +59,9 @@ export function MediaView(props: MediaViewProps) {
           quickActionPending={props.quickActionPending}
         />
         <MediaViewDetails data={props.data} />
+        {tmdbType && Number.isSafeInteger(tmdbId) && tmdbId > 0 && (
+          <MediaViewWatchProviders type={tmdbType} id={tmdbId} />
+        )}
         <MediaViewStatusHistory
           mediaId={props.data.id}
           readOnly={props.readOnly}

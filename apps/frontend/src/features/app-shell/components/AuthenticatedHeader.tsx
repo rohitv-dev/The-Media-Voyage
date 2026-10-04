@@ -12,6 +12,7 @@ import {
   Text,
   Title,
   Tooltip,
+  UnstyledButton,
 } from "@mantine/core";
 import {
   IconHelp,
@@ -149,7 +150,12 @@ export function AuthenticatedHeader({
             </ActionIcon>
           </Tooltip>
 
-          <Box style={{ cursor: "pointer", minWidth: 0 }} onClick={onGoHome}>
+          <UnstyledButton
+            type="button"
+            aria-label="Go to dashboard"
+            style={{ minWidth: 0, textAlign: "left" }}
+            onClick={onGoHome}
+          >
             <Group gap="xs" wrap="nowrap" miw={0}>
               <img
                 src="/media-voyage-mark.svg"
@@ -161,6 +167,7 @@ export function AuthenticatedHeader({
               />
               <Stack gap={0} miw={0}>
                 <Title
+                  component="span"
                   order={4}
                   fz={{ base: "lg", sm: "h4" }}
                   lh={1.1}
@@ -177,7 +184,7 @@ export function AuthenticatedHeader({
                 </Text>
               </Stack>
             </Group>
-          </Box>
+          </UnstyledButton>
         </Group>
 
         <Group gap="xs" wrap="nowrap" style={{ flexShrink: 0 }}>
@@ -260,16 +267,16 @@ export function AuthenticatedHeader({
           </Button>
           <Box visibleFrom="md">
             <Tooltip label="Profile" withArrow>
-              <Avatar
-                color="accent"
-                radius="xl"
-                size="sm"
-                style={{ cursor: "pointer" }}
+              <UnstyledButton
+                type="button"
+                display="flex"
                 onClick={onOpenProfile}
                 aria-label="Open profile"
               >
-                <IconUser size={17} />
-              </Avatar>
+                <Avatar color="accent" radius="xl" size="sm">
+                  <IconUser size={17} />
+                </Avatar>
+              </UnstyledButton>
             </Tooltip>
           </Box>
         </Group>

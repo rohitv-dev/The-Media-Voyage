@@ -2,6 +2,13 @@ import type {
   TmdbMediaDetails,
   TmdbMediaRecord,
   TmdbMediaType,
+  TmdbWatchAvailability,
+  TmdbWatchProvider,
+  TmdbWatchRegion,
+} from "@media-voyage/shared/api";
+import {
+  WATCH_PROVIDER_CACHE_TTL_MS,
+  watchCountrySchema,
 } from "@media-voyage/shared/api";
 import { normalizeCatalogTerms } from "@media-voyage/shared/catalogMetadata";
 import { z } from "zod";
@@ -13,6 +20,7 @@ const TMDB_POSTER_URL = "https://image.tmdb.org/t/p/w500";
 const TMDB_LANGUAGE = "en-US";
 const TMDB_NETWORK_RETRY_DELAY_MS = 200;
 const TMDB_APPEND_LIMIT = 20;
+const TMDB_WATCH_CACHE_LIMIT = 200;
 
 type TmdbMovieRecord = Extract<TmdbMediaRecord, { source: "tmdb_movie" }>;
 type TmdbShowRecord = Extract<TmdbMediaRecord, { source: "tmdb_tv" }>;
@@ -93,6 +101,64 @@ const tmdbSeasonRuntimeSchema = z.object({
     }),
   ),
 });
+
+const tmdbWatchProviderSchema = z.object({
+  provider_id: z.number().int().positive(),
+  provider_name: z.string().min(1),
+  logo_path: z.string().startsWith("/").nullable().optional().default(null),
+  display_priority: z.number().int().optional().default(0),
+});
+
+const tmdbWatchCountrySchema = z.object({
+  link: z
+    .url()
+    .refine((value) => {
+      try {
+        const url = new URL(value);
+        return (
+          url.protocol === "https:" &&
+          (url.hostname === "www.themoviedb.org" ||
+            url.hostname === "themoviedb.org")
+        );
+      } catch {
+        return false;
+      }
+    }, "Invalid TMDB watch-page URL")
+    .nullable()
+    .optional()
+    .default(null),
+  flatrate: z.array(tmdbWatchProviderSchema).optional().default([]),
+  free: z.array(tmdbWatchProviderSchema).optional().default([]),
+  ads: z.array(tmdbWatchProviderSchema).optional().default([]),
+  rent: z.array(tmdbWatchProviderSchema).optional().default([]),
+  buy: z.array(tmdbWatchProviderSchema).optional().default([]),
+});
+
+const tmdbWatchResponseSchema = z.object({
+  id: z.number().int().positive(),
+  results: z.record(watchCountrySchema, tmdbWatchCountrySchema),
+});
+
+const tmdbWatchRegionsSchema = z.object({
+  results: z
+    .array(
+      z.object({
+        iso_3166_1: watchCountrySchema,
+        english_name: z.string().min(1),
+      }),
+    )
+    .min(1),
+});
+
+type WatchCacheEntry = {
+  data: Promise<z.infer<typeof tmdbWatchResponseSchema>>;
+  expiresAt: number;
+};
+
+// Public title availability is shared across viewers and countries.
+const watchProvidersCache = new Map<string, WatchCacheEntry>();
+let watchRegionsCache:
+  { data: Promise<TmdbWatchRegion[]>; expiresAt: number } | undefined;
 
 function tmdbPath(type: TmdbMediaType): "movie" | "tv" {
   return type === "movie" ? "movie" : "tv";
@@ -383,4 +449,105 @@ export async function getTmdbRecommendations(
   );
 
   return parseResults(type, data);
+}
+
+function watchProviders(
+  providers: z.infer<typeof tmdbWatchProviderSchema>[] = [],
+): TmdbWatchProvider[] {
+  return providers
+    .map((provider) => ({
+      id: provider.provider_id,
+      name: provider.provider_name,
+      logoUrl: provider.logo_path
+        ? `https://image.tmdb.org/t/p/w92${provider.logo_path}`
+        : null,
+      displayPriority: provider.display_priority,
+    }))
+    .sort(
+      (left, right) =>
+        left.displayPriority - right.displayPriority ||
+        left.name.localeCompare(right.name),
+    );
+}
+
+export async function getTmdbWatchProviders(
+  type: TmdbMediaType,
+  id: number,
+  country: string,
+): Promise<TmdbWatchAvailability> {
+  const key = `${type}:${id}`;
+  let entry = watchProvidersCache.get(key);
+
+  if (!entry || entry.expiresAt <= Date.now()) {
+    watchProvidersCache.delete(key);
+    const newEntry: WatchCacheEntry = {
+      expiresAt: Date.now() + WATCH_PROVIDER_CACHE_TTL_MS,
+      data: fetchTmdb(
+        `${tmdbPath(type)}/${id}/watch/providers`,
+        {},
+        "TMDB media not found",
+      ).then((data) => {
+        const parsed = tmdbWatchResponseSchema
+          .refine((response) => response.id === id)
+          .safeParse(data);
+        if (!parsed.success) return invalidResponse(parsed.error);
+        return parsed.data;
+      }),
+    };
+
+    if (watchProvidersCache.size >= TMDB_WATCH_CACHE_LIMIT) {
+      const oldestKey = watchProvidersCache.keys().next().value;
+      if (oldestKey !== undefined) watchProvidersCache.delete(oldestKey);
+    }
+    watchProvidersCache.set(key, newEntry);
+    void newEntry.data.catch(() => {
+      if (watchProvidersCache.get(key) === newEntry) {
+        watchProvidersCache.delete(key);
+      }
+    });
+    entry = newEntry;
+  }
+
+  const data = await entry.data;
+  const availability = data.results[country];
+
+  return {
+    country,
+    link: availability?.link ?? null,
+    offers: {
+      flatrate: watchProviders(availability?.flatrate),
+      free: watchProviders(availability?.free),
+      ads: watchProviders(availability?.ads),
+      rent: watchProviders(availability?.rent),
+      buy: watchProviders(availability?.buy),
+    },
+    expiresAt: new Date(entry.expiresAt).toISOString(),
+  };
+}
+
+export async function getTmdbWatchRegions(): Promise<TmdbWatchRegion[]> {
+  if (watchRegionsCache && watchRegionsCache.expiresAt > Date.now()) {
+    return watchRegionsCache.data;
+  }
+
+  const entry = {
+    expiresAt: Date.now() + WATCH_PROVIDER_CACHE_TTL_MS,
+    data: fetchTmdb("watch/providers/regions", {
+      language: TMDB_LANGUAGE,
+    }).then((data) => {
+      const parsed = tmdbWatchRegionsSchema.safeParse(data);
+      if (!parsed.success) return invalidResponse(parsed.error);
+      return parsed.data.results
+        .map((region) => ({
+          code: region.iso_3166_1,
+          name: region.english_name,
+        }))
+        .sort((left, right) => left.name.localeCompare(right.name));
+    }),
+  };
+  watchRegionsCache = entry;
+  void entry.data.catch(() => {
+    if (watchRegionsCache === entry) watchRegionsCache = undefined;
+  });
+  return entry.data;
 }

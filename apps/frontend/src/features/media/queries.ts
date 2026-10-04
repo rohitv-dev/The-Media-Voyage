@@ -13,11 +13,17 @@ import type {
   ReactionRecord,
   StatusHistoryRecord,
   UserMediaQuerySchema,
+  TmdbMediaType,
+  TmdbWatchAvailability,
+  TmdbWatchRegion,
   UserMediaDropdowns,
   MediaPickerQuery,
   MediaPickerRecord,
 } from "@media-voyage/shared/api";
-import { FUZZY_TITLE_SEARCH_CONFIG } from "@media-voyage/shared/api";
+import {
+  FUZZY_TITLE_SEARCH_CONFIG,
+  WATCH_PROVIDER_CACHE_TTL_MS,
+} from "@media-voyage/shared/api";
 
 /**
  * Serialize a filter object into a query string (with leading `?`, or empty
@@ -45,6 +51,38 @@ export function buildFilterQuery(filters: Record<string, unknown>): string {
 
   const queryString = params.toString();
   return queryString ? `?${queryString}` : "";
+}
+
+export const tmdbWatchRegionsOptions = queryOptions({
+  queryKey: queryKeys.tmdb.watchRegions,
+  queryFn: () => api<TmdbWatchRegion[]>("/media/tmdb/watch-regions"),
+  staleTime: WATCH_PROVIDER_CACHE_TTL_MS,
+  refetchOnWindowFocus: true,
+  refetchOnReconnect: true,
+});
+
+export function tmdbWatchProvidersOptions(
+  type: TmdbMediaType,
+  id: number,
+  country: string,
+) {
+  return queryOptions({
+    queryKey: queryKeys.tmdb.watchProviders(type, id, country),
+    queryFn: () =>
+      api<TmdbWatchAvailability>(
+        `/media/tmdb/${type}/${id}/watch/providers${buildFilterQuery({ country })}`,
+      ),
+    // Preserve the backend expiry instead of starting another 24-hour window.
+    staleTime: (query) =>
+      query.state.data
+        ? Math.max(
+            0,
+            Date.parse(query.state.data.expiresAt) - query.state.dataUpdatedAt,
+          )
+        : 0,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
 }
 
 // -- User media ---------------------------------------------------------------

@@ -2,9 +2,14 @@ import {
   mediaSearchQuerySchema,
   providerCatalogIdentitySchema,
   tmdbMediaParamsSchema,
+  tmdbWatchProvidersQuerySchema,
 } from "@media-voyage/shared/api";
 import type { FastifyContextConfig, FastifyInstance } from "fastify";
-import { getTmdbDetails } from "@/services/tmdb";
+import {
+  getTmdbDetails,
+  getTmdbWatchProviders,
+  getTmdbWatchRegions,
+} from "@/services/tmdb";
 import { resolveProviderMediaSelection } from "@/services/providerCatalog";
 import { requireAuth } from "@/require-auth";
 import { searchMedia } from "./service";
@@ -38,6 +43,20 @@ async function mediaRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const identity = providerCatalogIdentitySchema.parse(request.body);
       return reply.send(await resolveProviderMediaSelection(identity));
+    },
+  );
+
+  fastify.get("/tmdb/watch-regions", { config }, async (_request, reply) =>
+    reply.send(await getTmdbWatchRegions()),
+  );
+
+  fastify.get(
+    "/tmdb/:type/:id/watch/providers",
+    { config },
+    async (request, reply) => {
+      const { type, id } = tmdbMediaParamsSchema.parse(request.params);
+      const { country } = tmdbWatchProvidersQuerySchema.parse(request.query);
+      return reply.send(await getTmdbWatchProviders(type, id, country));
     },
   );
 

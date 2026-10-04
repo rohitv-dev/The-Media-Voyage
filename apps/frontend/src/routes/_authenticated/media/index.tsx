@@ -95,6 +95,7 @@ function RouteComponent() {
     isPending,
     isError,
     error,
+    refetch,
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
@@ -391,6 +392,7 @@ function RouteComponent() {
             onSearch={setLibrarySearchQuery}
             onClear={clearLibrarySearch}
             focusRequest={librarySearchFocusRequest}
+            autoFocus
           />
         )}
 
@@ -434,6 +436,19 @@ function RouteComponent() {
                   </Box>
                 ))}
               </SimpleGrid>
+            ) : !isExploring && isError && !hasLoadedResults ? (
+              <EmptyState
+                title="Library could not be loaded"
+                description="Check your connection and try loading it again."
+              >
+                <Button
+                  variant="light"
+                  loading={isFetching}
+                  onClick={() => void refetch()}
+                >
+                  Try again
+                </Button>
+              </EmptyState>
             ) : !isResultsFetching &&
               hasLoadedResults &&
               records.length === 0 ? (

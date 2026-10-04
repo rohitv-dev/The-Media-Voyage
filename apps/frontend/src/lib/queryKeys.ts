@@ -1,4 +1,7 @@
-import type { UserMediaQuerySchema } from "@media-voyage/shared/api";
+import type {
+  TmdbMediaType,
+  UserMediaQuerySchema,
+} from "@media-voyage/shared/api";
 
 /**
  * Central registry of TanStack Query keys. Query options and cache
@@ -26,6 +29,11 @@ export const queryKeys = {
   calendarActivity: (month: string) => ["calendar-activity", month] as const,
   mediaSearch: (type: string, search: string) =>
     ["media-search", type, search] as const,
+  tmdb: {
+    watchRegions: ["tmdb", "watch-regions"] as const,
+    watchProviders: (type: TmdbMediaType, id: number, country: string) =>
+      ["tmdb", "watch-providers", type, id, country] as const,
+  },
   collection: {
     all: ["collection"] as const,
     items: (collectionId: string) =>

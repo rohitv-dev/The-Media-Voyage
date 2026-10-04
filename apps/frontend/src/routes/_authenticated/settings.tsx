@@ -418,6 +418,20 @@ function RouteComponent() {
             </Anchor>
           </SettingRow>
 
+          <SettingRow
+            title="Watch availability"
+            description="Powered by JustWatch via TMDB"
+          >
+            <Anchor
+              href="https://www.justwatch.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open JustWatch"
+            >
+              <IconExternalLink size={18} />
+            </Anchor>
+          </SettingRow>
+
           <Text size="xs" c="dimmed">
             This product uses the TMDB API but is not endorsed or certified by
             TMDB.

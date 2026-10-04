@@ -1,5 +1,6 @@
 import Fastify from "fastify";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { FastifyInstance } from "fastify";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { unauthorized } from "@/errors";
 
 const {
@@ -54,14 +55,10 @@ vi.mock("./service", () => ({
 
 import friendsRoutes from "./routes";
 
-async function buildApp() {
-  const app = Fastify();
-  await app.register(friendsRoutes, { prefix: "/api/v1/friends" });
-  return app;
-}
-
 describe("friend routes", () => {
-  beforeEach(() => {
+  let app: FastifyInstance;
+
+  beforeEach(async () => {
     requireAuthMock.mockReset();
     requireAuthMock.mockImplementation(async (request: { userId: string }) => {
       request.userId = "user-1";
@@ -75,6 +72,13 @@ describe("friend routes", () => {
     sendFriendRequestAcceptedNotificationMock.mockResolvedValue(undefined);
     sendFriendRequestNotificationMock.mockResolvedValue(undefined);
     sendMediaCommentNotificationMock.mockResolvedValue(undefined);
+
+    app = Fastify();
+    await app.register(friendsRoutes, { prefix: "/api/v1/friends" });
+  });
+
+  afterEach(async () => {
+    await app.close();
   });
 
   it("sends a push after creating a pending friend request", async () => {
@@ -86,27 +90,22 @@ describe("friend routes", () => {
       },
       autoAccepted: false,
     });
-    const app = await buildApp();
 
-    try {
-      const response = await app.inject({
-        method: "POST",
-        url: "/api/v1/friends/requests",
-        payload: { email: "friend@example.com" },
-      });
+    const response = await app.inject({
+      method: "POST",
+      url: "/api/v1/friends/requests",
+      payload: { email: "friend@example.com" },
+    });
 
-      expect(response.statusCode).toBe(201);
-      expect(sendFriendRequestMock).toHaveBeenCalledWith(
-        "user-1",
-        "friend@example.com",
-      );
-      expect(sendFriendRequestNotificationMock).toHaveBeenCalledWith(
-        "user-2",
-        "friendship-1",
-      );
-    } finally {
-      await app.close();
-    }
+    expect(response.statusCode).toBe(201);
+    expect(sendFriendRequestMock).toHaveBeenCalledWith(
+      "user-1",
+      "friend@example.com",
+    );
+    expect(sendFriendRequestNotificationMock).toHaveBeenCalledWith(
+      "user-2",
+      "friendship-1",
+    );
   });
 
   it("does not send a pending-request push when an existing request is auto-accepted", async () => {
@@ -118,24 +117,19 @@ describe("friend routes", () => {
       },
       autoAccepted: true,
     });
-    const app = await buildApp();
 
-    try {
-      const response = await app.inject({
-        method: "POST",
-        url: "/api/v1/friends/requests",
-        payload: { email: "friend@example.com" },
-      });
+    const response = await app.inject({
+      method: "POST",
+      url: "/api/v1/friends/requests",
+      payload: { email: "friend@example.com" },
+    });
 
-      expect(response.statusCode).toBe(201);
-      expect(sendFriendRequestNotificationMock).not.toHaveBeenCalled();
-      expect(sendFriendRequestAcceptedNotificationMock).toHaveBeenCalledWith(
-        "user-3",
-        "friendship-1",
-      );
-    } finally {
-      await app.close();
-    }
+    expect(response.statusCode).toBe(201);
+    expect(sendFriendRequestNotificationMock).not.toHaveBeenCalled();
+    expect(sendFriendRequestAcceptedNotificationMock).toHaveBeenCalledWith(
+      "user-3",
+      "friendship-1",
+    );
   });
 
   it("sends a push when a friend request is accepted", async () => {
@@ -146,42 +140,32 @@ describe("friend routes", () => {
       addresseeId: "user-1",
       status: "accepted",
     });
-    const app = await buildApp();
 
-    try {
-      const response = await app.inject({
-        method: "PATCH",
-        url: `/api/v1/friends/requests/${friendshipId}`,
-        payload: { action: "accept" },
-      });
+    const response = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/friends/requests/${friendshipId}`,
+      payload: { action: "accept" },
+    });
 
-      expect(response.statusCode).toBe(200);
-      expect(sendFriendRequestAcceptedNotificationMock).toHaveBeenCalledWith(
-        "user-2",
-        friendshipId,
-      );
-    } finally {
-      await app.close();
-    }
+    expect(response.statusCode).toBe(200);
+    expect(sendFriendRequestAcceptedNotificationMock).toHaveBeenCalledWith(
+      "user-2",
+      friendshipId,
+    );
   });
 
   it("does not send a push when a friend request is declined", async () => {
     const friendshipId = "123e4567-e89b-12d3-a456-426614174004";
     respondToFriendRequestMock.mockResolvedValue({ removed: true });
-    const app = await buildApp();
 
-    try {
-      const response = await app.inject({
-        method: "PATCH",
-        url: `/api/v1/friends/requests/${friendshipId}`,
-        payload: { action: "decline" },
-      });
+    const response = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/friends/requests/${friendshipId}`,
+      payload: { action: "decline" },
+    });
 
-      expect(response.statusCode).toBe(200);
-      expect(sendFriendRequestAcceptedNotificationMock).not.toHaveBeenCalled();
-    } finally {
-      await app.close();
-    }
+    expect(response.statusCode).toBe(200);
+    expect(sendFriendRequestAcceptedNotificationMock).not.toHaveBeenCalled();
   });
 
   it("sends a push after adding a comment to a friend's media", async () => {
@@ -196,40 +180,30 @@ describe("friend routes", () => {
       },
       recipientId: "user-2",
     });
-    const app = await buildApp();
 
-    try {
-      const response = await app.inject({
-        method: "POST",
-        url: `/api/v1/friends/media/${userMediaId}/comments`,
-        payload: { body: "Great pick" },
-      });
+    const response = await app.inject({
+      method: "POST",
+      url: `/api/v1/friends/media/${userMediaId}/comments`,
+      payload: { body: "Great pick" },
+    });
 
-      expect(response.statusCode).toBe(201);
-      expect(sendMediaCommentNotificationMock).toHaveBeenCalledWith(
-        "user-2",
-        userMediaId,
-      );
-    } finally {
-      await app.close();
-    }
+    expect(response.statusCode).toBe(201);
+    expect(sendMediaCommentNotificationMock).toHaveBeenCalledWith(
+      "user-2",
+      userMediaId,
+    );
   });
 
   it("rejects unauthenticated requests", async () => {
     requireAuthMock.mockRejectedValueOnce(unauthorized());
-    const app = await buildApp();
 
-    try {
-      const response = await app.inject({
-        method: "POST",
-        url: "/api/v1/friends/requests",
-        payload: { email: "friend@example.com" },
-      });
+    const response = await app.inject({
+      method: "POST",
+      url: "/api/v1/friends/requests",
+      payload: { email: "friend@example.com" },
+    });
 
-      expect(response.statusCode).toBe(401);
-      expect(sendFriendRequestMock).not.toHaveBeenCalled();
-    } finally {
-      await app.close();
-    }
+    expect(response.statusCode).toBe(401);
+    expect(sendFriendRequestMock).not.toHaveBeenCalled();
   });
 });

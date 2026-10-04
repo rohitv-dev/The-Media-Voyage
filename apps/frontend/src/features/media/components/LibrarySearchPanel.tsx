@@ -17,6 +17,7 @@ type LibrarySearchPanelProps = {
   onSearch: (query: string) => void;
   onClear: () => void;
   focusRequest: number;
+  autoFocus?: boolean;
 };
 
 export function LibrarySearchPanel({
@@ -25,6 +26,7 @@ export function LibrarySearchPanel({
   onSearch,
   onClear,
   focusRequest,
+  autoFocus,
 }: LibrarySearchPanelProps) {
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -57,6 +59,7 @@ export function LibrarySearchPanel({
       <form onSubmit={submitSearch}>
         <Group align="center" gap="xs" wrap="nowrap">
           <TextInput
+            autoFocus={autoFocus}
             ref={inputRef}
             aria-label="Describe what you're looking for"
             placeholder="Describe what you're looking for..."

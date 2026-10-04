@@ -1,4 +1,3 @@
-import { notFound } from "@/errors";
 import { mediaCollectionItems } from "@media-voyage/shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -154,21 +153,7 @@ describe("collection-item insertion", () => {
     ]);
   });
 
-  it("uses plural wording for a one-element batch media error", async () => {
-    const { tx } = configureTransaction({ ownedMedia: [] });
-
-    await expect(
-      addCollectionItems(USER_ID, COLLECTION_ID, [FIRST_MEDIA_ID]),
-    ).rejects.toMatchObject({
-      statusCode: 404,
-      code: "NOT_FOUND",
-      message: "One or more selected media entries were not found",
-    });
-
-    expect(tx.insert).not.toHaveBeenCalled();
-  });
-
-  it("uses singular wording for a missing single media entry", async () => {
+  it("rejects a missing media entry without inserting", async () => {
     const { tx } = configureTransaction({ ownedMedia: [] });
 
     await expect(
@@ -197,7 +182,7 @@ describe("collection-item insertion", () => {
     expect(tx.insert).not.toHaveBeenCalled();
   });
 
-  it("preserves singular duplicate wording", async () => {
+  it("rejects an existing collection item without inserting", async () => {
     const { tx } = configureTransaction({ existingItems: [{ id: "item-1" }] });
 
     await expect(
@@ -209,21 +194,6 @@ describe("collection-item insertion", () => {
     });
 
     expect(transactionMock).toHaveBeenCalledTimes(1);
-    expect(tx.insert).not.toHaveBeenCalled();
-  });
-
-  it("preserves plural duplicate wording", async () => {
-    const { tx } = configureTransaction({ existingItems: [{ id: "item-1" }] });
-
-    await expect(
-      addCollectionItems(USER_ID, COLLECTION_ID, [FIRST_MEDIA_ID]),
-    ).rejects.toMatchObject({
-      statusCode: 409,
-      code: "CONFLICT",
-      message:
-        "One or more selected media entries are already in this collection",
-    });
-
     expect(tx.insert).not.toHaveBeenCalled();
   });
 

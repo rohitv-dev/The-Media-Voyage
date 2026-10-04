@@ -23,6 +23,47 @@ export const tmdbMediaParamsSchema = z.object({
 
 export type TmdbMediaParams = z.infer<typeof tmdbMediaParamsSchema>;
 
+export { DEFAULT_WATCH_COUNTRY } from "../db/schema";
+
+export const WATCH_PROVIDER_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+export const watchCountrySchema = z
+  .string()
+  .regex(/^[A-Z]{2}$/, "Watch country must be a two-letter country code");
+
+export const tmdbWatchProvidersQuerySchema = z.object({
+  country: watchCountrySchema,
+});
+
+export const watchOfferTypeValues = [
+  "flatrate",
+  "free",
+  "ads",
+  "rent",
+  "buy",
+] as const;
+
+export type WatchOfferType = (typeof watchOfferTypeValues)[number];
+
+export type TmdbWatchProvider = {
+  id: number;
+  name: string;
+  logoUrl: string | null;
+  displayPriority: number;
+};
+
+export type TmdbWatchAvailability = {
+  country: string;
+  link: string | null;
+  offers: Record<WatchOfferType, TmdbWatchProvider[]>;
+  expiresAt: string;
+};
+
+export type TmdbWatchRegion = {
+  code: string;
+  name: string;
+};
+
 export type IgdbRecord = {
   id: number;
   name: string;

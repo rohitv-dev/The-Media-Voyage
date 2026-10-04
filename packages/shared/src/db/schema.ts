@@ -813,6 +813,8 @@ export const activityEventsRelations = relations(activityEvents, ({ one }) => ({
 
 // Better Auth Generated Tables
 
+export const DEFAULT_WATCH_COUNTRY = "IN";
+
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
   publicId: text("public_id").unique(),
@@ -823,6 +825,7 @@ export const user = pgTable("user", {
   defaultVisibility: visibilityEnum("default_visibility")
     .default("private")
     .notNull(),
+  watchCountry: text("watch_country").default(DEFAULT_WATCH_COUNTRY).notNull(),
   // ponytail: one token per user; use a push_devices table for multi-device delivery.
   deviceToken: text("device_token"),
   tutorialProgress: jsonb("tutorial_progress")

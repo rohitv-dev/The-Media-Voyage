@@ -10,7 +10,7 @@ Media Voyage is a personal media-tracking app for keeping tabs on the movies, sh
 - Collections for grouping related media, with ordered items and visibility controls
 - Dashboard with library stats and quick actions
 - Activity calendar to see consumption history over time
-- Friends: follow other users, browse their libraries and collections, and copy items into your own library
+- Friends: send, accept, or decline requests; browse friends' visible libraries and collections, and copy items into your own library
 - Recommendations generated from your library, plus friend-to-friend recommendations with response tracking
 - In-app notifications for likes, comments, friend requests, and recommendation activity
 - Per-entry visibility with a configurable default, plus public read-only links for libraries, collections, and entries

@@ -1,6 +1,10 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import * as schema from "@media-voyage/shared/schema";
+import {
+  DEFAULT_WATCH_COUNTRY,
+  watchCountrySchema,
+} from "@media-voyage/shared/api";
 import { db } from "./db/db";
 import { env } from "./config";
 import { nanoid } from "nanoid";
@@ -26,6 +30,12 @@ export const auth = betterAuth({
         type: "string",
         required: false,
         defaultValue: "private",
+      },
+      watchCountry: {
+        type: "string",
+        required: false,
+        defaultValue: DEFAULT_WATCH_COUNTRY,
+        validator: { input: watchCountrySchema },
       },
       publicId: {
         type: "string",

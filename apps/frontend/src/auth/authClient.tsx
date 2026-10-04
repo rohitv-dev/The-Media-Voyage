@@ -11,6 +11,7 @@ export const authClient = createAuthClient({
       user: {
         // `required: false` keeps it out of the sign-up payload.
         defaultVisibility: { type: "string", required: false },
+        watchCountry: { type: "string", required: false },
         publicId: { type: "string", required: false },
         deviceToken: { type: "string", required: false },
         tutorialProgress: { type: "json", required: false },
