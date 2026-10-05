@@ -50,7 +50,7 @@ Object.defineProperty(window, "matchMedia", {
 
 const preview: SystemRecommendationPreviewResponse = {
   strategyKey: "provider_recommendations",
-  strategyVersion: "4",
+  strategyVersion: "5",
   eligibleSeedCount: 7,
   seeds: [
     {

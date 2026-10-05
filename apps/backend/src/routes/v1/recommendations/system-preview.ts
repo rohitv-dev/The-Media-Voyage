@@ -11,6 +11,7 @@ import {
 } from "./queries";
 
 const MAX_PRODUCTIVE_SEEDS = 6;
+const FIXED_SEED_COUNT = 4;
 const MAX_SEED_ATTEMPTS = 15;
 const MAX_CANDIDATES_PER_SEED = 3;
 const MAX_RECOMMENDATIONS = 10;
@@ -63,10 +64,18 @@ function compareSeedPriority(left: PreviewSeed, right: PreviewSeed) {
 }
 
 export function selectPreviewSeeds(library: LibraryItem[]): PreviewSeed[] {
-  return library
-    .filter(isPreviewSeed)
-    .sort(compareSeedPriority)
-    .slice(0, MAX_SEED_ATTEMPTS);
+  const seeds = library.filter(isPreviewSeed).sort(compareSeedPriority);
+
+  if (seeds.length > MAX_PRODUCTIVE_SEEDS) {
+    for (let index = seeds.length - 1; index > FIXED_SEED_COUNT; index -= 1) {
+      const swapIndex =
+        FIXED_SEED_COUNT +
+        Math.floor(Math.random() * (index - FIXED_SEED_COUNT + 1));
+      [seeds[index], seeds[swapIndex]] = [seeds[swapIndex], seeds[index]];
+    }
+  }
+
+  return seeds.slice(0, MAX_SEED_ATTEMPTS);
 }
 
 function positiveInteger(value: string | null): number | null {
@@ -364,27 +373,46 @@ function buildRecommendations(
     }
   }
 
-  return Array.from(aggregates.values())
-    .sort(
-      (left, right) =>
-        right.seeds.length - left.seeds.length ||
-        compareSeedPriority(left.seeds[0], right.seeds[0]) ||
-        left.firstProviderIndex - right.firstProviderIndex ||
-        mediaIdentity(
-          left.candidate.source,
-          left.candidate.externalId,
-        ).localeCompare(
-          mediaIdentity(right.candidate.source, right.candidate.externalId),
-        ),
-    )
-    .slice(0, MAX_RECOMMENDATIONS)
-    .map((aggregate, index) => ({
-      rank: index + 1,
-      reason: combinedRecommendationReason(aggregate.seeds),
-      seedUserMediaId: aggregate.seeds[0].userMediaId,
-      seedUserMediaIds: aggregate.seeds.map((seed) => seed.userMediaId),
-      media: aggregate.candidate,
-    }));
+  const ranked = Array.from(aggregates.values()).sort(
+    (left, right) =>
+      right.seeds.length - left.seeds.length ||
+      compareSeedPriority(left.seeds[0], right.seeds[0]) ||
+      left.firstProviderIndex - right.firstProviderIndex ||
+      mediaIdentity(
+        left.candidate.source,
+        left.candidate.externalId,
+      ).localeCompare(
+        mediaIdentity(right.candidate.source, right.candidate.externalId),
+      ),
+  );
+  const queues = runs.map((run) =>
+    ranked.filter((aggregate) =>
+      aggregate.seeds.some((seed) => seed.userMediaId === run.seed.userMediaId),
+    ),
+  );
+  const selected = new Set<CandidateAggregate>();
+
+  while (
+    selected.size < MAX_RECOMMENDATIONS &&
+    queues.some((queue) => queue.length > 0)
+  ) {
+    for (const queue of queues) {
+      let candidate = queue.shift();
+      while (candidate && selected.has(candidate)) candidate = queue.shift();
+      if (!candidate) continue;
+
+      selected.add(candidate);
+      if (selected.size === MAX_RECOMMENDATIONS) break;
+    }
+  }
+
+  return Array.from(selected).map((aggregate, index) => ({
+    rank: index + 1,
+    reason: combinedRecommendationReason(aggregate.seeds),
+    seedUserMediaId: aggregate.seeds[0].userMediaId,
+    seedUserMediaIds: aggregate.seeds.map((seed) => seed.userMediaId),
+    media: aggregate.candidate,
+  }));
 }
 
 export async function getSystemRecommendationPreview(
@@ -412,7 +440,7 @@ export async function getSystemRecommendationPreview(
 
   return {
     strategyKey: "provider_recommendations",
-    strategyVersion: "4",
+    strategyVersion: "5",
     eligibleSeedCount: eligibleSeeds.length,
     seeds: runs.map((run) => ({
       userMediaId: run.seed.userMediaId,

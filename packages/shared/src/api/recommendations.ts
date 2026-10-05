@@ -98,7 +98,7 @@ const systemRecommendationPreviewSeedSchema = z.object({
 
 export const systemRecommendationPreviewResponseSchema = z.object({
   strategyKey: z.literal("provider_recommendations"),
-  strategyVersion: z.literal("4"),
+  strategyVersion: z.literal("5"),
   eligibleSeedCount: z.number().int().nonnegative(),
   seeds: z.array(systemRecommendationPreviewSeedSchema),
   recommendations: z.array(

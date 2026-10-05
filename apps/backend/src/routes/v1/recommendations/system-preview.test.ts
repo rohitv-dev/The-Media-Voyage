@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { internalServerError } from "@/errors";
 
 const {
@@ -120,12 +120,17 @@ function book(
 
 describe("system recommendation preview", () => {
   beforeEach(() => {
+    vi.spyOn(Math, "random").mockReturnValue(0.999);
     findSystemPreviewLibraryMock.mockReset();
     findDismissedSystemRecommendationsMock.mockReset();
     findDismissedSystemRecommendationsMock.mockResolvedValue([]);
     getTmdbRecommendationsMock.mockReset();
     getGameRecommendationsMock.mockReset();
     getOpenLibraryRecommendationsMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("skips dismissed candidates and keeps trying seeds that have no usable result", async () => {
@@ -337,31 +342,47 @@ describe("system recommendation preview", () => {
     expect(preview.recommendations).toHaveLength(3);
   });
 
-  it("uses up to six productive seeds", async () => {
-    const userMediaIds = Object.values(IDS);
-    findSystemPreviewLibraryMock.mockResolvedValue(
-      userMediaIds.map((userMediaId, index) =>
-        libraryItem({
-          userMediaId,
-          title: `Seed ${index + 1}`,
-          externalId: String(100 + index),
-        }),
-      ),
+  it("rotates seeds while preserving the fixed seeds and attempt limits", async () => {
+    const library = Array.from({ length: 20 }, (_, index) =>
+      libraryItem({
+        userMediaId: `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
+        externalId: String(100 + index),
+        favorite: index < 4,
+      }),
     );
+    const originalIds = library.map((seed) => seed.userMediaId);
+    findSystemPreviewLibraryMock.mockResolvedValue(library);
     getTmdbRecommendationsMock.mockImplementation(
       async (_type: "movie" | "show", id: number) => [
         movie(500 + id, `Recommendation ${id}`),
       ],
     );
 
-    const preview = await getSystemRecommendationPreview("user-1");
+    const first = await getSystemRecommendationPreview("user-1");
 
     expect(getTmdbRecommendationsMock).toHaveBeenCalledTimes(6);
-    expect(preview.seeds).toHaveLength(6);
-    expect(preview.recommendations).toHaveLength(6);
+    expect(first.seeds.map((seed) => seed.userMediaId)).toEqual(
+      originalIds.slice(0, 6),
+    );
+    expect(first.recommendations).toHaveLength(6);
+
+    vi.mocked(Math.random).mockReturnValue(0);
+    const rotated = selectPreviewSeeds(library);
+    const second = await getSystemRecommendationPreview("user-1");
+
+    expect(rotated).toHaveLength(15);
+    expect(rotated).toContainEqual(library[15]);
+    expect(new Set(rotated.map((seed) => seed.userMediaId)).size).toBe(15);
+    expect(second.seeds.map((seed) => seed.userMediaId)).toEqual([
+      ...originalIds.slice(0, 4),
+      originalIds[5],
+      originalIds[6],
+    ]);
+    expect(getTmdbRecommendationsMock).toHaveBeenCalledTimes(12);
+    expect(library.map((seed) => seed.userMediaId)).toEqual(originalIds);
   });
 
-  it("aggregates duplicate candidates and ranks multi-seed matches first", async () => {
+  it("aggregates duplicate candidates and prioritizes multi-seed matches within each turn", async () => {
     findSystemPreviewLibraryMock.mockResolvedValue([
       libraryItem({
         userMediaId: IDS.first,
@@ -376,27 +397,30 @@ describe("system recommendation preview", () => {
       }),
       libraryItem({
         userMediaId: IDS.third,
-        title: "Already Tracked",
-        externalId: "700",
-        status: "planned",
+        externalId: "300",
+        rating: 8,
       }),
     ]);
     getTmdbRecommendationsMock
       .mockResolvedValueOnce([
-        movie(999, "Shared Candidate"),
         movie(501, "First Movie"),
+        movie(999, "Shared Candidate"),
       ])
       .mockResolvedValueOnce([
-        movie(999, "Shared Candidate"),
         movie(502, "Second Movie"),
-      ]);
+        movie(503, "Third Movie"),
+        movie(999, "Shared Candidate"),
+      ])
+      .mockResolvedValueOnce([movie(504, "Fourth Movie")]);
 
     const preview = await getSystemRecommendationPreview("user-1");
 
     expect(preview.recommendations.map(({ media }) => media.title)).toEqual([
       "Shared Candidate",
-      "First Movie",
       "Second Movie",
+      "Fourth Movie",
+      "First Movie",
+      "Third Movie",
     ]);
     expect(preview.recommendations[0]).toMatchObject({
       rank: 1,
@@ -555,7 +579,7 @@ describe("system recommendation preview", () => {
     });
   });
 
-  it("returns version 4 without provider calls when no seed is eligible", async () => {
+  it("returns version 5 without provider calls when no seed is eligible", async () => {
     findSystemPreviewLibraryMock.mockResolvedValue([
       libraryItem({ status: "planned" }),
       libraryItem({
@@ -567,7 +591,7 @@ describe("system recommendation preview", () => {
 
     await expect(getSystemRecommendationPreview("user-1")).resolves.toEqual({
       strategyKey: "provider_recommendations",
-      strategyVersion: "4",
+      strategyVersion: "5",
       eligibleSeedCount: 0,
       seeds: [],
       recommendations: [],
@@ -637,16 +661,11 @@ describe("system recommendation preview", () => {
   });
 
   it("caps each seed at three and the final list at ten recommendations", async () => {
-    findSystemPreviewLibraryMock.mockResolvedValue(
-      [IDS.first, IDS.second, IDS.third, IDS.fourth].map(
-        (userMediaId, seedIndex) =>
-          libraryItem({
-            userMediaId,
-            title: `Seed ${seedIndex + 1}`,
-            externalId: String(100 + seedIndex),
-          }),
-      ),
+    const library = [IDS.first, IDS.second, IDS.third, IDS.fourth].map(
+      (userMediaId, seedIndex) =>
+        libraryItem({ userMediaId, externalId: String(100 + seedIndex) }),
     );
+    findSystemPreviewLibraryMock.mockResolvedValue(library);
     getTmdbRecommendationsMock.mockImplementation(
       async (_type: "movie" | "show", id: number) =>
         Array.from({ length: 5 }, (_, index) =>
@@ -656,23 +675,26 @@ describe("system recommendation preview", () => {
 
     const preview = await getSystemRecommendationPreview("user-1");
 
-    expect(preview.recommendations).toHaveLength(10);
     expect(preview.recommendations.at(-1)?.rank).toBe(10);
     expect(
-      preview.recommendations.reduce<Record<string, number>>(
-        (counts, recommendation) => {
-          for (const seedId of recommendation.seedUserMediaIds) {
-            counts[seedId] = (counts[seedId] ?? 0) + 1;
-          }
-          return counts;
-        },
-        {},
-      ),
-    ).toEqual({
-      [IDS.first]: 3,
-      [IDS.second]: 3,
-      [IDS.third]: 3,
-      [IDS.fourth]: 1,
-    });
+      preview.recommendations.map(({ media }) => media.externalId),
+    ).toEqual([
+      "1000",
+      "1010",
+      "1020",
+      "1030",
+      "1001",
+      "1011",
+      "1021",
+      "1031",
+      "1002",
+      "1012",
+    ]);
+
+    findSystemPreviewLibraryMock.mockResolvedValue(library.slice(0, 1));
+    const singleSeed = await getSystemRecommendationPreview("user-1");
+    expect(
+      singleSeed.recommendations.map(({ media }) => media.externalId),
+    ).toEqual(["1000", "1001", "1002"]);
   });
 });
