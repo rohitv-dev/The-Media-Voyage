@@ -40,7 +40,7 @@ export function TimeSpentCard({
 
   return (
     <DashboardAnimatedCard>
-      <Card withBorder radius="md" p={{ base: "sm", sm: "lg" }}>
+      <Card withBorder radius="md" p={{ base: "sm", sm: "lg" }} h="100%">
         <Stack gap="sm">
           <div>
             <Title order={4}>Time spent</Title>

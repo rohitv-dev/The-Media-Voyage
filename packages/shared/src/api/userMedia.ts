@@ -353,7 +353,18 @@ export type DashboardStatsResponse = {
   completionTrend: {
     month: string; // YYYY-MM
     count: number;
+    movie: number;
+    show: number;
+    book: number;
+    game: number;
   }[];
+
+  addedTrend: {
+    month: string; // YYYY-MM
+    count: number;
+  }[];
+
+  nearlyFinished: MediaRecord[];
 
   timeSpent: {
     totalMinutes: number;

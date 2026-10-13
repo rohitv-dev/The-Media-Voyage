@@ -32,6 +32,7 @@ import {
   inArray,
   isNotNull,
   isNull,
+  lt,
   lte,
   notInArray,
   or,
@@ -484,6 +485,8 @@ export async function getDashboardStats(userId: string) {
     ratingDistribution,
     completionTrend,
     timeSpentByType,
+    addedTrend,
+    nearlyFinished,
   ] = await Promise.all([
     db
       .select({ count: count() })
@@ -514,8 +517,13 @@ export async function getDashboardStats(userId: string) {
       .select({
         month: sql<string>`to_char(date_trunc('month', ${userMedia.completedAt}), 'YYYY-MM')`,
         count: count(),
+        movie: sql<number>`(count(*) filter (where ${media.type} = 'movie'))::int`,
+        show: sql<number>`(count(*) filter (where ${media.type} = 'show'))::int`,
+        book: sql<number>`(count(*) filter (where ${media.type} = 'book'))::int`,
+        game: sql<number>`(count(*) filter (where ${media.type} = 'game'))::int`,
       })
       .from(userMedia)
+      .innerJoin(media, eq(media.id, userMedia.mediaId))
       .where(
         and(
           activeUserMediaCondition(userId),
@@ -537,6 +545,33 @@ export async function getDashboardStats(userId: string) {
       )
       .groupBy(media.type)
       .orderBy(media.type),
+    db
+      .select({
+        month: sql<string>`to_char(date_trunc('month', ${userMedia.createdAt}), 'YYYY-MM')`,
+        count: count(),
+      })
+      .from(userMedia)
+      .where(activeUserMediaCondition(userId))
+      .groupBy(sql`date_trunc('month', ${userMedia.createdAt})`)
+      .orderBy(sql`date_trunc('month', ${userMedia.createdAt})`),
+    db
+      .select(userMediaSummarySelect)
+      .from(userMedia)
+      .innerJoin(media, eq(media.id, userMedia.mediaId))
+      .where(
+        and(
+          activeUserMediaCondition(userId),
+          inArray(userMedia.status, ["in_progress", "playing", "revisiting"]),
+          gt(userMedia.progress, 0),
+          lt(userMedia.progress, 100),
+        ),
+      )
+      .orderBy(
+        desc(userMedia.progress),
+        desc(userMedia.lastProgressUpdate),
+        asc(userMedia.id),
+      )
+      .limit(5),
   ]);
 
   const normalizedTimeSpentByType = timeSpentByType.map((row) => ({
@@ -564,6 +599,8 @@ export async function getDashboardStats(userId: string) {
     mediaTypeDistribution,
     ratingDistribution,
     completionTrend,
+    addedTrend,
+    nearlyFinished,
     timeSpent: {
       totalMinutes: normalizedTimeSpentByType.reduce(
         (total, row) => total + row.minutes,

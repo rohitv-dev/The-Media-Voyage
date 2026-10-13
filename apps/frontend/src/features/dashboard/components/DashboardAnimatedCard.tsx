@@ -8,6 +8,7 @@ export function DashboardAnimatedCard({ children }: { children: ReactNode }) {
 
   return (
     <motion.div
+      style={{ height: "100%" }}
       variants={fadeUpVariants(reduceMotion)}
       layout={!reduceMotion}
       whileHover={

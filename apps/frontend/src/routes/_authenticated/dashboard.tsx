@@ -134,6 +134,7 @@ function RouteComponent() {
           >
             <DashboardContinue
               items={continueItems}
+              nearlyFinished={data.nearlyFinished}
               reduceMotion={reduceMotion}
               onViewAll={() =>
                 navigate({ to: "/media", search: continueMediaFilters })
