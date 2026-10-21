@@ -68,6 +68,20 @@ describe("user-media request schemas", () => {
     });
   });
 
+  it("accepts historical Date Added for create and edit", () => {
+    const createdAt = new Date("2024-05-15T00:00:00.000Z");
+    expect(
+      userMediaFormSchema.parse({
+        title: "Dune",
+        type: "movie",
+        createdAt: "2024-05-15",
+      }).createdAt,
+    ).toEqual(createdAt);
+    expect(
+      userMediaPatchSchema.parse({ createdAt: "2024-05-15T00:00:00.000Z" }),
+    ).toEqual({ createdAt });
+  });
+
   it("does not accept progress as a quick action", () => {
     expect(userMediaQuickActionSchema.safeParse({ progress: 42 }).success).toBe(
       false,

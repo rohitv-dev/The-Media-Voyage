@@ -559,7 +559,10 @@ export function MediaForm(props: MediaFormProps) {
       return api<MediaDetailedRecord>(`/user-media/${props.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          createdAt: form.isDirty("createdAt") ? data.createdAt : undefined,
+        }),
       });
     },
 

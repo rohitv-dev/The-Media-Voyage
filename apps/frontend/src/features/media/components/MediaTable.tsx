@@ -207,7 +207,10 @@ export function MediaTable({ data }: MediaTableProps) {
               <Stack gap={2}>
                 <Text size="sm">{formatDate(record.updatedAt)}</Text>
                 <Text size="xs" c="dimmed">
-                  Added {formatDate(record.createdAt)}
+                  Added{" "}
+                  {dayjs(
+                    new Date(record.createdAt).toISOString().slice(0, 10),
+                  ).format("MMM D, YYYY")}
                 </Text>
               </Stack>
             ),

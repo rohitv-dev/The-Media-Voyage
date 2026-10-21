@@ -17,7 +17,10 @@ export function MediaCardFooter({
   return (
     <Group justify="space-between" align="flex-end" wrap="nowrap" gap="xs">
       <Text size="xs" c="dimmed" lh={1.4}>
-        Added {dayjs(media.createdAt).format("MMM DD, YYYY")}
+        Added{" "}
+        {dayjs(new Date(media.createdAt).toISOString().slice(0, 10)).format(
+          "MMM DD, YYYY",
+        )}
         <br />
         Updated {dayjs(media.updatedAt).format("MMM DD, YYYY")}
       </Text>

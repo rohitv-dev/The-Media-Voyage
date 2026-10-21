@@ -8,9 +8,10 @@ import {
   Collapse,
   Autocomplete,
   TagsInput,
+  Button,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
-import { IconClipboard } from "@tabler/icons-react";
+import { IconChevronDown, IconClipboard } from "@tabler/icons-react";
 import type { UserMediaDropdowns } from "@media-voyage/shared/api";
 import { useFormContext } from "./context";
 import { useDisclosure, useMediaQuery } from "@mantine/hooks";
@@ -37,6 +38,8 @@ export function ProgressTrackingSection({
   const isShow = form.values.type === "show";
   const numberOfPages = getBookPageCount(form.values.metadata ?? undefined);
   const [opened, { toggle }] = useDisclosure(false);
+  const [dateAddedOpened, { toggle: toggleDateAdded }] = useDisclosure(false);
+  const today = new Date().toISOString().slice(0, 10);
 
   return (
     <Grid.Col span={{ xs: 12, md: 6 }}>
@@ -126,6 +129,47 @@ export function ProgressTrackingSection({
                 onSync={onSyncSeasons}
               />
             )}
+
+            <Button
+              variant="default"
+              size="xs"
+              rightSection={
+                <IconChevronDown
+                  size={14}
+                  style={{
+                    transform: dateAddedOpened ? "rotate(180deg)" : undefined,
+                  }}
+                />
+              }
+              style={{ alignSelf: "flex-start" }}
+              aria-expanded={dateAddedOpened}
+              aria-controls="date-added-field"
+              onClick={toggleDateAdded}
+            >
+              Adjust Date Added
+            </Button>
+            <Collapse expanded={dateAddedOpened} id="date-added-field">
+              <DateInput
+                label="Date Added"
+                description="Used for additions analytics and date-added sorting."
+                variant="filled"
+                maxDate={today}
+                value={
+                  form.values.createdAt
+                    ? new Date(form.values.createdAt).toISOString().slice(0, 10)
+                    : today
+                }
+                onChange={(value) => {
+                  if (value) {
+                    // Keep the selected calendar date consistent with analytics.
+                    form.setFieldValue(
+                      "createdAt",
+                      new Date(`${value}T00:00:00Z`),
+                    );
+                  }
+                }}
+              />
+            </Collapse>
           </Stack>
         </Collapse>
       </Card>

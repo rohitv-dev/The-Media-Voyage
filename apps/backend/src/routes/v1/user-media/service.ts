@@ -340,6 +340,7 @@ export async function createUserMedia(
         review: input.review,
         notes: input.notes,
         startedAt: input.startedAt,
+        createdAt: input.createdAt,
         completedAt:
           input.status === "completed" && !input.completedAt
             ? changedAt

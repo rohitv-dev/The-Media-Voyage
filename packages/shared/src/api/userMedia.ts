@@ -187,6 +187,13 @@ const userMediaTrackingFieldsSchema = z.object({
   seasonsProgress: seasonsProgressSchema.optional(),
   startedAt: userMediaInsertSchema.shape.startedAt,
   completedAt: userMediaInsertSchema.shape.completedAt,
+  createdAt: z.coerce
+    .date()
+    .refine(
+      (value) => value <= new Date(),
+      "Date Added cannot be in the future",
+    )
+    .optional(),
   source: z.string().nullable().optional(),
   tags: z.array(z.string()).nullable().optional(),
 });
