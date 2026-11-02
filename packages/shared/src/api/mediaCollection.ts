@@ -147,6 +147,7 @@ export type MediaCollectionRecord = z.infer<typeof mediaCollectionRecord>;
 
 export const mediaCollectionSummaryRecord = mediaCollectionRecord.extend({
   itemCount: z.number().int().nonnegative(),
+  previewImageUrls: z.array(mediaSelectSchema.shape.imageUrl.unwrap()).max(3),
 });
 
 export type MediaCollectionSummaryRecord = z.infer<

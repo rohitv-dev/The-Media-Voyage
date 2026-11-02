@@ -42,6 +42,7 @@ function RouteComponent() {
   const invalidate = () =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.collection.all }),
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats }),
       queryClient.invalidateQueries({ queryKey: queryKeys.activity.all }),
     ]);

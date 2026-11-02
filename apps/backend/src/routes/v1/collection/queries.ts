@@ -23,6 +23,20 @@ export function listMediaCollections(userId: string) {
     .select({
       ...mediaCollectionSelect,
       itemCount: count(userMedia.id),
+      previewImageUrls: sql<string[]>`array(
+        select ${media.imageUrl}
+        from ${mediaCollectionItems}
+        inner join ${userMedia}
+          on ${userMedia.id} = ${mediaCollectionItems.userMediaId}
+        inner join ${media} on ${media.id} = ${userMedia.mediaId}
+        where ${mediaCollectionItems.collectionId} = ${mediaCollection.id}
+          and ${userMedia.userId} = ${userId}
+          and ${userMedia.deletedAt} is null
+          and ${media.imageUrl} is not null
+          and ${media.imageUrl} <> ''
+        order by ${mediaCollectionItems.position}, ${mediaCollectionItems.createdAt}, ${mediaCollectionItems.id}
+        limit 3
+      )`,
     })
     .from(mediaCollection)
     .leftJoin(

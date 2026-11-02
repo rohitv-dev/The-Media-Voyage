@@ -578,6 +578,7 @@ export function MediaForm(props: MediaFormProps) {
 
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.collection.all }),
         queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats }),
         queryClient.invalidateQueries({
           queryKey: queryKeys.userMedia.statusHistory(data.id),

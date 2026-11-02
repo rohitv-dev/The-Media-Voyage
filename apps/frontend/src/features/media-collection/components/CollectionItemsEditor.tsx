@@ -113,6 +113,9 @@ export function CollectionItemsEditor() {
         queryKey: queryKeys.collection.itemsDetailed(collectionId),
       });
       setCanSaveOrder(false);
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.collection.all,
+      });
       showSuccessNotification({ message: "Order saved" });
     },
     onError: (error: Error) => {
