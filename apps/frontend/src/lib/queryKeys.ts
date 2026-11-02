@@ -1,4 +1,5 @@
 import type {
+  ActivityListQuery,
   TmdbMediaType,
   UserMediaQuerySchema,
 } from "@media-voyage/shared/api";
@@ -70,8 +71,7 @@ export const queryKeys = {
   },
   activity: {
     all: ["activity"] as const,
-    list: (page: number, limit: number) =>
-      ["activity", { page, limit }] as const,
+    list: (query: ActivityListQuery) => ["activity", query] as const,
   },
   recommendations: {
     all: ["recommendations"] as const,
