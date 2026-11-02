@@ -41,6 +41,7 @@ services:
       IGDB_CLIENT_ID: ${IGDB_CLIENT_ID}
       IGDB_CLIENT_SECRET: ${IGDB_CLIENT_SECRET}
       TMDB_API_READ_ACCESS_TOKEN: ${TMDB_API_READ_ACCESS_TOKEN}
+      CONSTELLATION_SIMILARITY_THRESHOLD: ${CONSTELLATION_SIMILARITY_THRESHOLD:-0.35}
     volumes:
       - transformers_cache:/app/.cache/transformers
     ports:

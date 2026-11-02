@@ -42,6 +42,10 @@ import {
 import { db } from "@/db/db";
 import { listReactions } from "../friends/queries";
 import {
+  buildLibraryConstellation,
+  CONSTELLATION_NODE_LIMIT,
+} from "./constellation";
+import {
   calendarCompletedSelect,
   calendarStartedSelect,
   calendarStatusChangeSelect,
@@ -209,6 +213,34 @@ export function searchUserMedia(userId: string, search: string) {
     .where(and(activeUserMediaCondition(userId), titleSearchCondition(search)))
     .orderBy(asc(media.title), asc(userMedia.id))
     .limit(20);
+}
+
+export async function getLibraryConstellation(
+  userId: string,
+  similarityThreshold: number,
+) {
+  const records = await db
+    .select({
+      id: userMedia.id,
+      title: media.title,
+      type: media.type,
+      imageUrl: media.imageUrl,
+      status: userMedia.status,
+      embedding: media.embedding,
+    })
+    .from(userMedia)
+    .innerJoin(media, eq(userMedia.mediaId, media.id))
+    .where(
+      and(
+        activeUserMediaCondition(userId),
+        isNotNull(media.embedding),
+        eq(media.embeddingModel, EMBEDDING_MODEL),
+      ),
+    )
+    .orderBy(desc(userMedia.createdAt), asc(userMedia.id))
+    .limit(CONSTELLATION_NODE_LIMIT + 1);
+
+  return buildLibraryConstellation(records, similarityThreshold);
 }
 
 const HYBRID_SEARCH_CANDIDATE_LIMIT = 50;

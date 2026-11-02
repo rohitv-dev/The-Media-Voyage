@@ -13,6 +13,7 @@ import {
   userMediaSearchQuerySchema,
   hybridSearchQuerySchema,
 } from "@media-voyage/shared/api";
+import { env } from "@/config";
 import { internalServerError, notFound } from "@/errors";
 import { requireAuth } from "@/require-auth";
 import {
@@ -26,6 +27,7 @@ import {
   findUserMediaById,
   getCalendarActivity,
   getDashboardStats,
+  getLibraryConstellation,
   getUserMediaDropdowns,
   getUserMediaForExport,
   getUserMediaStatusHistory,
@@ -66,6 +68,16 @@ async function userMediaRoutes(fastify: FastifyInstance) {
     const records = await searchUserMedia(request.userId, search);
 
     return reply.send(records);
+  });
+
+  fastify.get("/constellation", async (request, reply) => {
+    reply.header("Cache-Control", "no-store");
+    return reply.send(
+      await getLibraryConstellation(
+        request.userId,
+        env.CONSTELLATION_SIMILARITY_THRESHOLD,
+      ),
+    );
   });
 
   fastify.get(

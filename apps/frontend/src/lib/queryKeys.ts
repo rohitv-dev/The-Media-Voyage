@@ -23,6 +23,7 @@ export const queryKeys = {
     search: (search: string) => ["user-media", "search", search] as const,
     hybridSearch: (query: string) =>
       ["user-media", "hybrid-search", query] as const,
+    constellation: ["user-media", "constellation"] as const,
     trash: ["user-media", "trash"] as const,
     dropdowns: ["user-media", "dropdowns"] as const,
   },

@@ -9,6 +9,7 @@ import type {
   GetUserMediaPageResponse,
   GetUserMediaSearchResponse,
   GetHybridSearchResponse,
+  LibraryConstellation,
   MediaDetailedRecord,
   ReactionRecord,
   StatusHistoryRecord,
@@ -86,6 +87,13 @@ export function tmdbWatchProvidersOptions(
 }
 
 // -- User media ---------------------------------------------------------------
+
+export const libraryConstellationOptions = queryOptions({
+  queryKey: queryKeys.userMedia.constellation,
+  queryFn: () => api<LibraryConstellation>("/user-media/constellation"),
+  // Embeddings finish asynchronously after a title is added.
+  staleTime: 60_000,
+});
 
 export function userMediaDetailedOptions(id: string) {
   return queryOptions({
