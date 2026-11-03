@@ -1,7 +1,6 @@
 import { EmptyState } from "#/components/EmptyState";
 import { getTypeColor } from "#/features/media/display";
 import { libraryConstellationOptions } from "#/features/media/queries";
-import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { useAppTheme } from "#/theme/ThemeProvider";
 import { THEMES } from "#/theme/themes";
 import { capitalizeWords } from "#/utils/strings";
@@ -27,29 +26,16 @@ import type {
 } from "@media-voyage/shared/api";
 import { IconSearch } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ForceGraph2D from "react-force-graph-2d";
-import type {
-  ForceGraphMethods,
-  GraphData,
-  LinkObject,
-} from "react-force-graph-2d";
+import type { ForceGraphMethods, GraphData } from "react-force-graph-2d";
 
 type ConstellationLink = Pick<
   LibraryConstellation["links"][number],
   "similarity"
 >;
 
-function otherNodeId(
-  link: LinkObject<LibraryConstellationNode, ConstellationLink>,
-  id: string,
-): string | null {
-  const source = typeof link.source === "object" ? link.source.id : link.source;
-  const target = typeof link.target === "object" ? link.target.id : link.target;
-  if (source === id && typeof target === "string") return target;
-  if (target === id && typeof source === "string") return source;
-  return null;
-}
+const FOCUS_RADIUS = 120;
 
 export default function LibraryConstellation({
   onOpen,
@@ -61,80 +47,72 @@ export default function LibraryConstellation({
   );
   const theme = useMantineTheme();
   const { themeId } = useAppTheme();
-  const reducedMotion = useAppReducedMotion();
   const { ref, width, height } = useElementSize();
   const graph = useRef<
     ForceGraphMethods<LibraryConstellationNode, ConstellationLink> | undefined
   >(undefined);
-  const fitted = useRef(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = data?.nodes.find((node) => node.id === selectedId);
+  const connections = useMemo(() => {
+    if (!selected || !data) return [];
+    return data.links
+      .flatMap((link) => {
+        if (link.source !== selected.id && link.target !== selected.id)
+          return [];
+        const id = link.source === selected.id ? link.target : link.source;
+        const node = data.nodes.find((candidate) => candidate.id === id);
+        return node ? [{ node, similarity: link.similarity }] : [];
+      })
+      .sort(
+        (a, b) =>
+          (b.similarity ?? -1) - (a.similarity ?? -1) ||
+          a.node.title.localeCompare(b.node.title),
+      );
+  }, [data, selected]);
   // The graph library mutates its objects; keep the query cache untouched.
   const graphData = useMemo<
     GraphData<LibraryConstellationNode, ConstellationLink>
-  >(
-    () => ({
-      nodes: (data?.nodes ?? []).map((node) => ({ ...node })),
-      links: (data?.links ?? []).map((link) => ({ ...link })),
-    }),
-    [data],
-  );
+  >(() => {
+    const nodes = selected
+      ? [selected, ...connections.map(({ node }) => node)]
+      : (data?.nodes ?? []);
+    return {
+      nodes: nodes.map((node, index) => {
+        if (selected && index === 0)
+          return { ...node, x: 0, y: 0, fx: 0, fy: 0 };
+        // Spread overview dots in a fixed spiral without running a simulation.
+        const angle = selected
+          ? ((index - 1) * 2 * Math.PI) / connections.length - Math.PI / 2
+          : index * Math.PI * (3 - Math.sqrt(5));
+        const radius = selected ? FOCUS_RADIUS : 20 * Math.sqrt(index);
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+        return { ...node, x, y, fx: x, fy: y };
+      }),
+      links: selected
+        ? connections.map(({ node, similarity }) => ({
+            source: selected.id,
+            target: node.id,
+            similarity,
+          }))
+        : [],
+    };
+  }, [data, selected, connections]);
   const graphVisible = width > 0 && height > 0 && graphData.nodes.length > 0;
-  const fitGraph = (duration = 0) => {
-    // The renderer can stop before warmup initializes node coordinates.
-    if (
-      !graph.current ||
-      !graphVisible ||
-      graphData.nodes.some(
-        (node) => !Number.isFinite(node.x) || !Number.isFinite(node.y),
-      )
-    ) {
-      return false;
-    }
-    graph.current.zoomToFit(duration, Math.min(72, width / 6));
-    return true;
-  };
-  useLayoutEffect(() => {
-    if (!graphVisible || !graph.current) return;
-    fitted.current = false;
-    graph.current.d3Force("charge")?.strength(-85).distanceMax(180);
-    graph.current
-      .d3Force("link")
-      ?.distance(
-        (link: LinkObject<LibraryConstellationNode, ConstellationLink>) =>
-          42 + (1 - (link.similarity ?? 0.5)) * 75,
-      );
-    // Keep isolated titles and long chains in the same field.
-    graph.current.d3Force("constellation", (alpha) => {
-      for (const node of graphData.nodes) {
-        node.vx = (node.vx ?? 0) - (node.x ?? 0) * alpha * 0.025;
-        node.vy = (node.vy ?? 0) - (node.y ?? 0) * alpha * 0.025;
-      }
-    });
-  }, [graphData, graphVisible]);
+  const fitGraph = useCallback(() => {
+    if (!graph.current || !graphVisible) return;
+    const padding = Math.min(72, width / 6, height / 6);
+    const radius =
+      Math.max(
+        FOCUS_RADIUS,
+        ...graphData.nodes.map((node) => Math.hypot(node.x ?? 0, node.y ?? 0)),
+      ) + 12;
+    graph.current.centerAt(0, 0);
+    graph.current.zoom((Math.min(width, height) - padding * 2) / (2 * radius));
+  }, [graphData, graphVisible, width, height]);
   useEffect(() => {
-    if (fitted.current && width > 0 && height > 0) {
-      graph.current?.zoomToFit(0, Math.min(72, width / 6));
-    }
-  }, [width, height]);
-
-  const selected = data?.nodes.find((node) => node.id === selectedId);
-  const connections =
-    selected && data
-      ? data.links
-          .flatMap((link) => {
-            const id = otherNodeId(link, selected.id);
-            const node = id
-              ? data.nodes.find((node) => node.id === id)
-              : undefined;
-            return node ? [{ node, similarity: link.similarity }] : [];
-          })
-          .sort(
-            (a, b) =>
-              (b.similarity ?? -1) - (a.similarity ?? -1) ||
-              a.node.title.localeCompare(b.node.title),
-          )
-      : [];
-  const graphText = THEMES[themeId].text;
+    fitGraph();
+  }, [fitGraph]);
 
   return (
     <Container size="xl" py="md">
@@ -142,7 +120,7 @@ export default function LibraryConstellation({
         <Stack gap={4} align="center" ta="center">
           <Title order={2}>Library Constellation</Title>
           <Text size="sm" c="dimmed">
-            Explore connections in your library.
+            Explore one title and its connections at a time.
           </Text>
         </Stack>
 
@@ -209,25 +187,59 @@ export default function LibraryConstellation({
                       label.textContent = node.title;
                       return label.outerHTML;
                     }}
-                    linkColor={(link) =>
-                      selected && otherNodeId(link, selected.id) !== null
-                        ? theme.colors.accent[5]
-                        : graphText + "40"
-                    }
-                    linkWidth={(link) =>
-                      selected && otherNodeId(link, selected.id) !== null
-                        ? 1.5
-                        : 0.6
-                    }
+                    onRenderFramePost={(ctx, scale) => {
+                      if (!selected) return;
+                      const labels: { x: number; y: number; width: number }[] =
+                        [];
+                      const maxLabelWidth = Math.min(160, width / 3) / scale;
+                      ctx.save();
+                      ctx.textAlign = "center";
+                      ctx.textBaseline = "top";
+                      ctx.fillStyle = THEMES[themeId].text;
+                      ctx.strokeStyle = THEMES[themeId].surface;
+                      ctx.lineWidth = 3 / scale;
+                      ctx.lineJoin = "round";
+                      for (const node of graphData.nodes) {
+                        if (node.x === undefined || node.y === undefined)
+                          continue;
+                        const active = node.id === selected.id;
+                        ctx.font = `${active ? 600 : 400} ${(active ? 13 : 12) / scale}px ${theme.fontFamily}`;
+                        const letters = Array.from(node.title);
+                        let label = node.title;
+                        while (
+                          letters.length > 1 &&
+                          ctx.measureText(label).width > maxLabelWidth
+                        ) {
+                          letters.pop();
+                          label = letters.join("").trimEnd() + "…";
+                        }
+                        const labelWidth = ctx.measureText(label).width;
+                        const x = node.x;
+                        const y =
+                          node.y + 6 * Math.sqrt(active ? 3 : 1) + 5 / scale;
+                        if (
+                          labels.some(
+                            (previous) =>
+                              Math.abs(x - previous.x) <
+                                (labelWidth + previous.width) / 2 + 4 / scale &&
+                              Math.abs(y - previous.y) < 18 / scale,
+                          )
+                        )
+                          continue;
+                        labels.push({ x, y, width: labelWidth });
+                        ctx.strokeText(label, x, y);
+                        ctx.fillText(label, x, y);
+                      }
+                      ctx.restore();
+                    }}
+                    linkColor={() => theme.colors.accent[5]}
+                    linkWidth={1.5}
                     maxZoom={4}
-                    warmupTicks={160}
                     cooldownTicks={0}
                     enableNodeDrag={false}
                     onNodeClick={(node) => setSelectedId(node.id)}
                     onBackgroundClick={() => setSelectedId(null)}
-                    onEngineStop={() => {
-                      if (!fitted.current) fitted.current = fitGraph();
-                    }}
+                    onEngineStop={fitGraph}
                   />
                 )}
               </Box>
@@ -241,14 +253,16 @@ export default function LibraryConstellation({
                 }}
               >
                 <Text size="xs" c="dimmed">
-                  {data.nodes.length} titles · {data.links.length} connections
+                  {selected
+                    ? `${graphData.nodes.length} of ${data.nodes.length} titles · ${connections.length} connection${connections.length === 1 ? "" : "s"}`
+                    : `${data.nodes.length} titles · Choose a title`}
                 </Text>
                 <Button
                   size="compact-xs"
                   variant="subtle"
                   onClick={() => {
                     setSelectedId(null);
-                    fitGraph(reducedMotion ? 0 : 350);
+                    if (!selected) fitGraph();
                   }}
                 >
                   Reset view
@@ -302,7 +316,7 @@ export default function LibraryConstellation({
                 </Stack>
               ) : (
                 <Text size="sm" c="dimmed">
-                  Choose a title or select a node to see its connections.
+                  Choose a title or select a node to focus on its connections.
                 </Text>
               )}
             </Card>

@@ -14,9 +14,11 @@ import LibraryConstellation from "./LibraryConstellation";
 type GraphProps = ForceGraphProps<LibraryConstellationNode>;
 const state = vi.hoisted(() => ({
   props: undefined as GraphProps | undefined,
-  fit: vi.fn(),
+  center: vi.fn(),
+  zoom: vi.fn(),
   isError: false,
   height: 480,
+  data: undefined as ConstellationData | undefined,
 }));
 const data: ConstellationData = {
   nodes: [
@@ -43,7 +45,7 @@ vi.mock("#/features/media/queries", () => ({
 }));
 vi.mock("@tanstack/react-query", () => ({
   useQuery: () => ({
-    data,
+    data: state.data ?? data,
     isPending: false,
     isError: state.isError,
     refetch: vi.fn(),
@@ -51,9 +53,6 @@ vi.mock("@tanstack/react-query", () => ({
 }));
 vi.mock("#/theme/ThemeProvider", () => ({
   useAppTheme: () => ({ themeId: "classic" }),
-}));
-vi.mock("#/hooks/useAppReducedMotion", () => ({
-  useAppReducedMotion: () => true,
 }));
 vi.mock("@mantine/hooks", async (original) => ({
   ...(await original<typeof MantineHooks>()),
@@ -65,11 +64,8 @@ vi.mock("react-force-graph-2d", async () => {
     default: forwardRef((props: GraphProps, ref) => {
       state.props = props;
       useImperativeHandle(ref, () => ({
-        d3Force: () => ({
-          strength: () => ({ distanceMax: vi.fn() }),
-          distance: vi.fn(),
-        }),
-        zoomToFit: state.fit,
+        centerAt: state.center,
+        zoom: state.zoom,
       }));
       return props.graphData?.nodes.map((node) => (
         <button
@@ -87,6 +83,7 @@ beforeEach(() => {
   state.props = undefined;
   state.isError = false;
   state.height = 480;
+  state.data = undefined;
   Object.defineProperty(window, "matchMedia", {
     writable: true,
     value: () => ({
@@ -120,51 +117,63 @@ function mount() {
   return { ...view, onOpen };
 }
 
-it("opens connected titles without changing the layout or cached graph data", () => {
+it("opens connected titles without mutating the overview or cached graph data", () => {
   const { onOpen } = mount();
   const graphData = state.props?.graphData;
   if (!graphData) throw new Error("Graph did not mount");
-  graphData.links[0].source = graphData.nodes[0];
-  graphData.links[0].target = graphData.nodes[1];
-  graphData.nodes[0].x = 123;
+  const positions = graphData.nodes.map(({ x, y }) => ({ x, y }));
 
   fireEvent.click(screen.getByRole("button", { name: "Star Moonrise" }));
+  const focused = state.props?.graphData;
+  if (!focused) throw new Error("Focused graph did not mount");
+  focused.links[0].source = focused.nodes[0];
+  focused.links[0].target = focused.nodes[1];
+  focused.nodes[0].x = 123;
   fireEvent.click(
     screen.getByRole("button", { name: "Starlight", exact: true }),
   );
+  expect(screen.getByText("2 of 2 titles · 1 connection")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Open media" }));
 
   expect(onOpen).toHaveBeenCalledWith("b");
-  expect(state.props?.graphData).toBe(graphData);
-  expect(graphData.nodes[0].x).toBe(123);
+  expect(state.props?.graphData?.nodes[0]).toMatchObject({
+    id: "b",
+    x: 0,
+    y: 0,
+  });
   expect(data.nodes[0]).not.toHaveProperty("x");
   expect(data.links[0].source).toBe("a");
-  expect(state.fit).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Reset view" }));
+  expect(state.props?.graphData?.nodes.map(({ x, y }) => ({ x, y }))).toEqual(
+    positions,
+  );
 });
 
-it("waits for canvas dimensions and initialized coordinates before fitting once", () => {
-  state.height = 0;
-  const { rerender, onOpen } = mount();
-  expect(state.props).toBeUndefined();
-  state.height = 480;
-  rerender(<LibraryConstellation onOpen={onOpen} />);
-  const props = state.props;
-  const nodes = props?.graphData?.nodes;
-  if (!props || !nodes) throw new Error("Graph did not mount");
-
-  expect(props.warmupTicks).toBe(160);
-  expect(props.cooldownTicks).toBe(0);
-  props.onEngineStop?.();
-  expect(state.fit).not.toHaveBeenCalled();
-
-  nodes.forEach((node, index) => {
-    node.x = index * 40;
-    node.y = 0;
-  });
-  props.onEngineStop?.();
-  props.onEngineStop?.();
-  expect(state.fit).toHaveBeenCalledExactlyOnceWith(0, 72);
-});
+it.each([0, 1])(
+  "waits for canvas size and centers a title with %i connections",
+  (count) => {
+    state.height = 0;
+    state.data = { ...data, links: data.links.slice(0, count) };
+    const { rerender, onOpen } = mount();
+    expect(state.props).toBeUndefined();
+    expect(state.center).not.toHaveBeenCalled();
+    state.height = 480;
+    rerender(<LibraryConstellation onOpen={onOpen} />);
+    fireEvent.click(screen.getByRole("button", { name: "Star Moonrise" }));
+    const nodes = state.props?.graphData?.nodes;
+    expect(nodes).toHaveLength(count + 1);
+    expect(nodes?.[0]).toMatchObject({
+      id: "a",
+      x: 0,
+      y: 0,
+      fx: 0,
+      fy: 0,
+    });
+    expect(state.center).toHaveBeenLastCalledWith(0, 0);
+    expect(state.zoom.mock.lastCall?.[0]).toBeGreaterThan(0);
+    expect(state.props?.cooldownTicks).toBe(0);
+  },
+);
 
 it("keeps the loaded graph and selection after a failed refresh", () => {
   const { rerender, onOpen } = mount();
@@ -193,4 +202,125 @@ it("renders hover titles as text rather than HTML", () => {
   tooltip.innerHTML = content;
   expect(tooltip.textContent).toBe(title);
   expect(tooltip.querySelector("img")).toBeNull();
+});
+
+it("labels focused nodes at a fixed screen size and prioritizes the selected title", () => {
+  mount();
+  const labels: { title: string; font: string }[] = [];
+  // Only the canvas text operations used by the label renderer are needed here.
+  const ctx = {
+    save() {},
+    restore() {},
+    strokeText() {},
+    measureText: (text: string) => ({
+      width: text.length * parseFloat(ctx.font.split(" ")[1]) * 0.6,
+    }),
+    fillText: (title: string) => labels.push({ title, font: ctx.font }),
+  } as CanvasRenderingContext2D;
+  const draw = (scale = 1) => {
+    labels.length = 0;
+    state.props?.onRenderFramePost?.(ctx, scale);
+  };
+  draw();
+  expect(labels).toHaveLength(0);
+
+  fireEvent.click(screen.getByRole("button", { name: "Star Moonrise" }));
+  const nodes = state.props?.graphData?.nodes;
+  if (!nodes) throw new Error("Graph did not mount");
+  for (const scale of [0.5, 1, 4]) {
+    draw(scale);
+    expect(labels.map(({ title }) => title)).toEqual(["Moonrise", "Starlight"]);
+    expect(parseFloat(labels[0].font.split(" ")[1]) * scale).toBe(13);
+    expect(parseFloat(labels[1].font.split(" ")[1]) * scale).toBe(12);
+    expect(labels[0].font).toMatch(/^600 /);
+  }
+
+  nodes[1].title = "A much longer connected title that needs truncating";
+  draw();
+  expect(labels[1].title).toMatch(/…$/);
+  nodes[1].title = "Starlight";
+  fireEvent.click(screen.getByRole("button", { name: "Star Starlight" }));
+  const neighbour = state.props?.graphData?.nodes[1];
+  if (!neighbour) throw new Error("Connected title is missing");
+  neighbour.x = 0;
+  neighbour.y = 0;
+  draw();
+  expect(labels.map(({ title }) => title)).toEqual(["Starlight"]);
+
+  fireEvent.click(screen.getByRole("button", { name: "Reset view" }));
+  draw();
+  expect(labels).toHaveLength(0);
+});
+
+it("centers a title and spaces its neighbours evenly without changing the 155-title overview", () => {
+  const nodes = [
+    ...data.nodes,
+    ...Array.from({ length: 153 }, (_, index) => ({
+      ...data.nodes[0],
+      id: "extra-" + index,
+      title: "Title " + (index + 3),
+    })),
+  ];
+  state.data = {
+    nodes,
+    links: [
+      ...data.links,
+      { source: "a", target: "extra-0", similarity: 0.75 },
+      { source: "a", target: "extra-1", similarity: 0.6 },
+      ...Array.from({ length: 343 }, (_, index) => ({
+        source: nodes[4 + (index % 151)].id,
+        target: nodes[4 + ((index + 1 + Math.floor(index / 151)) % 151)].id,
+        similarity: 0.6,
+      })),
+    ],
+    truncated: false,
+  };
+  mount();
+  const graphData = state.props?.graphData;
+  if (!graphData) throw new Error("Graph did not mount");
+  expect(state.data.links).toHaveLength(346);
+  expect(graphData.links).toHaveLength(0);
+  expect(screen.getAllByRole("button", { name: /^Star / })).toHaveLength(155);
+  const positions = graphData.nodes.map(({ x, y }) => ({ x, y }));
+
+  fireEvent.click(screen.getByRole("button", { name: "Star Moonrise" }));
+  const focused = state.props?.graphData;
+  if (!focused) throw new Error("Focused graph did not mount");
+  expect(screen.getAllByRole("button", { name: /^Star / })).toHaveLength(4);
+  expect(focused.links).toHaveLength(3);
+  expect(screen.getByText("4 of 155 titles · 3 connections")).toBeTruthy();
+  expect(focused.nodes[0]).toMatchObject({
+    id: "a",
+    x: 0,
+    y: 0,
+    fx: 0,
+    fy: 0,
+  });
+  const neighbours = focused.nodes.slice(1);
+  const radii = neighbours.map((node) => Math.hypot(node.x ?? 0, node.y ?? 0));
+  const gaps = neighbours.map((node, index) => {
+    const next = neighbours[(index + 1) % neighbours.length];
+    return Math.hypot(
+      (node.x ?? 0) - (next.x ?? 0),
+      (node.y ?? 0) - (next.y ?? 0),
+    );
+  });
+  expect(radii[0]).toBeGreaterThan(0);
+  expect(gaps[0]).toBeGreaterThan(0);
+  neighbours.forEach((node, index) => {
+    expect(radii[index]).toBeCloseTo(radii[0]);
+    expect(gaps[index]).toBeCloseTo(gaps[0]);
+    expect(node.fx).toBe(node.x);
+    expect(node.fy).toBe(node.y);
+  });
+  expect(data.nodes[0]).not.toHaveProperty("x");
+  state.props?.onEngineStop?.();
+  expect(state.center).toHaveBeenCalledWith(0, 0);
+  expect(state.zoom.mock.lastCall?.[0]).toBeGreaterThan(0);
+
+  fireEvent.click(screen.getByRole("button", { name: "Reset view" }));
+  expect(screen.getAllByRole("button", { name: /^Star / })).toHaveLength(155);
+  expect(state.props?.graphData?.nodes.map(({ x, y }) => ({ x, y }))).toEqual(
+    positions,
+  );
 });
