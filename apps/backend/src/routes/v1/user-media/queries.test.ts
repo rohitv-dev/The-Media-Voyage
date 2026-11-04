@@ -2,7 +2,6 @@ import { sql } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FUZZY_TITLE_SEARCH_CONFIG } from "@media-voyage/shared/api";
-import { EMBEDDING_MODEL } from "@media-voyage/shared";
 
 const { selectMock } = vi.hoisted(() => ({
   selectMock: vi.fn(),
@@ -14,7 +13,6 @@ vi.mock("@/db/db", () => ({
 
 import {
   filterUserMedia,
-  getLibraryConstellation,
   searchUserMedia,
   searchUserMediaHybrid,
 } from "./queries";
@@ -43,24 +41,6 @@ function createSelectBuilder() {
 function renderSql(value: Parameters<PgDialect["sqlToQuery"]>[0]) {
   return new PgDialect().sqlToQuery(value);
 }
-
-it("scopes the constellation to the owner's active, current-model embeddings", async () => {
-  const results = createSelectBuilder();
-  results.limit.mockResolvedValue([]);
-  selectMock.mockReturnValueOnce(results);
-
-  expect(await getLibraryConstellation("owner-1", 0.35)).toEqual({
-    nodes: [],
-    links: [],
-    truncated: false,
-  });
-  const condition = renderSql(results.where.mock.calls[0][0]);
-  expect(condition.sql).toContain('"user_media"."user_id"');
-  expect(condition.sql).toContain('"deleted_at" is null');
-  expect(condition.sql).toContain('"embedding" is not null');
-  expect(condition.params).toEqual(["owner-1", EMBEDDING_MODEL]);
-  expect(results.limit).toHaveBeenCalledWith(201);
-});
 
 describe("searchUserMediaHybrid", () => {
   beforeEach(() => {

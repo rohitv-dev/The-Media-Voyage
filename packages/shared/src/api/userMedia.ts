@@ -307,31 +307,22 @@ export type GetHybridSearchResponse = z.infer<
   typeof getHybridSearchResponseSchema
 >;
 
-export const libraryConstellationNodeSchema = mediaRecordSchema.pick({
+export const similarLibraryMediaSchema = mediaRecordSchema.pick({
   id: true,
   title: true,
   type: true,
   imageUrl: true,
-  status: true,
+  imageFocusX: true,
+  imageFocusY: true,
 });
 
-export type LibraryConstellationNode = z.infer<
-  typeof libraryConstellationNodeSchema
+export const getSimilarLibraryMediaResponseSchema = z
+  .array(similarLibraryMediaSchema)
+  .max(3);
+
+export type GetSimilarLibraryMediaResponse = z.infer<
+  typeof getSimilarLibraryMediaResponseSchema
 >;
-
-export const libraryConstellationSchema = z.object({
-  nodes: z.array(libraryConstellationNodeSchema),
-  links: z.array(
-    z.object({
-      source: userMediaSelectSchema.shape.id,
-      target: userMediaSelectSchema.shape.id,
-      similarity: z.number().min(-1).max(1).optional(),
-    }),
-  ),
-  truncated: z.boolean(),
-});
-
-export type LibraryConstellation = z.infer<typeof libraryConstellationSchema>;
 
 export const userMediaPageQuerySchema = userMediaQuerySchema.extend({
   page: z.coerce.number().int().min(1).default(1),

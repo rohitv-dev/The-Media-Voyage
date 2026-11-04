@@ -43,6 +43,7 @@ import { useTagColorMap } from "#/features/named-entities/queries";
 import { MediaCoverArtFocusModal } from "../MediaCoverArtFocusModal";
 import { accentText } from "./constants";
 import type { MediaViewData } from "./index";
+import { MediaViewSimilar } from "./MediaViewSimilar";
 import { getProgress } from "./utils";
 import { getImageObjectPosition } from "../../imageFocus";
 
@@ -404,6 +405,7 @@ export function MediaViewHero({
                   }
                   reducedMotion={reducedMotion}
                 />
+                {!readOnly && <MediaViewSimilar id={data.id} />}
 
                 <Box maw={480} mt="auto" pt={{ base: "md", sm: "xl" }}>
                   <Group justify="space-between" gap="xs" mb={6}>

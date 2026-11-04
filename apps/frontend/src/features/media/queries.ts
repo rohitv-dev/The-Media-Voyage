@@ -9,7 +9,7 @@ import type {
   GetUserMediaPageResponse,
   GetUserMediaSearchResponse,
   GetHybridSearchResponse,
-  LibraryConstellation,
+  GetSimilarLibraryMediaResponse,
   MediaDetailedRecord,
   ReactionRecord,
   StatusHistoryRecord,
@@ -88,12 +88,16 @@ export function tmdbWatchProvidersOptions(
 
 // -- User media ---------------------------------------------------------------
 
-export const libraryConstellationOptions = queryOptions({
-  queryKey: queryKeys.userMedia.constellation,
-  queryFn: () => api<LibraryConstellation>("/user-media/constellation"),
-  // Embeddings finish asynchronously after a title is added.
-  staleTime: 60_000,
-});
+export function similarLibraryMediaOptions(id: string) {
+  return queryOptions({
+    queryKey: queryKeys.userMedia.similar(id),
+    queryFn: () =>
+      api<GetSimilarLibraryMediaResponse>(`/user-media/${id}/similar`),
+    // Embeddings finish asynchronously after a title is added.
+    staleTime: 60_000,
+    refetchOnWindowFocus: true,
+  });
+}
 
 export function userMediaDetailedOptions(id: string) {
   return queryOptions({

@@ -36,7 +36,6 @@ const getNavigationItem = (path: AppNavigationPath) => {
 };
 
 const browseItems = [
-  getNavigationItem("/constellation"),
   getNavigationItem("/collection"),
   getNavigationItem("/friends"),
   getNavigationItem("/calendar"),

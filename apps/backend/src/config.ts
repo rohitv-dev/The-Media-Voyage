@@ -15,11 +15,6 @@ const environmentSchema = z.object({
     .min(1)
     .default(isProduction ? "0.0.0.0" : "127.0.0.1"),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
-  CONSTELLATION_SIMILARITY_THRESHOLD: z.coerce
-    .number()
-    .min(0)
-    .max(1)
-    .default(0.35),
   DATABASE_URL: z.url("DATABASE_URL must be a valid PostgreSQL URL"),
   BETTER_AUTH_SECRET: z
     .string()

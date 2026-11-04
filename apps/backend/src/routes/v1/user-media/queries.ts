@@ -35,16 +35,14 @@ import {
   lt,
   lte,
   notInArray,
+  ne,
   or,
   sql,
   type SQL,
 } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/db/db";
 import { listReactions } from "../friends/queries";
-import {
-  buildLibraryConstellation,
-  CONSTELLATION_NODE_LIMIT,
-} from "./constellation";
 import {
   calendarCompletedSelect,
   calendarStartedSelect,
@@ -215,32 +213,47 @@ export function searchUserMedia(userId: string, search: string) {
     .limit(20);
 }
 
-export async function getLibraryConstellation(
-  userId: string,
-  similarityThreshold: number,
-) {
-  const records = await db
+export function getSimilarLibraryMedia(userId: string, id: string) {
+  const sourceEntry = alias(userMedia, "source_entry");
+  const sourceMedia = alias(media, "source_media");
+  const distance = sql<number>`${media.embedding} <=> ${sourceMedia.embedding}`;
+
+  return db
     .select({
       id: userMedia.id,
       title: media.title,
       type: media.type,
       imageUrl: media.imageUrl,
-      status: userMedia.status,
-      embedding: media.embedding,
+      imageFocusX: userMedia.imageFocusX,
+      imageFocusY: userMedia.imageFocusY,
     })
     .from(userMedia)
     .innerJoin(media, eq(userMedia.mediaId, media.id))
+    .innerJoin(
+      sourceEntry,
+      and(
+        eq(sourceEntry.id, id),
+        eq(sourceEntry.userId, userId),
+        isNull(sourceEntry.deletedAt),
+      ),
+    )
+    .innerJoin(sourceMedia, eq(sourceEntry.mediaId, sourceMedia.id))
     .where(
       and(
         activeUserMediaCondition(userId),
+        ne(media.id, sourceMedia.id),
         isNotNull(media.embedding),
+        isNotNull(sourceMedia.embedding),
         eq(media.embeddingModel, EMBEDDING_MODEL),
+        eq(sourceMedia.embeddingModel, EMBEDDING_MODEL),
+        // Cosine similarity is undefined for zero vectors.
+        sql`vector_norm(${media.embedding}) > 0`,
+        sql`vector_norm(${sourceMedia.embedding}) > 0`,
+        gt(sql`1 - (${distance})`, 0.38),
       ),
     )
-    .orderBy(desc(userMedia.createdAt), asc(userMedia.id))
-    .limit(CONSTELLATION_NODE_LIMIT + 1);
-
-  return buildLibraryConstellation(records, similarityThreshold);
+    .orderBy(asc(distance), asc(media.title), asc(userMedia.id))
+    .limit(3);
 }
 
 const HYBRID_SEARCH_CANDIDATE_LIMIT = 50;

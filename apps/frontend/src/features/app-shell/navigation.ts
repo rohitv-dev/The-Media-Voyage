@@ -6,7 +6,6 @@ import {
   IconHistory,
   IconSettings,
   IconSparkles,
-  IconStars,
   IconTags,
   IconTrash,
   IconTrendingUp,
@@ -35,13 +34,6 @@ export const appNavigationItems = [
     icon: IconSparkles,
     path: "/recommendations",
     keywords: ["discover", "suggestions", "for you"],
-  },
-  {
-    label: "Constellation",
-    description: "Explore connections between your titles",
-    icon: IconStars,
-    path: "/constellation",
-    keywords: ["stars", "similar", "themes"],
   },
   {
     label: "Activity Calendar",
