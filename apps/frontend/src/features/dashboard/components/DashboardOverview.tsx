@@ -55,7 +55,7 @@ export function DashboardOverview({
     <Stack gap="sm">
       <Title order={3}>Overview</Title>
       <SimpleGrid
-        cols={{ base: 2, xs: 3, md: 4, lg: 6 }}
+        cols={{ base: 3, md: 4, lg: 6 }}
         spacing={{ base: "xs", sm: "md" }}
       >
         {Object.entries(summary).map(([type, value]) => (

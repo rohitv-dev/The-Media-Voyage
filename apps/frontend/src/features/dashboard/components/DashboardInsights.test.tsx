@@ -176,7 +176,7 @@ describe("dashboard trends", () => {
 });
 
 describe("continue views", () => {
-  it("switches between recent and nearly finished without showing both lists", async () => {
+  it("shows three-card previews and expands nearly finished on mobile", async () => {
     const item: MediaRecord = {
       id: "title-1",
       title: "Nearly Done",
@@ -194,7 +194,14 @@ describe("continue views", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+    const moreItems = [2, 3, 4, 5].map((number) => ({
+      ...item,
+      id: `title-${number}`,
+      title: `Title ${number}`,
+      progress: 92 - number,
+    }));
     const onView = vi.fn();
+    const onViewAll = vi.fn();
     render(
       <MantineProvider>
         <DashboardContinue
@@ -205,14 +212,16 @@ describe("continue views", () => {
               title: "Recently Updated",
               progress: 20,
             },
+            ...moreItems,
           ]}
-          nearlyFinished={[item]}
+          nearlyFinished={[item, ...moreItems]}
           reduceMotion
-          onViewAll={vi.fn()}
+          onViewAll={onViewAll}
           onView={onView}
         />
       </MantineProvider>,
     );
+    expect(screen.getAllByRole("link")).toHaveLength(3);
     expect(
       screen.getByRole("link", { name: "Resume Recently Updated" }),
     ).toBeTruthy();
@@ -226,9 +235,14 @@ describe("continue views", () => {
         screen.queryByRole("link", { name: "Resume Recently Updated" }),
       ).toBeNull(),
     );
-    expect(screen.queryByRole("button", { name: "View all" })).toBeNull();
-    fireEvent.click(screen.getByRole("link", { name: "Resume Nearly Done" }));
-    expect(onView).toHaveBeenCalledWith("title-1");
+    expect(screen.getAllByRole("link")).toHaveLength(3);
+    fireEvent.click(screen.getByRole("button", { name: "View all" }));
+    expect(screen.getAllByRole("link")).toHaveLength(5);
+    expect(onViewAll).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("link", { name: "Resume Title 5" }));
+    expect(onView).toHaveBeenCalledWith("title-5");
+    fireEvent.click(screen.getByRole("button", { name: "Show less" }));
+    await waitFor(() => expect(screen.getAllByRole("link")).toHaveLength(3));
     fireEvent.click(screen.getByRole("radio", { name: "Recent" }));
     await waitFor(() =>
       expect(
@@ -238,7 +252,8 @@ describe("continue views", () => {
     expect(
       screen.getByRole("link", { name: "Resume Recently Updated" }),
     ).toBeTruthy();
-    expect(screen.getByRole("button", { name: "View all" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "View all" }));
+    expect(onViewAll).toHaveBeenCalledOnce();
   });
 
   it("explains how to populate an empty section", () => {
@@ -256,5 +271,6 @@ describe("continue views", () => {
     expect(screen.getByText("Nothing in progress")).toBeTruthy();
     fireEvent.click(screen.getByRole("radio", { name: "Nearly Finished" }));
     expect(screen.getByText("No partially finished titles")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "View all" })).toBeNull();
   });
 });

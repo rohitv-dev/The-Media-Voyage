@@ -5,7 +5,9 @@ import {
   SimpleGrid,
   Stack,
   Title,
+  useMatches,
 } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import type { MediaRecord } from "@media-voyage/shared/api";
@@ -13,6 +15,8 @@ import { ContinueMediaCard } from "#/features/media/components/ContinueMediaCard
 import { EmptyState } from "#/components/EmptyState";
 import { IconArrowRight, IconPlayerPlay } from "@tabler/icons-react";
 import { gridItemMotionProps } from "#/theme/motion";
+
+const MOBILE_PREVIEW_LIMIT = 3;
 
 export function DashboardContinue({
   items,
@@ -28,8 +32,20 @@ export function DashboardContinue({
   onView: (id: string) => void;
 }) {
   const [view, setView] = useState("recent");
+  const [expanded, { toggle: toggleNearlyFinished }] = useDisclosure(false);
+  const isMobile = useMatches(
+    { base: true, sm: false },
+    { getInitialValueInEffect: false },
+  );
   const showNearlyFinished = view === "nearly_finished";
-  const visibleItems = showNearlyFinished ? nearlyFinished : items;
+  const showAllNearlyFinished = showNearlyFinished && expanded;
+  const selectedItems = showNearlyFinished ? nearlyFinished : items;
+  const visibleItems =
+    isMobile && !showAllNearlyFinished
+      ? selectedItems.slice(0, MOBILE_PREVIEW_LIMIT)
+      : selectedItems;
+  const canExpandNearlyFinished =
+    isMobile && nearlyFinished.length > MOBILE_PREVIEW_LIMIT;
 
   return (
     <Stack gap="sm">
@@ -47,14 +63,17 @@ export function DashboardContinue({
             ]}
           />
         </Group>
-        {!showNearlyFinished && (
+        {(!showNearlyFinished || canExpandNearlyFinished) && (
           <Button
             variant="subtle"
             size="sm"
-            rightSection={<IconArrowRight size={15} />}
-            onClick={onViewAll}
+            aria-expanded={showNearlyFinished ? expanded : undefined}
+            rightSection={
+              showNearlyFinished ? undefined : <IconArrowRight size={15} />
+            }
+            onClick={showNearlyFinished ? toggleNearlyFinished : onViewAll}
           >
-            View all
+            {showAllNearlyFinished ? "Show less" : "View all"}
           </Button>
         )}
       </Group>
