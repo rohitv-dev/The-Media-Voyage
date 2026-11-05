@@ -1,4 +1,5 @@
 import { CollapsibleSectionHeading } from "#/components/CollapsibleSectionHeading";
+import { PHONE_WIDTH_QUERY } from "#/theme/breakpoints";
 import { Grid, Card, Stack, Collapse, Textarea } from "@mantine/core";
 import { IconPencil } from "@tabler/icons-react";
 import { useFormContext } from "./context";
@@ -6,7 +7,7 @@ import { useDisclosure, useMediaQuery } from "@mantine/hooks";
 
 export function PersonalNotesSection() {
   const form = useFormContext();
-  const isMobile = useMediaQuery("(max-width: 47.99em)");
+  const isMobile = useMediaQuery(PHONE_WIDTH_QUERY);
   const [opened, { toggle }] = useDisclosure(false);
 
   return (

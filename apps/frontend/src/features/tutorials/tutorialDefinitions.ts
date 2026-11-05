@@ -1,3 +1,4 @@
+import { PHONE_WIDTH_QUERY } from "#/theme/breakpoints";
 import { driver } from "driver.js";
 import type { DriveStep, Driver } from "driver.js";
 
@@ -26,7 +27,6 @@ type TutorialDefinition = {
   steps: (options: TutorialStepOptions) => DriveStep[];
 };
 
-const PHONE_QUERY = "(max-width: 47.99em)";
 const TABLET_QUERY = "(max-width: 61.99em)";
 
 function matches(query: string) {
@@ -44,7 +44,7 @@ function responsiveCopy(
   phoneCopy: string,
   tabletCopy = wideCopy,
 ) {
-  return matches(PHONE_QUERY)
+  return matches(PHONE_WIDTH_QUERY)
     ? phoneCopy
     : matches(TABLET_QUERY)
       ? tabletCopy
@@ -57,7 +57,7 @@ function responsiveElement(
   tabletSelector = wideSelector,
 ) {
   return () => {
-    const selector = matches(PHONE_QUERY)
+    const selector = matches(PHONE_WIDTH_QUERY)
       ? phoneSelector
       : matches(TABLET_QUERY)
         ? tabletSelector

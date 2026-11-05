@@ -28,6 +28,7 @@ import {
 import type { PushNotificationData } from "#/features/notifications/hooks/usePushNotifications";
 import { openRecommendationModal } from "#/features/recommendations/components/ContextModal";
 import type { AppShellPath } from "#/features/app-shell/navigation";
+import { PHONE_WIDTH_QUERY } from "#/theme/breakpoints";
 import { useCallback } from "react";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -98,7 +99,7 @@ function AuthenticatedShell() {
     defaultValue: true,
   });
   const isDesktop = useMediaQuery("(min-width: 62em)");
-  const isPhone = useMediaQuery("(max-width: 47.99em)", undefined, {
+  const isPhone = useMediaQuery(PHONE_WIDTH_QUERY, undefined, {
     getInitialValueInEffect: false,
   });
   const railCollapsed = isDesktop && !sidebarOpened;

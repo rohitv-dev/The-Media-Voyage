@@ -39,6 +39,7 @@ import { showErrorNotification } from "#/lib/notifications";
 import { useDisclosure, useLocalStorage, useMediaQuery } from "@mantine/hooks";
 import { AnimatePresence, motion } from "motion/react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
+import { PHONE_WIDTH_QUERY } from "#/theme/breakpoints";
 import { gridItemMotionProps } from "#/theme/motion";
 import { MediaFilterCard } from "#/features/media/components/MediaFilters/MediaFilterCard";
 import { MediaPickerModal } from "#/features/media/components/MediaPickerModal";
@@ -105,7 +106,7 @@ function RouteComponent() {
   );
   const navigate = useNavigate();
   const reduceMotion = useAppReducedMotion();
-  const isMobile = useMediaQuery("(max-width: 47.99em)", undefined, {
+  const isMobile = useMediaQuery(PHONE_WIDTH_QUERY, undefined, {
     getInitialValueInEffect: false,
   });
   const [view, setView] = useLocalStorage<ViewType>({

@@ -2,6 +2,7 @@ import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { appNavigationItems } from "#/features/app-shell/navigation";
 import type { AppShellPath } from "#/features/app-shell/navigation";
 import { userMediaSearchQueryOptions } from "#/features/media/queries";
+import { PHONE_WIDTH_QUERY } from "#/theme/breakpoints";
 import { capitalizeWords } from "#/utils/strings";
 import {
   Badge,
@@ -129,7 +130,7 @@ export function CommandPalette({
   const [query, setQuery] = useState("");
   const [debouncedQuery] = useDebouncedValue(query, 300);
   const combobox = useCombobox();
-  const isMobile = useMediaQuery("(max-width: 47.99em)");
+  const isMobile = useMediaQuery(PHONE_WIDTH_QUERY);
   const reduceMotion = useAppReducedMotion();
   const trimmedQuery = query.trim();
   const normalizedQuery = trimmedQuery.toLowerCase();

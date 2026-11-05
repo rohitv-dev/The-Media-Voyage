@@ -1,6 +1,7 @@
 import { EmptyState } from "#/components/EmptyState";
 import { ActivityItem } from "#/features/activity/components/ActivityItem";
 import { activityListQueryOptions } from "#/features/activity/queries";
+import { PHONE_WIDTH_QUERY } from "#/theme/breakpoints";
 import { capitalizeWords } from "#/utils/strings";
 import { activityFilterSchema } from "@media-voyage/shared/api";
 import type { ActivityFilters, ActivityRecord } from "@media-voyage/shared/api";
@@ -57,7 +58,7 @@ function RouteComponent() {
   );
   const [filtersOpened, { toggle: toggleFilters, close: closeFilters }] =
     useDisclosure();
-  const isMobile = useMediaQuery("(max-width: 47.99em)", undefined, {
+  const isMobile = useMediaQuery(PHONE_WIDTH_QUERY, undefined, {
     getInitialValueInEffect: false,
   });
   const activeFilterCount = [

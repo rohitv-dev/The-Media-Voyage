@@ -1,4 +1,5 @@
 import { CollapsibleSectionHeading } from "#/components/CollapsibleSectionHeading";
+import { PHONE_WIDTH_QUERY } from "#/theme/breakpoints";
 import {
   Grid,
   Card,
@@ -33,7 +34,7 @@ export function ProgressTrackingSection({
   onSyncSeasons,
 }: ProgressTrackingSectionProps) {
   const form = useFormContext();
-  const isMobile = useMediaQuery("(max-width: 47.99em)");
+  const isMobile = useMediaQuery(PHONE_WIDTH_QUERY);
   const isCompleted = form.values.status === "completed";
   const isShow = form.values.type === "show";
   const numberOfPages = getBookPageCount(form.values.metadata ?? undefined);

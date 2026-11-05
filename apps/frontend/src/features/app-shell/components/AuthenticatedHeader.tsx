@@ -27,6 +27,7 @@ import { NotificationPopover } from "#/features/notifications/components/Notific
 import { latestNotificationsQueryOptions } from "#/features/notifications/queries";
 import { useMarkNotificationsSeen } from "#/features/notifications/hooks/useMarkNotificationsSeen";
 import { openRecommendationModal } from "#/features/recommendations/components/ContextModal";
+import { PHONE_WIDTH_QUERY } from "#/theme/breakpoints";
 import { ThemeSwitcher } from "#/theme/ThemeSwitcher";
 
 interface AuthenticatedHeaderProps {
@@ -58,7 +59,7 @@ export function AuthenticatedHeader({
   onAddMedia,
   onOpenProfile,
 }: AuthenticatedHeaderProps) {
-  const isPhone = useMediaQuery("(max-width: 47.99em)", undefined, {
+  const isPhone = useMediaQuery(PHONE_WIDTH_QUERY, undefined, {
     getInitialValueInEffect: false,
   });
   const [
