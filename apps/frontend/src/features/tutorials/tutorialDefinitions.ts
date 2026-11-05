@@ -138,7 +138,7 @@ export const tutorialDefinitions: Record<TutorialId, TutorialDefinition> = {
         "library-core-controls",
         '[data-tutorial="library-core-controls"]',
         "Library controls",
-        "Filter your library and switch between grid and table views when the table is available",
+        "Filter and sort your library to find the media you want",
       ),
       tutorialStep(
         "library-pick-for-me",

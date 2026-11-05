@@ -6,7 +6,6 @@ import { capitalizeWords } from "#/utils/strings";
 import {
   Avatar,
   Badge,
-  Box,
   Button,
   Card,
   Checkbox,
@@ -18,7 +17,6 @@ import {
 import type { MediaRecord } from "@media-voyage/shared/api";
 import { IconCheck, IconSearch } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { DataTable } from "mantine-datatable";
 import { useEffect, useMemo, useState } from "react";
 import {
   showErrorNotification,
@@ -126,23 +124,6 @@ export function CollectionFindMedia({
     setQuery("");
   };
 
-  const renderSelection = (record: MediaRecord) => {
-    const included = includedIds.has(record.id);
-
-    return (
-      <Checkbox
-        aria-label={
-          included
-            ? `${record.title} is already in this collection`
-            : `Select ${record.title}`
-        }
-        checked={selectedIds.has(record.id)}
-        disabled={included || addMutation.isPending}
-        onChange={() => toggleSelection(record.id)}
-      />
-    );
-  };
-
   return (
     <Card withBorder radius="lg" p="lg">
       <Stack gap="md">
@@ -176,7 +157,7 @@ export function CollectionFindMedia({
 
         {results.length > 0 && (
           <>
-            <Card withBorder radius="md" p="xs" hiddenFrom="sm">
+            <Card withBorder radius="md" p="xs">
               <Stack gap="xs">
                 {results.map((record) => {
                   const included = includedIds.has(record.id);
@@ -187,7 +168,16 @@ export function CollectionFindMedia({
                       p="xs"
                       style={{ opacity: included ? 0.55 : 1 }}
                     >
-                      {renderSelection(record)}
+                      <Checkbox
+                        aria-label={
+                          included
+                            ? `${record.title} is already in this collection`
+                            : `Select ${record.title}`
+                        }
+                        checked={selectedIds.has(record.id)}
+                        disabled={included || addMutation.isPending}
+                        onChange={() => toggleSelection(record.id)}
+                      />
                       <MediaIdentity media={record} />
                       {included && (
                         <Text size="xs" c="dimmed" ml="auto">
@@ -199,45 +189,6 @@ export function CollectionFindMedia({
                 })}
               </Stack>
             </Card>
-
-            <Box visibleFrom="sm">
-              <DataTable
-                records={results}
-                idAccessor="id"
-                minHeight={180}
-                verticalAlign="center"
-                withTableBorder
-                borderRadius="md"
-                highlightOnHover
-                columns={[
-                  {
-                    accessor: "select",
-                    title: "",
-                    width: 48,
-                    render: renderSelection,
-                  },
-                  {
-                    accessor: "title",
-                    title: "Media",
-                    render: (record) => <MediaIdentity media={record} />,
-                  },
-                  {
-                    accessor: "included",
-                    title: "",
-                    width: 110,
-                    render: (record) =>
-                      includedIds.has(record.id) ? (
-                        <Text size="sm" c="dimmed">
-                          Added
-                        </Text>
-                      ) : null,
-                  },
-                ]}
-                rowStyle={(record) => ({
-                  opacity: includedIds.has(record.id) ? 0.55 : 1,
-                })}
-              />
-            </Box>
 
             <Group justify="space-between" align="center">
               <Text size="sm" c="dimmed">

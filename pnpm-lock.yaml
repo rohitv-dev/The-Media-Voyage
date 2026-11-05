@@ -135,9 +135,6 @@ importers:
       driver.js:
         specifier: ^1.8.0
         version: 1.8.0
-      mantine-datatable:
-        specifier: ^9.3.0
-        version: 9.3.0(@mantine/core@9.5.0(@mantine/hooks@9.5.0(react@19.2.7))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@mantine/hooks@9.5.0(react@19.2.7))(clsx@2.1.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       motion:
         specifier: ^12.42.2
         version: 12.42.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -3702,15 +3699,6 @@ packages:
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
-
-  mantine-datatable@9.3.0:
-    resolution: {integrity: sha512-YCLC5VCRPUHDoDUvWgVY81bx17MDk3Gz38icOINe/QO2ZKASGxNzf/wiqV3Dv1N/BRO601GyVMHRH6LzFWVC7g==}
-    peerDependencies:
-      '@mantine/core': '>=9.0'
-      '@mantine/hooks': '>=9.0'
-      clsx: '>=2'
-      react: '>=19'
-      react-dom: '>=19'
 
   matcher@3.0.0:
     resolution: {integrity: sha512-OkeDaAZ/bQCxeFAozM55PKcKU0yJMPGifLwV4Qgjitu+5MoAfSQN4lsLJeXZ1b8w0x+/Emda6MZgXS1jvsapng==}
@@ -8289,14 +8277,6 @@ snapshots:
   magic-string@0.30.21:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.6.0
-
-  mantine-datatable@9.3.0(@mantine/core@9.5.0(@mantine/hooks@9.5.0(react@19.2.7))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@mantine/hooks@9.5.0(react@19.2.7))(clsx@2.1.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
-    dependencies:
-      '@mantine/core': 9.5.0(@mantine/hooks@9.5.0(react@19.2.7))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@mantine/hooks': 9.5.0(react@19.2.7)
-      clsx: 2.1.1
-      react: 19.2.7
-      react-dom: 19.2.7(react@19.2.7)
 
   matcher@3.0.0:
     dependencies:

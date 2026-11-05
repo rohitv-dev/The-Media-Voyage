@@ -36,7 +36,6 @@
     "better-auth": "1.6.16",
     "dayjs": "^1.11.21",
     "driver.js": "^1.8.0",
-    "mantine-datatable": "^9.3.0",
     "motion": "^12.42.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

@@ -14,7 +14,6 @@ import {
   Loader,
   SimpleGrid,
   Stack,
-  SegmentedControl,
   Text,
   Title,
 } from "@mantine/core";
@@ -36,7 +35,7 @@ import type { UserMediaQuerySchema } from "@media-voyage/shared/api";
 import { userMediaQuerySchema } from "@media-voyage/shared/api";
 import { getApiErrorMessage } from "#/lib/api";
 import { showErrorNotification } from "#/lib/notifications";
-import { useDisclosure, useLocalStorage, useMediaQuery } from "@mantine/hooks";
+import { useDisclosure, useMediaQuery } from "@mantine/hooks";
 import { AnimatePresence, motion } from "motion/react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { PHONE_WIDTH_QUERY } from "#/theme/breakpoints";
@@ -49,18 +48,13 @@ import {
   IconDice5,
   IconFilter,
   IconInfoCircle,
-  IconLayoutGrid,
   IconMovie,
   IconPlus,
   IconSearch,
-  IconTable,
 } from "@tabler/icons-react";
 import { MediaAppliedFilters } from "#/features/media/components/MediaFilters/MediaAppliedFilters";
-import { MediaTable } from "#/features/media/components/MediaTable";
 import { useTutorial } from "#/features/tutorials/useTutorial";
 import { TutorialTrigger } from "#/features/tutorials/components/TutorialTrigger";
-
-type ViewType = "grid" | "table";
 
 export const Route = createFileRoute("/_authenticated/media/")({
   validateSearch: userMediaQuerySchema,
@@ -109,11 +103,6 @@ function RouteComponent() {
   const isMobile = useMediaQuery(PHONE_WIDTH_QUERY, undefined, {
     getInitialValueInEffect: false,
   });
-  const [view, setView] = useLocalStorage<ViewType>({
-    key: "media-view",
-    defaultValue: "grid",
-  });
-
   const [opened, { open, close }] = useDisclosure();
   const [pickerOpened, { open: openPicker, close: closePicker }] =
     useDisclosure();
@@ -192,12 +181,6 @@ function RouteComponent() {
       });
     }
   }, [error, isError, isLibrarySearchError, librarySearchError]);
-
-  useEffect(() => {
-    if (isMobile && view !== "grid") {
-      setView("grid");
-    }
-  }, [isMobile, view, setView]);
 
   useEffect(() => {
     const sentinel = loadMoreRef.current;
@@ -308,35 +291,6 @@ function RouteComponent() {
             w={{ base: "100%", sm: "auto" }}
             data-tutorial="library-core-controls"
           >
-            {!isMobile && (
-              <SegmentedControl
-                size="xs"
-                aria-label="Choose library view"
-                value={view}
-                onChange={setView}
-                color="accent"
-                data={[
-                  {
-                    value: "grid",
-                    label: (
-                      <Group gap={5} wrap="nowrap">
-                        <IconLayoutGrid size={15} />
-                        <Text size="xs">Grid</Text>
-                      </Group>
-                    ),
-                  },
-                  {
-                    value: "table",
-                    label: (
-                      <Group gap={5} wrap="nowrap">
-                        <IconTable size={15} />
-                        <Text size="xs">Table</Text>
-                      </Group>
-                    ),
-                  },
-                ]}
-              />
-            )}
             <Box
               flex={{ base: "1 1 calc(50% - 4px)", sm: "0 0 auto" }}
               order={{ base: 3, sm: 1 }}
@@ -495,8 +449,6 @@ function RouteComponent() {
                       : "Add media"}
                 </Button>
               </EmptyState>
-            ) : view === "table" ? (
-              <MediaTable data={records} />
             ) : (
               <SimpleGrid
                 spacing={{ base: "sm", md: "md" }}
