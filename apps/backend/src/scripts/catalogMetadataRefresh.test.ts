@@ -126,34 +126,25 @@ describe("catalog metadata refresh mappings", () => {
 });
 
 describe("catalog metadata refresh changes", () => {
-  it("does not write when the merged metadata is unchanged", () => {
-    expect(
-      getCatalogRefreshChanges(
-        {
-          description: "Existing description",
-          metadata: { keywords: ["space travel"] },
-        },
-        {
-          description: "Existing description",
-          metadata: { keywords: ["space travel"] },
-        },
-      ),
-    ).toEqual({});
-  });
+  it("skips writes when the merged metadata is unchanged", async () => {
+    const writeChanges = vi.fn();
 
-  it("only returns fields that changed, allowing dry runs to avoid writes", () => {
-    expect(
-      getCatalogRefreshChanges(
+    await expect(
+      applyCatalogRefresh(
+        "apply",
         {
           description: "Existing description",
-          metadata: { genre: ["Drama"] },
+          metadata: { keywords: ["space travel"] },
         },
         {
           description: "Existing description",
-          metadata: { genre: ["Drama"], runtime: 60 },
+          metadata: { keywords: ["space travel"] },
         },
+        writeChanges,
       ),
-    ).toEqual({ metadata: { genre: ["Drama"], runtime: 60 } });
+    ).resolves.toBe("unchanged");
+
+    expect(writeChanges).not.toHaveBeenCalled();
   });
 
   it("preserves existing values when the provider has no usable refresh", () => {
@@ -212,19 +203,22 @@ describe("catalog metadata refresh changes", () => {
   });
 
   it("writes only the changed values when applying", async () => {
-    const writeChanges = vi.fn().mockResolvedValue(undefined);
+    const writeChanges = vi.fn();
 
     await expect(
       applyCatalogRefresh(
         "apply",
-        { description: null, metadata: {} },
-        { metadata: { genre: ["Drama"] } },
+        {
+          description: "Existing description",
+          metadata: { genre: ["Drama"] },
+        },
+        { description: "Existing description", metadata: { runtime: 60 } },
         writeChanges,
       ),
     ).resolves.toBe("updated");
 
     expect(writeChanges).toHaveBeenCalledWith({
-      metadata: { genre: ["Drama"] },
+      metadata: { genre: ["Drama"], runtime: 60 },
     });
   });
 });

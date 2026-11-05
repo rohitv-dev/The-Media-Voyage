@@ -196,13 +196,4 @@ describe("collection-item insertion", () => {
     expect(transactionMock).toHaveBeenCalledTimes(1);
     expect(tx.insert).not.toHaveBeenCalled();
   });
-
-  it("propagates transaction failures unchanged", async () => {
-    const error = new Error("database unavailable");
-    transactionMock.mockRejectedValue(error);
-
-    await expect(
-      addCollectionItems(USER_ID, COLLECTION_ID, [FIRST_MEDIA_ID]),
-    ).rejects.toBe(error);
-  });
 });

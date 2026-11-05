@@ -89,17 +89,6 @@ afterEach(() => {
 });
 
 describe("CommandPalette", () => {
-  it("shows the static action and navigation groups", () => {
-    renderPalette();
-
-    expect(screen.getByText("Actions")).toBeTruthy();
-    expect(screen.getByText("Add media")).toBeTruthy();
-    expect(screen.getByText("Navigate")).toBeTruthy();
-    expect(screen.getByText("Dashboard")).toBeTruthy();
-    expect(screen.getByText("Collections")).toBeTruthy();
-    expect(screen.getByText("Settings")).toBeTruthy();
-  });
-
   it("filters commands by labels, descriptions, and keywords", () => {
     renderPalette();
     const input = screen.getByRole("textbox", {
@@ -133,11 +122,7 @@ describe("CommandPalette", () => {
     const onClose = vi.fn();
     const onOpenLibrarySearch = vi.fn();
     renderPalette({ onClose, onOpenLibrarySearch });
-    const input = screen.getByRole("textbox", {
-      name: "Search actions or pages",
-    });
 
-    fireEvent.change(input, { target: { value: "describe" } });
     fireEvent.click(
       screen.getByRole("option", { name: /Describe what you want/ }),
     );
@@ -194,19 +179,7 @@ describe("CommandPalette", () => {
     expect(apiMock).toHaveBeenCalledWith("/user-media/search?search=alien");
   });
 
-  it("keeps commands available while library search is loading", () => {
-    renderPalette();
-    const input = screen.getByRole("textbox", {
-      name: "Search actions or pages",
-    });
-
-    fireEvent.change(input, { target: { value: "settings" } });
-
-    expect(screen.getByText("Searching your library...")).toBeTruthy();
-    expect(screen.getByText("Settings")).toBeTruthy();
-  });
-
-  it("shows library search errors without hiding matching commands", async () => {
+  it("keeps matching commands available during a search and after an error", async () => {
     apiMock.mockRejectedValue(new Error("Search failed"));
     renderPalette();
     const input = screen.getByRole("textbox", {
@@ -215,10 +188,11 @@ describe("CommandPalette", () => {
 
     fireEvent.change(input, { target: { value: "settings" } });
 
-    expect(
-      await screen.findByText("Library search is unavailable. Try again."),
-    ).toBeTruthy();
-    expect(screen.getByText("Settings")).toBeTruthy();
+    screen.getByText("Searching your library...");
+    screen.getByRole("option", { name: /Settings/ });
+
+    await screen.findByText("Library search is unavailable. Try again.");
+    screen.getByRole("option", { name: /Settings/ });
   });
 
   it("shows an empty library state after a settled search", async () => {

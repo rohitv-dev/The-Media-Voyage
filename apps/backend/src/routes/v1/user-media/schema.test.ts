@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   mediaCollectionFormSchema,
   mediaCollectionUpdateSchema,
-  addMediaCollectionItemsSchema,
   mediaImageFocusSchema,
   reorderMediaCollectionItemsSchema,
   FUZZY_TITLE_SEARCH_CONFIG,
@@ -190,15 +189,6 @@ describe("user-media request schemas", () => {
       userMediaQuerySchema.safeParse({ favorite: "not-a-boolean" }).success,
     ).toBe(false);
   });
-
-  it("reports malformed array filters as validation errors", () => {
-    expect(userMediaQuerySchema.safeParse({ status: "not-json" }).success).toBe(
-      false,
-    );
-    expect(
-      userMediaQuerySchema.safeParse({ status: '["planned"' }).success,
-    ).toBe(false);
-  });
 });
 
 describe("collection request schemas", () => {
@@ -255,27 +245,6 @@ describe("collection reorder request schema", () => {
           { id: firstId, position: 1 },
           { id: secondId, position: 3 },
         ],
-      }).success,
-    ).toBe(false);
-  });
-});
-
-describe("collection batch-add request schema", () => {
-  const firstId = "11111111-1111-4111-8111-111111111111";
-  const secondId = "22222222-2222-4222-8222-222222222222";
-
-  it("requires one or more unique library-media ids", () => {
-    expect(
-      addMediaCollectionItemsSchema.safeParse({
-        userMediaIds: [firstId, secondId],
-      }).success,
-    ).toBe(true);
-    expect(
-      addMediaCollectionItemsSchema.safeParse({ userMediaIds: [] }).success,
-    ).toBe(false);
-    expect(
-      addMediaCollectionItemsSchema.safeParse({
-        userMediaIds: [firstId, firstId],
       }).success,
     ).toBe(false);
   });

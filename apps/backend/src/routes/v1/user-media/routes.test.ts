@@ -4,14 +4,18 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { registerErrorHandler } from "@/error-handler";
 import { unauthorized } from "@/errors";
 
-const { getSimilar, requireAuth } = vi.hoisted(() => ({
+const { filterPage, getSimilar, requireAuth } = vi.hoisted(() => ({
+  filterPage: vi.fn(),
   getSimilar: vi.fn(),
   requireAuth: vi.fn(),
 }));
 vi.mock("@/require-auth", () => ({ requireAuth }));
 vi.mock("@/services/mediaEmbeddings", () => ({}));
 vi.mock("./service", () => ({}));
-vi.mock("./queries", () => ({ getSimilarLibraryMedia: getSimilar }));
+vi.mock("./queries", () => ({
+  filterUserMediaPage: filterPage,
+  getSimilarLibraryMedia: getSimilar,
+}));
 
 import userMediaRoutes from "./routes";
 
@@ -53,3 +57,20 @@ it("requires authentication before querying library matches", async () => {
   expect(response.statusCode).toBe(401);
   expect(getSimilar).not.toHaveBeenCalled();
 });
+
+it.each(["not-json", '["unknown-status"]'])(
+  "rejects the invalid library status filter %s before querying",
+  async (status) => {
+    const response = await app.inject(
+      `/user-media/filter/page?${new URLSearchParams({ status })}`,
+    );
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({
+      success: false,
+      type: "validation",
+      code: "VALIDATION_ERROR",
+    });
+    expect(filterPage).not.toHaveBeenCalled();
+  },
+);

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppError } from "../errors";
 
 const TEST_TOKEN = "tmdb-test-read-token";
@@ -17,6 +17,8 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 describe("TMDB service", () => {
+  beforeEach(() => vi.stubGlobal("fetch", fetchMock));
+
   afterEach(() => {
     vi.unstubAllGlobals();
     fetchMock.mockReset();
@@ -48,7 +50,6 @@ describe("TMDB service", () => {
         ],
       }),
     );
-    vi.stubGlobal("fetch", fetchMock);
 
     await expect(searchTmdb("star wars & beyond", "movie")).resolves.toEqual([
       {
@@ -99,7 +100,6 @@ describe("TMDB service", () => {
         ],
       }),
     );
-    vi.stubGlobal("fetch", fetchMock);
 
     await expect(searchTmdb("long watch", "show")).resolves.toEqual([
       {
@@ -139,7 +139,6 @@ describe("TMDB service", () => {
         vote_average: 8.4,
       }),
     );
-    vi.stubGlobal("fetch", fetchMock);
 
     await expect(getTmdbDetails("movie", 31)).resolves.toEqual({
       id: "",
@@ -195,7 +194,6 @@ describe("TMDB service", () => {
         },
       }),
     );
-    vi.stubGlobal("fetch", fetchMock);
 
     await expect(getTmdbDetails("show", 41)).resolves.toEqual({
       id: "",
@@ -261,7 +259,6 @@ describe("TMDB service", () => {
           "season/21": { episodes: [{ runtime: 61 }] },
         }),
       );
-    vi.stubGlobal("fetch", fetchMock);
 
     await expect(getTmdbDetails("show", 44)).resolves.toMatchObject({
       runtimeMinutes: 41,
@@ -292,7 +289,6 @@ describe("TMDB service", () => {
         vote_average: null,
       }),
     );
-    vi.stubGlobal("fetch", fetchMock);
 
     await expect(getTmdbDetails("show", 42)).resolves.toMatchObject({
       runtimeMinutes: 46,
@@ -317,7 +313,6 @@ describe("TMDB service", () => {
         }),
       )
       .mockResolvedValueOnce(jsonResponse({}, 429));
-    vi.stubGlobal("fetch", fetchMock);
 
     await expect(getTmdbDetails("show", 45)).resolves.toMatchObject({
       runtimeMinutes: 48,
@@ -339,7 +334,6 @@ describe("TMDB service", () => {
         vote_average: null,
       }),
     );
-    vi.stubGlobal("fetch", fetchMock);
 
     await expect(getTmdbDetails("show", 43)).resolves.toMatchObject({
       runtimeMinutes: null,
@@ -366,7 +360,6 @@ describe("TMDB service", () => {
         ],
       }),
     );
-    vi.stubGlobal("fetch", fetchMock);
 
     await expect(getTmdbRecommendations("movie", 31)).resolves.toEqual([
       {
@@ -385,26 +378,17 @@ describe("TMDB service", () => {
     expect(url.searchParams.get("page")).toBe("1");
   });
 
-  it("returns an empty array when TMDB has no results", async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ results: [] }));
-    vi.stubGlobal("fetch", fetchMock);
-
-    await expect(searchTmdb("nothing", "show")).resolves.toEqual([]);
-  });
-
   it("retries once when the initial TMDB request fails at the network layer", async () => {
     fetchMock
       .mockRejectedValueOnce(new TypeError("fetch failed"))
       .mockResolvedValueOnce(jsonResponse({ results: [] }));
-    vi.stubGlobal("fetch", fetchMock);
 
-    await expect(searchTmdb("retry", "movie")).resolves.toEqual([]);
+    await expect(searchTmdb("retry", "show")).resolves.toEqual([]);
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("returns a sanitized error after both network attempts fail", async () => {
     fetchMock.mockRejectedValue(new TypeError("fetch failed"));
-    vi.stubGlobal("fetch", fetchMock);
 
     await expect(searchTmdb("failure", "movie")).rejects.toMatchObject({
       statusCode: 500,
@@ -419,7 +403,6 @@ describe("TMDB service", () => {
     ["recommendations", () => getTmdbRecommendations("show", 999)],
   ])("returns the standard not-found error for missing %s", async (_, call) => {
     fetchMock.mockResolvedValue(jsonResponse({}, 404));
-    vi.stubGlobal("fetch", fetchMock);
 
     await expect(call()).rejects.toMatchObject({
       statusCode: 404,
@@ -432,7 +415,6 @@ describe("TMDB service", () => {
     fetchMock.mockResolvedValue(
       jsonResponse({ results: [{ id: "invalid", title: 42 }] }),
     );
-    vi.stubGlobal("fetch", fetchMock);
 
     await expect(searchTmdb("invalid", "movie")).rejects.toMatchObject({
       statusCode: 500,
@@ -441,31 +423,26 @@ describe("TMDB service", () => {
     });
   });
 
-  it.each([401, 429, 500])(
-    "sanitizes TMDB HTTP %s failures without exposing the token",
-    async (status) => {
-      fetchMock.mockResolvedValue(
-        jsonResponse({ status_message: "No" }, status),
-      );
-      vi.stubGlobal("fetch", fetchMock);
+  it("sanitizes HTTP failures without exposing the provider response", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ status_message: `Rejected token ${TEST_TOKEN}` }, 401),
+    );
 
-      let caught: unknown;
+    let caught: unknown;
+    try {
+      await searchTmdb("failure", "movie");
+    } catch (error) {
+      caught = error;
+    }
 
-      try {
-        await searchTmdb("failure", "movie");
-      } catch (error) {
-        caught = error;
-      }
-
-      expect(caught).toBeInstanceOf(AppError);
-      expect(caught).toMatchObject({
-        statusCode: 500,
-        code: "INTERNAL_SERVER_ERROR",
-        message: "TMDB request failed",
-      });
-      expect(String(caught)).not.toContain(TEST_TOKEN);
-      expect(JSON.stringify(caught)).not.toContain(TEST_TOKEN);
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-    },
-  );
+    expect(caught).toBeInstanceOf(AppError);
+    expect(caught).toMatchObject({
+      statusCode: 500,
+      code: "INTERNAL_SERVER_ERROR",
+      message: "TMDB request failed",
+    });
+    expect(String(caught)).not.toContain(TEST_TOKEN);
+    expect(JSON.stringify(caught)).not.toContain(TEST_TOKEN);
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
 });

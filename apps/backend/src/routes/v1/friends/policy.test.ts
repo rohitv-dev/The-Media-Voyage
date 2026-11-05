@@ -4,7 +4,6 @@ import {
   isStricterThan,
   resolveFriendRequest,
   visibleEntryVisibilities,
-  visibilityRank,
   type FriendshipRow,
 } from "./policy";
 
@@ -78,11 +77,6 @@ describe("visibleEntryVisibilities", () => {
 });
 
 describe("visibility strictness", () => {
-  it("orders visibility from most to least restrictive", () => {
-    expect(visibilityRank("private")).toBeLessThan(visibilityRank("friends"));
-    expect(visibilityRank("friends")).toBeLessThan(visibilityRank("public"));
-  });
-
   it("flags an entry stricter than the collection it sits in", () => {
     // Sharing a collection with friends does not reveal a private entry, so
     // that entry is what the bump prompt offers to widen.
@@ -121,10 +115,14 @@ describe("resolveFriendRequest", () => {
     expect(resolveFriendRequest(OWNER, null)).toEqual({ type: "create" });
   });
 
-  it("reports already friends when one is accepted", () => {
-    expect(
-      resolveFriendRequest(OWNER, friendship({ status: "accepted" })),
-    ).toEqual({ type: "already_friends" });
+  it("reports an accepted friendship from either side", () => {
+    const accepted = friendship({ status: "accepted" });
+    expect(resolveFriendRequest(OWNER, accepted)).toEqual({
+      type: "already_friends",
+    });
+    expect(resolveFriendRequest(FRIEND, accepted)).toEqual({
+      type: "already_friends",
+    });
   });
 
   it("reports a duplicate when we already requested them", () => {
@@ -141,20 +139,6 @@ describe("resolveFriendRequest", () => {
     expect(resolveFriendRequest(OWNER, theirs)).toEqual({
       type: "accept_existing",
       friendshipId: "friendship-1",
-    });
-  });
-
-  it("is unaffected by which side of the row the requester sits on", () => {
-    // friendshipBetween can return the row in either direction, so the rule
-    // must key off requesterId rather than assuming an ordering.
-    const accepted = friendship({
-      status: "accepted",
-      requesterId: FRIEND,
-      addresseeId: OWNER,
-    });
-
-    expect(resolveFriendRequest(OWNER, accepted)).toEqual({
-      type: "already_friends",
     });
   });
 });

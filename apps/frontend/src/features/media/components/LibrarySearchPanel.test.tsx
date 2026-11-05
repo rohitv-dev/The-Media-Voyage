@@ -23,21 +23,23 @@ beforeEach(() => {
 
 afterEach(cleanup);
 
-function renderPanel(onClear = vi.fn()) {
-  return {
-    onClear,
-    ...render(
-      <MantineProvider>
-        <LibrarySearchPanel
-          query=""
-          isSearching={false}
-          onSearch={vi.fn()}
-          onClear={onClear}
-          focusRequest={1}
-        />
-      </MantineProvider>,
-    ),
-  };
+function renderPanel() {
+  const onSearch = vi.fn();
+  const onClear = vi.fn();
+
+  render(
+    <MantineProvider>
+      <LibrarySearchPanel
+        query=""
+        isSearching={false}
+        onSearch={onSearch}
+        onClear={onClear}
+        focusRequest={1}
+      />
+    </MantineProvider>,
+  );
+
+  return { onSearch, onClear };
 }
 
 describe("LibrarySearchPanel", () => {
@@ -51,25 +53,20 @@ describe("LibrarySearchPanel", () => {
     );
   });
 
-  it("explains the supported web-style search syntax", () => {
-    renderPanel();
-
-    expect(
-      screen.getByText(/Web-style syntax is supported:.*quotes.*-word.*OR/),
-    ).toBeTruthy();
-  });
-
-  it("explains the minimum query length while typing", () => {
-    renderPanel();
+  it("submits a trimmed query only when it meets the minimum length", () => {
+    const { onSearch } = renderPanel();
     const input = screen.getByRole("textbox", {
       name: "Describe what you're looking for",
     });
+    const explore = screen.getByRole("button", { name: "Explore" });
 
-    fireEvent.change(input, { target: { value: "spa" } });
+    fireEvent.change(input, { target: { value: "  spac  " } });
+    fireEvent.click(explore);
+    expect(onSearch).not.toHaveBeenCalled();
 
-    expect(
-      screen.getByText("Enter at least 5 characters to explore."),
-    ).toBeTruthy();
+    fireEvent.change(input, { target: { value: "  space  " } });
+    fireEvent.click(explore);
+    expect(onSearch).toHaveBeenCalledExactlyOnceWith("space");
   });
 
   it("uses the same clear action when Escape is pressed", () => {

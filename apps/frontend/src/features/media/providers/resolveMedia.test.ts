@@ -75,9 +75,17 @@ describe("provider media resolution", () => {
       id: "11111111-1111-4111-8111-111111111111",
       source: "db",
     };
+    const manualRecord: SourceMediaRecord = {
+      ...providerRecord,
+      source: "manual",
+      externalId: null,
+    };
 
     await expect(resolveMediaSelection(databaseRecord)).resolves.toEqual({
       record: databaseRecord,
+    });
+    await expect(resolveMediaSelection(manualRecord)).resolves.toEqual({
+      record: manualRecord,
     });
     expect(apiMock).not.toHaveBeenCalled();
   });

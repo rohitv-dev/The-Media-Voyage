@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { media, userMedia } from "@media-voyage/shared";
+import { userMedia } from "@media-voyage/shared";
+import { PgDialect } from "drizzle-orm/pg-core";
 
 const { transactionMock } = vi.hoisted(() => ({
   transactionMock: vi.fn(),
@@ -9,6 +10,10 @@ vi.mock("@/db/db", () => ({
   db: {
     transaction: transactionMock,
   },
+}));
+
+vi.mock("@/services/providerCatalog", () => ({
+  ensureProviderCatalogMedia: vi.fn(),
 }));
 
 import {
@@ -48,20 +53,17 @@ describe("user-media image focus", () => {
   });
 
   it("selects the focus stored on the entry in owner, friend, and public views", () => {
-    expect(userMediaSummarySelect.imageFocusX).toBe(userMedia.imageFocusX);
-    expect(userMediaSummarySelect.imageFocusY).toBe(userMedia.imageFocusY);
-    expect(userMediaDetailedSelect.imageFocusX).toBe(userMedia.imageFocusX);
-    expect(userMediaDetailedSelect.imageFocusY).toBe(userMedia.imageFocusY);
-
-    const friendSummary = friendMediaSummarySelect("viewer-1");
-    expect(friendSummary.imageFocusX).toBe(userMedia.imageFocusX);
-    expect(friendSummary.imageFocusY).toBe(userMedia.imageFocusY);
-    expect(friendMediaDetailedSelect.imageFocusX).toBe(userMedia.imageFocusX);
-    expect(friendMediaDetailedSelect.imageFocusY).toBe(userMedia.imageFocusY);
-    expect(publicMediaSummarySelect.imageFocusX).toBe(userMedia.imageFocusX);
-    expect(publicMediaSummarySelect.imageFocusY).toBe(userMedia.imageFocusY);
-    expect(publicMediaDetailSelect.imageFocusX).toBe(userMedia.imageFocusX);
-    expect(publicMediaDetailSelect.imageFocusY).toBe(userMedia.imageFocusY);
+    for (const selection of [
+      userMediaSummarySelect,
+      userMediaDetailedSelect,
+      friendMediaSummarySelect("viewer-1"),
+      friendMediaDetailedSelect,
+      publicMediaSummarySelect,
+      publicMediaDetailSelect,
+    ]) {
+      expect(selection.imageFocusX).toBe(userMedia.imageFocusX);
+      expect(selection.imageFocusY).toBe(userMedia.imageFocusY);
+    }
   });
 
   it("updates only the owned user-media row", async () => {
@@ -95,13 +97,21 @@ describe("user-media image focus", () => {
       }),
     ).resolves.toEqual(updatedRecord);
 
-    expect(tx.update).toHaveBeenCalledWith(userMedia);
-    expect(tx.update).not.toHaveBeenCalledWith(media);
+    expect(tx.update).toHaveBeenCalledExactlyOnceWith(userMedia);
     expect(updateBuilder.set).toHaveBeenCalledWith({
       imageFocusX: 0.25,
       imageFocusY: 0.75,
       updatedAt,
     });
+
+    const dialect = new PgDialect();
+    for (const { where } of [lockedEntry, updateBuilder, returnedEntry]) {
+      const { sql, params } = dialect.sqlToQuery(where.mock.calls[0][0]);
+      expect(sql).toContain('"user_media"."id" =');
+      expect(sql).toContain('"user_media"."user_id" =');
+      expect(sql).toContain('"user_media"."deleted_at" is null');
+      expect(params).toEqual(expect.arrayContaining([ENTRY_ID, USER_ID]));
+    }
   });
 
   it("does not update anything when the entry is not owned", async () => {

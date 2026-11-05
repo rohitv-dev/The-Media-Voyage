@@ -12,6 +12,10 @@ vi.mock("@/db/db", () => ({
   db: { transaction: transactionMock },
 }));
 
+vi.mock("@/services/providerCatalog", () => ({
+  ensureProviderCatalogMedia: vi.fn(),
+}));
+
 import { updateUserMedia, updateUserMediaQuickActions } from "./service";
 
 const USER_ID = "user-1";
@@ -67,61 +71,36 @@ function createTransaction(type: "movie" | "game") {
   return { tx, updateBuilder };
 }
 
-describe("Playing status backend guard", () => {
+describe.each([
+  {
+    action: "normal edit",
+    update: updateUserMedia,
+    schema: userMediaPatchSchema,
+  },
+  {
+    action: "quick action",
+    update: updateUserMediaQuickActions,
+    schema: userMediaQuickActionSchema,
+  },
+])("Playing status in a $action", ({ update, schema }) => {
   beforeEach(() => {
     transactionMock.mockReset();
   });
 
-  it("rejects Playing for a non-game normal edit", async () => {
+  it("rejects Playing for a non-game", async () => {
     const { tx } = createTransaction("movie");
 
     await expect(
-      updateUserMedia(
-        USER_ID,
-        ENTRY_ID,
-        userMediaPatchSchema.parse({ status: "playing" }),
-      ),
+      update(USER_ID, ENTRY_ID, schema.parse({ status: "playing" })),
     ).rejects.toThrow("Playing status is only available for games");
 
     expect(tx.update).not.toHaveBeenCalled();
   });
 
-  it("rejects Playing for a non-game quick action", async () => {
-    const { tx } = createTransaction("movie");
-
-    await expect(
-      updateUserMediaQuickActions(
-        USER_ID,
-        ENTRY_ID,
-        userMediaQuickActionSchema.parse({ status: "playing" }),
-      ),
-    ).rejects.toThrow("Playing status is only available for games");
-
-    expect(tx.update).not.toHaveBeenCalled();
-  });
-
-  it("accepts Playing for a game normal edit", async () => {
+  it("accepts Playing for a game", async () => {
     const { updateBuilder } = createTransaction("game");
 
-    await updateUserMedia(
-      USER_ID,
-      ENTRY_ID,
-      userMediaPatchSchema.parse({ status: "playing" }),
-    );
-
-    expect(updateBuilder.set).toHaveBeenCalledWith(
-      expect.objectContaining({ status: "playing" }),
-    );
-  });
-
-  it("accepts Playing for a game quick action", async () => {
-    const { updateBuilder } = createTransaction("game");
-
-    await updateUserMediaQuickActions(
-      USER_ID,
-      ENTRY_ID,
-      userMediaQuickActionSchema.parse({ status: "playing" }),
-    );
+    await update(USER_ID, ENTRY_ID, schema.parse({ status: "playing" }));
 
     expect(updateBuilder.set).toHaveBeenCalledWith(
       expect.objectContaining({ status: "playing" }),

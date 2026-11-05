@@ -1,29 +1,28 @@
 // @vitest-environment jsdom
 
-import { describe, expect, it } from "vitest";
+import { expect, it } from "vitest";
 import { buildFilterQuery } from "./queries";
 
-describe("filter query serialization", () => {
-  it("preserves numeric zero and false", () => {
-    const query = buildFilterQuery({ maxRating: 0, favorite: false });
-    const params = new URLSearchParams(query);
-
-    expect(params.get("maxRating")).toBe("0");
-    expect(params.get("favorite")).toBe("false");
+it("serializes selected filters and omits blank values", () => {
+  const query = buildFilterQuery({
+    minRating: undefined,
+    maxRating: 0,
+    favorite: false,
+    createdFrom: null,
+    createdTo: "",
+    tags: [],
+    search: "Dune",
+    status: ["planned"],
   });
+  const url = new URL(
+    `/user-media/filter/page${query}`,
+    "https://example.test",
+  );
 
-  it("omits only blank values and empty arrays", () => {
-    const query = buildFilterQuery({
-      missing: undefined,
-      cleared: null,
-      blank: "",
-      empty: [],
-      search: "Dune",
-      statuses: ["planned"],
-    });
-    const params = new URLSearchParams(query);
-
-    expect([...params.keys()]).toEqual(["search", "statuses"]);
-    expect(params.get("statuses")).toBe('["planned"]');
+  expect(Object.fromEntries(url.searchParams)).toEqual({
+    maxRating: "0",
+    favorite: "false",
+    search: "Dune",
+    status: '["planned"]',
   });
 });

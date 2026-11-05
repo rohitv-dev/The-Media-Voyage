@@ -12,18 +12,24 @@ import {
   useParams,
 } from "@tanstack/react-router";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
+  renderHook,
   screen,
   waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { queryKeys } from "#/lib/queryKeys";
+import { useDeleteMedia } from "../../hooks/useDeleteMedia";
 import { MediaViewSimilar } from "./MediaViewSimilar";
 
 const { apiMock } = vi.hoisted(() => ({ apiMock: vi.fn() }));
 vi.mock("#/lib/api", () => ({ api: apiMock }));
+vi.mock("#/lib/confirmModal", () => ({
+  confirmDelete: ({ onConfirm }: { onConfirm: () => void }) => onConfirm(),
+}));
 
 Object.defineProperty(window, "matchMedia", {
   writable: true,
@@ -145,11 +151,27 @@ it.each(["empty", "failure"])(
   },
 );
 
-it("refreshes matches when the library is invalidated", async () => {
-  apiMock.mockResolvedValue(matches);
+it("removes a match after deleting it from the library", async () => {
+  apiMock
+    .mockResolvedValueOnce(matches)
+    .mockResolvedValueOnce({ success: true })
+    .mockResolvedValueOnce(matches.slice(1));
+
   const { client } = mount();
-  await screen.findByRole("heading", { name: "Similar in Your Library" });
-  apiMock.mockResolvedValue([]);
-  await client.invalidateQueries({ queryKey: queryKeys.userMedia.all });
-  await waitFor(() => expect(screen.queryByRole("region")).toBeNull());
+  await screen.findByRole("link", { name: /Arrival/ });
+  const { result } = renderHook(useDeleteMedia, {
+    wrapper: ({ children }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    ),
+  });
+
+  act(() => result.current.requestDelete("arrival", "Arrival"));
+
+  await waitFor(() =>
+    expect(screen.queryByRole("link", { name: /Arrival/ })).toBeNull(),
+  );
+  screen.getByRole("link", { name: /The Expanse/ });
+  expect(apiMock).toHaveBeenCalledWith("/user-media/arrival", {
+    method: "DELETE",
+  });
 });
