@@ -49,31 +49,10 @@ Object.defineProperty(window, "matchMedia", {
 });
 
 const preview: SystemRecommendationPreviewResponse = {
-  strategyKey: "provider_recommendations",
-  strategyVersion: "5",
   eligibleSeedCount: 7,
-  seeds: [
-    {
-      userMediaId: "11111111-1111-4111-8111-111111111111",
-      title: "Arrival",
-      type: "movie",
-      status: "completed",
-      rating: 9,
-      favorite: false,
-      catalogSource: "tmdb_movie",
-      catalogExternalId: "329865",
-      mappingStatus: "mapped",
-      mappingReason: "provider_id",
-      recommendationSource: "tmdb_movie",
-      recommendationExternalId: "329865",
-      candidateCount: 2,
-    },
-  ],
   recommendations: [
     {
-      rank: 1,
       reason: 'Because you rated "Arrival" 9/10 and "Dune" is a favorite',
-      seedUserMediaId: "11111111-1111-4111-8111-111111111111",
       seedUserMediaIds: [
         "11111111-1111-4111-8111-111111111111",
         "33333333-3333-4333-8333-333333333333",
@@ -87,9 +66,7 @@ const preview: SystemRecommendationPreviewResponse = {
       },
     },
     {
-      rank: 2,
       reason: 'Because "Dune" is a favorite',
-      seedUserMediaId: "22222222-2222-4222-8222-222222222222",
       seedUserMediaIds: ["22222222-2222-4222-8222-222222222222"],
       media: {
         source: "open_library",

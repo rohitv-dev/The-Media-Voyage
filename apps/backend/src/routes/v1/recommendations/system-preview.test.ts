@@ -171,7 +171,6 @@ describe("system recommendation preview", () => {
     expect(preview.recommendations.map(({ media }) => media.title)).toEqual([
       "Useful",
     ]);
-    expect(preview.seeds).toHaveLength(7);
   });
 
   it("selects favorites, highly rated media, revisiting items, and unrated completions", () => {
@@ -287,20 +286,25 @@ describe("system recommendation preview", () => {
 
     const preview = await getSystemRecommendationPreview("user-1");
 
-    expect(getTmdbRecommendationsMock).toHaveBeenNthCalledWith(1, "movie", 100);
-    expect(getTmdbRecommendationsMock).toHaveBeenNthCalledWith(2, "show", 200);
-    expect(preview.seeds).toMatchObject([
-      {
-        mappingReason: "provider_id",
-        recommendationSource: "tmdb_movie",
-        recommendationExternalId: "100",
-      },
-      {
-        mappingReason: "provider_id",
-        recommendationSource: "tmdb_tv",
-        recommendationExternalId: "200",
-      },
+    expect(getTmdbRecommendationsMock.mock.calls).toEqual([
+      ["movie", 100],
+      ["show", 200],
     ]);
+    expect(Object.keys(preview).sort()).toEqual([
+      "eligibleSeedCount",
+      "recommendations",
+    ]);
+    expect(preview.eligibleSeedCount).toBe(2);
+    expect(
+      preview.recommendations.map(({ media }) => media.externalId),
+    ).toEqual(["501", "502"]);
+    for (const recommendation of preview.recommendations) {
+      expect(Object.keys(recommendation).sort()).toEqual([
+        "media",
+        "reason",
+        "seedUserMediaIds",
+      ]);
+    }
   });
 
   it("continues past unmapped and empty seeds", async () => {
@@ -328,18 +332,15 @@ describe("system recommendation preview", () => {
 
     const preview = await getSystemRecommendationPreview("user-1");
 
-    expect(preview.seeds.map((seed) => seed.mappingStatus)).toEqual([
-      "unmapped",
-      "unmapped",
-      "mapped",
-      "mapped",
-      "mapped",
-      "mapped",
+    expect(getTmdbRecommendationsMock.mock.calls).toEqual([
+      ["movie", 100],
+      ["movie", 200],
+      ["movie", 300],
+      ["movie", 400],
     ]);
-    expect(preview.seeds[0].mappingReason).toBe("unsupported_source");
-    expect(preview.seeds[1].mappingReason).toBe("invalid_external_id");
-    expect(getTmdbRecommendationsMock).toHaveBeenCalledTimes(4);
-    expect(preview.recommendations).toHaveLength(3);
+    expect(
+      preview.recommendations.map(({ media }) => media.externalId),
+    ).toEqual(["700", "800", "900"]);
   });
 
   it("rotates seeds while preserving the fixed seeds and attempt limits", async () => {
@@ -360,12 +361,12 @@ describe("system recommendation preview", () => {
 
     const first = await getSystemRecommendationPreview("user-1");
 
-    expect(getTmdbRecommendationsMock).toHaveBeenCalledTimes(6);
-    expect(first.seeds.map((seed) => seed.userMediaId)).toEqual(
-      originalIds.slice(0, 6),
-    );
+    expect(getTmdbRecommendationsMock.mock.calls.map(([, id]) => id)).toEqual([
+      100, 101, 102, 103, 104, 105,
+    ]);
     expect(first.recommendations).toHaveLength(6);
 
+    getTmdbRecommendationsMock.mockClear();
     vi.mocked(Math.random).mockReturnValue(0);
     const rotated = selectPreviewSeeds(library);
     const second = await getSystemRecommendationPreview("user-1");
@@ -373,12 +374,10 @@ describe("system recommendation preview", () => {
     expect(rotated).toHaveLength(15);
     expect(rotated).toContainEqual(library[15]);
     expect(new Set(rotated.map((seed) => seed.userMediaId)).size).toBe(15);
-    expect(second.seeds.map((seed) => seed.userMediaId)).toEqual([
-      ...originalIds.slice(0, 4),
-      originalIds[5],
-      originalIds[6],
+    expect(getTmdbRecommendationsMock.mock.calls.map(([, id]) => id)).toEqual([
+      100, 101, 102, 103, 105, 106,
     ]);
-    expect(getTmdbRecommendationsMock).toHaveBeenCalledTimes(12);
+    expect(second.recommendations).toHaveLength(6);
     expect(library.map((seed) => seed.userMediaId)).toEqual(originalIds);
   });
 
@@ -423,12 +422,32 @@ describe("system recommendation preview", () => {
       "Third Movie",
     ]);
     expect(preview.recommendations[0]).toMatchObject({
-      rank: 1,
       reason:
         'Because "Favorite Seed" is a favorite and you rated "Rated Seed" 9/10',
-      seedUserMediaId: IDS.first,
       seedUserMediaIds: [IDS.first, IDS.second],
     });
+  });
+
+  it("uses original provider positions to break ties after excluding candidates", async () => {
+    findSystemPreviewLibraryMock.mockResolvedValue([
+      libraryItem({ userMediaId: IDS.first, favorite: true }),
+      libraryItem({ userMediaId: IDS.second, externalId: "200", rating: 9 }),
+    ]);
+    const first = movie(501, "First Candidate");
+    const second = movie(502, "Second Candidate");
+    getTmdbRecommendationsMock
+      .mockResolvedValueOnce([
+        movie(100, "Already in the Library"),
+        first,
+        second,
+      ])
+      .mockResolvedValueOnce([second, first]);
+
+    const preview = await getSystemRecommendationPreview("user-1");
+
+    expect(
+      preview.recommendations.map(({ media }) => media.externalId),
+    ).toEqual(["502", "501"]);
   });
 
   it("caps combined reasons at two explicit seed titles", async () => {
@@ -459,7 +478,6 @@ describe("system recommendation preview", () => {
     expect(preview.recommendations[0]).toMatchObject({
       reason:
         'Because "Favorite Seed" is a favorite, you rated "Rated Seed" 9/10, and 1 other titles you liked',
-      seedUserMediaId: IDS.first,
       seedUserMediaIds: [IDS.first, IDS.second, IDS.third],
     });
   });
@@ -526,12 +544,10 @@ describe("system recommendation preview", () => {
 
     const preview = await getSystemRecommendationPreview("user-1");
 
-    expect(getTmdbRecommendationsMock).toHaveBeenCalledTimes(2);
-    expect(preview.seeds.map((seed) => seed.title)).toEqual([
-      "First Seed",
-      "Second Seed",
+    expect(getTmdbRecommendationsMock.mock.calls).toEqual([
+      ["movie", 100],
+      ["movie", 200],
     ]);
-    expect(preview.seeds.map((seed) => seed.candidateCount)).toEqual([1, 1]);
     expect(preview.recommendations.map(({ media }) => media.title)).toEqual([
       "Useful Candidate",
     ]);
@@ -579,7 +595,7 @@ describe("system recommendation preview", () => {
     });
   });
 
-  it("returns version 5 without provider calls when no seed is eligible", async () => {
+  it("returns an empty preview without provider calls when no seed is eligible", async () => {
     findSystemPreviewLibraryMock.mockResolvedValue([
       libraryItem({ status: "planned" }),
       libraryItem({
@@ -590,42 +606,45 @@ describe("system recommendation preview", () => {
     ]);
 
     await expect(getSystemRecommendationPreview("user-1")).resolves.toEqual({
-      strategyKey: "provider_recommendations",
-      strategyVersion: "5",
       eligibleSeedCount: 0,
-      seeds: [],
       recommendations: [],
     });
     expect(getTmdbRecommendationsMock).not.toHaveBeenCalled();
   });
 
-  it("returns partial results without exposing a failed provider error", async () => {
-    findSystemPreviewLibraryMock.mockResolvedValue([
-      libraryItem({ userMediaId: IDS.first, favorite: true }),
-      libraryItem({ userMediaId: IDS.second, externalId: "200", rating: 8 }),
-    ]);
-    getTmdbRecommendationsMock
-      .mockRejectedValueOnce(internalServerError("TMDB request failed"))
-      .mockResolvedValueOnce([movie(501, "Working Recommendation")]);
+  it.each([
+    ["partial", [movie(501, "Working Recommendation")]],
+    ["empty", []],
+  ] as const)(
+    "returns %s results when one provider call succeeds and another fails",
+    async (_, candidates) => {
+      findSystemPreviewLibraryMock.mockResolvedValue([
+        libraryItem({ userMediaId: IDS.first, favorite: true }),
+        libraryItem({ userMediaId: IDS.second, externalId: "200", rating: 8 }),
+      ]);
+      getTmdbRecommendationsMock
+        .mockRejectedValueOnce(internalServerError("TMDB request failed"))
+        .mockResolvedValueOnce(candidates);
 
-    const preview = await getSystemRecommendationPreview("user-1");
+      const preview = await getSystemRecommendationPreview("user-1");
 
-    expect(preview.seeds.map((seed) => seed.mappingStatus)).toEqual([
-      "provider_error",
-      "mapped",
-    ]);
-    expect(preview.recommendations).toHaveLength(1);
-    expect(JSON.stringify(preview)).not.toContain("TMDB request failed");
-  });
+      expect(preview.recommendations.map(({ media }) => media.title)).toEqual(
+        candidates.map(({ title }) => title),
+      );
+      expect(JSON.stringify(preview)).not.toContain("TMDB request failed");
+    },
+  );
 
   it("propagates the sanitized error when every selected seed fails", async () => {
     findSystemPreviewLibraryMock.mockResolvedValue([
       libraryItem({ userMediaId: IDS.first, favorite: true }),
       libraryItem({ userMediaId: IDS.second, externalId: "200", rating: 8 }),
     ]);
-    getTmdbRecommendationsMock.mockRejectedValue(
-      internalServerError("TMDB request failed"),
-    );
+    getTmdbRecommendationsMock
+      .mockRejectedValueOnce(internalServerError("TMDB request failed"))
+      .mockRejectedValueOnce(
+        internalServerError("Another TMDB request failed"),
+      );
 
     await expect(
       getSystemRecommendationPreview("user-1"),
@@ -675,7 +694,6 @@ describe("system recommendation preview", () => {
 
     const preview = await getSystemRecommendationPreview("user-1");
 
-    expect(preview.recommendations.at(-1)?.rank).toBe(10);
     expect(
       preview.recommendations.map(({ media }) => media.externalId),
     ).toEqual([

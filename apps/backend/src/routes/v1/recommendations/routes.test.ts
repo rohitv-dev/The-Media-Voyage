@@ -51,10 +51,7 @@ vi.mock("@/services/pushNotifications", () => ({
 import recommendationRoutes from "./routes";
 
 const preview = {
-  strategyKey: "provider_recommendations",
-  strategyVersion: "5",
   eligibleSeedCount: 0,
-  seeds: [],
   recommendations: [],
 };
 

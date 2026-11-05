@@ -75,37 +75,11 @@ const systemRecommendationPreviewMediaSchema = z.object({
   numberOfPages: z.number().optional(),
 });
 
-const systemRecommendationPreviewSeedSchema = z.object({
-  userMediaId: z.uuid(),
-  title: z.string(),
-  type: z.enum(mediaTypeEnum.enumValues),
-  status: z.enum(["in_progress", "completed", "revisiting"]),
-  rating: z.number().int().min(0).max(10).nullable(),
-  favorite: z.boolean(),
-  catalogSource: z.string().nullable(),
-  catalogExternalId: z.string().nullable(),
-  mappingStatus: z.enum(["mapped", "unmapped", "provider_error"]),
-  mappingReason: z.enum([
-    "provider_id",
-    "unsupported_source",
-    "invalid_external_id",
-    "provider_error",
-  ]),
-  recommendationSource: systemRecommendationProviderSchema.nullable(),
-  recommendationExternalId: z.string().nullable(),
-  candidateCount: z.number().int().nonnegative(),
-});
-
 export const systemRecommendationPreviewResponseSchema = z.object({
-  strategyKey: z.literal("provider_recommendations"),
-  strategyVersion: z.literal("5"),
   eligibleSeedCount: z.number().int().nonnegative(),
-  seeds: z.array(systemRecommendationPreviewSeedSchema),
   recommendations: z.array(
     z.object({
-      rank: z.number().int().positive(),
       reason: z.string(),
-      seedUserMediaId: z.uuid(),
       seedUserMediaIds: z.array(z.uuid()).min(1),
       media: systemRecommendationPreviewMediaSchema,
     }),
