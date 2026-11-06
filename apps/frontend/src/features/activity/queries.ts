@@ -2,11 +2,18 @@ import type {
   ActivityFilters,
   ActivityListQuery,
   ActivityListResponse,
+  CalendarActivityResponse,
 } from "@media-voyage/shared/api";
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "#/lib/api";
 import { queryKeys } from "#/lib/queryKeys";
 import dayjs from "dayjs";
+import { z } from "zod";
+
+export const activityMonthSchema = z
+  .string()
+  .regex(/^\d{4}-(0[1-9]|1[0-2])$/)
+  .optional();
 
 async function getActivity(query: ActivityListQuery) {
   const params = new URLSearchParams();
@@ -38,5 +45,34 @@ export function activityListQueryOptions({
   return queryOptions({
     queryKey: queryKeys.activity.list(query),
     queryFn: () => getActivity(query),
+  });
+}
+
+export function calendarActivityOptions(month: string) {
+  return queryOptions({
+    queryKey: queryKeys.activity.calendar(month),
+    queryFn: async () => {
+      const start = dayjs(`${month}-01`);
+      const end = start.endOf("month");
+      // Include the adjacent UTC dates for changes near local month boundaries.
+      const from = start.subtract(1, "day").format("YYYY-MM-DD");
+      const to = end.add(1, "day").format("YYYY-MM-DD");
+      const data = await api<CalendarActivityResponse>(
+        `/user-media/calendar/activity?from=${from}&to=${to}`,
+      );
+      const events = data.events
+        .map((event) =>
+          event.eventType === "status_change"
+            ? { ...event, date: dayjs(event.occurredAt).format("YYYY-MM-DD") }
+            : event,
+        )
+        .filter(({ date }) => date.startsWith(`${month}-`));
+
+      return {
+        from: start.format("YYYY-MM-DD"),
+        to: end.format("YYYY-MM-DD"),
+        events,
+      };
+    },
   });
 }

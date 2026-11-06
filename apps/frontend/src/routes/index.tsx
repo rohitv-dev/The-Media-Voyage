@@ -43,8 +43,8 @@ const FEATURES = [
     icon: IconBooks,
   },
   {
-    title: "Activity Calendar",
-    description: "See your viewing and playing activity over time.",
+    title: "Personal Activity",
+    description: "Browse monthly milestones and the changes you’ve logged.",
     icon: IconCalendar,
   },
   {

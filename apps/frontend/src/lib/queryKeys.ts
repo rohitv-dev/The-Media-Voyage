@@ -28,7 +28,6 @@ export const queryKeys = {
     dropdowns: ["user-media", "dropdowns"] as const,
   },
   dashboardStats: ["dashboard-stats"] as const,
-  calendarActivity: (month: string) => ["calendar-activity", month] as const,
   mediaSearch: (type: string, search: string) =>
     ["media-search", type, search] as const,
   tmdb: {
@@ -73,6 +72,7 @@ export const queryKeys = {
   activity: {
     all: ["activity"] as const,
     list: (query: ActivityListQuery) => ["activity", query] as const,
+    calendar: (month: string) => ["activity", "calendar", month] as const,
   },
   recommendations: {
     all: ["recommendations"] as const,

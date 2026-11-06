@@ -38,7 +38,6 @@ const getNavigationItem = (path: AppNavigationPath) => {
 const browseItems = [
   getNavigationItem("/collection"),
   getNavigationItem("/friends"),
-  getNavigationItem("/calendar"),
   getNavigationItem("/activity"),
   getNavigationItem("/notifications"),
 ];
@@ -50,7 +49,6 @@ const manageItems = [
 ];
 
 const mobileLabels: Partial<Record<AppNavigationPath, string>> = {
-  "/calendar": "Calendar",
   "/sources": "Sources",
   "/tags": "Tags",
 };

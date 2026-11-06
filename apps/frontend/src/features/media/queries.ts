@@ -1,9 +1,7 @@
 import { api } from "#/lib/api";
 import { queryKeys } from "#/lib/queryKeys";
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
-import dayjs from "dayjs";
 import type {
-  CalendarActivityResponse,
   GetTrashedUserMediaResponse,
   GetUserMediaResponse,
   GetUserMediaPageResponse,
@@ -189,29 +187,6 @@ export const continueMediaQueryOptions = queryOptions({
       `/user-media/filter${buildFilterQuery(continueMediaFilters)}`,
     ),
 });
-
-// -- Calendar -----------------------------------------------------------------
-
-function calendarMonthRange(month: string) {
-  const start = dayjs(`${month}-01`);
-
-  return {
-    from: start.format("YYYY-MM-DD"),
-    to: start.endOf("month").format("YYYY-MM-DD"),
-  };
-}
-
-export function calendarActivityOptions(month: string) {
-  return queryOptions({
-    queryKey: queryKeys.calendarActivity(month),
-    queryFn: () => {
-      const { from, to } = calendarMonthRange(month);
-      return api<CalendarActivityResponse>(
-        `/user-media/calendar/activity?from=${from}&to=${to}`,
-      );
-    },
-  });
-}
 
 // -- Media picker -------------------------------------------------------------
 
