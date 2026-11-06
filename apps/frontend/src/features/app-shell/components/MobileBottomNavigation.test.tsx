@@ -4,30 +4,33 @@ import { MantineProvider } from "@mantine/core";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MobileBottomNavigation } from "./MobileBottomNavigation";
+import {
+  ADD_MEDIA_FORM_ID,
+  getUpdateMediaFormId,
+} from "#/features/media/components/MediaForm/context";
 
 beforeEach(() => {
-  Object.defineProperty(window, "matchMedia", {
-    writable: true,
-    value: vi.fn().mockImplementation((query: string) => ({
-      matches: false,
-      media: query,
-      onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    })),
-  });
+  vi.stubGlobal("matchMedia", () => ({
+    matches: false,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }));
 });
 
-function renderNavigation(
-  props: Partial<React.ComponentProps<typeof MobileBottomNavigation>> = {},
-) {
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+type NavigationProps = Partial<
+  React.ComponentProps<typeof MobileBottomNavigation>
+>;
+
+function renderNavigation(initialProps: NavigationProps = {}) {
   const onNavigate = vi.fn();
   const onToggleMore = vi.fn();
 
-  render(
+  const view = (props: NavigationProps) => (
     <MantineProvider>
       <MobileBottomNavigation
         navbarOpened={false}
@@ -36,17 +39,22 @@ function renderNavigation(
         onToggleMore={onToggleMore}
         {...props}
       />
-    </MantineProvider>,
+    </MantineProvider>
   );
+  const { rerender } = render(view(initialProps));
 
-  return { onNavigate, onToggleMore };
+  return {
+    onNavigate,
+    onToggleMore,
+    rerenderNavigation: (props: NavigationProps) => rerender(view(props)),
+  };
 }
 
-afterEach(cleanup);
-
 describe("MobileBottomNavigation", () => {
-  it("navigates from each primary action and opens More", () => {
-    const { onNavigate, onToggleMore } = renderNavigation();
+  it("navigates normally even with stale form status", () => {
+    const { onNavigate, onToggleMore } = renderNavigation({
+      mediaFormStatus: { formId: ADD_MEDIA_FORM_ID, isPending: true },
+    });
 
     fireEvent.click(screen.getByRole("button", { name: "Home" }));
     fireEvent.click(screen.getByRole("button", { name: "Library" }));
@@ -63,17 +71,10 @@ describe("MobileBottomNavigation", () => {
     expect(onToggleMore).toHaveBeenCalledOnce();
   });
 
-  it("marks library detail and edit routes as Library", () => {
-    const { rerender } = render(
-      <MantineProvider>
-        <MobileBottomNavigation
-          navbarOpened={false}
-          pathname="/media/view/media-1"
-          onNavigate={vi.fn()}
-          onToggleMore={vi.fn()}
-        />
-      </MantineProvider>,
-    );
+  it("keeps Library current and waits for the matching Edit form", () => {
+    const { rerenderNavigation } = renderNavigation({
+      pathname: "/media/view/media-1",
+    });
 
     expect(
       screen
@@ -81,30 +82,33 @@ describe("MobileBottomNavigation", () => {
         .getAttribute("aria-current"),
     ).toBe("page");
 
-    rerender(
-      <MantineProvider>
-        <MobileBottomNavigation
-          navbarOpened={false}
-          pathname="/media/update/media-1"
-          onNavigate={vi.fn()}
-          onToggleMore={vi.fn()}
-        />
-      </MantineProvider>,
-    );
+    rerenderNavigation({
+      pathname: "/media/update/media-1/",
+      mediaFormStatus: {
+        formId: getUpdateMediaFormId("media-2"),
+        isPending: false,
+      },
+    });
 
     expect(
       screen
         .getByRole("button", { name: "Library" })
         .getAttribute("aria-current"),
     ).toBe("page");
+    expect(
+      screen.getByRole<HTMLButtonElement>("button", { name: "Update media" })
+        .disabled,
+    ).toBe(true);
   });
 
-  it("distinguishes Add from other media routes", () => {
+  it("shows Save on the Add route and waits for the form to mount", () => {
     renderNavigation({ pathname: "/media/add" });
 
-    expect(
-      screen.getByRole("button", { name: "Add" }).getAttribute("aria-current"),
-    ).toBe("page");
+    const save = screen.getByRole<HTMLButtonElement>("button", {
+      name: "Save media",
+    });
+    expect(save.disabled).toBe(true);
+    expect(save.getAttribute("aria-current")).toBeNull();
     expect(
       screen
         .getByRole("button", { name: "Library" })
@@ -113,31 +117,13 @@ describe("MobileBottomNavigation", () => {
   });
 
   it("marks More for secondary routes and while its drawer is open", () => {
-    const { rerender } = render(
-      <MantineProvider>
-        <MobileBottomNavigation
-          navbarOpened={false}
-          pathname="/settings"
-          onNavigate={vi.fn()}
-          onToggleMore={vi.fn()}
-        />
-      </MantineProvider>,
-    );
+    const { rerenderNavigation } = renderNavigation({ pathname: "/settings" });
 
     expect(
       screen.getByRole("button", { name: "More" }).getAttribute("aria-current"),
     ).toBe("page");
 
-    rerender(
-      <MantineProvider>
-        <MobileBottomNavigation
-          navbarOpened
-          pathname="/dashboard"
-          onNavigate={vi.fn()}
-          onToggleMore={vi.fn()}
-        />
-      </MantineProvider>,
-    );
+    rerenderNavigation({ pathname: "/dashboard", navbarOpened: true });
 
     expect(
       screen.getByRole("button", { name: "More" }).getAttribute("aria-current"),

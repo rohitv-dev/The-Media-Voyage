@@ -22,6 +22,7 @@ function RouteComponent() {
 
   return (
     <MediaForm
+      key={data.id}
       id={data.id}
       mode="update"
       initialValues={{ ...data, metadata: data.catalogMetadata }}

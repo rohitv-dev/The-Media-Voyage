@@ -13,9 +13,15 @@ import {
   useNavigate,
   useRouter,
 } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import type { MouseEventHandler } from "react";
-import { FormProvider, useForm } from "./context";
+import {
+  ADD_MEDIA_FORM_ID,
+  FormProvider,
+  getUpdateMediaFormId,
+  SetMediaFormStatusContext,
+  useForm,
+} from "./context";
 import { api, getApiErrorMessage } from "#/lib/api";
 import { Container, Grid, Stack, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
@@ -158,6 +164,8 @@ type MediaFormProps =
 export function MediaForm(props: MediaFormProps) {
   const { mode } = props;
   const isAddMode = mode === "add";
+  const formId = isAddMode ? ADD_MEDIA_FORM_ID : getUpdateMediaFormId(props.id);
+  const setMediaFormStatus = useContext(SetMediaFormStatusContext);
   const canGoBack = useCanGoBack();
 
   const [mediaRecord, setMediaRecord] = useState<SourceMediaRecord | null>(
@@ -628,6 +636,18 @@ export function MediaForm(props: MediaFormProps) {
     },
   });
 
+  const { requestDelete: requestDeleteMedia, isDeletePending } =
+    useDeleteMedia();
+  const isPending = saveMutation.isPending || isCatalogRequestPending;
+  const isMobileSubmitPending = isPending || isDeletePending;
+
+  useEffect(() => {
+    if (!setMediaFormStatus) return;
+
+    setMediaFormStatus({ formId, isPending: isMobileSubmitPending });
+    return () => setMediaFormStatus(null);
+  }, [formId, isMobileSubmitPending, setMediaFormStatus]);
+
   const handleSubmit = (values: UserMediaFormSchema) => {
     if (saveMutation.isPending || isCatalogRequestPending) return;
 
@@ -648,9 +668,6 @@ export function MediaForm(props: MediaFormProps) {
           : values.completedAt,
     });
   };
-
-  const { requestDelete: requestDeleteMedia, isDeletePending } =
-    useDeleteMedia();
 
   const handleDelete = () => {
     if (isAddMode || isDeletePending) return;
@@ -681,7 +698,17 @@ export function MediaForm(props: MediaFormProps) {
     <FormProvider form={form}>
       <Container pt="sm" px={{ base: "xs", md: "sm" }}>
         <Stack gap="lg" pb="lg">
-          <form onSubmit={form.onSubmit(handleSubmit)}>
+          <form
+            id={formId}
+            onSubmit={form.onSubmit(handleSubmit, (errors) => {
+              const firstError = Object.keys(errors)[0];
+              if (!firstError) return;
+
+              const input = form.getInputNode(firstError);
+              input?.focus({ preventScroll: true });
+              input?.scrollIntoView({ block: "center" });
+            })}
+          >
             <Grid gap="sm">
               <FormHeader
                 mode={mode}
@@ -694,9 +721,7 @@ export function MediaForm(props: MediaFormProps) {
                   <MobileFormActions
                     mode={mode}
                     onCancel={handleCancel}
-                    isPending={
-                      saveMutation.isPending || isCatalogRequestPending
-                    }
+                    isPending={isPending}
                     onDelete={isAddMode ? undefined : handleDelete}
                     isDeletePending={isDeletePending}
                   />
@@ -723,7 +748,7 @@ export function MediaForm(props: MediaFormProps) {
               <FormActions
                 mode={mode}
                 onCancel={handleCancel}
-                isPending={saveMutation.isPending || isCatalogRequestPending}
+                isPending={isPending}
                 onDelete={isAddMode ? undefined : handleDelete}
                 isDeletePending={isDeletePending}
               />

@@ -1,8 +1,19 @@
-import { Box, Group, Text, UnstyledButton } from "@mantine/core";
-import { IconDots, IconHome2, IconPlus, IconStar } from "@tabler/icons-react";
+import { Box, Group, Loader, Text, UnstyledButton } from "@mantine/core";
+import {
+  IconCheck,
+  IconDots,
+  IconHome2,
+  IconPlus,
+  IconStar,
+} from "@tabler/icons-react";
 import type { ComponentType } from "react";
 import { mobilePrimaryNavigationItems } from "#/features/app-shell/navigation";
 import type { AppShellPath } from "#/features/app-shell/navigation";
+import {
+  ADD_MEDIA_FORM_ID,
+  getUpdateMediaFormId,
+} from "#/features/media/components/MediaForm/context";
+import type { MediaFormStatus } from "#/features/media/components/MediaForm/context";
 
 const mobileLabels = {
   "/dashboard": "Home",
@@ -48,20 +59,37 @@ function MobileNavigationButton({
   );
 }
 
-interface AddMediaButtonProps {
-  active: boolean;
+interface MediaActionButtonProps {
+  label: "Add" | "Save" | "Update";
+  formId?: string;
+  formStatus?: MediaFormStatus | null;
   onClick: () => void;
 }
 
-function AddMediaButton({ active, onClick }: AddMediaButtonProps) {
+function MediaActionButton({
+  label,
+  formId,
+  formStatus,
+  onClick,
+}: MediaActionButtonProps) {
+  const isSubmit = formId !== undefined;
+  const formReady = isSubmit && formStatus?.formId === formId;
+  const isPending = formReady && formStatus?.isPending === true;
+  const disabled = isSubmit && (!formReady || isPending);
+
   return (
     <UnstyledButton
-      aria-current={active ? "page" : undefined}
-      aria-label="Add"
-      data-tutorial="dashboard-add-media-mobile"
+      type={isSubmit ? "submit" : "button"}
+      form={formId}
+      aria-label={isSubmit ? `${label} media` : label}
+      aria-busy={isPending || undefined}
+      data-tutorial={
+        isSubmit ? "media-save-mobile" : "dashboard-add-media-mobile"
+      }
+      disabled={disabled}
       c="accent"
       h={64}
-      onClick={onClick}
+      onClick={isSubmit ? undefined : onClick}
       pos="relative"
       style={{
         alignItems: "center",
@@ -70,6 +98,7 @@ function AddMediaButton({ active, onClick }: AddMediaButtonProps) {
         flexDirection: "column",
         justifyContent: "flex-end",
         minWidth: 44,
+        opacity: disabled ? 0.6 : 1,
         overflow: "visible",
         paddingBottom: 6,
       }}
@@ -90,16 +119,23 @@ function AddMediaButton({ active, onClick }: AddMediaButtonProps) {
           justifyContent: "center",
         }}
       >
-        <IconPlus size={26} stroke={2.1} />
+        {isPending ? (
+          <Loader size={24} color="white" />
+        ) : isSubmit ? (
+          <IconCheck size={26} stroke={2.1} />
+        ) : (
+          <IconPlus size={26} stroke={2.1} />
+        )}
       </Box>
       <Text component="span" c="inherit" fz={11} fw={700}>
-        Add
+        {label}
       </Text>
     </UnstyledButton>
   );
 }
 
 interface MobileBottomNavigationProps {
+  mediaFormStatus?: MediaFormStatus | null;
   navbarOpened: boolean;
   pathname: string;
   onNavigate: (path: AppShellPath) => void;
@@ -107,14 +143,23 @@ interface MobileBottomNavigationProps {
 }
 
 export function MobileBottomNavigation({
+  mediaFormStatus,
   navbarOpened,
   pathname,
   onNavigate,
   onToggleMore,
 }: MobileBottomNavigationProps) {
-  const addActive = pathname === "/media/add";
+  const addActive = /^\/media\/add\/?$/i.test(pathname);
+  const updateId = /^\/media\/update\/([^/]+)\/?$/i.exec(pathname)?.[1];
+  const formId = updateId
+    ? getUpdateMediaFormId(updateId)
+    : addActive
+      ? ADD_MEDIA_FORM_ID
+      : undefined;
   const libraryActive =
-    pathname === "/media" || (pathname.startsWith("/media/") && !addActive);
+    !!updateId ||
+    pathname === "/media" ||
+    (pathname.startsWith("/media/") && !addActive);
   const homeActive = pathname === "/dashboard";
   const recommendationsActive = pathname.startsWith("/recommendations");
   const primaryRouteActive =
@@ -164,8 +209,10 @@ export function MobileBottomNavigation({
           );
         })}
 
-        <AddMediaButton
-          active={!navbarOpened && addActive}
+        <MediaActionButton
+          label={updateId ? "Update" : addActive ? "Save" : "Add"}
+          formId={formId}
+          formStatus={mediaFormStatus}
           onClick={() => onNavigate("/media/add")}
         />
 

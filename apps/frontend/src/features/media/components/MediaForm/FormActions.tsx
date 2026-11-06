@@ -44,26 +44,15 @@ export function MobileFormActions({
         <span />
       )}
 
-      <Group gap="xs" wrap="nowrap">
-        <Button
-          type="button"
-          variant="light"
-          size="sm"
-          disabled={isPending}
-          onClick={handleCancel}
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          size="sm"
-          leftSection={<IconCheck size={17} />}
-          loading={isPending}
-          data-tutorial="media-save-mobile"
-        >
-          {mode === "add" ? "Save Media" : "Update Media"}
-        </Button>
-      </Group>
+      <Button
+        type="button"
+        variant="light"
+        size="sm"
+        disabled={isPending}
+        onClick={handleCancel}
+      >
+        Cancel
+      </Button>
     </Group>
   );
 }

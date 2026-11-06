@@ -21,6 +21,8 @@ import { AuthenticatedSidebar } from "#/features/app-shell/components/Authentica
 import { CommandPalette } from "#/features/app-shell/components/CommandPalette";
 import { MobileBottomNavigation } from "#/features/app-shell/components/MobileBottomNavigation";
 import { MobileMoreDrawer } from "#/features/app-shell/components/MobileMoreDrawer";
+import { SetMediaFormStatusContext } from "#/features/media/components/MediaForm/context";
+import type { MediaFormStatus } from "#/features/media/components/MediaForm/context";
 import {
   clearPushNotificationToken,
   usePushNotifications,
@@ -29,7 +31,7 @@ import type { PushNotificationData } from "#/features/notifications/hooks/usePus
 import { openRecommendationModal } from "#/features/recommendations/components/ContextModal";
 import type { AppShellPath } from "#/features/app-shell/navigation";
 import { PHONE_WIDTH_QUERY } from "#/theme/breakpoints";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ context: { queryClient } }) => {
@@ -56,6 +58,8 @@ function AuthenticatedShell() {
   const { session } = Route.useRouteContext();
   const navigate = Route.useNavigate();
   const { pathname } = useLocation();
+  const [mediaFormStatus, setMediaFormStatus] =
+    useState<MediaFormStatus | null>(null);
   const queryClient = useQueryClient();
   const openNotifications = useCallback(
     (data: PushNotificationData) => {
@@ -224,10 +228,13 @@ function AuthenticatedShell() {
           sm: 0,
         }}
       >
-        <Outlet />
+        <SetMediaFormStatusContext.Provider value={setMediaFormStatus}>
+          <Outlet />
+        </SetMediaFormStatusContext.Provider>
       </AppShell.Main>
 
       <MobileBottomNavigation
+        mediaFormStatus={mediaFormStatus}
         navbarOpened={navbarOpened}
         pathname={pathname}
         onNavigate={navigateSidebar}

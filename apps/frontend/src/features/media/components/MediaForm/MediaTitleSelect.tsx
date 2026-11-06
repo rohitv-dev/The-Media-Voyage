@@ -218,8 +218,7 @@ export function MediaTitleSelect(props: MediaTitleSelectProps) {
           <InputBase
             label="Title"
             variant="filled"
-            value={search}
-            error={form.errors.title}
+            {...form.getInputProps("title")}
             description={
               isBookSearch
                 ? "Book search isn't available yet — matches only come from titles you've already added"
