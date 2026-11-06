@@ -1,5 +1,6 @@
 import type { NotificationRecord } from "@media-voyage/shared/api";
 import {
+  IconHandClick,
   IconMessageCircle,
   IconSend,
   IconThumbDown,
@@ -69,6 +70,12 @@ function getNotificationDetails(notification: NotificationRecord) {
         icon: <IconUserCheck size={11} />,
         color: "teal",
         message: "accepted your friend request",
+      };
+    case "friend_poke":
+      return {
+        icon: <IconHandClick size={11} />,
+        color: "grape",
+        message: "poked you",
       };
     case "friend_recommendation":
       return {

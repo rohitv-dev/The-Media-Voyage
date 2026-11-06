@@ -32,24 +32,26 @@ const SHARED_VISIBILITIES = ["friends", "public"] as const;
 
 /**
  * A friendship is one directed row, so "is there anything between these two
- * people" has to look both ways. Every friendship read goes through here.
+ * people" has to look both ways.
  */
+export function friendshipPairFilter(userId: string, otherUserId: string) {
+  return or(
+    and(
+      eq(friendships.requesterId, userId),
+      eq(friendships.addresseeId, otherUserId),
+    ),
+    and(
+      eq(friendships.requesterId, otherUserId),
+      eq(friendships.addresseeId, userId),
+    ),
+  );
+}
+
 export async function friendshipBetween(userId: string, otherUserId: string) {
   const [row] = await db
     .select()
     .from(friendships)
-    .where(
-      or(
-        and(
-          eq(friendships.requesterId, userId),
-          eq(friendships.addresseeId, otherUserId),
-        ),
-        and(
-          eq(friendships.requesterId, otherUserId),
-          eq(friendships.addresseeId, userId),
-        ),
-      ),
-    )
+    .where(friendshipPairFilter(userId, otherUserId))
     .limit(1);
 
   return row ?? null;

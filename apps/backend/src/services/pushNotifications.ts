@@ -115,6 +115,18 @@ export function sendFriendRequestAcceptedNotification(
   });
 }
 
+export function sendFriendPokeNotification(
+  recipientId: string,
+  actorName: string,
+) {
+  const name = [...actorName.trim()].slice(0, 100).join("") || "A friend";
+  return sendPushNotification(recipientId, {
+    title: `${name} poked you 👋`,
+    body: "See what's new in Media Voyage.",
+    data: { type: "friend_poke" },
+  });
+}
+
 export function sendFriendRecommendationResponseNotification(
   recipientId: string,
   recommendationId: string,

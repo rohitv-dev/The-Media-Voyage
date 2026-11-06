@@ -10,9 +10,11 @@ import {
   shareLibrarySchema,
   userMediaIdParamsSchema,
 } from "@media-voyage/shared/api";
+import type { PokeFriendResponse } from "@media-voyage/shared/api";
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "@/require-auth";
 import {
+  sendFriendPokeNotification,
   sendFriendRequestAcceptedNotification,
   sendFriendRequestNotification,
   sendMediaCommentNotification,
@@ -30,6 +32,7 @@ import {
 import {
   addComment,
   deleteComment,
+  pokeFriend,
   removeFriendship,
   respondToFriendRequest,
   sendFriendRequest,
@@ -115,6 +118,20 @@ async function friendsRoutes(fastify: FastifyInstance) {
     const { userId } = friendUserIdParamsSchema.parse(request.params);
 
     return reply.send(await removeFriendship(request.userId, userId));
+  });
+
+  fastify.post("/:userId/poke", async (request, reply) => {
+    const { userId } = friendUserIdParamsSchema.parse(request.params);
+    const actorName = await pokeFriend(request.userId, userId);
+
+    void sendFriendPokeNotification(userId, actorName).catch((error) => {
+      request.log.warn(
+        { err: error, recipientId: userId },
+        "Friend poke push failed",
+      );
+    });
+
+    return reply.status(201).send({ sent: true } satisfies PokeFriendResponse);
   });
 
   fastify.post("/share-library", async (request, reply) => {

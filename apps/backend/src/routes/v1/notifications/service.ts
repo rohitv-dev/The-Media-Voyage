@@ -24,6 +24,7 @@ type CreateNotificationInput = Pick<
 > & {
   userMediaId?: NotificationInsert["userMediaId"];
   recommendationId?: NotificationInsert["recommendationId"];
+  createdAt?: NotificationInsert["createdAt"];
 };
 
 export async function createNotification(

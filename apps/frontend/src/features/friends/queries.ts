@@ -12,6 +12,7 @@ import type {
   FriendRecord,
   FriendRequestsResponse,
   FriendRespondInput,
+  PokeFriendResponse,
   ReactionInput,
   ShareLibraryInput,
 } from "@media-voyage/shared/api";
@@ -98,6 +99,12 @@ export function respondToFriendRequest(
 
 export function removeFriend(userId: string) {
   return api(`/friends/${encodeURIComponent(userId)}`, { method: "DELETE" });
+}
+
+export function pokeFriend(userId: string) {
+  return api<PokeFriendResponse>(`/friends/${encodeURIComponent(userId)}/poke`, {
+    method: "POST",
+  });
 }
 
 export function setReaction(

@@ -1,5 +1,7 @@
 import {
   friendships,
+  notifications,
+  user,
   userMedia,
   userMediaComments,
   userMediaReactions,
@@ -10,16 +12,19 @@ import type {
   ReactionInput,
   ShareLibraryInput,
 } from "@media-voyage/shared/api";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, gt, isNull } from "drizzle-orm";
 import { badRequest, conflict, forbidden, notFound } from "@/errors";
 import { createNotification } from "../notifications/service";
 import {
   findUserByEmail,
   friendshipBetween,
+  friendshipPairFilter,
   requireViewableUserMedia,
 } from "./queries";
 import { resolveFriendRequest } from "./policy";
 import { db } from "@/db/db";
+
+const POKE_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Sends a request by email. If the other person already has a pending request
@@ -164,6 +169,60 @@ export async function removeFriendship(userId: string, otherUserId: string) {
   await db.delete(friendships).where(eq(friendships.id, existing.id));
 
   return { removed: true };
+}
+
+export async function pokeFriend(actorId: string, recipientId: string) {
+  if (actorId === recipientId) throw badRequest("You can't poke yourself");
+
+  return db.transaction(
+    async (tx) => {
+      // Serialize pokes for this friendship before checking the cooldown.
+      const [friendship] = await tx
+        .select({ actorName: user.name })
+        .from(friendships)
+        .innerJoin(user, eq(user.id, actorId))
+        .where(
+          and(
+            friendshipPairFilter(actorId, recipientId),
+            eq(friendships.status, "accepted"),
+          ),
+        )
+        .orderBy(friendships.id)
+        .limit(1)
+        .for("update", { of: friendships });
+
+      if (!friendship) throw forbidden("You can only poke accepted friends");
+
+      const now = new Date();
+      const cutoff = new Date(now.getTime() - POKE_COOLDOWN_MS);
+      const [recentPoke] = await tx
+        .select({ id: notifications.id })
+        .from(notifications)
+        .where(
+          and(
+            eq(notifications.recipientId, recipientId),
+            eq(notifications.actorId, actorId),
+            eq(notifications.type, "friend_poke"),
+            gt(notifications.createdAt, cutoff),
+          ),
+        )
+        .limit(1);
+
+      if (recentPoke) {
+        throw conflict("You can poke this friend once every 24 hours");
+      }
+
+      await createNotification(tx, {
+        recipientId,
+        actorId,
+        type: "friend_poke",
+        createdAt: now,
+      });
+
+      return friendship.actorName;
+    },
+    { isolationLevel: "read committed" },
+  );
 }
 
 export async function setReaction(

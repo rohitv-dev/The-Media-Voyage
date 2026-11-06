@@ -56,6 +56,11 @@ function RouteComponent() {
   }, [data?.unseenCount, isMarkingSeen, markSeen]);
 
   const openNotification = (notification: NotificationRecord) => {
+    if (notification.type === "friend_poke") {
+      navigate({ to: "/dashboard" });
+      return;
+    }
+
     if (notification.recommendationId) {
       openRecommendationModal(notification.recommendationId);
       return;

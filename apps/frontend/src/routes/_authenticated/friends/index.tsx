@@ -4,6 +4,7 @@ import {
   friendRequestsQueryOptions,
   friendsFeedQueryOptions,
   friendsQueryOptions,
+  pokeFriend,
   removeFriend,
   respondToFriendRequest,
   sendFriendRequest,
@@ -142,6 +143,16 @@ function RouteComponent() {
         message: getApiErrorMessage(error),
       }),
     onSettled: refreshAll,
+  });
+
+  const pokeMutation = useMutation({
+    mutationFn: pokeFriend,
+    onSuccess: () => showSuccessNotification({ message: "Poke sent." }),
+    onError: (error) =>
+      showErrorNotification({
+        title: "Could not poke",
+        message: getApiErrorMessage(error),
+      }),
   });
 
   const incoming = requests?.incoming ?? [];
@@ -314,6 +325,19 @@ function RouteComponent() {
                         }
                       >
                         View library
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="subtle"
+                        aria-label={`Poke ${friend.name}`}
+                        loading={
+                          pokeMutation.isPending &&
+                          pokeMutation.variables === friend.userId
+                        }
+                        disabled={pokeMutation.isPending}
+                        onClick={() => pokeMutation.mutate(friend.userId)}
+                      >
+                        Poke
                       </Button>
                       <Tooltip label="Remove friend" withArrow>
                         <ActionIcon

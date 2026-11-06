@@ -63,6 +63,11 @@ function AuthenticatedShell() {
   const queryClient = useQueryClient();
   const openNotifications = useCallback(
     (data: PushNotificationData) => {
+      if (data.type === "friend_poke") {
+        navigate({ to: "/dashboard" });
+        return;
+      }
+
       if (
         (data.type === "friend_recommendation" ||
           data.type === "friend_recommendation_response") &&

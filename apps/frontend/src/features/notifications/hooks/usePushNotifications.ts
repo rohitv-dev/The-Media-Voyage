@@ -83,6 +83,7 @@ export function usePushNotifications(
               data?.type === "friend_recommendation_response" ||
               data?.type === "friend_request" ||
               data?.type === "friend_request_accepted" ||
+              data?.type === "friend_poke" ||
               data?.type === "media_comment"
             ) {
               onNotificationTap(data);

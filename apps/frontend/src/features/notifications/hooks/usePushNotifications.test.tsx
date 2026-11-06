@@ -113,6 +113,7 @@ describe("usePushNotifications", () => {
       },
       { type: "friend_request", friendshipId: "friendship-1" },
       { type: "friend_request_accepted", friendshipId: "friendship-2" },
+      { type: "friend_poke" },
       {
         type: "friend_recommendation_response",
         recommendationId: "recommendation-2",

@@ -94,7 +94,9 @@ export function AuthenticatedHeader({
   const openNotification = (notification: NotificationRecord) => {
     closeNotifications();
 
-    if (notification.recommendationId) {
+    if (notification.type === "friend_poke") {
+      onGoHome();
+    } else if (notification.recommendationId) {
       openRecommendationModal(notification.recommendationId);
     } else if (notification.userMediaId) {
       onOpenMedia(notification.userMediaId);

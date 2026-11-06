@@ -95,6 +95,7 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "friend_request_accepted",
   "friend_recommendation",
   "friend_recommendation_response",
+  "friend_poke",
 ]);
 
 export const activityActionEnum = pgEnum("activity_action", [

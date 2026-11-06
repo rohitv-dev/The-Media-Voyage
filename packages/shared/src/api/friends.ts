@@ -22,6 +22,10 @@ export const friendUserIdParamsSchema = z.object({
   userId: z.string().min(1),
 });
 
+export const pokeFriendResponseSchema = z.object({ sent: z.literal(true) });
+
+export type PokeFriendResponse = z.infer<typeof pokeFriendResponseSchema>;
+
 const friendUserSchema = z.object({
   userId: z.string(),
   name: z.string(),
