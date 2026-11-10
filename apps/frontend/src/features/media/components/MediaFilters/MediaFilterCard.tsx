@@ -34,6 +34,7 @@ type MediaFilterCardsProps = {
   dropdowns: UserMediaDropdowns;
   compact?: boolean;
   disabled?: boolean;
+  showTitleSearch?: boolean;
 };
 
 export function MediaFilterCard({
@@ -44,6 +45,7 @@ export function MediaFilterCard({
   dropdowns,
   compact = false,
   disabled = false,
+  showTitleSearch = true,
 }: MediaFilterCardsProps) {
   const updateSort = (sort: UserMediaQuerySchema["sort"] | null) => {
     if (sort === null) return;
@@ -144,33 +146,35 @@ export function MediaFilterCard({
         >
           <Title order={5}>Filters</Title>
 
-          <TextInput
-            value={filters.search ?? ""}
-            variant="filled"
-            placeholder="Search Titles"
-            leftSection={<IconSearch size={16} />}
-            rightSection={
-              filters.search ? (
-                <ActionIcon
-                  size="xs"
-                  variant="subtle"
-                  color="gray"
-                  aria-label="Clear search"
-                  onClick={() =>
-                    updateFilters({ ...filters, search: undefined })
-                  }
-                >
-                  <IconX size={14} />
-                </ActionIcon>
-              ) : undefined
-            }
-            size="xs"
-            radius="sm"
-            data-shortcut="library-search"
-            onChange={(e) =>
-              updateFilters({ ...filters, search: e.target.value })
-            }
-          />
+          {showTitleSearch && (
+            <TextInput
+              value={filters.search ?? ""}
+              variant="filled"
+              placeholder="Search Titles"
+              leftSection={<IconSearch size={16} />}
+              rightSection={
+                filters.search ? (
+                  <ActionIcon
+                    size="xs"
+                    variant="subtle"
+                    color="gray"
+                    aria-label="Clear search"
+                    onClick={() =>
+                      updateFilters({ ...filters, search: undefined })
+                    }
+                  >
+                    <IconX size={14} />
+                  </ActionIcon>
+                ) : undefined
+              }
+              size="xs"
+              radius="sm"
+              data-shortcut="library-search"
+              onChange={(e) =>
+                updateFilters({ ...filters, search: e.target.value })
+              }
+            />
+          )}
 
           <SimpleGrid cols={compact ? 1 : 2} spacing="xs">
             <Select

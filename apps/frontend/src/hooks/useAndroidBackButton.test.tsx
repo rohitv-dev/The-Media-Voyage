@@ -60,11 +60,13 @@ describe("useAndroidBackButton", () => {
     const dialog = document.body.appendChild(document.createElement("div"));
     dialog.setAttribute("role", "dialog");
     const dismissDialog = vi.fn();
-    document.addEventListener("keydown", dismissDialog);
-    backButtonHandler?.({ canGoBack: false });
-    expect(dismissDialog).toHaveBeenCalledOnce();
+    dialog.addEventListener("keydown", dismissDialog);
+    backButtonHandler?.({ canGoBack: true });
+    expect(dismissDialog).toHaveBeenCalledWith(
+      expect.objectContaining({ key: "Escape" }),
+    );
+    expect(historyBack).toHaveBeenCalledOnce();
     expect(openConfirmModalMock).not.toHaveBeenCalled();
-    document.removeEventListener("keydown", dismissDialog);
     dialog.remove();
 
     backButtonHandler?.({ canGoBack: false });

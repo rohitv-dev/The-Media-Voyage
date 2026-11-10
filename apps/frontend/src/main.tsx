@@ -53,6 +53,7 @@ declare module "@tanstack/react-router" {
   interface HistoryState {
     recommendationSelection?: SourceMediaRecord;
     librarySearchFocusRequest?: number;
+    librarySearchQuery?: string;
     tutorialReplayRequest?: { tutorialId: "app-orientation" };
   }
 }
@@ -64,7 +65,7 @@ if (!rootElement.innerHTML) {
   root.render(
     <QueryClientProvider client={queryClient}>
       <AppThemeProvider>
-        <Notifications />
+        <Notifications layout="stacked" />
         <RouterProvider router={router} />
       </AppThemeProvider>
     </QueryClientProvider>,

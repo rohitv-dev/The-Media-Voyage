@@ -4,6 +4,7 @@ import { getApiErrorMessage, api } from "#/lib/api";
 import { queryKeys } from "#/lib/queryKeys";
 import { capitalizeWords } from "#/utils/strings";
 import {
+  ActionBar,
   Avatar,
   Badge,
   Button,
@@ -13,6 +14,7 @@ import {
   Stack,
   Text,
   Title,
+  useMatches,
 } from "@mantine/core";
 import type { MediaRecord } from "@media-voyage/shared/api";
 import { IconCheck, IconSearch } from "@tabler/icons-react";
@@ -52,6 +54,10 @@ export function CollectionFindMedia({
 }: CollectionFindMediaProps) {
   const [query, setQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const actionBarBottom = useMatches({
+    base: "calc(96px + env(safe-area-inset-bottom))",
+    sm: "var(--mantine-spacing-xl)",
+  });
   const queryClient = useQueryClient();
   const {
     data: results = [],
@@ -190,11 +196,30 @@ export function CollectionFindMedia({
               </Stack>
             </Card>
 
-            <Group justify="space-between" align="center">
-              <Text size="sm" c="dimmed">
+            <ActionBar
+              opened={selectedResults.length > 0}
+              aria-label="Selected collection media"
+              position={{ bottom: actionBarBottom, left: 0, right: 0 }}
+              maw="calc(100vw - 2 * var(--mantine-spacing-md))"
+              radius="md"
+              shadow="md"
+              style={{ flexWrap: "wrap", justifyContent: "center" }}
+            >
+              <Text size="sm" fw={600} role="status">
                 {selectedResults.length} selected
               </Text>
               <Button
+                variant="default"
+                px="sm"
+                mih={44}
+                disabled={addMutation.isPending}
+                onClick={() => setSelectedIds(new Set())}
+              >
+                Clear
+              </Button>
+              <Button
+                px="sm"
+                mih={44}
                 leftSection={<IconCheck size={16} />}
                 loading={addMutation.isPending}
                 disabled={selectedResults.length === 0}
@@ -204,7 +229,7 @@ export function CollectionFindMedia({
               >
                 Add selected
               </Button>
-            </Group>
+            </ActionBar>
           </>
         )}
       </Stack>

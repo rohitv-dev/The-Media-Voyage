@@ -17,7 +17,6 @@ type LibrarySearchPanelProps = {
   onSearch: (query: string) => void;
   onClear: () => void;
   focusRequest: number;
-  autoFocus?: boolean;
 };
 
 export function LibrarySearchPanel({
@@ -26,9 +25,8 @@ export function LibrarySearchPanel({
   onSearch,
   onClear,
   focusRequest,
-  autoFocus,
 }: LibrarySearchPanelProps) {
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(query);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const isActive = query.length > 0;
@@ -36,6 +34,10 @@ export function LibrarySearchPanel({
   const isBelowMinimum =
     normalizedInput.length > 0 &&
     normalizedInput.length < FUZZY_TITLE_SEARCH_CONFIG.minimumQueryLength;
+
+  useEffect(() => {
+    setInput(query);
+  }, [query]);
 
   useEffect(() => {
     if (focusRequest > 0) inputRef.current?.focus();
@@ -59,7 +61,6 @@ export function LibrarySearchPanel({
       <form onSubmit={submitSearch}>
         <Group align="center" gap="xs" wrap="nowrap">
           <TextInput
-            autoFocus={autoFocus}
             ref={inputRef}
             aria-label="Describe what you're looking for"
             placeholder="Describe what you're looking for..."

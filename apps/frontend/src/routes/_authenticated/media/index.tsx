@@ -4,6 +4,7 @@ import {
   userMediaHybridSearchQueryOptions,
 } from "#/features/media/queries";
 import {
+  ActionIcon,
   Alert,
   Box,
   Button,
@@ -15,6 +16,7 @@ import {
   SimpleGrid,
   Stack,
   Text,
+  TextInput,
   Title,
 } from "@mantine/core";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
@@ -23,7 +25,7 @@ import {
   useLocation,
   useNavigate,
 } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { MediaCard } from "#/features/media/components/MediaCard";
 import { MediaCardSkeleton } from "#/features/media/components/MediaCardSkeleton";
 import {
@@ -35,7 +37,11 @@ import type { UserMediaQuerySchema } from "@media-voyage/shared/api";
 import { userMediaQuerySchema } from "@media-voyage/shared/api";
 import { getApiErrorMessage } from "#/lib/api";
 import { showErrorNotification } from "#/lib/notifications";
-import { useDisclosure, useMediaQuery } from "@mantine/hooks";
+import {
+  useDebouncedCallback,
+  useDisclosure,
+  useMediaQuery,
+} from "@mantine/hooks";
 import { AnimatePresence, motion } from "motion/react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
 import { PHONE_WIDTH_QUERY } from "#/theme/breakpoints";
@@ -51,6 +57,7 @@ import {
   IconMovie,
   IconPlus,
   IconSearch,
+  IconX,
 } from "@tabler/icons-react";
 import { MediaAppliedFilters } from "#/features/media/components/MediaFilters/MediaAppliedFilters";
 import { useTutorial } from "#/features/tutorials/useTutorial";
@@ -71,12 +78,15 @@ function RouteComponent() {
   const librarySearchOpenRequest = useLocation({
     select: (location) => location.state.librarySearchFocusRequest,
   });
+  const librarySearchQuery = useLocation({
+    select: (location) => location.state.librarySearchQuery ?? "",
+  });
   const { data: dropdowns } = useQuery(userMediaDropdownOptions);
   const { data: collections } = useQuery(collectionQueryOptions);
-  const [librarySearchQuery, setLibrarySearchQuery] = useState("");
-  const [librarySearchOpen, setLibrarySearchOpen] = useState(false);
+  const [searchPanelOpened, setSearchPanelOpened] = useState(false);
   const [librarySearchFocusRequest, setLibrarySearchFocusRequest] = useState(0);
   const isExploring = librarySearchQuery.length > 0;
+  const librarySearchOpen = searchPanelOpened || isExploring;
   const {
     data: librarySearchRecords,
     isPending: isLibrarySearchPending,
@@ -109,6 +119,23 @@ function RouteComponent() {
 
   const [filters, setFilters] = useState<UserMediaQuerySchema>(search);
   const skipNextSearchSyncRef = useRef(false);
+  const applyTitleSearch = useDebouncedCallback((value: string) => {
+    const title = value.trim() || undefined;
+    if (title === search.search) return;
+
+    skipNextSearchSyncRef.current = true;
+    void navigate({
+      to: "/media",
+      search: (previous) => ({ ...previous, search: title }),
+      state: true,
+      replace: true,
+      resetScroll: false,
+    });
+  }, 300);
+  const changeTitleSearch = (value: string) => {
+    setFilters((previous) => ({ ...previous, search: value || undefined }));
+    applyTitleSearch(value);
+  };
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const normalRecords = data?.pages.flatMap((page) => page.data) ?? [];
   const records = isExploring ? (librarySearchRecords ?? []) : normalRecords;
@@ -136,19 +163,31 @@ function RouteComponent() {
   };
 
   const applyFilters = () => {
+    applyTitleSearch.cancel();
     skipNextSearchSyncRef.current = true;
-    navigate({ to: "/media", search: filters });
+    navigate({
+      to: "/media",
+      search: isMobile
+        ? { ...filters, search: filters.search?.trim() || undefined }
+        : filters,
+    });
     close();
   };
 
   const updateAndApplyFilters = (newFilters: UserMediaQuerySchema) => {
-    updateFilters(newFilters);
+    const nextFilters =
+      applyTitleSearch.isPending() && newFilters.search === search.search
+        ? { ...newFilters, search: filters.search?.trim() || undefined }
+        : newFilters;
+    applyTitleSearch.cancel();
+    updateFilters(nextFilters);
     skipNextSearchSyncRef.current = true;
-    navigate({ to: "/media", search: newFilters });
+    navigate({ to: "/media", search: nextFilters });
     close();
   };
 
   const resetFilters = () => {
+    applyTitleSearch.cancel();
     setFilters({
       favorite: undefined,
       search: undefined,
@@ -220,14 +259,20 @@ function RouteComponent() {
       skipNextSearchSyncRef.current = false;
       return;
     }
+    applyTitleSearch.cancel();
     setFilters(search);
-  }, [search]);
+  }, [applyTitleSearch, search]);
+
+  const openLibrarySearch = useCallback(() => {
+    applyTitleSearch.flush();
+    setSearchPanelOpened(true);
+    setLibrarySearchFocusRequest((request) => request + 1);
+  }, [applyTitleSearch]);
 
   useEffect(() => {
     if (librarySearchOpenRequest === undefined) return;
 
-    setLibrarySearchOpen(true);
-    setLibrarySearchFocusRequest((request) => request + 1);
+    openLibrarySearch();
     void navigate({
       to: "/media",
       search: (previous) => previous,
@@ -237,11 +282,24 @@ function RouteComponent() {
         librarySearchFocusRequest: undefined,
       }),
     });
-  }, [librarySearchOpenRequest, navigate]);
+  }, [librarySearchOpenRequest, navigate, openLibrarySearch]);
+
+  const submitLibrarySearch = (query: string) => {
+    void navigate({
+      to: "/media",
+      search: true,
+      replace: true,
+      resetScroll: false,
+      state: (previous) => ({
+        ...previous,
+        librarySearchQuery: query || undefined,
+      }),
+    });
+  };
 
   const clearLibrarySearch = () => {
-    setLibrarySearchQuery("");
-    setLibrarySearchOpen(false);
+    if (isExploring) submitLibrarySearch("");
+    setSearchPanelOpened(false);
   };
 
   const viewMedia = (id: string) =>
@@ -266,6 +324,32 @@ function RouteComponent() {
     });
 
   const isInitialLoading = isResultsPending && !hasLoadedResults;
+  const filterButton = (
+    <Button
+      size="xs"
+      leftSection={<IconFilter size={16} />}
+      onClick={open}
+      disabled={isExploring}
+    >
+      Filters
+    </Button>
+  );
+  const pickForMe = (
+    <Box
+      flex={{ base: "1 1 auto", sm: "0 0 auto" }}
+      data-tutorial="library-pick-for-me"
+    >
+      <Button
+        size="xs"
+        variant="light"
+        leftSection={<IconDice5 size={16} />}
+        onClick={openPicker}
+        w={{ base: "100%", sm: "auto" }}
+      >
+        Pick for me
+      </Button>
+    </Box>
+  );
 
   return (
     <Container fluid px={{ base: "sm", sm: "md" }} pt="md" pb="md">
@@ -291,24 +375,61 @@ function RouteComponent() {
             w={{ base: "100%", sm: "auto" }}
             data-tutorial="library-core-controls"
           >
+            {isMobile && (
+              <Group w="100%" gap="xs" wrap="nowrap">
+                <TextInput
+                  aria-label="Search titles"
+                  placeholder="Search titles"
+                  data-shortcut="library-search"
+                  value={filters.search ?? ""}
+                  disabled={isExploring}
+                  size="xs"
+                  flex={1}
+                  miw={0}
+                  inputMode="search"
+                  enterKeyHint="search"
+                  styles={{
+                    input: { fontSize: "var(--mantine-font-size-md)" },
+                  }}
+                  leftSection={<IconSearch size={16} />}
+                  rightSectionPointerEvents="auto"
+                  rightSection={
+                    filters.search && (
+                      <ActionIcon
+                        type="button"
+                        size="sm"
+                        variant="subtle"
+                        color="gray"
+                        aria-label="Clear title search"
+                        disabled={isExploring}
+                        onClick={() => {
+                          changeTitleSearch("");
+                          applyTitleSearch.flush();
+                        }}
+                      >
+                        <IconX size={14} />
+                      </ActionIcon>
+                    )
+                  }
+                  onChange={(event) =>
+                    changeTitleSearch(event.currentTarget.value)
+                  }
+                  onKeyDown={(event) => {
+                    if (
+                      event.key === "Enter" &&
+                      !event.nativeEvent.isComposing
+                    ) {
+                      applyTitleSearch.flush();
+                      event.currentTarget.blur();
+                    }
+                  }}
+                />
+                {filterButton}
+              </Group>
+            )}
+            {!isMobile && pickForMe}
             <Box
-              flex={{ base: "1 1 calc(50% - 4px)", sm: "0 0 auto" }}
-              order={{ base: 3, sm: 1 }}
-              data-tutorial="library-pick-for-me"
-            >
-              <Button
-                size="xs"
-                variant="light"
-                leftSection={<IconDice5 size={16} />}
-                onClick={openPicker}
-                w={{ base: "100%", sm: "auto" }}
-              >
-                Pick for me
-              </Button>
-            </Box>
-            <Box
-              flex={{ base: "1 1 calc(50% - 4px)", sm: "0 0 auto" }}
-              order={{ base: 2, sm: 2 }}
+              flex={{ base: "1 1 auto", sm: "0 0 auto" }}
               data-tutorial="library-describe"
             >
               <Button
@@ -316,27 +437,13 @@ function RouteComponent() {
                 variant={librarySearchOpen ? "filled" : "light"}
                 leftSection={<IconSearch size={16} />}
                 aria-pressed={librarySearchOpen}
-                onClick={() => setLibrarySearchOpen(true)}
+                onClick={openLibrarySearch}
                 w={{ base: "100%", sm: "auto" }}
               >
                 Describe what you want
               </Button>
             </Box>
-            <Box
-              hiddenFrom="lg"
-              flex={{ base: "1 1 calc(50% - 4px)", sm: "0 0 auto" }}
-              order={{ base: 1, sm: 4 }}
-            >
-              <Button
-                size="xs"
-                leftSection={<IconFilter size={16} />}
-                onClick={open}
-                disabled={isExploring}
-                w={{ base: "100%", sm: "auto" }}
-              >
-                Filters
-              </Button>
-            </Box>
+            {isMobile ? pickForMe : <Box hiddenFrom="lg">{filterButton}</Box>}
           </Group>
         </Group>
 
@@ -344,10 +451,9 @@ function RouteComponent() {
           <LibrarySearchPanel
             query={librarySearchQuery}
             isSearching={isLibrarySearchFetching}
-            onSearch={setLibrarySearchQuery}
+            onSearch={submitLibrarySearch}
             onClear={clearLibrarySearch}
             focusRequest={librarySearchFocusRequest}
-            autoFocus
           />
         )}
 
@@ -535,6 +641,7 @@ function RouteComponent() {
           resetFilters={resetFilters}
           updateFilters={updateFilters}
           dropdowns={dropdowns ?? { sources: [], tags: [] }}
+          showTitleSearch={!isMobile}
           disabled={isExploring}
         />
       </Drawer>

@@ -16,6 +16,7 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
+    cacheDir: "node_modules/.vite/frontend",
     resolve: { tsconfigPaths: true },
     server: {
       proxy: {

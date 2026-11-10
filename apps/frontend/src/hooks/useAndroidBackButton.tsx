@@ -15,8 +15,13 @@ export function useAndroidBackButton(
     if (Capacitor.getPlatform() !== "android") return;
 
     const listener = App.addListener("backButton", ({ canGoBack }) => {
-      if (document.querySelector('[role="dialog"]')) {
-        document.dispatchEvent(
+      const dialog =
+        document.querySelector('[role="dialog"][aria-modal="true"]') ??
+        document.querySelector('[role="dialog"]');
+
+      if (dialog) {
+        // Popovers handle Escape on the dropdown itself.
+        dialog.dispatchEvent(
           new KeyboardEvent("keydown", {
             key: "Escape",
             code: "Escape",

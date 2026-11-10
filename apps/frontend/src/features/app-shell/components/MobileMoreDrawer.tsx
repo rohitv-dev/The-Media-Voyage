@@ -12,6 +12,7 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import type { MantineColor } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { useQuery } from "@tanstack/react-query";
 import {
   IconChevronRight,
@@ -113,6 +114,7 @@ export function MobileMoreDrawer({
   onLogout,
   onNavigate,
 }: MobileMoreDrawerProps) {
+  const isShortViewport = useMediaQuery("(max-height: 34em)");
   const { data: friendRequests } = useQuery(friendRequestsQueryOptions);
   const { data: notificationData } = useQuery(latestNotificationsQueryOptions);
   const pendingRequests = friendRequests?.incoming.length ?? 0;
@@ -191,7 +193,13 @@ export function MobileMoreDrawer({
         body: { height: "100%", padding: 0 },
       }}
     >
-      <Stack component="nav" aria-label="More navigation" gap={0} h="100%">
+      <Stack
+        component="nav"
+        aria-label="More navigation"
+        gap={0}
+        h="100%"
+        style={isShortViewport ? { overflowY: "auto" } : undefined}
+      >
         <Paper withBorder radius="lg" p="sm" m="sm" mb="md">
           <Group gap="sm" wrap="nowrap">
             <Avatar name={userName} color="accent" size={48} radius="xl" />
@@ -206,7 +214,14 @@ export function MobileMoreDrawer({
           </Group>
         </Paper>
 
-        <ScrollArea flex={1} mih={0} px="sm" pb="sm" type="auto">
+        <ScrollArea
+          flex={isShortViewport ? "none" : 1}
+          mih={0}
+          px="sm"
+          pb="sm"
+          type="auto"
+          scrollbars={isShortViewport ? false : undefined}
+        >
           <Stack gap="lg">
             {renderSection("Browse", browseItems)}
             {renderSection("Manage", manageItems)}
