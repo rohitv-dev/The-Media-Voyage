@@ -6,6 +6,7 @@ import { CopyPublicLinkButton } from "#/features/public/components/CopyPublicLin
 import { useCoverArtPreference } from "#/features/media/hooks/useCoverArtPreference";
 import { useCoverArtSizePreference } from "#/features/media/hooks/useCoverArtSizePreference";
 import { useReducedMotionPreference } from "#/hooks/useReducedMotionPreference";
+import { useCharacterShortcutsPreference } from "#/hooks/useCharacterShortcutsPreference";
 import { downloadApiFile, getApiErrorMessage } from "#/lib/api";
 import { ThemeOptionsList } from "#/theme/ThemeSwitcher";
 import {
@@ -42,6 +43,8 @@ function RouteComponent() {
   const [showCoverArt, setShowCoverArt] = useCoverArtPreference();
   const [coverArtSize, setCoverArtSize] = useCoverArtSizePreference();
   const [reduceMotion, setReduceMotion] = useReducedMotionPreference();
+  const [characterShortcuts, setCharacterShortcuts] =
+    useCharacterShortcutsPreference();
 
   const [exporting, setExporting] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -205,6 +208,18 @@ function RouteComponent() {
               checked={reduceMotion}
               onChange={(event) => setReduceMotion(event.currentTarget.checked)}
               aria-label="Reduce motion"
+            />
+          </SettingRow>
+          <SettingRow
+            title="Require Alt for character shortcuts"
+            description="Add Alt to letter and punctuation shortcuts to prevent accidental activation."
+          >
+            <Switch
+              checked={!characterShortcuts}
+              onChange={(event) =>
+                setCharacterShortcuts(!event.currentTarget.checked)
+              }
+              aria-label="Require Alt for character shortcuts"
             />
           </SettingRow>
         </SettingsSection>

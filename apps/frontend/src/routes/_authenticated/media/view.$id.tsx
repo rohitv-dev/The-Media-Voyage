@@ -16,7 +16,7 @@ import {
   showErrorNotification,
   showSuccessNotification,
 } from "#/lib/notifications";
-import { useDisclosure } from "@mantine/hooks";
+import { useDisclosure, useHotkeys } from "@mantine/hooks";
 import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import {
   createFileRoute,
@@ -26,6 +26,7 @@ import {
 } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { useAppReducedMotion } from "#/hooks/useAppReducedMotion";
+import { useCharacterShortcutsPreference } from "#/hooks/useCharacterShortcutsPreference";
 import { fadeUpEntranceProps } from "#/theme/motion";
 
 export const Route = createFileRoute("/_authenticated/media/view/$id")({
@@ -48,6 +49,7 @@ function RouteComponent() {
   const { isActionPending, runQuickAction } = useMediaCardActions(data);
   const { data: session } = authClient.useSession();
   const reduceMotion = useAppReducedMotion();
+  const [characterShortcuts] = useCharacterShortcutsPreference();
   const [recommendOpened, { open: openRecommend, close: closeRecommend }] =
     useDisclosure(false);
   const friendsQuery = useQuery({
@@ -98,6 +100,19 @@ function RouteComponent() {
     });
   };
 
+  useHotkeys([
+    [
+      characterShortcuts ? "u" : "alt+u",
+      (event) => runPageShortcut(event, editMedia),
+      { preventDefault: false, usePhysicalKeys: !characterShortcuts },
+    ],
+    [
+      characterShortcuts ? "b" : "alt+b",
+      (event) => runPageShortcut(event, returnToLibrary),
+      { preventDefault: false, usePhysicalKeys: !characterShortcuts },
+    ],
+  ]);
+
   return (
     <motion.div {...fadeUpEntranceProps(reduceMotion)}>
       <MediaView
@@ -147,4 +162,15 @@ function RouteComponent() {
       />
     </motion.div>
   );
+}
+
+function runPageShortcut(event: KeyboardEvent, action: () => void) {
+  const overlays = document.querySelectorAll(
+    '[role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"]',
+  );
+  if (Array.from(overlays).some((overlay) => overlay.getClientRects().length)) {
+    return;
+  }
+  event.preventDefault();
+  action();
 }

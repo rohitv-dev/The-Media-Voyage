@@ -4,6 +4,8 @@ import { IconKeyboard } from "@tabler/icons-react";
 type ShortcutsHelpModalProps = {
   opened: boolean;
   onClose: () => void;
+  onMediaView: boolean;
+  characterShortcuts: boolean;
 };
 
 const shortcuts: { keys: string[]; description: string }[] = [
@@ -19,6 +21,8 @@ const shortcuts: { keys: string[]; description: string }[] = [
 export function ShortcutsHelpModal({
   opened,
   onClose,
+  onMediaView,
+  characterShortcuts,
 }: ShortcutsHelpModalProps) {
   return (
     <Modal
@@ -35,10 +39,36 @@ export function ShortcutsHelpModal({
       }
     >
       <Stack gap="sm">
+        {onMediaView && (
+          <>
+            <Text fw={600} size="sm">
+              This page
+            </Text>
+            <Group justify="space-between" wrap="nowrap">
+              <Text size="sm">Update media</Text>
+              <Group gap={4} wrap="nowrap">
+                {!characterShortcuts && <Kbd>Alt</Kbd>}
+                <Kbd>u</Kbd>
+              </Group>
+            </Group>
+            <Group justify="space-between" wrap="nowrap">
+              <Text size="sm">Back to Library</Text>
+              <Group gap={4} wrap="nowrap">
+                {!characterShortcuts && <Kbd>Alt</Kbd>}
+                <Kbd>b</Kbd>
+              </Group>
+            </Group>
+            <Text fw={600} size="sm">
+              Global shortcuts
+            </Text>
+          </>
+        )}
         {shortcuts.map(({ keys, description }) => (
           <Group key={description} justify="space-between" wrap="nowrap">
             <Text size="sm">{description}</Text>
             <Group gap={4} wrap="nowrap">
+              {!characterShortcuts &&
+                ["/", "c", "r", "?"].includes(keys[0]) && <Kbd>Alt</Kbd>}
               {keys.map((key) => (
                 <Kbd key={key}>{key}</Kbd>
               ))}

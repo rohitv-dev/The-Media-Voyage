@@ -16,6 +16,7 @@ import { sessionQueryKey, sessionQueryOptions } from "#/auth/session";
 import { authClient } from "#/auth/authClient";
 import { ShortcutsHelpModal } from "#/components/ShortcutsHelpModal";
 import { useAndroidBackButton } from "#/hooks/useAndroidBackButton";
+import { useCharacterShortcutsPreference } from "#/hooks/useCharacterShortcutsPreference";
 import { AuthenticatedHeader } from "#/features/app-shell/components/AuthenticatedHeader";
 import { AuthenticatedSidebar } from "#/features/app-shell/components/AuthenticatedSidebar";
 import { CommandPalette } from "#/features/app-shell/components/CommandPalette";
@@ -58,6 +59,7 @@ function AuthenticatedShell() {
   const { session } = Route.useRouteContext();
   const navigate = Route.useNavigate();
   const { pathname } = useLocation();
+  const [characterShortcuts] = useCharacterShortcutsPreference();
   const [mediaFormStatus, setMediaFormStatus] =
     useState<MediaFormStatus | null>(null);
   const queryClient = useQueryClient();
@@ -124,33 +126,39 @@ function AuthenticatedShell() {
     },
   ] = useDisclosure();
 
+  useHotkeys([["mod+K", toggleCommandPalette]]);
+
   useHotkeys([
     [
-      "/",
-      (event) => {
-        event.preventDefault();
+      characterShortcuts ? "/" : "alt+/",
+      () =>
         document
           .querySelector<HTMLInputElement>('[data-shortcut="library-search"]')
-          ?.focus();
-      },
+          ?.focus(),
+      { usePhysicalKeys: !characterShortcuts },
     ],
-    ["c", () => navigate({ to: "/media/add" })],
+    [characterShortcuts ? "?" : "alt+?", openShortcuts],
+    [characterShortcuts ? "shift+?" : "alt+shift+?", openShortcuts],
     [
-      "r",
+      characterShortcuts ? "c" : "alt+c",
+      () => navigate({ to: "/media/add" }),
+      { usePhysicalKeys: !characterShortcuts },
+    ],
+    [
+      characterShortcuts ? "r" : "alt+r",
       () =>
         document
           .querySelector<HTMLButtonElement>('[data-shortcut="reset-filters"]')
           ?.click(),
+      { usePhysicalKeys: !characterShortcuts },
     ],
-    [
-      "?",
-      (event) => {
-        event.preventDefault();
-        openShortcuts();
-      },
-    ],
-    ["mod+K", toggleCommandPalette],
   ]);
+
+  useHotkeys(
+    characterShortcuts
+      ? []
+      : [["alt+shift+/", openShortcuts, { usePhysicalKeys: true }]],
+  );
 
   const logout = async () => {
     await clearPushNotificationToken();
@@ -246,7 +254,12 @@ function AuthenticatedShell() {
         onToggleMore={toggleNavbar}
       />
 
-      <ShortcutsHelpModal opened={shortcutsOpened} onClose={closeShortcuts} />
+      <ShortcutsHelpModal
+        opened={shortcutsOpened}
+        onClose={closeShortcuts}
+        onMediaView={/^\/media\/view\/[^/]+\/?$/.test(pathname)}
+        characterShortcuts={characterShortcuts}
+      />
       <CommandPalette
         opened={commandPaletteOpened}
         onClose={closeCommandPalette}
