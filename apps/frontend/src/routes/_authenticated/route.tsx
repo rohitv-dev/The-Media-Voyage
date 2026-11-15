@@ -266,6 +266,9 @@ function AuthenticatedShell() {
         onNavigate={navigateSidebar}
         onOpenMedia={openMedia}
         onOpenLibrarySearch={openLibrarySearch}
+        onAddSearch={(title) =>
+          navigate({ to: "/media/add", state: { addMediaTitle: title } })
+        }
       />
     </AppShell>
   );

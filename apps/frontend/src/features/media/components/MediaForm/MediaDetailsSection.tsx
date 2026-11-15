@@ -17,6 +17,7 @@ import type { MouseEventHandler } from "react";
 
 type MediaDetailsSectionProps = {
   mode: "add" | "update";
+  focusTitle?: boolean;
   mediaRecord: SourceMediaRecord | null;
   onTypeChange: (type: MediaType | null) => void;
   onTypeClick: MouseEventHandler<HTMLInputElement>;
@@ -26,6 +27,7 @@ type MediaDetailsSectionProps = {
 
 export function MediaDetailsSection({
   mode,
+  focusTitle,
   mediaRecord,
   onTypeChange,
   onTypeClick,
@@ -74,6 +76,7 @@ export function MediaDetailsSection({
 
           {isAddMode ? (
             <MediaTitleSelect
+              autoFocus={focusTitle}
               value={mediaRecord}
               onChange={onTitleChange}
               onSearchChange={onSearchChange}

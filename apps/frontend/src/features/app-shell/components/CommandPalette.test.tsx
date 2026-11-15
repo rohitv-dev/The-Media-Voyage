@@ -10,7 +10,12 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  onlineManager,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
+import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { apiMock } = vi.hoisted(() => ({ apiMock: vi.fn() }));
@@ -58,6 +63,7 @@ function renderPalette(
     onNavigate: vi.fn(),
     onOpenMedia: vi.fn(),
     onOpenLibrarySearch: vi.fn(),
+    onAddSearch: vi.fn(),
   };
   const renderElement = (
     nextProps: Partial<React.ComponentProps<typeof CommandPalette>>,
@@ -85,6 +91,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  onlineManager.setOnline(true);
   vi.useRealTimers();
 });
 
@@ -195,15 +202,93 @@ describe("CommandPalette", () => {
     screen.getByRole("option", { name: /Settings/ });
   });
 
-  it("shows an empty library state after a settled search", async () => {
-    renderPalette();
+  it("offers the searched title for adding after an empty search", async () => {
+    const onAddSearch = vi.fn();
+    renderPalette({ onAddSearch });
     const input = screen.getByRole("textbox", {
       name: "Search actions or pages",
     });
+    fireEvent.change(input, { target: { value: "  dune  " } });
 
-    fireEvent.change(input, { target: { value: "zz" } });
+    const option = await screen.findByRole("option", { name: /Add media/ });
+    expect(screen.getByText("No library matches found.")).toBeTruthy();
+    await waitFor(() =>
+      expect(option.getAttribute("data-combobox-selected")).not.toBeNull(),
+    );
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+    expect(onAddSearch).toHaveBeenCalledWith("dune");
+  });
 
-    expect(await screen.findByText("No library matches found.")).toBeTruthy();
+  it("does not offer adding when the library search fails", async () => {
+    apiMock.mockRejectedValue(new Error("Search failed"));
+    renderPalette();
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Search actions or pages" }),
+      {
+        target: { value: "dune" },
+      },
+    );
+    expect(screen.queryByRole("option", { name: /Add media/ })).toBeNull();
+    await screen.findByText("Library search is unavailable. Try again.");
+    expect(screen.queryByRole("option", { name: /Add media/ })).toBeNull();
+  });
+
+  it("does not treat a paused search as an empty result", async () => {
+    onlineManager.setOnline(false);
+    renderPalette();
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Search actions or pages" }),
+      {
+        target: { value: "dune" },
+      },
+    );
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    expect(apiMock).not.toHaveBeenCalled();
+    expect(screen.getByText("Searching your library...")).toBeTruthy();
+    expect(screen.queryByRole("option", { name: /Add media/ })).toBeNull();
+  });
+
+  it("keeps focus on the destination after adding a search", async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    function Handoff() {
+      const [opened, setOpened] = useState(false);
+      const [destination, setDestination] = useState(false);
+      return (
+        <>
+          <button onClick={() => setOpened(true)}>Open palette</button>
+          {destination && <input aria-label="Destination title" autoFocus />}
+          <CommandPalette
+            opened={opened}
+            onClose={() => setOpened(false)}
+            onNavigate={vi.fn()}
+            onOpenMedia={vi.fn()}
+            onOpenLibrarySearch={vi.fn()}
+            onAddSearch={() => setDestination(true)}
+          />
+        </>
+      );
+    }
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MantineProvider>
+          <Handoff />
+        </MantineProvider>
+      </QueryClientProvider>,
+    );
+    const trigger = screen.getByRole("button", { name: "Open palette" });
+    trigger.focus();
+    fireEvent.click(trigger);
+    fireEvent.change(
+      await screen.findByRole("textbox", { name: "Search actions or pages" }),
+      { target: { value: "dune" } },
+    );
+    fireEvent.click(await screen.findByRole("option", { name: /Add media/ }));
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(document.activeElement).toBe(
+      screen.getByRole("textbox", { name: "Destination title" }),
+    );
   });
 
   it("shows at most 20 library matches before static commands", async () => {

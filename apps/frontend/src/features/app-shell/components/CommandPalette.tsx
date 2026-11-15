@@ -32,6 +32,7 @@ type CommandPaletteProps = {
   onNavigate: (path: AppShellPath) => void;
   onOpenMedia: (userMediaId: string) => void;
   onOpenLibrarySearch: () => void;
+  onAddSearch: (query: string) => void;
 };
 
 const actionItems = [
@@ -126,6 +127,7 @@ export function CommandPalette({
   onNavigate,
   onOpenMedia,
   onOpenLibrarySearch,
+  onAddSearch,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
   const [debouncedQuery] = useDebouncedValue(query, 300);
@@ -140,6 +142,7 @@ export function CommandPalette({
     data: librarySearchResults = [],
     isFetching: isSearchingLibrary,
     isError: isLibrarySearchError,
+    isSuccess: isLibrarySearchSuccess,
   } = useQuery(userMediaSearchQueryOptions(opened ? debouncedQuery : ""));
   const visibleLibraryResults =
     isLibrarySearchEnabled && isLibrarySearchSettled
@@ -148,7 +151,11 @@ export function CommandPalette({
   let libraryStatus: { message: string; color: "dimmed" | "red" } | undefined;
 
   if (isLibrarySearchEnabled) {
-    if (!isLibrarySearchSettled || isSearchingLibrary) {
+    if (
+      !isLibrarySearchSettled ||
+      isSearchingLibrary ||
+      (!isLibrarySearchError && !isLibrarySearchSuccess)
+    ) {
       libraryStatus = {
         message: "Searching your library...",
         color: "dimmed",
@@ -176,6 +183,12 @@ export function CommandPalette({
     visibleLibraryResults.length > 0 ||
     filteredActions.length > 0 ||
     filteredNavigation.length > 0;
+  const showAddSearch =
+    isLibrarySearchEnabled &&
+    isLibrarySearchSettled &&
+    !isSearchingLibrary &&
+    isLibrarySearchSuccess &&
+    !hasResults;
 
   useEffect(() => {
     if (opened) {
@@ -186,7 +199,13 @@ export function CommandPalette({
       setQuery("");
       combobox.resetSelectedOption();
     }
-  }, [combobox, normalizedQuery, opened, visibleLibraryResults.length]);
+  }, [
+    combobox,
+    normalizedQuery,
+    opened,
+    visibleLibraryResults.length,
+    showAddSearch,
+  ]);
 
   const reset = () => {
     setQuery("");
@@ -194,6 +213,12 @@ export function CommandPalette({
   };
 
   const selectCommand = (value: string) => {
+    if (value === "add-search") {
+      reset();
+      onClose();
+      onAddSearch(trimmedQuery);
+      return;
+    }
     if (value === "hybrid-search") {
       reset();
       onClose();
@@ -219,6 +244,7 @@ export function CommandPalette({
     <Modal
       opened={opened}
       onClose={onClose}
+      returnFocus={false}
       title="Search or jump"
       size="lg"
       centered={!isMobile}
@@ -262,6 +288,15 @@ export function CommandPalette({
               <Text size="xs" c={libraryStatus.color} px="sm" py="xs">
                 {libraryStatus.message}
               </Text>
+            )}
+
+            {showAddSearch && (
+              <CommandOption
+                value="add-search"
+                icon={IconPlus}
+                label="Add media"
+                description={`Search the catalog for ${trimmedQuery}`}
+              />
             )}
 
             {filteredActions.length > 0 && (

@@ -38,6 +38,7 @@ const searchPlaceholders: Record<MediaType, string> = {
 };
 
 interface MediaTitleSelectProps {
+  autoFocus?: boolean;
   value: SourceMediaRecord | null;
   onChange: (value: SourceMediaRecord | null) => void;
   onSearchChange: (value: string) => void;
@@ -216,6 +217,7 @@ export function MediaTitleSelect(props: MediaTitleSelectProps) {
       >
         <Combobox.Target>
           <InputBase
+            autoFocus={props.autoFocus}
             label="Title"
             variant="filled"
             {...form.getInputProps("title")}

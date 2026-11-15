@@ -127,6 +127,24 @@ function getBottomAction(name: "Save media" | "Update media") {
 }
 
 describe("mobile form submission", () => {
+  it("preserves the title when changing media type", async () => {
+    vi.mocked(api).mockResolvedValue([]);
+    renderForm({
+      mode: "add",
+      dropdowns: { sources: [], tags: [] },
+      initialTitle: "Dune",
+    });
+    const title = screen.getByRole<HTMLInputElement>("textbox", {
+      name: "Title",
+    });
+    expect(title.value).toBe("Dune");
+    expect(document.activeElement).toBe(title);
+    expect(await screen.findByText("No matches found")).toBeTruthy();
+    fireEvent.click(screen.getByRole("combobox", { name: "Type" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Book" }));
+    expect(title.value).toBe("Dune");
+  });
+
   it("updates the edited entry from the bottom bar", async () => {
     vi.mocked(api).mockResolvedValueOnce({ id: "media-1", title: "Dune" });
     renderForm({

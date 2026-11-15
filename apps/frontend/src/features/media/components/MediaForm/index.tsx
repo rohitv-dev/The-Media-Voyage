@@ -151,6 +151,7 @@ type MediaFormProps =
       dropdowns: UserMediaDropdowns;
       defaultVisibility?: UserMediaFormSchema["visibility"];
       recommendationSelection?: SourceMediaRecord;
+      initialTitle?: string;
     }
   | {
       id: string;
@@ -194,6 +195,7 @@ export function MediaForm(props: MediaFormProps) {
       ? {
           ...addInitialValues,
           visibility: props.defaultVisibility ?? "private",
+          title: props.initialTitle ?? "",
           ...(props.recommendationSelection
             ? {
                 title: props.recommendationSelection.title,
@@ -396,8 +398,6 @@ export function MediaForm(props: MediaFormProps) {
     if (type !== "game" && form.values.status === "playing") {
       form.setFieldValue("status", "planned");
     }
-    form.setFieldValue("title", "");
-
     setMediaRecord(null);
 
     if (type === "game") {
@@ -729,6 +729,7 @@ export function MediaForm(props: MediaFormProps) {
               />
               <MediaDetailsSection
                 mode={mode}
+                focusTitle={isAddMode && Boolean(props.initialTitle)}
                 mediaRecord={mediaRecord}
                 onTypeChange={handleTypeChange}
                 onTypeClick={handleTypeClick}

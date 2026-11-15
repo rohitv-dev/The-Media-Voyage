@@ -51,6 +51,7 @@ declare module "@tanstack/react-router" {
   }
 
   interface HistoryState {
+    addMediaTitle?: string;
     recommendationSelection?: SourceMediaRecord;
     librarySearchFocusRequest?: number;
     librarySearchQuery?: string;

@@ -14,13 +14,21 @@ function RouteComponent() {
   const recommendationSelection = useLocation({
     select: (location) => location.state.recommendationSelection,
   });
+  const addMediaTitle = useLocation({
+    select: (location) => location.state.addMediaTitle,
+  });
+  const locationKey = useLocation({
+    select: (location) => location.state.__TSR_key,
+  });
 
   return (
     <MediaForm
+      key={addMediaTitle ? locationKey : undefined}
       mode="add"
       dropdowns={data}
       defaultVisibility={toVisibility(session.user.defaultVisibility)}
       recommendationSelection={recommendationSelection}
+      initialTitle={addMediaTitle}
     />
   );
 }
